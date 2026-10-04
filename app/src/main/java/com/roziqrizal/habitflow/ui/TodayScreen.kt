@@ -20,8 +20,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -57,15 +57,7 @@ fun TodayScreen(
 ) {
     var showAddDialog by rememberSaveable { mutableStateOf(false) }
 
-    Scaffold(
-        floatingActionButton = {
-            if (state.canAddTodo) {
-                FloatingActionButton(onClick = { showAddDialog = true }) {
-                    Text("+ To-do", modifier = Modifier.padding(horizontal = 8.dp))
-                }
-            }
-        },
-    ) { padding ->
+    Scaffold { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxWidth(),
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = padding.calculateTopPadding() + 8.dp, bottom = 96.dp),
@@ -100,6 +92,13 @@ fun TodayScreen(
                     onToggle = { onToggleTodo(todo) },
                     onDelete = { onDeleteTodo(todo) },
                 )
+            }
+            item {
+                OutlinedButton(
+                    onClick = { showAddDialog = true },
+                    enabled = state.canAddTodo,
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text("+ To-do") }
             }
             if (!state.canAddTodo) {
                 item {
@@ -147,7 +146,7 @@ private fun DayHeader(state: TodayUiState) {
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    text = "Habit ${state.doneHabits}/${state.totalHabits}  ·  To-do ${state.doneTodos}/${state.todos.size}",
+                    text = "Habit ${state.doneHabits}/${state.totalHabits}  ·  To-do ${state.doneTodos}/$MAX_TODOS_PER_DAY",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                 )
