@@ -1,0 +1,95 @@
+package com.roziqrizal.habitflow.ui
+
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.runtime.toMutableStateList
+import androidx.compose.ui.Modifier
+
+enum class Tab(val label: String) {
+    TODAY("Hari ini"),
+    CONTRIBUTION("Kontribusi"),
+    HABITS("Habit"),
+    ABOUT("Tentang"),
+}
+
+@Composable
+fun HabitFlowApp(
+    today: TodayViewModel,
+    contribution: ContributionViewModel,
+    manage: ManageHabitsViewModel,
+    versionName: String,
+) {
+    // Riwayat tab, dari yang paling lama sampai tab aktif. Tombol kembali membuka tab sebelumnya.
+    val history = rememberSaveable(
+        saver = listSaver<SnapshotStateList<Tab>, String>(
+            save = { tabs -> tabs.map { it.name } },
+            restore = { names -> names.map { Tab.valueOf(it) }.toMutableStateList() },
+        ),
+    ) { mutableStateListOf(Tab.TODAY) }
+    val current = history.last()
+
+    BackHandler(enabled = history.size > 1) {
+        history.removeAt(history.lastIndex)
+    }
+
+    Scaffold(
+        bottomBar = {
+            NavigationBar {
+                Tab.entries.forEach { tab ->
+                    NavigationBarItem(
+                        selected = tab == current,
+                        onClick = {
+                            if (tab != current) {
+                                history.remove(tab)
+                                history.add(tab)
+                            }
+                        },
+                        icon = {},
+                        label = { Text(tab.label) },
+                    )
+                }
+            }
+        },
+    ) { padding ->
+        Box(modifier = Modifier.padding(padding)) {
+            when (current) {
+                Tab.TODAY -> {
+                    val state by today.state.collectAsState()
+                    TodayScreen(
+                        state = state,
+                        onToggleHabit = today::toggleHabit,
+                        onAddTodo = today::addTodo,
+                        onToggleTodo = today::toggleTodo,
+                        onDeleteTodo = today::deleteTodo,
+                    )
+                }
+                Tab.CONTRIBUTION -> {
+                    val state by contribution.state.collectAsState()
+                    ContributionScreen(state = state)
+                }
+                Tab.HABITS -> {
+                    val habits by manage.habits.collectAsState()
+                    ManageHabitsScreen(
+                        habits = habits,
+                        onAdd = manage::addHabit,
+                        onRename = manage::renameHabit,
+                        onDelete = manage::deleteHabit,
+                    )
+                }
+                Tab.ABOUT -> AboutScreen(versionName = versionName)
+            }
+        }
+    }
+}

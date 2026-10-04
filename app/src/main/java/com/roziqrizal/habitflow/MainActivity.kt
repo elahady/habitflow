@@ -3,14 +3,15 @@ package com.roziqrizal.habitflow
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.roziqrizal.habitflow.data.HabitDatabase
 import com.roziqrizal.habitflow.data.HabitRepository
-import com.roziqrizal.habitflow.ui.TodayScreen
+import com.roziqrizal.habitflow.ui.ContributionViewModel
+import com.roziqrizal.habitflow.ui.HabitFlowApp
+import com.roziqrizal.habitflow.ui.ManageHabitsViewModel
 import com.roziqrizal.habitflow.ui.TodayViewModel
 import com.roziqrizal.habitflow.ui.theme.HabitFlowTheme
 
@@ -20,21 +21,25 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             HabitFlowTheme {
-                val vm: TodayViewModel = viewModel(
-                    factory = viewModelFactory {
-                        initializer {
-                            TodayViewModel(HabitRepository(HabitDatabase.get(applicationContext)))
-                        }
-                    },
+                val repo = remember { HabitRepository(HabitDatabase.get(applicationContext)) }
+                val today: TodayViewModel = viewModel(
+                    factory = viewModelFactory { initializer { TodayViewModel(repo) } },
                 )
-                val state by vm.state.collectAsState()
+                val contribution: ContributionViewModel = viewModel(
+                    factory = viewModelFactory { initializer { ContributionViewModel(repo) } },
+                )
+                val manage: ManageHabitsViewModel = viewModel(
+                    factory = viewModelFactory { initializer { ManageHabitsViewModel(repo) } },
+                )
+                val versionName = remember {
+                    packageManager.getPackageInfo(packageName, 0).versionName.orEmpty()
+                }
 
-                TodayScreen(
-                    state = state,
-                    onToggleHabit = vm::toggleHabit,
-                    onAddTodo = vm::addTodo,
-                    onToggleTodo = vm::toggleTodo,
-                    onDeleteTodo = vm::deleteTodo,
+                HabitFlowApp(
+                    today = today,
+                    contribution = contribution,
+                    manage = manage,
+                    versionName = versionName,
                 )
             }
         }
