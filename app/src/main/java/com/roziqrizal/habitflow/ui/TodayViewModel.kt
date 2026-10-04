@@ -6,6 +6,7 @@ import com.roziqrizal.habitflow.data.Habit
 import com.roziqrizal.habitflow.data.HabitRepository
 import com.roziqrizal.habitflow.data.Todo
 import com.roziqrizal.habitflow.domain.canAddTodo
+import com.roziqrizal.habitflow.domain.completeDays
 import com.roziqrizal.habitflow.domain.currentStreak
 import com.roziqrizal.habitflow.domain.scoreDay
 import kotlinx.coroutines.flow.SharingStarted
@@ -46,15 +47,13 @@ class TodayViewModel(
         val nowKey = now.toString()
         val createdOn = habits.associate { it.id to LocalDate.parse(it.createdAt) }
 
-        val doneByDate = entries.groupBy({ LocalDate.parse(it.date) }, { it.habitId })
+        val doneByDate = entries.groupBy({ LocalDate.parse(it.date) }, { it.habitId }).mapValues { it.value.toSet() }
         val doneTodosByDate = todos.filter { it.done }.groupingBy { LocalDate.parse(it.date) }.eachCount()
 
-        // Streak hanya bisa berasal dari tanggal yang punya centang habit.
-        val completeDays = (doneByDate.keys + now).filter { day ->
-            scoreDay(day, createdOn, doneByDate[day]?.toSet().orEmpty(), doneTodosByDate[day] ?: 0).complete
-        }.toSet()
+        // Streak hanya bisa berasal dari tanggal yang punya centang habit, ditambah hari ini.
+        val complete = completeDays(createdOn, doneByDate, doneTodosByDate, doneByDate.keys + now)
 
-        val doneIdsToday = doneByDate[now]?.toSet().orEmpty()
+        val doneIdsToday = doneByDate[now].orEmpty()
         val score = scoreDay(now, createdOn, doneIdsToday, doneTodosByDate[now] ?: 0)
         val todosToday = todos.filter { it.date == nowKey }
 
@@ -66,7 +65,7 @@ class TodayViewModel(
             doneHabits = score.doneHabits,
             doneTodos = score.doneTodos,
             level = score.level,
-            streak = currentStreak(completeDays, now),
+            streak = currentStreak(complete, now),
             canAddTodo = canAddTodo(todosToday.size),
         )
     }.stateIn(
