@@ -44,8 +44,11 @@ class HabitRepository(private val db: HabitDatabase) {
 
     /** Habit wajib tidak bisa dihapus. Mengembalikan false kalau penghapusan ditolak. */
     suspend fun deleteHabit(habitId: Long): Boolean = db.withTransaction {
-        entries.deleteAllForHabit(habitId)
-        habits.deleteIfNotMandatory(habitId) > 0
+        // Riwayat baru dihapus setelah habitnya benar-benar terhapus, supaya riwayat habit wajib
+        // tidak ikut hilang saat penghapusannya ditolak.
+        val deleted = habits.deleteIfNotMandatory(habitId) > 0
+        if (deleted) entries.deleteAllForHabit(habitId)
+        deleted
     }
 
     /** Mengembalikan false kalau batas to-do untuk hari itu sudah penuh. */
