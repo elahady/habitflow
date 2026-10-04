@@ -27,6 +27,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.roziqrizal.habitflow.domain.CELL_NOT_DRAWN
 import com.roziqrizal.habitflow.domain.HEATMAP_WEEKS
 import com.roziqrizal.habitflow.domain.heatmapDate
 import com.roziqrizal.habitflow.domain.heatmapStart
@@ -42,8 +43,9 @@ private val GRID_HEIGHT = STEP * 7 - GAP
 
 /**
  * Heatmap 26 minggu gaya GitHub. Kolom terakhir adalah minggu ini, dan hari setelah
- * [today] tidak digambar. [levelFor] memberi level 0 sampai 4 untuk satu tanggal.
- * Tap pada kotak memanggil [onDayClick] dengan tanggal kotak itu.
+ * [today] tidak digambar. [levelFor] memberi level 0 sampai 4 untuk satu tanggal, atau
+ * [CELL_NOT_DRAWN] untuk sel yang dilewati. Tap pada kotak memanggil [onDayClick] dengan
+ * tanggal kotak itu.
  */
 @Composable
 fun HeatmapGrid(
@@ -51,6 +53,8 @@ fun HeatmapGrid(
     levelFor: (LocalDate) -> Int,
     onDayClick: (LocalDate) -> Unit,
     modifier: Modifier = Modifier,
+    description: String = "Heatmap 26 minggu terakhir",
+    showLegend: Boolean = true,
 ) {
     val heat = LocalHeatColors.current
     val start = heatmapStart(today)
@@ -60,7 +64,7 @@ fun HeatmapGrid(
         Canvas(
             modifier = Modifier
                 .size(width = GRID_WIDTH, height = GRID_HEIGHT)
-                .semantics { contentDescription = "Heatmap 26 minggu terakhir" }
+                .semantics { contentDescription = description }
                 .pointerInput(today) {
                     detectTapGestures { offset ->
                         val stepPx = STEP.toPx()
@@ -78,8 +82,10 @@ fun HeatmapGrid(
             drawGrid(start, today, levelFor, heat::forLevel)
         }
 
-        Spacer(Modifier.size(8.dp))
-        HeatmapLegend()
+        if (showLegend) {
+            Spacer(Modifier.size(8.dp))
+            HeatmapLegend()
+        }
     }
 }
 
@@ -96,9 +102,10 @@ private fun DrawScope.drawGrid(
     for (col in 0 until HEATMAP_WEEKS) {
         for (row in 0..6) {
             val date = heatmapDate(start, col, row)
-            if (date.isAfter(today)) continue
+            val level = levelFor(date)
+            if (date.isAfter(today) || level == CELL_NOT_DRAWN) continue
             drawRoundRect(
-                color = colorFor(levelFor(date)),
+                color = colorFor(level),
                 topLeft = Offset(col * stepPx, row * stepPx),
                 size = Size(cellPx, cellPx),
                 cornerRadius = radius,
