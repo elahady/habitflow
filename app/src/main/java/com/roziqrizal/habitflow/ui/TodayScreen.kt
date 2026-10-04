@@ -1,7 +1,6 @@
 package com.roziqrizal.habitflow.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,13 +14,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -29,12 +26,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -57,11 +52,11 @@ fun TodayScreen(
 ) {
     var showAddDialog by rememberSaveable { mutableStateOf(false) }
 
-    Scaffold { padding ->
+    Scaffold(containerColor = MaterialTheme.colorScheme.surfaceContainerLow) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxWidth(),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = padding.calculateTopPadding() + 8.dp, bottom = 96.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = padding.calculateTopPadding() + 16.dp, bottom = 96.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             item { DayHeader(state) }
 
@@ -94,11 +89,12 @@ fun TodayScreen(
                 )
             }
             item {
-                OutlinedButton(
-                    onClick = { showAddDialog = true },
+                TonalButton(
+                    text = "+ To-do",
                     enabled = state.canAddTodo,
+                    onClick = { showAddDialog = true },
                     modifier = Modifier.fillMaxWidth(),
-                ) { Text("+ To-do") }
+                )
             }
             if (!state.canAddTodo) {
                 item {
@@ -129,51 +125,35 @@ private fun DayHeader(state: TodayUiState) {
     val heat = LocalHeatColors.current
     val dateText = state.date.format(DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy", Locale("id", "ID")))
 
-    Card(
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(dateText, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Spacer(Modifier.height(6.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(16.dp)
-                        .clip(MaterialTheme.shapes.extraSmall)
-                        .background(heat.forLevel(state.level))
-                        .semantics { contentDescription = "Level hari ini ${state.level}" },
-                )
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    text = "Habit ${state.doneHabits}/${state.totalHabits}  ·  To-do ${state.doneTodos}/$MAX_TODOS_PER_DAY",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                )
-            }
-            Spacer(Modifier.height(6.dp))
-            Text(
-                text = "Streak: ${state.streak} hari berturut-turut dengan semua habit selesai",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+    AppCard(hero = true, contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 16.dp)) {
+        Text(dateText, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+        Row(modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 16.dp)) {
+            StatBlock(value = "${state.doneHabits}/${state.totalHabits}", label = "Habit")
+            Spacer(Modifier.width(24.dp))
+            StatBlock(value = "${state.doneTodos}/$MAX_TODOS_PER_DAY", label = "To-do")
+        }
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(14.dp)
+                    .background(heat.forLevel(state.level), RoundedCornerShape(4.dp))
+                    .semantics { contentDescription = "Level hari ini ${state.level}" },
             )
+            Spacer(Modifier.width(8.dp))
             Text(
-                text = "Level 4 butuh semua habit dan $TODOS_FOR_LEVEL_4 to-do selesai.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                text = "Level ${state.level}  ·  Streak ${state.streak} hari",
+                style = MaterialTheme.typography.titleMedium,
             )
         }
+        Spacer(Modifier.height(4.dp))
+        Text(
+            text = "Level 4 butuh semua habit dan $TODOS_FOR_LEVEL_4 to-do selesai.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
-}
-
-@Composable
-private fun SectionTitle(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(top = 8.dp, start = 4.dp),
-    )
 }
 
 @Composable
@@ -183,16 +163,12 @@ private fun HabitRow(
     checked: Boolean,
     onToggle: () -> Unit,
 ) {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onToggle),
+    AppCard(
+        modifier = Modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
+        onClick = onToggle,
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 12.dp),
-        ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Checkbox(checked = checked, onCheckedChange = null)
             Spacer(Modifier.width(4.dp))
             Column(modifier = Modifier.weight(1f)) {
@@ -215,21 +191,22 @@ private fun TodoRow(
     onToggle: () -> Unit,
     onDelete: () -> Unit,
 ) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onToggle),
+    AppCard(
+        modifier = Modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+        onClick = onToggle,
     ) {
-        Checkbox(checked = todo.done, onCheckedChange = null)
-        Text(
-            text = todo.title,
-            style = MaterialTheme.typography.bodyMedium,
-            textDecoration = if (todo.done) TextDecoration.LineThrough else null,
-            color = if (todo.done) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.weight(1f),
-        )
-        TextButton(onClick = onDelete) { Text("Hapus") }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Checkbox(checked = todo.done, onCheckedChange = null)
+            Text(
+                text = todo.title,
+                style = MaterialTheme.typography.bodyMedium,
+                textDecoration = if (todo.done) TextDecoration.LineThrough else null,
+                color = if (todo.done) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f),
+            )
+            TextButton(onClick = onDelete) { Text("Hapus") }
+        }
     }
 }
 

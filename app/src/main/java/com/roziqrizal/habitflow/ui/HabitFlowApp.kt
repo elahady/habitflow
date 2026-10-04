@@ -3,8 +3,10 @@ package com.roziqrizal.habitflow.ui
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -16,6 +18,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Modifier
+import com.roziqrizal.habitflow.ui.theme.tokens
 
 enum class Tab(val label: String) {
     TODAY("Hari ini"),
@@ -45,8 +48,10 @@ fun HabitFlowApp(
     }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         bottomBar = {
-            NavigationBar {
+            // Indikator pill hijau muda dan label terpilih gelap, seperti navigasi di prototipe Rizqflow.
+            NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainer) {
                 Tab.entries.forEach { tab ->
                     NavigationBarItem(
                         selected = tab == current,
@@ -58,6 +63,11 @@ fun HabitFlowApp(
                         },
                         icon = {},
                         label = { Text(tab.label) },
+                        colors = NavigationBarItemDefaults.colors(
+                            indicatorColor = MaterialTheme.tokens.primaryFixed,
+                            selectedTextColor = MaterialTheme.colorScheme.onSurface,
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        ),
                     )
                 }
             }

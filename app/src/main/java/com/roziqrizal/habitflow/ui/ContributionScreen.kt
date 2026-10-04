@@ -6,12 +6,10 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -42,35 +40,38 @@ fun ContributionScreen(state: ContributionUiState) {
 
     LazyColumn(
         modifier = Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 32.dp),
+        // Gutter 12dp (bukan 16dp) supaya grid 309dp muat di 360dp dengan padding kartu 8dp.
+        contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 16.dp, bottom = 32.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item {
             Text(
                 text = "Kontribusi",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.onSurface,
             )
         }
         item { StreakCard(state.currentStreak, state.longestStreak) }
 
         item { SectionTitle("Gabungan") }
         item {
-            HeatmapGrid(
-                today = state.today,
-                levelFor = { state.combined[it] ?: 0 },
-                onDayClick = onDayClick,
-                description = "Heatmap gabungan 26 minggu terakhir",
-            )
+            AppCard(contentPadding = PaddingValues(8.dp)) {
+                HeatmapGrid(
+                    today = state.today,
+                    levelFor = { state.combined[it] ?: 0 },
+                    onDayClick = onDayClick,
+                    description = "Heatmap gabungan 26 minggu terakhir",
+                )
+            }
         }
 
         item { SectionTitle("Per habit") }
         items(state.perHabit, key = { it.habit.id }) { heat ->
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            AppCard(contentPadding = PaddingValues(8.dp)) {
                 Text(
                     text = heat.habit.name,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium,
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(start = 8.dp, top = 4.dp, bottom = 8.dp),
                 )
                 HeatmapGrid(
                     today = state.today,
@@ -92,34 +93,18 @@ fun ContributionScreen(state: ContributionUiState) {
 
 @Composable
 private fun StreakCard(current: Int, longest: Int) {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = "Streak sekarang: $current hari",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-            )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text = "Streak terpanjang: $longest hari",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+    AppCard(hero = true, contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 16.dp)) {
+        Text(
+            text = "Streak",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Row(modifier = Modifier.fillMaxWidth().padding(top = 4.dp)) {
+            StatBlock(value = "$current", label = "Sekarang, hari")
+            Spacer(Modifier.width(24.dp))
+            StatBlock(value = "$longest", label = "Terpanjang, hari")
         }
     }
-}
-
-@Composable
-private fun SectionTitle(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(top = 8.dp, start = 4.dp),
-    )
 }
 
 @Composable
@@ -133,8 +118,8 @@ private fun DayDetail(state: ContributionUiState, date: LocalDate) {
     Column(modifier = Modifier.padding(start = 24.dp, end = 24.dp, bottom = 32.dp)) {
         Text(
             text = dateText,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onSurface,
         )
         Text(
             text = "Habit $doneHabits/${activeHabits.size} selesai",
