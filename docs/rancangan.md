@@ -74,10 +74,8 @@ divisualisasikan seperti kontribusi GitHub.
 
 ## Palet warna
 
-- Mengikuti palet hijau sage dari homepage roziqrizal.com (`--color-primary`
-  dan turunannya di `resources/css/app.css`).
-- Level 0-4 memakai gradasi sage, dengan level 0 berupa abu-abu netral.
-- UI memakai Jetpack Compose (Material 3).
+Warna, font, dan jarak ada di [docs/design/README.md](design/README.md). Level 0-4 memakai
+gradasi sage dengan level 0 abu-abu netral. UI memakai Jetpack Compose (Material 3).
 
 ## Identitas
 

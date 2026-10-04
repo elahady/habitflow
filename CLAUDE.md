@@ -34,7 +34,8 @@ kontribusi ala GitHub. Detail rancangan ada di [docs/rancangan.md](docs/rancanga
 ## Konvensi
 
 - UI memakai Jetpack Compose dan Material 3.
-- Warna mengikuti palet hijau sage dari homepage roziqrizal.com. Level warna
-  hari mengikuti aturan di `docs/rancangan.md`.
+- Desain (warna, font, jarak, bentuk, komponen) mengikuti
+  [docs/design/README.md](docs/design/README.md). Nilai baru di layar harus dicatat di
+  sana dulu. Level warna hari mengikuti aturan di `docs/rancangan.md`.
 - Habit tetap menjadi prioritas. To-do tidak boleh menaikkan level hari ke 4
   tanpa habit lengkap.
