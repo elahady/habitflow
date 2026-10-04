@@ -114,7 +114,9 @@ dipindah ke `today`. To-do yang sudah selesai tidak dipindah.
   - daftar habit beserta status hari ini,
   - daftar to-do hari ini,
   - skor hari ini dan streak.
-- Saat ViewModel dibuat, jalankan `carryOver` untuk hari ini.
+- Saat ViewModel dibuat, jalankan `carryOver` untuk hari ini, dan ulangi setiap kali
+  tanggal berganti (`DayClock`: diperbarui di `onResume` dan saat broadcast
+  `DATE_CHANGED`, `TIME_SET`, atau `TIMEZONE_CHANGED`).
 - `ContributionViewModel` menyediakan data heatmap sampai 53 minggu (gabungan dan per habit),
   supaya grid bisa menampilkan minggu sebanyak lebar layar.
 
@@ -186,7 +188,7 @@ tampil di layar Hari ini.
 
 **Selesai jika:** keempat tab bisa dibuka dan kembali ke tab sebelumnya dengan benar.
 
-## Tahap 11: Kualitas dan verifikasi
+## Tahap 11: Kualitas dan verifikasi (sudah selesai, 4 Oktober 2026)
 
 - Tes unit untuk `domain/` lulus semua.
 - Verifikasi manual di emulator, dengan skenario:
@@ -210,7 +212,6 @@ tampil di layar Hari ini.
 ## Daftar pertanyaan terbuka
 
 - Urutan habit bisa diubah atau tidak (tahap 9, opsional).
-- Font: sistem atau Manrope dan Libre Caslon (tahap 5).
 - Apakah streak terpanjang disimpan permanen atau dihitung ulang dari data
   (saat ini: dihitung ulang).
 
