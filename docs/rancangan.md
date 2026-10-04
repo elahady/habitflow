@@ -10,14 +10,20 @@ divisualisasikan seperti kontribusi GitHub.
 
 ## Habit
 
-- Daftar habit awal (bisa ditambah, diubah, dan dihapus):
-  1. Jalan kaki 20 menit
-  2. Air putih 2 liter
-  3. Tanpa minuman manis
-  4. Ngopi maksimal 2 gelas (sepulang kerja)
-  5. Tidur sebelum 22.00
-  6. Makan malam selesai 2-3 jam sebelum tidur
-  7. Tanpa gorengan atau camilan manis
+- Daftar habit awal:
+  1. **Sholat 5 waktu** (wajib)
+  2. **Baca Al-Quran** (wajib)
+  3. Jalan kaki 20 menit
+  4. Air putih 2 liter
+  5. Tanpa minuman manis
+  6. Ngopi maksimal 2 gelas (sepulang kerja)
+  7. Tidur sebelum 22.00
+  8. Makan malam selesai 2-3 jam sebelum tidur
+  9. Tanpa gorengan atau camilan manis
+- **Habit wajib** (ditandai `isMandatory`) tidak bisa dihapus dan selalu tampil
+  paling atas di layar Hari ini dan Habit. Habit wajib tetap dihitung di level
+  dan streak seperti habit lain.
+- Habit lain bisa ditambah, diubah, dan dihapus.
 - Setiap habit hanya punya status centang: sudah atau belum, per hari.
 - Tidak ada input angka di versi ini (tekanan darah, gula, berat badan belum masuk).
 

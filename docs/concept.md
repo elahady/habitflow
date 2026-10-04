@@ -40,7 +40,7 @@ dengan kriteria selesai di tiap tahap.
 
 Tiga tabel sesuai `rancangan.md`:
 
-- `Habit` (`habits`): `id`, `name`, `createdAt` (tanggal ISO), `sortOrder`.
+- `Habit` (`habits`): `id`, `name`, `createdAt` (tanggal ISO), `sortOrder`, `isMandatory` (boolean).
 - `HabitEntry` (`habit_entries`): `habitId`, `date` (ISO). Primary key gabungan
   `(habitId, date)`. Satu baris = habit selesai di tanggal itu.
 - `Todo` (`todos`): `id`, `title`, `date` (ISO), `done`, `createdAt`.
@@ -49,8 +49,9 @@ Komponen:
 
 - `HabitDao`, `HabitEntryDao`, `TodoDao` dengan Flow untuk observasi.
 - `HabitDatabase` (versi 1).
-- Seed habit awal (tujuh habit dari rancangan) lewat `RoomDatabase.Callback`
-  saat database pertama kali dibuat.
+- Seed habit awal (sembilan habit dari rancangan, dua di antaranya wajib:
+  Sholat 5 waktu dan Baca Al-Quran) lewat `RoomDatabase.Callback` saat database
+  pertama kali dibuat.
 
 **Selesai jika:** database terbentuk, tujuh habit awal muncul, dan query untuk
 satu tanggal mengembalikan data yang benar (diuji dengan instrumented test
@@ -216,6 +217,7 @@ tampil di layar Hari ini.
 - Habit baru ditambahkan di tengah minggu. Heatmap sebelum tanggal dibuat
   tidak dihitung sebagai gagal.
 - Habit dihapus. Riwayatnya ikut hilang dan skor hari dihitung ulang.
+- Habit wajib tidak bisa dihapus, baik dari layar Habit maupun dari Kontribusi.
 - Ganti zona waktu. Tanggal dihitung dari zona waktu perangkat.
 - Pergantian hari saat app terbuka. Carry-over harus berjalan ulang.
 - Lebih dari 5 to-do lewat jalur lain (misalnya carry-over). Batas tetap dijaga.
