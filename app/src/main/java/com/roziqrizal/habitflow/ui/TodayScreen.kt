@@ -61,7 +61,7 @@ fun TodayScreen(
             item { DayHeader(state) }
 
             item { SectionTitle("Habit") }
-            items(state.habits, key = { it.habit.id }) { item ->
+            items(state.habits, key = { "habit-${it.habit.id}" }) { item ->
                 HabitRow(
                     name = item.habit.name,
                     mandatory = item.habit.isMandatory,
@@ -81,7 +81,7 @@ fun TodayScreen(
                     )
                 }
             }
-            items(state.todos, key = { it.id }) { todo ->
+            items(state.todos, key = { "todo-${it.id}" }) { todo ->
                 TodoRow(
                     todo = todo,
                     onToggle = { onToggleTodo(todo) },
