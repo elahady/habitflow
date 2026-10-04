@@ -40,7 +40,7 @@ fun ContributionScreen(state: ContributionUiState) {
 
     LazyColumn(
         modifier = Modifier.fillMaxWidth(),
-        // Gutter 12dp (bukan 16dp) supaya grid 309dp muat di 360dp dengan padding kartu 8dp.
+        // Gutter 12dp (bukan 16dp) supaya grid minimal 26 minggu (309dp) muat di 360dp dengan padding kartu 8dp.
         contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 16.dp, bottom = 32.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
@@ -60,7 +60,7 @@ fun ContributionScreen(state: ContributionUiState) {
                     today = state.today,
                     levelFor = { state.combined[it] ?: 0 },
                     onDayClick = onDayClick,
-                    description = "Heatmap gabungan 26 minggu terakhir",
+                    label = "Heatmap gabungan",
                 )
             }
         }
@@ -77,7 +77,7 @@ fun ContributionScreen(state: ContributionUiState) {
                     today = state.today,
                     levelFor = { heat.levels[it] ?: CELL_NOT_DRAWN },
                     onDayClick = onDayClick,
-                    description = "Heatmap ${heat.habit.name} 26 minggu terakhir",
+                    label = "Heatmap ${heat.habit.name}",
                     showLegend = false,
                 )
             }

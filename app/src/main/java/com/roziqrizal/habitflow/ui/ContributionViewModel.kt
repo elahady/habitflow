@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.roziqrizal.habitflow.data.Habit
 import com.roziqrizal.habitflow.data.HabitRepository
 import com.roziqrizal.habitflow.data.Todo
+import com.roziqrizal.habitflow.domain.HEATMAP_MAX_WEEKS
 import com.roziqrizal.habitflow.domain.completeDays
 import com.roziqrizal.habitflow.domain.currentStreak
 import com.roziqrizal.habitflow.domain.habitLevelOn
@@ -17,7 +18,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import java.time.LocalDate
 
-/** Level sel heatmap satu habit untuk setiap hari dalam 26 minggu terakhir. */
+/** Level sel heatmap satu habit untuk setiap hari dalam jendela heatmap terlebar. */
 data class HabitHeat(
     val habit: Habit,
     val levels: Map<LocalDate, Int>,
@@ -51,8 +52,9 @@ class ContributionViewModel(
         val todosByDate = todos.groupBy { LocalDate.parse(it.date) }
         val doneTodosByDate = todosByDate.mapValues { entry -> entry.value.count { it.done } }
 
-        // Hari dalam jendela heatmap, dari awal sampai hari ini.
-        val windowDays = generateSequence(heatmapStart(now)) { it.plusDays(1) }
+        // Hari dalam jendela heatmap terlebar, dari awal sampai hari ini. Grid sendiri yang
+        // memilih berapa minggu yang tampil sesuai lebar layar.
+        val windowDays = generateSequence(heatmapStart(now, HEATMAP_MAX_WEEKS)) { it.plusDays(1) }
             .takeWhile { !it.isAfter(now) }
             .toList()
 
@@ -69,7 +71,7 @@ class ContributionViewModel(
             )
         }
 
-        // Streak memakai seluruh riwayat, bukan hanya jendela 26 minggu.
+        // Streak memakai seluruh riwayat, bukan hanya jendela heatmap.
         val complete = completeDays(createdOn, doneIdsByDate, doneTodosByDate, doneIdsByDate.keys + now)
 
         ContributionUiState(

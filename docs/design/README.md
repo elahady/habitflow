@@ -141,8 +141,8 @@ Skala 4dp: 4, 8, 12, 16, 24, 32.
 | Tinggi minimum sentuh | Mengikuti komponen Material 3 (checkbox, tombol). Belum diukur, lihat Aksesibilitas |
 
 **Pengecualian Kontribusi:** gutter 12dp dan padding kartu heatmap 8dp. Alasannya, grid
-heatmap lebarnya 309dp (26 kolom × 12dp − 3dp), dan layar 360dp hanya menyisakan 320dp
-dengan pengaturan ini. Jangan menaikkan gutter di Kontribusi tanpa mengecilkan sel.
+minimal 26 minggu lebarnya 309dp (26 kolom × 12dp − 3dp), dan layar 360dp hanya menyisakan
+320dp dengan pengaturan ini. Jangan menaikkan gutter di Kontribusi tanpa mengecilkan sel.
 
 ## Komponen
 
@@ -154,7 +154,7 @@ Komponen bersama ada di `ui/Components.kt`. Pakai ulang, jangan membuat versi ba
 | `SectionTitle` | Judul bagian Caslon 18sp | Setiap bagian daftar. Jangan membuat judul bagian sendiri |
 | `StatBlock` | Angka displayMedium di atas label labelMedium | Skor dan streak. Maksimal dua blok berdampingan |
 | `TonalButton` | Tombol tonal dengan latar primaryFixed | Aksi utama layar, misalnya "+ To-do", "+ Habit" |
-| `HeatmapGrid` | Grid 7 × 26, dengan legenda opsional | Kontribusi. Gabungan dan per habit |
+| `HeatmapGrid` | Grid 7 baris × 26–53 minggu (mengisi lebar), dengan legenda opsional | Kontribusi. Gabungan dan per habit |
 
 Tombol hapus dan aksi sekunder memakai `TextButton`. Dialog memakai `AlertDialog`, dan
 detail hari memakai `ModalBottomSheet`.
@@ -199,12 +199,17 @@ Latar di belakang kartu memakai `surfaceContainerLow`, bukan `background`, supay
 
 ## Heatmap
 
-- 7 baris (Senin di atas, Minggu di bawah), 26 kolom (minggu). Kolom terakhir adalah minggu ini.
-- Kotak 9dp dengan jarak 3dp, sudut 2dp. Lebar total 309dp.
+- 7 baris (Senin di atas, Minggu di bawah). Kolom terakhir adalah minggu ini.
+- Jumlah kolom (minggu) mengikuti lebar kartu: sebanyak yang muat, minimal 26 dan paling
+  banyak 53. Grid diletakkan di tengah sehingga sisa ruang kiri dan kanan sama (selisihnya
+  selalu di bawah satu kolom, 12dp).
+- Kotak 9dp dengan jarak 3dp, sudut 2dp. Lebar grid = kolom × 12dp − 3dp (309dp untuk 26 kolom).
 - Hari setelah hari ini tidak digambar. Sel sebelum habit dibuat tidak digambar.
 - Tap pada kotak memanggil detail hari. Celah antar kotak tidak merespons tap.
-- Legenda "Less" dan "More" dengan lima kotak level di antaranya, di bawah grid gabungan.
-- Deskripsi aksesibilitas: "Heatmap gabungan 26 minggu terakhir" atau "Heatmap <nama habit> 26 minggu terakhir".
+- Legenda "Less" dan "More" dengan lima kotak level di antaranya, di bawah grid gabungan,
+  rata kanan dengan tepi kanan grid.
+- Deskripsi aksesibilitas: "Heatmap gabungan <n> minggu terakhir" atau "Heatmap <nama habit> <n> minggu terakhir".
+  Setiap kotak punya deskripsi "<tanggal>, level <n>".
 
 ## Aksesibilitas
 

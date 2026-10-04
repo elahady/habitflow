@@ -55,4 +55,25 @@ class HeatmapTest {
         assertEquals(start.plusDays(7), heatmapDate(start, col = 1, row = 0))
         assertEquals(start.plusDays(7 * 10 + 3), heatmapDate(start, col = 10, row = 3))
     }
+
+    @Test
+    fun `jumlah minggu lain tetap berakhir di minggu ini`() {
+        val start = heatmapStart(sunday, weeks = 30)
+
+        assertEquals(DayOfWeek.MONDAY, start.dayOfWeek)
+        assertEquals(sunday, heatmapDate(start, col = 29, row = 6))
+    }
+
+    @Test
+    fun `jumlah minggu mengikuti lebar yang tersedia`() {
+        // Kolom 12dp dengan jarak 3dp: 30 kolom butuh 30 x 12 - 3 = 357dp.
+        assertEquals(30, heatmapWeeksFor(available = 357f, step = 12f, gap = 3f))
+        assertEquals(29, heatmapWeeksFor(available = 356f, step = 12f, gap = 3f))
+    }
+
+    @Test
+    fun `jumlah minggu dibatasi minimal dan maksimal`() {
+        assertEquals(HEATMAP_WEEKS, heatmapWeeksFor(available = 100f, step = 12f, gap = 3f))
+        assertEquals(HEATMAP_MAX_WEEKS, heatmapWeeksFor(available = 2000f, step = 12f, gap = 3f))
+    }
 }

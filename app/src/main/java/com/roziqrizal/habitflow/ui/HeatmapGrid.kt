@@ -5,10 +5,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -31,9 +33,11 @@ import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.roziqrizal.habitflow.domain.CELL_NOT_DRAWN
+import com.roziqrizal.habitflow.domain.HEATMAP_MAX_WEEKS
 import com.roziqrizal.habitflow.domain.HEATMAP_WEEKS
 import com.roziqrizal.habitflow.domain.heatmapDate
 import com.roziqrizal.habitflow.domain.heatmapStart
+import com.roziqrizal.habitflow.domain.heatmapWeeksFor
 import com.roziqrizal.habitflow.ui.theme.LocalHeatColors
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -44,14 +48,15 @@ private val GAP = 3.dp
 private val CORNER = 2.dp
 private val CELL_DATE_FORMAT = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale("id", "ID"))
 private val STEP = CELL + GAP
-private val GRID_WIDTH = STEP * HEATMAP_WEEKS - GAP
 private val GRID_HEIGHT = STEP * 7 - GAP
 
 /**
- * Heatmap 26 minggu gaya GitHub. Kolom terakhir adalah minggu ini, dan hari setelah
- * [today] tidak digambar. [levelFor] memberi level 0 sampai 4 untuk satu tanggal, atau
- * [CELL_NOT_DRAWN] untuk sel yang dilewati. Tap pada kotak memanggil [onDayClick] dengan
- * tanggal kotak itu.
+ * Heatmap gaya GitHub yang mengisi lebar yang tersedia: minimal [HEATMAP_WEEKS] minggu, ditambah
+ * minggu sebanyak yang muat sampai [HEATMAP_MAX_WEEKS], lalu diletakkan di tengah supaya sisa
+ * ruang kiri dan kanan sama. Kolom terakhir adalah minggu ini, dan hari setelah [today] tidak
+ * digambar. [levelFor] memberi level 0 sampai 4 untuk satu tanggal, atau [CELL_NOT_DRAWN] untuk
+ * sel yang dilewati. Tap pada kotak memanggil [onDayClick] dengan tanggal kotak itu. [label]
+ * menjadi awal deskripsi aksesibilitas, diikuti jumlah minggu yang tampil.
  */
 @Composable
 fun HeatmapGrid(
@@ -59,71 +64,77 @@ fun HeatmapGrid(
     levelFor: (LocalDate) -> Int,
     onDayClick: (LocalDate) -> Unit,
     modifier: Modifier = Modifier,
-    description: String = "Heatmap 26 minggu terakhir",
+    label: String = "Heatmap",
     showLegend: Boolean = true,
 ) {
     val heat = LocalHeatColors.current
-    val start = heatmapStart(today)
     val currentOnDayClick by rememberUpdatedState(onDayClick)
 
-    Column(modifier = modifier) {
-        Box(
-            modifier = Modifier
-                .size(width = GRID_WIDTH, height = GRID_HEIGHT)
-                .semantics { contentDescription = description },
-        ) {
-            Canvas(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .pointerInput(today) {
-                        detectTapGestures { offset ->
-                            val stepPx = STEP.toPx()
-                            val cellPx = CELL.toPx()
-                            val col = (offset.x / stepPx).toInt()
-                            val row = (offset.y / stepPx).toInt()
-                            val onCell = offset.x - col * stepPx < cellPx && offset.y - row * stepPx < cellPx
-                            if (onCell && col in 0 until HEATMAP_WEEKS && row in 0..6) {
-                                val date = heatmapDate(start, col, row)
-                                if (!date.isAfter(today)) currentOnDayClick(date)
-                            }
-                        }
-                    },
-            ) {
-                drawGrid(start, today, levelFor, heat::forLevel)
-            }
+    BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
+        val weeks = heatmapWeeksFor(maxWidth.value, STEP.value, GAP.value)
+        val gridWidth = STEP * weeks - GAP
+        val start = heatmapStart(today, weeks)
 
-            // Canvas tidak punya node aksesibilitas per kotak, jadi setiap kotak yang digambar
-            // diberi node transparan sendiri supaya TalkBack bisa membaca dan membuka harinya.
-            for (col in 0 until HEATMAP_WEEKS) {
-                for (row in 0..6) {
-                    val date = heatmapDate(start, col, row)
-                    val level = levelFor(date)
-                    if (date.isAfter(today) || level == CELL_NOT_DRAWN) continue
-                    Box(
-                        modifier = Modifier
-                            .offset(x = STEP * col, y = STEP * row)
-                            .size(CELL)
-                            .semantics {
-                                contentDescription = "${date.format(CELL_DATE_FORMAT)}, level $level"
-                                onClick(label = "Lihat detail hari") {
-                                    currentOnDayClick(date)
-                                    true
+        Column(modifier = Modifier.align(Alignment.TopCenter).width(gridWidth)) {
+            Box(
+                modifier = Modifier
+                    .size(width = gridWidth, height = GRID_HEIGHT)
+                    .semantics { contentDescription = "$label $weeks minggu terakhir" },
+            ) {
+                Canvas(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .pointerInput(today, weeks) {
+                            detectTapGestures { offset ->
+                                val stepPx = STEP.toPx()
+                                val cellPx = CELL.toPx()
+                                val col = (offset.x / stepPx).toInt()
+                                val row = (offset.y / stepPx).toInt()
+                                val onCell = offset.x - col * stepPx < cellPx && offset.y - row * stepPx < cellPx
+                                if (onCell && col in 0 until weeks && row in 0..6) {
+                                    val date = heatmapDate(start, col, row)
+                                    if (!date.isAfter(today)) currentOnDayClick(date)
                                 }
-                            },
-                    )
+                            }
+                        },
+                ) {
+                    drawGrid(start, weeks, today, levelFor, heat::forLevel)
+                }
+
+                // Canvas tidak punya node aksesibilitas per kotak, jadi setiap kotak yang digambar
+                // diberi node transparan sendiri supaya TalkBack bisa membaca dan membuka harinya.
+                for (col in 0 until weeks) {
+                    for (row in 0..6) {
+                        val date = heatmapDate(start, col, row)
+                        val level = levelFor(date)
+                        if (date.isAfter(today) || level == CELL_NOT_DRAWN) continue
+                        Box(
+                            modifier = Modifier
+                                .offset(x = STEP * col, y = STEP * row)
+                                .size(CELL)
+                                .semantics {
+                                    contentDescription = "${date.format(CELL_DATE_FORMAT)}, level $level"
+                                    onClick(label = "Lihat detail hari") {
+                                        currentOnDayClick(date)
+                                        true
+                                    }
+                                },
+                        )
+                    }
                 }
             }
-        }
 
-        if (showLegend) {
-            Spacer(Modifier.size(8.dp))
-            HeatmapLegend()
+            if (showLegend) {
+                Spacer(Modifier.size(8.dp))
+                HeatmapLegend(modifier = Modifier.fillMaxWidth())
+            }
         }
     }
 }
 
 private fun DrawScope.drawGrid(
     start: LocalDate,
+    weeks: Int,
     today: LocalDate,
     levelFor: (LocalDate) -> Int,
     colorFor: (Int) -> Color,
@@ -132,7 +143,7 @@ private fun DrawScope.drawGrid(
     val cellPx = CELL.toPx()
     val radius = CornerRadius(CORNER.toPx())
 
-    for (col in 0 until HEATMAP_WEEKS) {
+    for (col in 0 until weeks) {
         for (row in 0..6) {
             val date = heatmapDate(start, col, row)
             val level = levelFor(date)

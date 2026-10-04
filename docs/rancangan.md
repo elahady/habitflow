@@ -64,8 +64,10 @@ divisualisasikan seperti kontribusi GitHub.
    - Bagian Habit ditampilkan dulu, lalu bagian To-do di bawahnya.
    - Tombol tambah to-do, dinonaktifkan jika sudah 5.
 2. **Kontribusi**
-   - Heatmap gabungan 26 minggu (gaya GitHub), warna dari level hari.
-   - Heatmap per habit di bawahnya, 26 minggu.
+   - Heatmap gabungan (gaya GitHub), warna dari level hari. Minimal 26 minggu, dan
+     ditambah minggu sampai lebar kartu terisi, paling banyak 53 minggu (setahun).
+     Sisa ruang dibagi rata di kiri dan kanan grid.
+   - Heatmap per habit di bawahnya, dengan jumlah minggu yang sama.
    - Tap kotak mana pun untuk melihat detail hari itu.
 3. **Kelola habit**
    - Tambah, ubah nama, dan hapus habit.

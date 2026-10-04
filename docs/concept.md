@@ -115,7 +115,8 @@ dipindah ke `today`. To-do yang sudah selesai tidak dipindah.
   - daftar to-do hari ini,
   - skor hari ini dan streak.
 - Saat ViewModel dibuat, jalankan `carryOver` untuk hari ini.
-- `ContributionViewModel` menyediakan data heatmap 26 minggu (gabungan dan per habit).
+- `ContributionViewModel` menyediakan data heatmap sampai 53 minggu (gabungan dan per habit),
+  supaya grid bisa menampilkan minggu sebanyak lebar layar.
 
 **Selesai jika:** perubahan di database langsung memperbarui `StateFlow`.
 Diverifikasi dengan unit test memakai repository palsu.
@@ -133,8 +134,9 @@ Diverifikasi dengan unit test memakai repository palsu.
 
 ## Tahap 6: Komponen heatmap
 
-- `HeatmapGrid` memakai `Canvas`: 7 baris (Senin sampai Minggu), 26 kolom
-  (minggu), ukuran kotak 9dp dengan jarak 3dp.
+- `HeatmapGrid` memakai `Canvas`: 7 baris (Senin sampai Minggu), minimal 26 kolom
+  (minggu) dan ditambah sampai lebar kartu terisi (maksimal 53), ukuran kotak 9dp dengan
+  jarak 3dp. Grid di tengah supaya ruang kiri dan kanan seimbang.
 - Kolom terakhir adalah minggu ini. Hari setelah hari ini tidak digambar.
 - Input: fungsi `levelFor(date): Int`.
 - Tap pada kotak memanggil `onDayClick(date)`.
