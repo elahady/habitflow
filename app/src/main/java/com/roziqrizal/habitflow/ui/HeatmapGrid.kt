@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,6 +27,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.roziqrizal.habitflow.domain.CELL_NOT_DRAWN
@@ -33,10 +36,13 @@ import com.roziqrizal.habitflow.domain.heatmapDate
 import com.roziqrizal.habitflow.domain.heatmapStart
 import com.roziqrizal.habitflow.ui.theme.LocalHeatColors
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 private val CELL = 9.dp
 private val GAP = 3.dp
 private val CORNER = 2.dp
+private val CELL_DATE_FORMAT = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale("id", "ID"))
 private val STEP = CELL + GAP
 private val GRID_WIDTH = STEP * HEATMAP_WEEKS - GAP
 private val GRID_HEIGHT = STEP * 7 - GAP
@@ -61,25 +67,52 @@ fun HeatmapGrid(
     val currentOnDayClick by rememberUpdatedState(onDayClick)
 
     Column(modifier = modifier) {
-        Canvas(
+        Box(
             modifier = Modifier
                 .size(width = GRID_WIDTH, height = GRID_HEIGHT)
-                .semantics { contentDescription = description }
-                .pointerInput(today) {
-                    detectTapGestures { offset ->
-                        val stepPx = STEP.toPx()
-                        val cellPx = CELL.toPx()
-                        val col = (offset.x / stepPx).toInt()
-                        val row = (offset.y / stepPx).toInt()
-                        val onCell = offset.x - col * stepPx < cellPx && offset.y - row * stepPx < cellPx
-                        if (onCell && col in 0 until HEATMAP_WEEKS && row in 0..6) {
-                            val date = heatmapDate(start, col, row)
-                            if (!date.isAfter(today)) currentOnDayClick(date)
-                        }
-                    }
-                },
+                .semantics { contentDescription = description },
         ) {
-            drawGrid(start, today, levelFor, heat::forLevel)
+            Canvas(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .pointerInput(today) {
+                        detectTapGestures { offset ->
+                            val stepPx = STEP.toPx()
+                            val cellPx = CELL.toPx()
+                            val col = (offset.x / stepPx).toInt()
+                            val row = (offset.y / stepPx).toInt()
+                            val onCell = offset.x - col * stepPx < cellPx && offset.y - row * stepPx < cellPx
+                            if (onCell && col in 0 until HEATMAP_WEEKS && row in 0..6) {
+                                val date = heatmapDate(start, col, row)
+                                if (!date.isAfter(today)) currentOnDayClick(date)
+                            }
+                        }
+                    },
+            ) {
+                drawGrid(start, today, levelFor, heat::forLevel)
+            }
+
+            // Canvas tidak punya node aksesibilitas per kotak, jadi setiap kotak yang digambar
+            // diberi node transparan sendiri supaya TalkBack bisa membaca dan membuka harinya.
+            for (col in 0 until HEATMAP_WEEKS) {
+                for (row in 0..6) {
+                    val date = heatmapDate(start, col, row)
+                    val level = levelFor(date)
+                    if (date.isAfter(today) || level == CELL_NOT_DRAWN) continue
+                    Box(
+                        modifier = Modifier
+                            .offset(x = STEP * col, y = STEP * row)
+                            .size(CELL)
+                            .semantics {
+                                contentDescription = "${date.format(CELL_DATE_FORMAT)}, level $level"
+                                onClick(label = "Lihat detail hari") {
+                                    currentOnDayClick(date)
+                                    true
+                                }
+                            },
+                    )
+                }
+            }
         }
 
         if (showLegend) {
