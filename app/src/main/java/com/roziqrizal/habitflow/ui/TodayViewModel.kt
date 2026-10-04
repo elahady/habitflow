@@ -35,15 +35,15 @@ data class TodayUiState(
 
 class TodayViewModel(
     private val repo: HabitRepository,
-    private val today: () -> LocalDate = { LocalDate.now() },
+    private val clock: DayClock,
 ) : ViewModel() {
 
     val state: StateFlow<TodayUiState> = combine(
         repo.observeHabits(),
         repo.observeAllEntries(),
         repo.observeAllTodos(),
-    ) { habits, entries, todos ->
-        val now = today()
+        clock.date,
+    ) { habits, entries, todos, now ->
         val nowKey = now.toString()
         val createdOn = habits.associate { it.id to LocalDate.parse(it.createdAt) }
 
@@ -71,21 +71,22 @@ class TodayViewModel(
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = TodayUiState(date = today()),
+        initialValue = TodayUiState(date = clock.date.value),
     )
 
     init {
-        // Pindahkan to-do yang belum selesai dari hari sebelumnya saat layar dibuka.
-        viewModelScope.launch { repo.carryOver(today()) }
+        // Pindahkan to-do yang belum selesai dari hari sebelumnya saat layar dibuka, dan ulangi
+        // setiap kali hari berganti selama app masih hidup.
+        viewModelScope.launch { clock.date.collect { repo.carryOver(it) } }
     }
 
     fun toggleHabit(habitId: Long) {
-        viewModelScope.launch { repo.toggleHabit(habitId, today()) }
+        viewModelScope.launch { repo.toggleHabit(habitId, clock.date.value) }
     }
 
     fun addTodo(title: String) {
         if (title.isBlank()) return
-        viewModelScope.launch { repo.addTodo(title, today()) }
+        viewModelScope.launch { repo.addTodo(title, clock.date.value) }
     }
 
     fun toggleTodo(todo: Todo) {

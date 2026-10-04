@@ -37,15 +37,15 @@ data class ContributionUiState(
 
 class ContributionViewModel(
     repo: HabitRepository,
-    private val today: () -> LocalDate = { LocalDate.now() },
+    private val clock: DayClock,
 ) : ViewModel() {
 
     val state: StateFlow<ContributionUiState> = combine(
         repo.observeHabits(),
         repo.observeAllEntries(),
         repo.observeAllTodos(),
-    ) { habits, entries, todos ->
-        val now = today()
+        clock.date,
+    ) { habits, entries, todos, now ->
         val createdOn = habits.associate { it.id to LocalDate.parse(it.createdAt) }
         val doneIdsByDate = entries.groupBy({ LocalDate.parse(it.date) }, { it.habitId }).mapValues { it.value.toSet() }
         val todosByDate = todos.groupBy { LocalDate.parse(it.date) }
@@ -86,6 +86,6 @@ class ContributionViewModel(
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = ContributionUiState(today = today()),
+        initialValue = ContributionUiState(today = clock.date.value),
     )
 }
