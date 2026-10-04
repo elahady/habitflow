@@ -3,6 +3,14 @@
 Aplikasi Android untuk memantau habit harian dan to-do kecil, dengan tampilan
 kontribusi ala GitHub. Detail rancangan ada di [docs/rancangan.md](docs/rancangan.md).
 
+## Baca dulu sebelum mengerjakan apa pun
+
+- [docs/concept.md](docs/concept.md): tahapan pembangunan, kriteria selesai per
+  tahap, dan edge case. Ikuti urutan tahapnya, jangan melompat.
+- [docs/rancangan.md](docs/rancangan.md): aturan fitur (habit, to-do, level,
+  streak, layar). Kalau ada konflik dengan `concept.md`, `rancangan.md` yang menang
+  dan `concept.md` diperbarui.
+
 ## Aturan Git
 
 - **Setiap perubahan langsung di-commit lalu di-push** ke `origin main`, tanpa
