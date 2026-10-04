@@ -32,8 +32,8 @@ interface HabitDao {
 @Dao
 interface HabitEntryDao {
 
-    @Query("SELECT * FROM habit_entries WHERE date BETWEEN :from AND :to")
-    fun observeBetween(from: String, to: String): Flow<List<HabitEntry>>
+    @Query("SELECT * FROM habit_entries")
+    fun observeAll(): Flow<List<HabitEntry>>
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(entry: HabitEntry): Long
@@ -54,10 +54,10 @@ interface TodoDao {
     @Query("SELECT * FROM todos WHERE date = :date ORDER BY done ASC, id ASC")
     fun observeByDate(date: String): Flow<List<Todo>>
 
-    @Query("SELECT * FROM todos WHERE date BETWEEN :from AND :to")
-    fun observeBetween(from: String, to: String): Flow<List<Todo>>
+    @Query("SELECT * FROM todos")
+    fun observeAll(): Flow<List<Todo>>
 
-    @Query("SELECT * FROM todos WHERE done = 0 AND date < :today")
+    @Query("SELECT * FROM todos WHERE done = 0 AND date < :today ORDER BY date ASC, id ASC")
     suspend fun undoneBefore(today: String): List<Todo>
 
     @Query("SELECT COUNT(*) FROM todos WHERE date = :date")

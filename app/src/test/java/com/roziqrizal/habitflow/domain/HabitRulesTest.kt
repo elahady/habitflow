@@ -112,6 +112,27 @@ class HabitRulesTest {
         assertFalse(shouldCarryOver(today.plusDays(1), done = false, today = today))
     }
 
+    // --- scoreDay ---
+
+    @Test
+    fun `habit yang dibuat setelah tanggal itu tidak dihitung`() {
+        val createdOn = mapOf(
+            1L to today.minusDays(5),
+            2L to today.plusDays(1), // dibuat besok, belum ada pada hari ini
+        )
+        val score = scoreDay(today, createdOn, doneHabitIds = setOf(1L), doneTodos = 0)
+        assertEquals(1, score.totalHabits)
+        assertEquals(1, score.doneHabits)
+        assertTrue(score.complete)
+    }
+
+    @Test
+    fun `centang pada habit yang sudah dihapus tidak dihitung`() {
+        val createdOn = mapOf(1L to today.minusDays(5))
+        val score = scoreDay(today, createdOn, doneHabitIds = setOf(1L, 99L), doneTodos = 0)
+        assertEquals(1, score.doneHabits)
+    }
+
     // --- canAddTodo ---
 
     @Test
