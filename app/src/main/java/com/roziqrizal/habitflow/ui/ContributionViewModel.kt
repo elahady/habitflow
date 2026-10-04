@@ -1,0 +1,91 @@
+package com.roziqrizal.habitflow.ui
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.roziqrizal.habitflow.data.Habit
+import com.roziqrizal.habitflow.data.HabitRepository
+import com.roziqrizal.habitflow.data.Todo
+import com.roziqrizal.habitflow.domain.completeDays
+import com.roziqrizal.habitflow.domain.currentStreak
+import com.roziqrizal.habitflow.domain.habitLevelOn
+import com.roziqrizal.habitflow.domain.heatmapStart
+import com.roziqrizal.habitflow.domain.longestStreak
+import com.roziqrizal.habitflow.domain.scoreDay
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
+import java.time.LocalDate
+
+/** Level sel heatmap satu habit untuk setiap hari dalam 26 minggu terakhir. */
+data class HabitHeat(
+    val habit: Habit,
+    val levels: Map<LocalDate, Int>,
+)
+
+data class ContributionUiState(
+    val today: LocalDate,
+    val combined: Map<LocalDate, Int> = emptyMap(),
+    val perHabit: List<HabitHeat> = emptyList(),
+    val habits: List<Habit> = emptyList(),
+    val createdOn: Map<Long, LocalDate> = emptyMap(),
+    val doneIdsByDate: Map<LocalDate, Set<Long>> = emptyMap(),
+    val todosByDate: Map<LocalDate, List<Todo>> = emptyMap(),
+    val currentStreak: Int = 0,
+    val longestStreak: Int = 0,
+)
+
+class ContributionViewModel(
+    repo: HabitRepository,
+    private val today: () -> LocalDate = { LocalDate.now() },
+) : ViewModel() {
+
+    val state: StateFlow<ContributionUiState> = combine(
+        repo.observeHabits(),
+        repo.observeAllEntries(),
+        repo.observeAllTodos(),
+    ) { habits, entries, todos ->
+        val now = today()
+        val createdOn = habits.associate { it.id to LocalDate.parse(it.createdAt) }
+        val doneIdsByDate = entries.groupBy({ LocalDate.parse(it.date) }, { it.habitId }).mapValues { it.value.toSet() }
+        val todosByDate = todos.groupBy { LocalDate.parse(it.date) }
+        val doneTodosByDate = todosByDate.mapValues { entry -> entry.value.count { it.done } }
+
+        // Hari dalam jendela heatmap, dari awal sampai hari ini.
+        val windowDays = generateSequence(heatmapStart(now)) { it.plusDays(1) }
+            .takeWhile { !it.isAfter(now) }
+            .toList()
+
+        val combined = windowDays.associateWith { day ->
+            scoreDay(day, createdOn, doneIdsByDate[day].orEmpty(), doneTodosByDate[day] ?: 0).level
+        }
+        val perHabit = habits.map { habit ->
+            val created = createdOn.getValue(habit.id)
+            HabitHeat(
+                habit = habit,
+                levels = windowDays.associateWith { day ->
+                    habitLevelOn(created, doneIdsByDate[day]?.contains(habit.id) == true, day)
+                },
+            )
+        }
+
+        // Streak memakai seluruh riwayat, bukan hanya jendela 26 minggu.
+        val complete = completeDays(createdOn, doneIdsByDate, doneTodosByDate, doneIdsByDate.keys + now)
+
+        ContributionUiState(
+            today = now,
+            combined = combined,
+            perHabit = perHabit,
+            habits = habits,
+            createdOn = createdOn,
+            doneIdsByDate = doneIdsByDate,
+            todosByDate = todosByDate,
+            currentStreak = currentStreak(complete, now),
+            longestStreak = longestStreak(complete),
+        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = ContributionUiState(today = today()),
+    )
+}
