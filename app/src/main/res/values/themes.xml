@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Tema dasar untuk splash dan jendela sebelum Compose menggambar. Warna UI dikelola di ui/theme. -->
+    <style name="Theme.HabitFlow" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>
