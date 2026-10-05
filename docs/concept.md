@@ -457,13 +457,44 @@ diubah.
 - Lokasi GPS dan manual sama-sama bekerja. Tanpa izin lokasi, app tetap jalan dengan
   lokasi manual.
 
-### Tahap 18: Alarm Subuh dan pengingat adzan
-Mesin waktu sholat dan lokasi pindah ke tahap 17. Tahap ini tinggal alarm Subuh − 15
-(tingkat Alarm) dan pengaturan pengingat per waktu sholat.
-Sudah diputuskan: mesin **Ephemeris Al Hasib offline** (rumus Al-Kaukaba, Astronomy Engine
-sebagai dependency), lokasi **GPS dengan opsi manual**, semua waktu sholat masuk jadwal,
-alarm Subuh − 15 menit. Hasil divalidasi terhadap app Al-Kaukaba.
-Belum dibahas: suara alarm, tunda alarm, pengingat adzan per waktu bisa dimatikan atau tidak.
+### Tahap 18: Alarm Subuh dan pengingat adzan (diputuskan, belum dikoding)
+
+Mesin waktu sholat dan lokasi ada di tahap 17. Tahap ini menambah tingkat notifikasi
+**Alarm** dan pengaturan pengingat adzan.
+
+**Keputusan (5 Oktober 2026):**
+
+| Pertanyaan | Keputusan |
+|---|---|
+| Waktu alarm | Mengikuti blok Bangun (awal: Subuh − 15), bisa diubah di Atur jadwal |
+| Suara | Nada alarm HP, bisa dipilih lewat pemilih nada Android. Volume naik perlahan dalam 30 detik |
+| Tunda | 5 menit, paling banyak 2 kali, lalu tombol Tunda hilang |
+| Hari libur dan akhir pekan | Tetap bunyi setiap hari. "Hari ini libur" tidak mematikan alarm |
+| Matikan sekali | Bisa mematikan alarm untuk satu tanggal saja (misalnya sakit) |
+| Pengingat adzan | Switch per waktu sholat (Subuh, Dzuhur, Ashar, Maghrib, Isya), default nyala |
+
+**Rencana teknis:**
+- Alarm presisi dengan `AlarmManager.setAlarmClock`, sehingga ikon alarm tampil di status
+  bar dan alarm tetap berbunyi saat HP hemat daya. Izin `USE_EXACT_ALARM` (Android 13+,
+  untuk app yang punya fitur alarm) dan `SCHEDULE_EXACT_ALARM` untuk Android 12.
+- Saat berbunyi, layar alarm penuh muncul di atas lock screen (full-screen intent, layar
+  menyala) dengan tombol **Matikan** dan **Tunda 5 menit**. Kalau izin full-screen intent
+  tidak ada, alarm tampil sebagai notifikasi heads-up dengan tombol yang sama.
+- Suara diputar dengan `AudioAttributes.USAGE_ALARM`, jadi ikut volume alarm dan menembus
+  mode senyap. Alarm berhenti sendiri setelah 10 menit tanpa disentuh.
+- Alarm dijadwalkan ulang setiap hari (waktu Subuh bergeser), setelah restart, dan saat
+  jam, zona waktu, atau lokasi berubah.
+- Pengaturan alarm dan adzan ada di Tentang, di bawah pengingat lain.
+
+**Selesai jika:**
+- Alarm berbunyi di jam yang benar (blok Bangun) walau app ditutup dan layar terkunci.
+- Ikon alarm tampil di status bar saat alarm berikutnya terjadwal.
+- Tunda bekerja dua kali, lalu tombol Tunda hilang.
+- Alarm tetap bunyi di akhir pekan dan saat "Hari ini libur" aktif, dan tidak bunyi di
+  tanggal yang dimatikan sekali.
+- Mematikan pengingat Dzuhur menghentikan notifikasi Dzuhur saja.
+- Alarm berhenti sendiri setelah 10 menit.
+- Alarm tetap terjadwal setelah emulator di-restart.
 
 ### Tahap 19: Catat cepat, follow-up kerja, daily scrum dan EOD
 Menggantikan tahap 15. Sudah diputuskan: **follow-up kerja terpisah dari to-do pribadi**

@@ -58,6 +58,14 @@ divisualisasikan seperti kontribusi GitHub.
 - **Notifikasi tetap** "Sekarang · Berikutnya" tampil dari blok pertama hari itu sampai
   batas tidur, lalu hilang. Bisa dimatikan dari Tentang.
 
+## Alarm Subuh dan adzan (tahap 18)
+
+- Alarm berbunyi di waktu blok Bangun (awal: Subuh − 15 menit), **setiap hari** termasuk
+  akhir pekan dan hari libur. Bisa dimatikan untuk satu tanggal saja.
+- Suara memakai nada alarm HP yang bisa dipilih. Volume naik perlahan.
+- Tunda 5 menit, paling banyak 2 kali. Alarm berhenti sendiri setelah 10 menit.
+- Pengingat adzan bisa dimatikan per waktu sholat. Default semua nyala.
+
 ## Daily scrum (tahap 15, dibatalkan)
 
 > Aturan di bawah tidak jadi dipakai. Daily scrum akan dibangun dari follow-up kerja di
