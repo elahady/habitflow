@@ -121,6 +121,21 @@ divisualisasikan seperti kontribusi GitHub.
   tanggal.
 - Catatan cepat yang dibuat selama acara Kerja berlangsung tertaut ke acara itu.
 
+## Asupan makan (tahap 23)
+
+- Makan dicatat per waktu makan (sarapan, siang, malam, camilan) dengan pola **Isi Piringku**:
+  komponen karbo, lauk, sayur, buah yang ada di piring, plus tanda gorengan dan manis. Teks
+  catatan opsional. Tidak ada hitung kalori.
+- Kopi dan minuman manis dihitung dengan tombol cepat, seperti air.
+- Habit makan yang sudah ada dicentang otomatis saat batas tidur:
+  - "Makan malam selesai 2-3 jam sebelum tidur" kalau makan malam dicatat paling lambat
+    2 jam sebelum batas tidur.
+  - "Tanpa gorengan atau camilan manis" kalau tidak ada catatan bertanda gorengan atau manis.
+  - "Tanpa minuman manis" kalau minuman manis 0.
+  - "Ngopi maksimal 2 gelas" kalau kopi paling banyak 2.
+  Centang manual selalu menang. Kopi ke-3 memunculkan pesan tenang.
+- Satu pengingat Info sebelum batas tidur kalau ada waktu makan yang belum dicatat.
+
 ## Daily scrum (tahap 15, dibatalkan)
 
 > Aturan di bawah tidak jadi dipakai. Daily scrum akan dibangun dari follow-up kerja di
@@ -171,6 +186,7 @@ divisualisasikan seperti kontribusi GitHub.
    - Bagian Habit ditampilkan dulu, lalu bagian To-do di bawahnya.
    - Jumlah Inbox yang belum dirapikan dan follow-up lewat tanggal (tahap 19).
    - Kartu Langkah, Berat, dan Tensi dengan tombol catat (tahap 21).
+   - Kartu Makan dan tombol cepat kopi dan minuman manis di kartu air (tahap 23).
    - Tombol tambah to-do, dinonaktifkan jika sudah 5.
 2. **Kerja** (tahap 19)
    - Inbox, Lewat tanggal, Hari ini, Menunggu, Nanti. Mode daily scrum dan EOD.

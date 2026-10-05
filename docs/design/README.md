@@ -219,6 +219,15 @@ memakai latar `primaryFixed` dan teks `onPrimaryContainer`, sama dengan `TonalBu
    bar navigasi. Membuka `ModalBottomSheet` berisi satu `OutlinedTextField` yang langsung
    fokus. Enter menyimpan, mengosongkan kolom, dan sheet tetap terbuka.
 
+### Asupan makan (tahap 23, belum diterapkan)
+1. Kartu "Makan" di dashboard: empat chip kecil Sarapan, Siang, Malam, Camilan. Chip yang
+   sudah dicatat memakai latar `primaryFixed` dan tanda centang, yang belum memakai garis
+   `outlineVariant`. Tap chip membuka bottom sheet catat.
+2. Bottom sheet catat: judul waktu makan dan jam (bisa diubah), baris `FilterChip` Karbo,
+   Lauk, Sayur, Buah, baris kedua Gorengan dan Manis, kolom catatan opsional, tombol Simpan.
+3. Kartu air (tahap 20) mendapat dua tombol teks kecil "+ Kopi" dan "+ Manis" dengan
+   jumlahnya. Kopi ke-3 menampilkan teks tenang di bawah kartu, bukan dialog.
+
 ### Kalender (tahap 22, belum diterapkan)
 1. Tab Kerja mendapat tombol ketiga "Agenda" di samping "Daily scrum" dan "EOD".
 2. **Agenda**: daftar 7 hari ke depan dikelompokkan per tanggal (labelMedium), satu baris per

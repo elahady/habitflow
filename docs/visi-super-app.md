@@ -116,8 +116,9 @@ Rinciannya di tahap 19 dan 19B.
 - **Berat badan dan BMI**: catat berkala, tinggi badan diisi sekali. Grafik tren dan
   rentang BMI sehat.
 - **Tensi**: catat sistolik dan diastolik, dengan kategori dan grafik tren.
-- **Asupan makan**: mulai sederhana (catat makan dan porsi ala "Isi Piringku"), bukan
-  hitung kalori.
+- **Asupan makan**: Isi Piringku per waktu makan (karbo, lauk, sayur, buah, tanda gorengan
+  dan manis), bukan hitung kalori. Kopi dan minuman manis dihitung seperti air. Habit makan
+  tercentang otomatis dari catatan.
 
 ## Kalender
 

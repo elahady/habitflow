@@ -654,8 +654,44 @@ berdekatan. Mengikuti aturan tiga tingkat notifikasi di visi.
 - Catatan cepat saat acara Kerja berlangsung tertaut ke acara itu, dan saat EOD terkumpul per
   acara.
 
-### Tahap 23: Asupan makan
-Mulai sederhana: catat makan dan porsi, bukan hitung kalori.
+### Tahap 23: Asupan makan (diputuskan, belum dikoding)
+
+**Keputusan (5 Oktober 2026).** Aturan fitur di `docs/rancangan.md` bagian Asupan makan.
+
+| Pertanyaan | Keputusan |
+|---|---|
+| Cara catat | Isi Piringku per waktu makan: tap komponen karbo, lauk, sayur, buah, plus tanda gorengan dan manis. Teks opsional. Tanpa hitung kalori |
+| Habit makan | Dicentang otomatis dari catatan, tetap bisa diubah manual |
+| Kopi dan minuman manis | Penghitung seperti air, tombol cepat di kartu air dashboard |
+| Pengingat | Satu ringkasan Info sebelum batas tidur, hanya kalau ada waktu makan yang belum dicatat |
+
+**Aturan centang otomatis** (diputuskan saat batas tidur, atau saat app dibuka setelahnya):
+- "Makan malam selesai 2-3 jam sebelum tidur": tercentang kalau makan malam dicatat paling
+  lambat 2 jam sebelum blok Batas tidur (20.00 untuk batas 22.00).
+- "Tanpa gorengan atau camilan manis": tercentang kalau tidak ada catatan makan bertanda
+  gorengan atau manis hari itu.
+- "Tanpa minuman manis": tercentang kalau penghitung minuman manis hari itu 0.
+- "Ngopi maksimal 2 gelas (sepulang kerja)": tercentang kalau penghitung kopi ≤ 2. Kopi ke-3
+  memunculkan pesan tenang, bukan peringatan.
+- Centang manual dari pengguna selalu menang atas hasil otomatis.
+
+**Rencana teknis:**
+- Tabel `meals` (tanggal, waktu, jenis: sarapan, siang, malam, camilan, komponen karbo, lauk,
+  sayur, buah, tanda gorengan dan manis, catatan) dan `drink_counts` (tanggal, jenis: air,
+  kopi, minuman manis, jumlah). Penghitung air dari tahap 20 ikut memakai tabel ini.
+- Habit punya sumber otomatis (diperluas dari tahap 21): langkah, makan malam, tanpa
+  gorengan/manis, minuman manis, kopi. Aturannya di `domain/` dengan unit test.
+- Centang otomatis dijalankan oleh alarm di blok Batas tidur dan saat app dibuka keesokan
+  harinya kalau alarm terlewat. Centang manual ditandai supaya tidak ditimpa.
+
+**Selesai jika:**
+- Mencatat satu waktu makan selesai dalam beberapa tap dari dashboard.
+- Unit test keempat aturan centang otomatis lulus, termasuk batas 20.00 dan kopi tepat 2.
+- Habit makan tercentang atau tidak sesuai aturan saat batas tidur, dan centang manual tidak
+  ditimpa.
+- Ringkasan malam hanya muncul kalau ada waktu makan yang belum dicatat.
+- Tab Progres bagian Kesehatan menampilkan ringkasan mingguan: berapa hari Isi Piringku
+  lengkap (keempat komponen di makan siang atau malam), jumlah gorengan, manis, dan kopi.
 
 ### Tahap 24: Asisten AI
 Opsional dan paling akhir karena butuh internet.
