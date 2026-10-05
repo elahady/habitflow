@@ -285,7 +285,13 @@ tetap wajib, Lepas membuatnya pindah ke urutan biasa dengan tombol Hapus. Setela
 ditutup paksa, urutan di Hari ini ikut berubah, centang hari ini tetap, dan skor tetap
 4/9 Level 1. Penolakan hapus di repository tidak diubah (`deleteIfNotMandatory`).
 
-## Tahap 15: Daily scrum di dalam app (diputuskan, belum dikoding)
+## Tahap 15: Daily scrum di dalam app (dibatalkan, diganti tahap 19)
+
+> **Ditinjau ulang 5 Oktober 2026.** Konsep di bawah ini tidak jadi dikoding. Kebutuhan
+> sebenarnya adalah mencatat target kerja dan follow-up secepat mungkin, dengan daily scrum
+> dan EOD dibangun dari daftar follow-up. Lihat `docs/visi-super-app.md` dan tahap 19.
+> Bagian di bawah disimpan sebagai riwayat diskusi.
+
 
 **Keputusan (5 Oktober 2026).** Aturan fitur lengkap ada di `docs/rancangan.md` bagian
 Daily scrum.
@@ -367,6 +373,50 @@ dan memperbesar kotak (mengurangi jumlah minggu atau harus digulir ke samping).
   apa pun.
 - Di tepi kiri dan kanan grid, tooltip tetap terlihat utuh.
 - Berfungsi di heatmap gabungan dan per habit, di tema terang dan gelap.
+
+## Tahap 17-24: HabitFlow sebagai asisten harian (diskusi dulu, belum dikoding)
+
+Arah besarnya ada di [visi-super-app.md](visi-super-app.md). Setiap tahap dibahas dan
+diputuskan dulu, lalu aturannya ditulis di `rancangan.md`, baru dikoding. Keputusan yang
+sudah diambil saat menyusun visi dicatat di tiap tahap.
+
+### Tahap 17: Jadwal harian dan dashboard
+Template blok waktu hari kerja (jam tetap atau berpatokan waktu sholat), layar dashboard
+"sekarang dan berikutnya", dan notifikasi tetap di status bar.
+Belum dibahas: bentuk dashboard (tab baru atau menggantikan Hari ini), cara mengedit
+template, jadwal akhir pekan.
+
+### Tahap 18: Waktu sholat dan alarm Subuh
+Sudah diputuskan: mesin **Ephemeris Al Hasib offline** (rumus Al-Kaukaba, Astronomy Engine
+sebagai dependency), lokasi **GPS dengan opsi manual**, semua waktu sholat masuk jadwal,
+alarm Subuh − 15 menit. Hasil divalidasi terhadap app Al-Kaukaba.
+Belum dibahas: suara alarm, tunda alarm, pengingat adzan per waktu bisa dimatikan atau tidak.
+
+### Tahap 19: Catat cepat, follow-up kerja, daily scrum dan EOD
+Menggantikan tahap 15. Sudah diputuskan: **follow-up kerja terpisah dari to-do pribadi**
+(follow-up tanpa batas, punya tanggal tindak lanjut dan orang terkait, tidak memengaruhi
+level), catat cepat versi pertama lewat **tombol + di semua layar**, daily scrum 08.00 dan
+EOD 16.00 dibangun dari follow-up, bisa dibagikan lewat share sheet.
+Belum dibahas: bentuk layar follow-up, status follow-up, cara Inbox dirapikan.
+
+### Tahap 20: Pengingat kerja
+Sudah diputuskan: minum air **setiap 60 menit** di jam kerja dengan tombol "Sudah minum"
+(8 gelas mencentang "Air putih 2 liter"), break **setiap 90 menit**, digabung kalau
+berdekatan. Mengikuti aturan tiga tingkat notifikasi di visi.
+
+### Tahap 21: Kesehatan
+Langkah dari Health Connect (target 8.000, mencentang "Jalan kaki"), berat badan dan BMI,
+tensi. Belum dibahas: pedoman kategori tensi, perangkat langkah, frekuensi pencatatan.
+
+### Tahap 22: Kalender dan acara rutin
+Acara berulang (misalnya meeting setiap 2 minggu), pengingat −15 menit, kemungkinan
+membaca kalender HP.
+
+### Tahap 23: Asupan makan
+Mulai sederhana: catat makan dan porsi, bukan hitung kalori.
+
+### Tahap 24: Asisten AI
+Opsional dan paling akhir karena butuh internet.
 
 ## Daftar pertanyaan terbuka
 

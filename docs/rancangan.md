@@ -40,7 +40,10 @@ divisualisasikan seperti kontribusi GitHub.
 - Pemindahan hanya mengubah tanggal, sehingga hari lama tidak lagi
   menghitung to-do itu sebagai selesai (perilaku yang diinginkan).
 
-## Daily scrum (tahap 15)
+## Daily scrum (tahap 15, dibatalkan)
+
+> Aturan di bawah tidak jadi dipakai. Daily scrum akan dibangun dari follow-up kerja di
+> tahap 19, lihat `docs/visi-super-app.md`. Bagian ini disimpan sampai tahap 19 diputuskan.
 
 - Catatan pribadi per hari, disimpan lokal seperti data lain. Tidak ada akun dan tidak
   ada sinkron. Bisa dibagikan sebagai teks lewat share sheet Android.
