@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Tema dasar untuk splash dan jendela sebelum Compose menggambar. Warna UI dikelola di ui/theme. -->
-    <style name="Theme.HabitFlow" parent="android:Theme.Material.Light.NoActionBar" />
+    <!--
+        Tema dasar untuk splash dan jendela sebelum Compose menggambar. Warna UI dikelola di ui/theme.
+        Versi gelap ada di values-night. Di Android 12+ mode malam mengikuti pilihan tampilan di app
+        (ThemeSettings), di bawah itu mengikuti tema HP.
+    -->
+    <style name="Theme.HabitFlow" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/window_background</item>
+    </style>
 </resources>

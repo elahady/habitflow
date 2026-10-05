@@ -198,7 +198,7 @@ memakai latar `primaryFixed` dan teks `onPrimaryContainer`, sama dengan `TonalBu
 **Belum diterapkan:** tab belum punya ikon, jadi indikator pill mengecil menjadi garis tipis di atas
 label. Kalau ikon ditambahkan, indikator akan tampil seperti pill penuh.
 
-### System bar (tahap 13, belum diterapkan)
+### System bar
 - Edge-to-edge. Status bar transparan di atas latar layar (`surfaceContainerLow`).
 - Bar gesture bawah memakai `surfaceContainer`, menyambung dengan bar navigasi app.
 - Ikon system bar gelap di tema terang dan terang di tema gelap, mengikuti pilihan
@@ -255,6 +255,8 @@ Latar di belakang kartu memakai `surfaceContainerLow`, bukan `background`, supay
 | Komponen bersama | `ui/Components.kt` |
 | Kotak dan grid heatmap | `ui/HeatmapGrid.kt` |
 | Navigasi dan latar layar | `ui/HabitFlowApp.kt` |
+| System bar (edge-to-edge) | `MainActivity.kt` |
+| Splash dan latar jendela | `res/values/themes.xml`, `res/values-night/themes.xml`, `data/ThemeSettings.kt` |
 
 ## Keputusan terbuka
 

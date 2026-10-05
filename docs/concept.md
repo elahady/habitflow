@@ -219,7 +219,7 @@ dan diputuskan bersama.** Setelah keputusan diambil, aturan fiturnya ditulis dul
 `docs/rancangan.md` (dan `docs/design/README.md` untuk tampilan), lalu tahap ini diberi
 kriteria "Selesai jika" seperti tahap lain.
 
-## Tahap 13: Status bar menyatu dengan warna layar (diputuskan, belum dikoding)
+## Tahap 13: Status bar menyatu dengan warna layar (selesai, 5 Oktober 2026)
 
 **Masalah sekarang:** status bar (bar notifikasi di atas) berwarna abu-abu, tidak
 mengikuti latar app. Di mode gelap terlihat makin kontras. Splash screen juga tetap
@@ -245,6 +245,12 @@ terang walau pilihan tampilan Gelap.
 - Dengan HP terang dan pilihan Gelap, splash di Android 12+ tampil gelap.
 - Tidak ada teks atau tombol yang tertutup status bar, bar gesture, atau keyboard
   (dialog tambah to-do dan tambah habit).
+
+**Hasil verifikasi di emulator (Android 16, HP tema terang):** keempat kriteria pertama
+terpenuhi di tema terang dan gelap. Splash tampil gelap saat pilihan Gelap. Layar Hari ini
+sempat punya Scaffold kedua yang membuat jarak status bar ganda, dan sudah dihapus. Input
+teks hanya ada di `AlertDialog` (jendela terpisah), jadi tidak tertutup keyboard. Splash di
+Android 8-11 belum diuji di perangkat.
 
 ## Tahap 14: Habit wajib bisa diatur sendiri (diskusi)
 
