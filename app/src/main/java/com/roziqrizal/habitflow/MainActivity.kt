@@ -7,6 +7,9 @@ import android.content.IntentFilter
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -14,6 +17,8 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.roziqrizal.habitflow.data.HabitDatabase
 import com.roziqrizal.habitflow.data.HabitRepository
+import com.roziqrizal.habitflow.data.ThemeMode
+import com.roziqrizal.habitflow.data.ThemeSettings
 import com.roziqrizal.habitflow.ui.ContributionViewModel
 import com.roziqrizal.habitflow.ui.DayClock
 import com.roziqrizal.habitflow.ui.HabitFlowApp
@@ -30,8 +35,15 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val themeSettings = ThemeSettings(applicationContext)
         setContent {
-            HabitFlowTheme {
+            val themeMode by themeSettings.mode.collectAsState()
+            val darkTheme = when (themeMode) {
+                ThemeMode.SYSTEM -> isSystemInDarkTheme()
+                ThemeMode.LIGHT -> false
+                ThemeMode.DARK -> true
+            }
+            HabitFlowTheme(darkTheme = darkTheme) {
                 val repo = remember { HabitRepository(HabitDatabase.get(applicationContext)) }
                 val today: TodayViewModel = viewModel(
                     factory = viewModelFactory { initializer { TodayViewModel(repo, clock) } },
@@ -51,6 +63,8 @@ class MainActivity : ComponentActivity() {
                     contribution = contribution,
                     manage = manage,
                     versionName = versionName,
+                    themeMode = themeMode,
+                    onThemeModeChange = themeSettings::setMode,
                 )
             }
         }

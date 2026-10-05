@@ -185,6 +185,10 @@ detail hari memakai `ModalBottomSheet`.
 Nama app (headlineMedium), "Versi x.y" (bodyMedium, `onSurfaceVariant`), dan "Dibuat oleh Roziq Rizal".
 Teks dipusatkan.
 
+Di bawahnya, berjarak 32dp: label "Tampilan" (labelMedium, `onSurfaceVariant`), lalu
+`SingleChoiceSegmentedButtonRow` dengan tiga segmen "Sistem", "Terang", "Gelap". Segmen aktif
+memakai latar `primaryFixed` dan teks `onPrimaryContainer`, sama dengan `TonalButton`.
+
 ### Navigasi bawah
 - Empat tab: Hari ini, Kontribusi, Habit, Tentang.
 - Bar memakai `surfaceContainer`. Tab aktif memakai indikator pill `primaryFixed` dan teks `onSurface`.

@@ -18,6 +18,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Modifier
+import com.roziqrizal.habitflow.data.ThemeMode
 import com.roziqrizal.habitflow.ui.theme.tokens
 
 enum class Tab(val label: String) {
@@ -33,6 +34,8 @@ fun HabitFlowApp(
     contribution: ContributionViewModel,
     manage: ManageHabitsViewModel,
     versionName: String,
+    themeMode: ThemeMode,
+    onThemeModeChange: (ThemeMode) -> Unit,
 ) {
     // Riwayat tab, dari yang paling lama sampai tab aktif. Tombol kembali membuka tab sebelumnya.
     val history = rememberSaveable(
@@ -98,7 +101,11 @@ fun HabitFlowApp(
                         onDelete = manage::deleteHabit,
                     )
                 }
-                Tab.ABOUT -> AboutScreen(versionName = versionName)
+                Tab.ABOUT -> AboutScreen(
+                    versionName = versionName,
+                    themeMode = themeMode,
+                    onThemeModeChange = onThemeModeChange,
+                )
             }
         }
     }

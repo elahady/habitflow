@@ -73,6 +73,8 @@ divisualisasikan seperti kontribusi GitHub.
    - Tambah, ubah nama, dan hapus habit.
 4. **Tentang**
    - Nama app dan teks "Dibuat oleh Roziq Rizal".
+   - Pilihan tampilan: Sistem, Terang, atau Gelap. Default Sistem (mengikuti
+     pengaturan perangkat). Pilihan disimpan di perangkat dan berlaku langsung.
 
 ## Palet warna
 
