@@ -211,6 +211,17 @@ Latar di belakang kartu memakai `surfaceContainerLow`, bukan `background`, supay
 - Deskripsi aksesibilitas: "Heatmap gabungan <n> minggu terakhir" atau "Heatmap <nama habit> <n> minggu terakhir".
   Setiap kotak punya deskripsi "<tanggal>, level <n>".
 
+## Ikon app
+
+- Potongan heatmap 3×3 di atas latar `#FAF9F7`. Level sel memakai warna heatmap terang,
+  makin pekat ke kanan atas: `[2,3,4] / [1,2,3] / [0,1,2]` (baris atas ke bawah).
+- Kanvas adaptive icon 108dp, sel 15dp, jarak 2dp, sudut 3dp. Grid 49dp di tengah, masih
+  di dalam safe zone 66dp.
+- Versi monochrome (themed icon Android 13+) memakai bentuk yang sama, level dinyatakan
+  dengan alpha.
+- Semua file ikon dibuat oleh `docs/design/ikon/generate.py`. Ubah script lalu jalankan ulang,
+  jangan mengedit file hasilnya. PNG 512 untuk Play Store dan README: `docs/design/ikon/ikon-512.png`.
+
 ## Aksesibilitas
 
 - Angka dan status selalu disertai teks (misalnya "Level 3", bukan hanya kotak berwarna).
