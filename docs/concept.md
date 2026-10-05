@@ -21,7 +21,7 @@ dengan kriteria selesai di tiap tahap.
 - [x] Gradle wrapper 8.9, AGP 8.5.2, Kotlin 2.0.21, Compose, Room sudah dikonfigurasi.
 - [x] Rancangan fitur ditulis di `docs/rancangan.md`.
 - [x] `CLAUDE.md` berisi aturan commit dan push.
-- [ ] **Verifikasi build kosong**: `./gradlew.bat assembleDebug` berhasil tanpa kode
+- [x] **Verifikasi build kosong**: `./gradlew.bat assembleDebug` berhasil tanpa kode
   (`MainActivity` belum ada, jadi tahap ini menambah `AndroidManifest.xml` dan
   activity kosong dulu).
 
@@ -202,12 +202,15 @@ tampil di layar Hari ini.
 
 **Selesai jika:** semua skenario di atas berhasil dan dicatat di commit message.
 
-## Tahap 12: Rilis (nanti)
+## Tahap 12: Rilis (sebagian selesai, 5 Oktober 2026)
 
-- Ikon app.
-- Keystore dan signing release. Simpan keystore di luar repo.
-- README dengan cara build dan screenshot.
-- Play Store listing, bila nanti dibutuhkan.
+- [x] Ikon app. Dibuat oleh `docs/design/ikon/generate.py`, aturannya di
+  `docs/design/README.md`.
+- [x] Keystore dan signing release. Keystore ada di `~/.habitflow/`, di luar repo.
+  `assembleRelease` menghasilkan APK yang sudah ditandatangani.
+- [x] README dengan cara build dan screenshot.
+- [ ] Play Store listing, bila nanti dibutuhkan. PNG 512 untuk listing sudah ada di
+  `docs/design/ikon/ikon-512.png`.
 
 ## Daftar pertanyaan terbuka
 
