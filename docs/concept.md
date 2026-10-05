@@ -212,6 +212,79 @@ tampil di layar Hari ini.
 - [ ] Play Store listing, bila nanti dibutuhkan. PNG 512 untuk listing sudah ada di
   `docs/design/ikon/ikon-512.png`.
 
+## Tahap 13-16: Usulan pengembangan (diskusi dulu, belum dikoding)
+
+Keempat tahap di bawah ini dicatat 5 Oktober 2026. **Jangan dikoding sebelum dibahas
+dan diputuskan bersama.** Setelah keputusan diambil, aturan fiturnya ditulis dulu di
+`docs/rancangan.md` (dan `docs/design/README.md` untuk tampilan), lalu tahap ini diberi
+kriteria "Selesai jika" seperti tahap lain.
+
+## Tahap 13: Status bar menyatu dengan warna layar (diskusi)
+
+**Masalah sekarang:** status bar (bar notifikasi di atas) berwarna abu-abu, tidak
+mengikuti latar app. Di mode gelap terlihat makin kontras. Splash screen juga tetap
+terang walau pilihan tampilan Gelap.
+
+**Yang perlu diputuskan:**
+- Status bar memakai warna latar layar (`surfaceContainerLow`), atau app digambar
+  sampai ke belakang status bar (edge-to-edge) sehingga warnanya otomatis sama.
+- Bar navigasi sistem di bawah (garis gesture) ikut disamakan atau tidak.
+- Ikon status bar (jam, baterai) harus gelap di tema terang dan terang di tema gelap,
+  mengikuti pilihan tampilan di app, bukan pengaturan HP.
+- Splash dan latar jendela sebelum Compose menggambar ikut mengikuti pilihan tampilan.
+
+## Tahap 14: Habit wajib bisa diatur sendiri (diskusi)
+
+**Aturan sekarang** (`docs/rancangan.md`): habit wajib ditentukan saat seed (Sholat
+5 waktu dan Baca Al-Quran), tidak bisa dihapus, dan tidak bisa diubah statusnya.
+
+**Usulan:** status wajib menjadi toggle. Habit apa pun bisa dijadikan wajib atau
+tidak wajib dari layar Kelola habit.
+
+**Yang perlu diputuskan:**
+- Arti "wajib" setelah bisa di-toggle: tetap tidak bisa dihapus selama wajib (harus
+  dimatikan dulu wajibnya), atau wajib hanya berarti tampil paling atas dan bertanda.
+- Apakah habit wajib punya bobot berbeda di level dan streak (sekarang sama seperti
+  habit lain).
+- Bentuk toggle di kartu habit: switch, chip, atau menu di dialog ubah habit.
+- Konfirmasi saat mematikan status wajib, atau langsung berlaku.
+- Data lama: `isMandatory` sudah ada di tabel `habits`, jadi kemungkinan cukup
+  menambah aksi ubah tanpa migrasi skema.
+
+## Tahap 15: Daily scrum di dalam app (diskusi konsep)
+
+**Usulan:** memasukkan daily scrum ke HabitFlow. Konsepnya dibahas dulu, belum ada
+rancangan.
+
+**Pertanyaan awal untuk diskusi:**
+- Untuk siapa: catatan pribadi (refleksi harian sendiri) atau untuk dibagikan ke tim.
+- Isi: tiga pertanyaan klasik (kemarin mengerjakan apa, hari ini akan mengerjakan apa,
+  ada hambatan apa) atau format lain.
+- Hubungan dengan to-do: apakah "hari ini akan mengerjakan" otomatis menjadi to-do,
+  dan apakah to-do kemarin yang selesai otomatis mengisi "kemarin".
+- Apakah mengisi daily scrum ikut memengaruhi level hari atau streak, atau terpisah.
+- Letak di app: tab baru, bagian di layar Hari ini, atau di detail hari pada Kontribusi.
+- Pengingat (notifikasi jam tertentu) dibutuhkan atau tidak.
+- Ekspor atau bagikan (salin teks, kirim ke WhatsApp atau Slack) dibutuhkan atau tidak.
+- Riwayat: bisa melihat daily scrum hari-hari sebelumnya, dan bentuk tampilannya.
+
+## Tahap 16: Kotak heatmap di Kontribusi lebih mudah ditekan (diskusi)
+
+**Masalah sekarang:** kotak heatmap berukuran 9dp dengan jarak 3dp
+(`docs/design/README.md`), jauh di bawah target sentuh yang nyaman (sekitar 48dp).
+Akibatnya sulit menekan tanggal yang dimaksud.
+
+**Pilihan yang bisa dibahas:**
+- Area sentuh lebih besar dari kotaknya (kotak tetap kecil, tap di sekitarnya ikut
+  terbaca), termasuk celah antar kotak yang sekarang tidak merespons.
+- Kotak diperbesar dengan jumlah minggu lebih sedikit, atau heatmap bisa digulir
+  ke samping.
+- Tap membuka tampilan perbesar (zoom) satu bulan, lalu pilih tanggal di sana.
+- Tekan dan geser di atas heatmap, dengan penanda tanggal yang mengikuti jari.
+- Navigasi tanggal di dalam bottom sheet detail hari (tombol hari sebelumnya dan
+  sesudahnya), sehingga tidak perlu tepat menekan kotak.
+- Heatmap per habit ikut diubah atau hanya heatmap gabungan.
+
 ## Daftar pertanyaan terbuka
 
 - Urutan habit bisa diubah atau tidak (tahap 9, opsional).
