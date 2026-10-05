@@ -20,7 +20,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -52,59 +51,57 @@ fun TodayScreen(
 ) {
     var showAddDialog by rememberSaveable { mutableStateOf(false) }
 
-    Scaffold(containerColor = MaterialTheme.colorScheme.surfaceContainerLow) { padding ->
-        LazyColumn(
-            modifier = Modifier.fillMaxWidth(),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = padding.calculateTopPadding() + 16.dp, bottom = 96.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            item { DayHeader(state) }
+    LazyColumn(
+        modifier = Modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 96.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        item { DayHeader(state) }
 
-            item { SectionTitle("Habit") }
-            items(state.habits, key = { "habit-${it.habit.id}" }) { item ->
-                HabitRow(
-                    name = item.habit.name,
-                    mandatory = item.habit.isMandatory,
-                    checked = item.doneToday,
-                    onToggle = { onToggleHabit(item.habit.id) },
-                )
-            }
+        item { SectionTitle("Habit") }
+        items(state.habits, key = { "habit-${it.habit.id}" }) { item ->
+            HabitRow(
+                name = item.habit.name,
+                mandatory = item.habit.isMandatory,
+                checked = item.doneToday,
+                onToggle = { onToggleHabit(item.habit.id) },
+            )
+        }
 
-            item { SectionTitle("To-do hari ini (${state.todos.size}/$MAX_TODOS_PER_DAY)") }
-            if (state.todos.isEmpty()) {
-                item {
-                    Text(
-                        text = "Belum ada to-do. Habit dulu, to-do menyusul.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(start = 4.dp),
-                    )
-                }
-            }
-            items(state.todos, key = { "todo-${it.id}" }) { todo ->
-                TodoRow(
-                    todo = todo,
-                    onToggle = { onToggleTodo(todo) },
-                    onDelete = { onDeleteTodo(todo) },
-                )
-            }
+        item { SectionTitle("To-do hari ini (${state.todos.size}/$MAX_TODOS_PER_DAY)") }
+        if (state.todos.isEmpty()) {
             item {
-                TonalButton(
-                    text = "+ To-do",
-                    enabled = state.canAddTodo,
-                    onClick = { showAddDialog = true },
-                    modifier = Modifier.fillMaxWidth(),
+                Text(
+                    text = "Belum ada to-do. Habit dulu, to-do menyusul.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(start = 4.dp),
                 )
             }
-            if (!state.canAddTodo) {
-                item {
-                    Text(
-                        text = "To-do hari ini sudah penuh ($MAX_TODOS_PER_DAY/$MAX_TODOS_PER_DAY).",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(start = 4.dp),
-                    )
-                }
+        }
+        items(state.todos, key = { "todo-${it.id}" }) { todo ->
+            TodoRow(
+                todo = todo,
+                onToggle = { onToggleTodo(todo) },
+                onDelete = { onDeleteTodo(todo) },
+            )
+        }
+        item {
+            TonalButton(
+                text = "+ To-do",
+                enabled = state.canAddTodo,
+                onClick = { showAddDialog = true },
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+        if (!state.canAddTodo) {
+            item {
+                Text(
+                    text = "To-do hari ini sudah penuh ($MAX_TODOS_PER_DAY/$MAX_TODOS_PER_DAY).",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(start = 4.dp),
+                )
             }
         }
     }
