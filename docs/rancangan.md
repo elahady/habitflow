@@ -104,6 +104,23 @@ divisualisasikan seperti kontribusi GitHub.
   frekuensi yang bisa diatur (default mingguan). Keduanya bisa dimatikan.
 - Kesehatan tidak mengubah aturan level, kecuali lewat centang otomatis habit langkah.
 
+## Kalender (tahap 22)
+
+- Acara berbeda dari blok jadwal: blok adalah rutinitas harian, acara adalah kejadian di
+  tanggal tertentu atau berulang (misalnya meeting reguler setiap 2 minggu).
+- Acara dibuat di HabitFlow dengan label **Kerja** atau **Pribadi**, dan bisa berulang: harian,
+  setiap N minggu di hari tertentu, bulanan per tanggal atau per urutan hari, tahunan, dengan
+  tanggal berakhir opsional. Satu kejadian bisa dilewati atau diubah sendiri.
+- Acara dari kalender HP ikut tampil (hanya baca), dari kalender yang dipilih di pengaturan.
+- Pengingat −15 menit (bisa diubah per acara) hanya untuk acara HabitFlow. Acara kalender HP
+  tidak diberi notifikasi oleh HabitFlow.
+- Acara hari ini masuk timeline dan Sekarang/Berikutnya. Acara Kerja tampil di Agenda tab
+  Kerja, acara Pribadi di dashboard Hari ini.
+- **Libur nasional** dan cuti bersama Indonesia otomatis mengaktifkan "Hari ini libur": blok
+  dan acara Kerja mati, sholat, alarm Subuh, dan acara Pribadi tetap. Bisa dibatalkan per
+  tanggal.
+- Catatan cepat yang dibuat selama acara Kerja berlangsung tertaut ke acara itu.
+
 ## Daily scrum (tahap 15, dibatalkan)
 
 > Aturan di bawah tidak jadi dipakai. Daily scrum akan dibangun dari follow-up kerja di
@@ -157,6 +174,7 @@ divisualisasikan seperti kontribusi GitHub.
    - Tombol tambah to-do, dinonaktifkan jika sudah 5.
 2. **Kerja** (tahap 19)
    - Inbox, Lewat tanggal, Hari ini, Menunggu, Nanti. Mode daily scrum dan EOD.
+   - Agenda 7 hari dan tampilan bulan (tahap 22).
 3. **Progres** (dulu Kontribusi, diganti nama di tahap 21)
    - Heatmap gabungan (gaya GitHub), warna dari level hari. Minimal 26 minggu, dan
      ditambah minggu sampai lebar kartu terisi, paling banyak 53 minggu (setahun).

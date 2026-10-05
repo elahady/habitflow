@@ -122,7 +122,8 @@ Rinciannya di tahap 19 dan 19B.
 ## Kalender
 
 - Acara berulang, misalnya meeting reguler setiap 2 minggu, dengan pengingat −15 menit.
-- Kalender HP (misalnya Google Calendar kantor) dipertimbangkan untuk ikut dibaca.
+- Kalender HP (misalnya Google Calendar kantor) ikut dibaca, dari kalender yang dipilih.
+- Libur nasional dan cuti bersama otomatis mematikan blok dan acara Kerja.
 
 ## Dashboard
 

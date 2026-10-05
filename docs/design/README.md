@@ -219,6 +219,18 @@ memakai latar `primaryFixed` dan teks `onPrimaryContainer`, sama dengan `TonalBu
    bar navigasi. Membuka `ModalBottomSheet` berisi satu `OutlinedTextField` yang langsung
    fokus. Enter menyimpan, mengosongkan kolom, dan sheet tetap terbuka.
 
+### Kalender (tahap 22, belum diterapkan)
+1. Tab Kerja mendapat tombol ketiga "Agenda" di samping "Daily scrum" dan "EOD".
+2. **Agenda**: daftar 7 hari ke depan dikelompokkan per tanggal (labelMedium), satu baris per
+   acara: jam dengan angka tabular, judul (bodyLarge), keterangan pengulangan atau nama
+   kalender HP (bodySmall, `onSurfaceVariant`). Hari libur nasional tampil sebagai baris
+   "Libur: <nama>".
+3. **Tampilan bulan**: grid 7 kolom, tanggal dengan titik kecil `primary` kalau ada acara.
+   Tap tanggal membuka agenda hari itu.
+4. **Editor acara**: judul, label Kerja/Pribadi (segmented button), tanggal dan jam
+   (`DatePicker`, `TimePicker` Material 3), pengulangan, tanggal berakhir, pengingat.
+5. Di timeline dashboard, acara tampil seperti blok dengan penanda kecil "Acara" dan label.
+
 ### Kesehatan (tahap 21, belum diterapkan)
 1. **Kartu di Hari ini**, di bawah kartu skor: kartu Langkah selebar layar (angka "3.240 /
    8.000" dengan displayMedium kecil, bar kemajuan `primary` di atas `surfaceContainerHighest`),

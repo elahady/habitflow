@@ -611,9 +611,48 @@ berdekatan. Mengikuti aturan tiga tingkat notifikasi di visi.
 - Pengingat berat dan tensi muncul sesuai pengaturan dan bisa dimatikan.
 - Migrasi mengganti nama habit tanpa menghapus riwayatnya.
 
-### Tahap 22: Kalender dan acara rutin
-Acara berulang (misalnya meeting setiap 2 minggu), pengingat −15 menit, kemungkinan
-membaca kalender HP.
+### Tahap 22: Kalender dan acara rutin (diputuskan, belum dikoding)
+
+**Keputusan (5 Oktober 2026).** Aturan fitur di `docs/rancangan.md` bagian Kalender.
+
+| Pertanyaan | Keputusan |
+|---|---|
+| Sumber acara | Acara dibuat di HabitFlow, ditambah membaca kalender HP (hanya baca) |
+| Kalender HP yang dibaca | Dipilih sendiri per kalender di pengaturan. Default tidak ada |
+| Pengulangan | Sekali, harian, setiap N minggu di hari tertentu, bulanan per tanggal atau per urutan hari (Senin kedua), tahunan. Bisa diberi tanggal berakhir |
+| Tampilan | Acara hari ini masuk timeline dan Sekarang/Berikutnya. Tab Kerja punya Agenda 7 hari dan tampilan bulan untuk melompat ke tanggal |
+| Libur nasional | Otomatis dari daftar libur nasional dan cuti bersama. "Hari ini libur" aktif sendiri, bisa dibatalkan per tanggal |
+| Pengingat | −15 menit hanya untuk acara HabitFlow. Acara kalender HP memakai pengingat Google Calendar, supaya tidak dobel |
+| Follow-up | Catatan yang dibuat selama acara berlangsung tertaut ke acara itu |
+| Label | Setiap acara Kerja atau Pribadi. Libur nasional hanya mematikan blok dan acara Kerja |
+
+**Rencana teknis:**
+- Tabel `events` (judul, label, mulai, durasi atau sepanjang hari, aturan pengulangan sebagai
+  kolom terstruktur, tanggal berakhir, pengingat menit, catatan) dan `event_exceptions`
+  (lewati atau ubah satu kejadian). Perhitungan kejadian acara di rentang tanggal ada di
+  `domain/` dengan unit test, termasuk setiap N minggu, Senin kedua, tanggal 31 di bulan
+  pendek, dan 29 Februari.
+- Kalender HP dibaca lewat `CalendarContract.Instances` (pengulangan sudah dijabarkan oleh
+  sistem), izin `READ_CALENDAR`. Setiap kalender HP diberi label Kerja atau Pribadi di
+  pengaturan. Tanpa izin, fitur ini mati dan acara HabitFlow tetap jalan.
+- Daftar libur nasional dan cuti bersama per tahun disimpan sebagai file JSON di app
+  (`assets/libur/<tahun>.json`, sumber SKB 3 Menteri), diperbarui lewat update app. Setelah
+  tahap 19B, server bisa mengirim daftar terbaru. Libur nasional masuk `days_off` dengan
+  sumber "nasional" dan bisa dibatalkan per tanggal (misalnya kantor tetap masuk saat cuti
+  bersama).
+- `follow_ups` mendapat kolom tautan acara dan tanggal kejadian.
+
+**Selesai jika:**
+- Membuat acara "Meeting reguler" setiap 2 minggu hari Selasa 14.00 menampilkan kejadian
+  yang benar di Agenda dan timeline, dan pengingat muncul 14.00 − 15 menit.
+- Melewati satu kejadian dan mengubah satu kejadian tidak mengubah kejadian lain.
+- Unit test pengulangan lulus, termasuk kasus tanggal 31 dan 29 Februari.
+- Kalender HP yang dicentang tampil di dashboard dan Agenda tanpa notifikasi dari HabitFlow.
+  Yang tidak dicentang tidak tampil. Tanpa izin kalender, app tetap jalan.
+- Di tanggal libur nasional, blok dan acara Kerja mati otomatis, sholat dan alarm Subuh tetap.
+  Membatalkan libur untuk satu tanggal mengembalikan blok Kerja hari itu.
+- Catatan cepat saat acara Kerja berlangsung tertaut ke acara itu, dan saat EOD terkumpul per
+  acara.
 
 ### Tahap 23: Asupan makan
 Mulai sederhana: catat makan dan porsi, bukan hitung kalori.
