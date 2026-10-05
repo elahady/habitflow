@@ -179,8 +179,8 @@ detail hari memakai `ModalBottomSheet`.
 1. Judul "Kelola habit".
 2. Tombol `TonalButton` "+ Habit".
 3. Satu kartu per habit: nama (tap untuk ubah), lalu baris "Wajib" (bodySmall,
-   `onSurfaceVariant`) dengan `Switch` Material 3 yang dikecilkan ke 70% (sekitar 36×22dp, jarak 8dp dari
-   label). Ukuran bawaan 52×32dp terlalu besar untuk baris keterangan. Warna tetap bawaan
+   `onSurfaceVariant`) dengan `Switch` Material 3 yang dikecilkan ke 55% (sekitar 29×18dp, setinggi teks,
+   jarak 8dp dari label). Ukuran bawaan 52×32dp terlalu besar untuk baris keterangan. Warna tetap bawaan
    (track `primary`, thumb `onPrimary` saat aktif). Seluruh baris bisa ditekan, jadi area
    sentuh tidak ikut mengecil. Tombol "Hapus" hanya ada untuk habit tidak wajib.
 4. Mematikan switch membuka `AlertDialog` "Lepas status wajib?" dengan tombol "Batal" dan

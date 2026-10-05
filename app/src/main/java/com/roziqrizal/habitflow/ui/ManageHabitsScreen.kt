@@ -206,18 +206,18 @@ private fun HabitManageRow(
 }
 
 /**
- * Switch Material 3 yang dikecilkan ke 70% (sekitar 36x22dp). Ukuran bawaan 52x32dp terlalu
+ * Switch Material 3 yang dikecilkan ke 55% (sekitar 29x18dp), setinggi teks keterangan. Ukuran bawaan 52x32dp terlalu
  * besar untuk baris keterangan. Area sentuh ada di baris pemanggil, jadi switch ini hanya tampilan.
  */
 @Composable
 private fun SmallSwitch(checked: Boolean) {
-    Box(modifier = Modifier.size(width = 37.dp, height = 23.dp), contentAlignment = Alignment.Center) {
+    Box(modifier = Modifier.size(width = 29.dp, height = 18.dp), contentAlignment = Alignment.Center) {
         Switch(
             checked = checked,
             onCheckedChange = null,
             modifier = Modifier
                 .requiredSize(width = 52.dp, height = 32.dp)
-                .scale(0.7f),
+                .scale(0.55f),
         )
     }
 }
