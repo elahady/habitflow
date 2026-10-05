@@ -207,6 +207,18 @@ memakai latar `primaryFixed` dan teks `onPrimaryContainer`, sama dengan `TonalBu
    sebagai tujuh huruf S S R K J S M, tingkat notifikasi). Tap membuka editor blok.
    Pintu masuk dari tautan "Atur" di kartu Sekarang.
 
+### Kerja (tahap 19, belum diterapkan)
+1. Tab kedua "Kerja". Judul layar "Kerja" (headlineMedium), lalu dua `TonalButton`
+   berdampingan: "Daily scrum" dan "EOD".
+2. Bagian dengan `SectionTitle` dan jumlah: "Inbox (n)", "Lewat tanggal (n)", "Hari ini (n)",
+   "Menunggu (n)", "Nanti (n)". Bagian kosong disembunyikan, kecuali Hari ini.
+3. Satu `AppCard` per follow-up: judul (bodyLarge), baris keterangan (bodySmall,
+   `onSurfaceVariant`) berisi tanggal, jam, dan orang. Lewat tanggal ditandai dengan teks
+   "Lewat n hari", bukan warna merah.
+4. **Tombol Catat**: `FloatingActionButton` kecil "Catat" di kanan bawah semua tab, di atas
+   bar navigasi. Membuka `ModalBottomSheet` berisi satu `OutlinedTextField` yang langsung
+   fokus. Enter menyimpan, mengosongkan kolom, dan sheet tetap terbuka.
+
 ### Daily scrum (tahap 15, dibatalkan)
 1. **Kartu di Hari ini**, di bawah tombol "+ To-do": `AppCard` berisi judul "Daily scrum"
    (titleMedium) dan satu baris status (bodySmall, `onSurfaceVariant`): "Belum diisi" atau

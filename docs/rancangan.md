@@ -66,6 +66,26 @@ divisualisasikan seperti kontribusi GitHub.
 - Tunda 5 menit, paling banyak 2 kali. Alarm berhenti sendiri setelah 10 menit.
 - Pengingat adzan bisa dimatikan per waktu sholat. Default semua nyala.
 
+## Follow-up kerja (tahap 19)
+
+- Follow-up adalah catatan target kerja supaya tidak lupa ditindaklanjuti. Terpisah dari
+  to-do pribadi: **tidak ada batas jumlah** dan **tidak memengaruhi level hari maupun streak**.
+- Setiap follow-up punya judul (wajib), status, dan opsional: tanggal tindak lanjut, jam
+  khusus, orang terkait, catatan.
+- Status: **Inbox** (baru dicatat, belum dirapikan), **Aktif** (akan dikerjakan, punya
+  tanggal), **Menunggu** (menunggu orang lain, punya tanggal cek ulang), **Selesai**.
+- **Catat cepat**: tombol "Catat" di semua layar membuka satu kolom teks. Enter menyimpan ke
+  Inbox tanpa memilih apa pun.
+- **Daily scrum (08.00)**: menampilkan follow-up yang lewat tanggal, jatuh tempo hari ini,
+  dipilih saat EOD kemarin, dan Menunggu yang perlu dicek ulang hari ini. Pilih yang
+  dikerjakan hari ini.
+- **EOD (16.00)**: beri status setiap follow-up hari ini (Selesai, Lanjut besok, Pindah
+  tanggal, Menunggu), rapikan Inbox, dan tulis catatan EOD. Ringkasan bisa dibagikan lewat
+  share sheet.
+- Tidak ada notifikasi per follow-up, kecuali item yang diberi jam khusus.
+- Orang terkait diketik bebas dengan saran nama yang pernah dipakai, dan bisa difilter.
+- HabitFlow menggantikan task harian di Notion. Task lama tidak dimigrasi.
+
 ## Daily scrum (tahap 15, dibatalkan)
 
 > Aturan di bawah tidak jadi dipakai. Daily scrum akan dibangun dari follow-up kerja di
@@ -114,8 +134,11 @@ divisualisasikan seperti kontribusi GitHub.
      dibuka-tutup dan tombol "Hari ini libur" (tahap 17).
    - Header: tanggal, skor hari ini (contoh: "Habit 5/7 · To-do 2/5"), dan streak.
    - Bagian Habit ditampilkan dulu, lalu bagian To-do di bawahnya.
+   - Jumlah Inbox yang belum dirapikan dan follow-up lewat tanggal (tahap 19).
    - Tombol tambah to-do, dinonaktifkan jika sudah 5.
-2. **Kontribusi**
+2. **Kerja** (tahap 19)
+   - Inbox, Lewat tanggal, Hari ini, Menunggu, Nanti. Mode daily scrum dan EOD.
+3. **Kontribusi**
    - Heatmap gabungan (gaya GitHub), warna dari level hari. Minimal 26 minggu, dan
      ditambah minggu sampai lebar kartu terisi, paling banyak 53 minggu (setahun).
      Sisa ruang dibagi rata di kiri dan kanan grid.
@@ -124,9 +147,9 @@ divisualisasikan seperti kontribusi GitHub.
      ke kotak terdekat.
    - Tahan sebentar lalu geser di heatmap untuk menelusuri hari: tooltip di atas jari
      menunjukkan tanggal dan level, dan detail hari terbuka saat jari diangkat (tahap 16).
-3. **Kelola habit**
+4. **Kelola habit**
    - Tambah, ubah nama, dan hapus habit.
-4. **Tentang**
+5. **Tentang**
    - Nama app dan teks "Dibuat oleh Roziq Rizal".
    - Pengaturan pengingat daily scrum (tahap 15).
    - Pilihan tampilan: Sistem, Terang, atau Gelap. Default Sistem (mengikuti

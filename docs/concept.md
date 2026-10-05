@@ -496,12 +496,70 @@ Mesin waktu sholat dan lokasi ada di tahap 17. Tahap ini menambah tingkat notifi
 - Alarm berhenti sendiri setelah 10 menit.
 - Alarm tetap terjadwal setelah emulator di-restart.
 
-### Tahap 19: Catat cepat, follow-up kerja, daily scrum dan EOD
-Menggantikan tahap 15. Sudah diputuskan: **follow-up kerja terpisah dari to-do pribadi**
-(follow-up tanpa batas, punya tanggal tindak lanjut dan orang terkait, tidak memengaruhi
-level), catat cepat versi pertama lewat **tombol + di semua layar**, daily scrum 08.00 dan
-EOD 16.00 dibangun dari follow-up, bisa dibagikan lewat share sheet.
-Belum dibahas: bentuk layar follow-up, status follow-up, cara Inbox dirapikan.
+### Tahap 19: Catat cepat, follow-up kerja, daily scrum dan EOD (diputuskan, belum dikoding)
+
+Menggantikan tahap 15. **HabitFlow menggantikan jurnal task harian di Notion** ("Ruang Kerja :
+I am a Leader"). Task lama di Notion dihabiskan di sana sampai cut off. Task baru dicatat di
+HabitFlow, tanpa migrasi data dari Notion.
+
+**Keputusan (5 Oktober 2026).** Aturan fitur di `docs/rancangan.md` bagian Follow-up kerja.
+
+| Pertanyaan | Keputusan |
+|---|---|
+| Hubungan dengan Notion | Menggantikan task harian Notion sepenuhnya. Task lama tidak dimigrasi |
+| Letak | Tab baru **Kerja**, urutan tab: Hari ini, Kerja, Kontribusi, Habit, Tentang |
+| Status | Inbox, Aktif, Menunggu, Selesai |
+| Catat cepat | Tombol "Catat" di semua layar, masuk Inbox tanpa memilih apa pun |
+| Merapikan Inbox | Saat EOD 16.00. Inbox yang belum rapi tampil di dashboard |
+| Pengingat follow-up | Tidak per item. Dikumpulkan di daily scrum 08.00 dan dashboard. Item boleh diberi jam khusus |
+| Orang terkait | Ketik bebas dengan saran nama yang pernah dipakai, bisa difilter per orang |
+| Akses laptop | Tidak perlu. HP saja |
+| Backup | Sinkron ke server sendiri di tahap 19B. Sampai itu jadi, Android Auto Backup |
+
+**Rencana teknis:**
+- Tabel baru `follow_ups` (judul, status, tanggal tindak lanjut, jam opsional, orang, catatan,
+  dibuat, selesai, tanggal dipilih untuk hari ini) dan `work_days` (satu baris per tanggal:
+  catatan EOD, waktu daily scrum dan EOD diselesaikan). Migrasi database ke versi berikutnya
+  tanpa destructive migration.
+- Aturan "follow-up apa yang muncul di daily scrum" dan perpindahan status di `domain/` dengan
+  unit test.
+- Notifikasi daily scrum dan EOD memakai blok jadwal tahap 17 (Kerja pagi 08.00 dan EOD
+  16.00). Tap notifikasi membuka tab Kerja dalam mode daily scrum atau EOD.
+- Item yang punya jam khusus memakai notifikasi tingkat Pengingat pada jam itu.
+- Pastikan Android Auto Backup aktif untuk database (`allowBackup`, aturan ekstraksi data)
+  sebagai pengaman sementara sampai tahap 19B.
+
+**Selesai jika:**
+- Tombol Catat ada di semua tab. Mengetik judul lalu Enter menyimpan ke Inbox dalam satu
+  langkah, dan bottom sheet langsung siap untuk catatan berikutnya.
+- Tab Kerja menampilkan Inbox, Lewat tanggal, Hari ini, Menunggu, dan Nanti dengan jumlahnya.
+- Daily scrum 08.00 menampilkan follow-up yang lewat tanggal, jatuh tempo hari ini, dipilih
+  saat EOD kemarin, dan Menunggu yang tanggal cek ulangnya hari ini. Item bisa dipilih untuk
+  hari ini.
+- EOD 16.00: setiap follow-up hari ini diberi status (Selesai, Lanjut besok, Pindah tanggal,
+  Menunggu), setiap item Inbox dirapikan, lalu catatan EOD disimpan. Tombol Bagikan membuka
+  share sheet dengan ringkasan hari itu.
+- Riwayat EOD dan follow-up yang selesai di suatu hari tampil di detail hari Kontribusi.
+- Filter per orang menampilkan semua follow-up terkait orang itu.
+- Level hari, streak, dan to-do pribadi tidak berubah.
+- Update dari versi database sebelumnya tidak menghapus data.
+
+### Tahap 19B: Sinkron ke server sendiri (diputuskan, belum dikoding)
+
+Dikerjakan **tepat setelah tahap 19, sebelum cut off Notion**, karena data kerja tidak boleh
+hanya ada di satu HP.
+
+| Pertanyaan | Keputusan |
+|---|---|
+| Fungsi | Backup dan pindah HP. Tidak ada akses web atau laptop |
+| Arah | Satu arah HP → server, plus pulihkan dari server saat install ulang atau ganti HP |
+| Server | **Laravel baru** di VPS Al-Kaukaba (`202.155.17.2`), terpisah dari app Al-Kaukaba |
+| Cakupan | Semua data HabitFlow: habit, riwayat, to-do, jadwal, follow-up, EOD, nanti kesehatan |
+| Sifat app | Tetap offline-first. HP adalah sumber data. Sinkron berjalan saat ada internet |
+
+Belum dibahas: subdomain, cara login (token pribadi sekali buat atau akun), frekuensi
+sinkron, enkripsi data di server, dan dampaknya ke RAM VPS yang juga melayani Al-Kaukaba
+produksi.
 
 ### Tahap 20: Pengingat kerja
 Sudah diputuskan: minum air **setiap 60 menit** di jam kerja dengan tombol "Sudah minum"

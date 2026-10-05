@@ -20,8 +20,9 @@ desain, dan datanya tetap dipakai. Nama app bisa ditinjau nanti.
    tanggal, atau layar dulu. Merapikan dilakukan belakangan.
 2. **Sedikit notifikasi yang berarti**, bukan banyak notifikasi yang diabaikan. Lihat
    bagian Notifikasi.
-3. **Offline dulu.** Semua fitur inti jalan tanpa internet dan tanpa akun. Fitur yang butuh
-   internet (AI) bersifat opsional.
+3. **Offline dulu.** Semua fitur inti jalan tanpa internet. HP adalah sumber data. Data
+   disinkron ke server sendiri (tahap 19B) untuk backup dan pindah HP, saat ada internet.
+   Fitur yang butuh internet (AI) bersifat opsional.
 4. **Tenang, bukan memarahi.** Prinsip desain yang sudah ada tetap berlaku.
 5. **Habit tetap pusat.** Jadwal, kesehatan, dan kerja terhubung ke habit yang sudah ada,
    misalnya langkah 8.000 mencentang "Jalan kaki" dan 8 gelas mencentang "Air putih 2 liter".
@@ -90,7 +91,8 @@ Tiga tingkat, ditambah satu notifikasi tetap.
 ## Kerja: catat cepat, follow-up, daily scrum
 
 Kebutuhan inti: mencatat semua target kerja supaya tidak lupa follow-up, dan mencatat
-topik baru seketika tanpa menunda.
+topik baru seketika tanpa menunda. **HabitFlow menggantikan jurnal task harian di Notion.**
+Rinciannya di tahap 19 dan 19B.
 
 - **Inbox catat cepat.** Satu kolom teks, simpan dengan Enter. Versi pertama: **tombol +
   di semua layar** yang membuka bottom sheet. Jalur lain (balas dari notifikasi, share dari
@@ -149,6 +151,7 @@ sebelum dikoding.
 1. Jadwal harian, dashboard "sekarang dan berikutnya", dan notifikasi tetap.
 2. Waktu sholat Ephemeris, lokasi, dan alarm Subuh − 15.
 3. Inbox catat cepat, follow-up kerja, daily scrum dan EOD (menggantikan tahap 15 lama).
+   Lalu sinkron ke server sendiri (tahap 19B), sebelum cut off Notion.
 4. Pengingat kerja: air dan break.
 5. Kesehatan: langkah, berat badan dan BMI, tensi.
 6. Kalender dan acara rutin.
