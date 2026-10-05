@@ -380,13 +380,86 @@ Arah besarnya ada di [visi-super-app.md](visi-super-app.md). Setiap tahap dibaha
 diputuskan dulu, lalu aturannya ditulis di `rancangan.md`, baru dikoding. Keputusan yang
 sudah diambil saat menyusun visi dicatat di tiap tahap.
 
-### Tahap 17: Jadwal harian dan dashboard
-Template blok waktu hari kerja (jam tetap atau berpatokan waktu sholat), layar dashboard
-"sekarang dan berikutnya", dan notifikasi tetap di status bar.
-Belum dibahas: bentuk dashboard (tab baru atau menggantikan Hari ini), cara mengedit
-template, jadwal akhir pekan.
+### Tahap 17: Jadwal harian, waktu sholat, dan dashboard (diputuskan, belum dikoding)
 
-### Tahap 18: Waktu sholat dan alarm Subuh
+**Keputusan (5 Oktober 2026).** Aturan fitur di `docs/rancangan.md` bagian Jadwal harian.
+
+| Pertanyaan | Keputusan |
+|---|---|
+| Letak dashboard | Tab Hari ini jadi dashboard: kartu Sekarang/Berikutnya di atas, timeline bisa dibuka-tutup, lalu habit dan to-do. Tetap 4 tab |
+| Cara mengatur jadwal | Editor di app (layar Atur jadwal), diisi awal dari tabel di bawah |
+| Akhir pekan | Setiap blok punya hari aktif |
+| Blok dicentang | Tidak. Blok bisa ditautkan ke habit, "Sudah" di notifikasi mencentang habit itu |
+| Notifikasi tetap | Dari blok pertama sampai batas tidur, bisa dimatikan |
+| Waktu sholat | **Masuk tahap ini** (mesin Ephemeris dan lokasi). Alarm Subuh tetap di tahap 18 |
+| Hari libur | Tombol "Hari ini libur" mematikan blok hari kerja untuk tanggal itu |
+| Blok tumpang tindih | Sekarang = blok aktif yang paling akhir dimulai |
+
+**Rencana teknis:**
+- Tabel baru: `schedule_blocks` (nama, jenis patokan jam tetap atau waktu sholat, waktu
+  sholat dan selisih menit atau jam tetap, durasi menit, hari aktif sebagai bitmask, tingkat
+  notifikasi, urutan), `schedule_block_habits` (tautan blok ke habit), dan `days_off`
+  (tanggal libur). Database naik ke versi 2 dengan `Migration`, tanpa destructive migration.
+- Mesin waktu sholat di `domain/prayer/` sebagai Kotlin murni: rumus Ephemeris dari
+  `EphemerisPrayerCalculator.kt` Al-Kaukaba, posisi matahari dari Astronomy Engine
+  (dependency Maven, MIT). Unit test memakai contoh Lamongan 1 Januari 2009 dari
+  `rumus-hisab-ephemeris.md`, dan pembanding beberapa tanggal dari app Al-Kaukaba.
+- Penentuan Sekarang dan Berikutnya, hari aktif, libur, dan tumpang tindih di `domain/`
+  dengan unit test.
+- Lokasi: izin lokasi kasar, `LocationManager` bawaan (tanpa Google Play Services), lokasi
+  terakhir disimpan. Opsi manual: nama kota dan koordinat.
+- Notifikasi blok dan pembaruan notifikasi tetap dijadwalkan dengan `AlarmManager` pada
+  setiap batas blok (alarm tidak presisi, jendela paling lama 5 menit), dijadwalkan ulang
+  setelah restart dan saat jam, zona waktu, atau lokasi berubah. Alarm presisi baru dipakai
+  di tahap 18 untuk alarm Subuh.
+- Tingkat notifikasi di tahap ini: Pengingat dan Info (lihat visi). Tingkat Alarm menunggu
+  tahap 18.
+
+**Jadwal awal** (bisa diubah di Atur jadwal):
+
+| Blok | Mulai | Durasi | Hari | Notifikasi | Habit |
+|---|---|---|---|---|---|
+| Bangun | Subuh − 15 | 15 mnt | Setiap hari | Pengingat (Alarm di tahap 18) | |
+| Jamaah Subuh dan ngaji | Subuh | 60 mnt | Setiap hari | Pengingat | Baca Al-Quran |
+| Aktivitas fisik | setelah ngaji | s.d. 06.00 | Setiap hari | Info | Jalan kaki 20 menit |
+| Mandi dan prepare | 06.15 | 20 mnt | Sen–Jum | Info | |
+| Berangkat | 06.35 | 85 mnt | Sen–Jum | Pengingat | |
+| Kerja pagi | 08.00 | 240 mnt | Sen–Jum | Pengingat | |
+| Sholat Dzuhur | Dzuhur | 15 mnt | Setiap hari | Pengingat | |
+| Makan siang dan istirahat | 12.00 | 60 mnt | Sen–Jum | Info | |
+| Kerja sore | 13.00 | 180 mnt | Sen–Jum | Pengingat | |
+| Sholat Ashar | Ashar | 15 mnt | Setiap hari | Pengingat | |
+| EOD | 16.00 | 60 mnt | Sen–Jum | Pengingat | |
+| Pulang | 17.00 | 60 mnt | Sen–Jum | Info | |
+| Sholat Maghrib | Maghrib | 15 mnt | Setiap hari | Pengingat | |
+| Sholat Isya | Isya | 15 mnt | Setiap hari | Pengingat | Sholat 5 waktu |
+| Project personal | 19.00 | 120 mnt | Setiap hari | Info | |
+| Batas tidur | 22.00 | — | Setiap hari | Pengingat | Tidur sebelum 22.00 |
+
+Catatan: "Aktivitas fisik" berakhir tepat 06.00, jadi durasinya mengikuti waktu Subuh.
+Tautan "Sholat 5 waktu" ke blok Isya (sholat terakhir hari itu) adalah usulan dan bisa
+diubah.
+
+**Selesai jika:**
+- Update dari database versi 1 tidak menghapus habit, riwayat, dan to-do.
+- Unit test waktu sholat lulus untuk contoh Lamongan 1 Januari 2009 (selisih paling banyak
+  1 menit dari buku), dan hasil untuk lokasi Roziq beberapa tanggal dicatat terhadap app
+  Al-Kaukaba.
+- Kartu Sekarang/Berikutnya benar untuk pagi, jam kerja, saat Dzuhur di tengah Kerja pagi,
+  malam, dan setelah batas tidur, di hari kerja dan akhir pekan.
+- Atur jadwal bisa menambah, mengubah, dan menghapus blok, termasuk patokan waktu sholat,
+  hari aktif, dan tautan habit. Perubahan langsung terlihat di dashboard.
+- "Hari ini libur" menyembunyikan blok hari kerja hanya untuk hari itu.
+- Notifikasi blok muncul paling lambat 5 menit setelah blok mulai, sesuai tingkatnya.
+  "Sudah" mencentang habit yang ditautkan.
+- Notifikasi tetap hilang setelah batas tidur, muncul lagi di blok pertama besok, dan tetap
+  berjalan setelah emulator di-restart.
+- Lokasi GPS dan manual sama-sama bekerja. Tanpa izin lokasi, app tetap jalan dengan
+  lokasi manual.
+
+### Tahap 18: Alarm Subuh dan pengingat adzan
+Mesin waktu sholat dan lokasi pindah ke tahap 17. Tahap ini tinggal alarm Subuh − 15
+(tingkat Alarm) dan pengaturan pengingat per waktu sholat.
 Sudah diputuskan: mesin **Ephemeris Al Hasib offline** (rumus Al-Kaukaba, Astronomy Engine
 sebagai dependency), lokasi **GPS dengan opsi manual**, semua waktu sholat masuk jadwal,
 alarm Subuh − 15 menit. Hasil divalidasi terhadap app Al-Kaukaba.

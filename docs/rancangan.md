@@ -40,6 +40,24 @@ divisualisasikan seperti kontribusi GitHub.
 - Pemindahan hanya mengubah tanggal, sehingga hari lama tidak lagi
   menghitung to-do itu sebagai selesai (perilaku yang diinginkan).
 
+## Jadwal harian (tahap 17)
+
+- Jadwal adalah satu daftar **blok**. Setiap blok punya: nama, waktu mulai, durasi, hari
+  aktif (Senin sampai Minggu), tingkat notifikasi, dan habit yang ditautkan (boleh kosong).
+- Waktu mulai bisa **jam tetap** (06.35) atau **berpatokan waktu sholat** dengan selisih
+  menit (Subuh − 15). Waktu sholat dihitung offline dengan metode Ephemeris Al Hasib, sama
+  dengan Al-Kaukaba (lihat `docs/visi-super-app.md`).
+- Blok diatur sendiri di layar **Atur jadwal**. Jadwal awal diisi dari tabel di
+  `docs/concept.md` tahap 17.
+- Blok **tidak** dicentang. Kalau blok ditautkan ke habit, tombol "Sudah" di notifikasinya
+  mencentang habit itu. Aturan level dan streak tidak berubah.
+- **Sekarang** adalah blok aktif yang paling akhir dimulai. Kalau blok sholat jatuh di
+  tengah blok kerja, Sekarang menampilkan blok sholat, lalu kembali ke blok kerja.
+- **Hari ini libur**: tombol di dashboard yang mematikan blok yang hanya aktif di hari kerja
+  (Senin sampai Jumat) untuk tanggal itu. Blok yang aktif setiap hari tetap jalan.
+- **Notifikasi tetap** "Sekarang · Berikutnya" tampil dari blok pertama hari itu sampai
+  batas tidur, lalu hilang. Bisa dimatikan dari Tentang.
+
 ## Daily scrum (tahap 15, dibatalkan)
 
 > Aturan di bawah tidak jadi dipakai. Daily scrum akan dibangun dari follow-up kerja di
@@ -83,7 +101,9 @@ divisualisasikan seperti kontribusi GitHub.
 
 ## Layar
 
-1. **Hari ini**
+1. **Hari ini** (sekaligus dashboard)
+   - Kartu "Sekarang / Berikutnya" paling atas, dengan timeline jadwal hari ini yang bisa
+     dibuka-tutup dan tombol "Hari ini libur" (tahap 17).
    - Header: tanggal, skor hari ini (contoh: "Habit 5/7 · To-do 2/5"), dan streak.
    - Bagian Habit ditampilkan dulu, lalu bagian To-do di bawahnya.
    - Tombol tambah to-do, dinonaktifkan jika sudah 5.

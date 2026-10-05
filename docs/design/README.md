@@ -194,7 +194,20 @@ Di bawahnya, berjarak 32dp: label "Tampilan" (labelMedium, `onSurfaceVariant`), 
 `SingleChoiceSegmentedButtonRow` dengan tiga segmen "Sistem", "Terang", "Gelap". Segmen aktif
 memakai latar `primaryFixed` dan teks `onPrimaryContainer`, sama dengan `TonalButton`.
 
-### Daily scrum (tahap 15, belum diterapkan)
+### Dashboard di Hari ini (tahap 17, belum diterapkan)
+1. Kartu hero "Sekarang" paling atas, di atas kartu skor: label "Sekarang" (labelMedium,
+   `onSurfaceVariant`), nama blok (titleLarge Caslon), sisa waktu (bodyMedium). Di bawahnya
+   garis pemisah `outlineVariant`, lalu "Berikutnya" dengan nama dan jam blok.
+2. Baris "Lihat jadwal hari ini" dengan chevron membuka timeline: satu baris per blok
+   (jam di kiri dengan angka tabular, nama di kanan). Blok yang sedang berjalan memakai latar
+   `primaryFixed`. Blok yang sudah lewat memakai `onSurfaceVariant`.
+3. Tombol teks "Hari ini libur" di bawah timeline. Saat aktif, kartu menampilkan
+   "Hari libur, blok kantor dimatikan" dengan tombol "Batalkan".
+4. Layar **Atur jadwal**: daftar kartu blok (nama, jam atau patokan sholat, hari aktif
+   sebagai tujuh huruf S S R K J S M, tingkat notifikasi). Tap membuka editor blok.
+   Pintu masuk dari tautan "Atur" di kartu Sekarang.
+
+### Daily scrum (tahap 15, dibatalkan)
 1. **Kartu di Hari ini**, di bawah tombol "+ To-do": `AppCard` berisi judul "Daily scrum"
    (titleMedium) dan satu baris status (bodySmall, `onSurfaceVariant`): "Belum diisi" atau
    potongan isi "Hari ini". Seluruh kartu bisa ditekan.
