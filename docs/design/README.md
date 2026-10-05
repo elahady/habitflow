@@ -194,6 +194,21 @@ Di bawahnya, berjarak 32dp: label "Tampilan" (labelMedium, `onSurfaceVariant`), 
 `SingleChoiceSegmentedButtonRow` dengan tiga segmen "Sistem", "Terang", "Gelap". Segmen aktif
 memakai latar `primaryFixed` dan teks `onPrimaryContainer`, sama dengan `TonalButton`.
 
+### Daily scrum (tahap 15, belum diterapkan)
+1. **Kartu di Hari ini**, di bawah tombol "+ To-do": `AppCard` berisi judul "Daily scrum"
+   (titleMedium) dan satu baris status (bodySmall, `onSurfaceVariant`): "Belum diisi" atau
+   potongan isi "Hari ini". Seluruh kartu bisa ditekan.
+2. **Layar isi**: judul "Daily scrum" (headlineMedium) dan tanggal (labelMedium). Tiga
+   bagian dengan `SectionTitle`: "Kemarin (<hari, tanggal>)", "Hari ini", "Hambatan",
+   masing-masing `OutlinedTextField` multi-baris. Tombol `TonalButton` "Bagikan" di bawah.
+   Tombol kembali menyimpan dan menutup layar.
+3. **Detail hari Kontribusi**: bagian "Daily scrum" di bawah to-do, tiga bagian sebagai
+   teks biasa (bodyMedium). Tidak tampil kalau hari itu tidak ada daily scrum.
+4. **Tentang**: di bawah pilihan Tampilan, berjarak 24dp: label "Pengingat daily scrum"
+   (labelMedium), lalu baris "Ingatkan" dengan switch kecil (sama seperti switch wajib)
+   dan jam (bodyMedium). Tap jam membuka `TimePicker` Material 3. Jam nonaktif saat
+   switch mati.
+
 ### Navigasi bawah
 - Empat tab: Hari ini, Kontribusi, Habit, Tentang.
 - Bar memakai `surfaceContainer`. Tab aktif memakai indikator pill `primaryFixed` dan teks `onSurface`.

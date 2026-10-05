@@ -40,6 +40,24 @@ divisualisasikan seperti kontribusi GitHub.
 - Pemindahan hanya mengubah tanggal, sehingga hari lama tidak lagi
   menghitung to-do itu sebagai selesai (perilaku yang diinginkan).
 
+## Daily scrum (tahap 15)
+
+- Catatan pribadi per hari, disimpan lokal seperti data lain. Tidak ada akun dan tidak
+  ada sinkron. Bisa dibagikan sebagai teks lewat share sheet Android.
+- Satu daily scrum per tanggal, berisi tiga bagian: **Kemarin**, **Hari ini**,
+  **Hambatan**. Ketiganya teks bebas, boleh kosong.
+- Saat daily scrum hari ini dibuka pertama kali, isinya terisi otomatis lalu bisa diedit:
+  - **Kemarin**: to-do yang selesai di hari terakhir sebelum hari ini yang punya to-do
+    selesai atau daily scrum (misalnya Jumat untuk hari Senin). Label menyebut tanggalnya.
+  - **Hari ini**: to-do hari ini, termasuk yang dipindah dari hari sebelumnya.
+  - **Hambatan**: kosong.
+  Isian otomatis hanya terjadi sekali. Setelah disimpan, perubahan to-do tidak lagi
+  mengubah daily scrum.
+- Daily scrum tidak mengubah to-do, dan tidak memengaruhi level hari maupun streak.
+- Hanya daily scrum hari ini yang bisa diedit. Hari sebelumnya hanya bisa dibaca.
+- **Pengingat**: opsional, diatur di layar Tentang (switch dan jam), awalnya mati.
+  Notifikasi muncul sekali sehari di jam itu, hanya kalau daily scrum hari itu belum diisi.
+
 ## Level warna per hari
 
 | Level | Syarat |
@@ -76,6 +94,7 @@ divisualisasikan seperti kontribusi GitHub.
    - Tambah, ubah nama, dan hapus habit.
 4. **Tentang**
    - Nama app dan teks "Dibuat oleh Roziq Rizal".
+   - Pengaturan pengingat daily scrum (tahap 15).
    - Pilihan tampilan: Sistem, Terang, atau Gelap. Default Sistem (mengikuti
      pengaturan perangkat). Pilihan disimpan di perangkat dan berlaku langsung.
 

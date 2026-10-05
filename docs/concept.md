@@ -285,22 +285,55 @@ tetap wajib, Lepas membuatnya pindah ke urutan biasa dengan tombol Hapus. Setela
 ditutup paksa, urutan di Hari ini ikut berubah, centang hari ini tetap, dan skor tetap
 4/9 Level 1. Penolakan hapus di repository tidak diubah (`deleteIfNotMandatory`).
 
-## Tahap 15: Daily scrum di dalam app (diskusi konsep)
+## Tahap 15: Daily scrum di dalam app (diputuskan, belum dikoding)
 
-**Usulan:** memasukkan daily scrum ke HabitFlow. Konsepnya dibahas dulu, belum ada
-rancangan.
+**Keputusan (5 Oktober 2026).** Aturan fitur lengkap ada di `docs/rancangan.md` bagian
+Daily scrum.
 
-**Pertanyaan awal untuk diskusi:**
-- Untuk siapa: catatan pribadi (refleksi harian sendiri) atau untuk dibagikan ke tim.
-- Isi: tiga pertanyaan klasik (kemarin mengerjakan apa, hari ini akan mengerjakan apa,
-  ada hambatan apa) atau format lain.
-- Hubungan dengan to-do: apakah "hari ini akan mengerjakan" otomatis menjadi to-do,
-  dan apakah to-do kemarin yang selesai otomatis mengisi "kemarin".
-- Apakah mengisi daily scrum ikut memengaruhi level hari atau streak, atau terpisah.
-- Letak di app: tab baru, bagian di layar Hari ini, atau di detail hari pada Kontribusi.
-- Pengingat (notifikasi jam tertentu) dibutuhkan atau tidak.
-- Ekspor atau bagikan (salin teks, kirim ke WhatsApp atau Slack) dibutuhkan atau tidak.
-- Riwayat: bisa melihat daily scrum hari-hari sebelumnya, dan bentuk tampilannya.
+| Pertanyaan | Keputusan |
+|---|---|
+| Untuk siapa | Pribadi, disimpan lokal, bisa dibagikan sebagai teks |
+| Isi | Tiga pertanyaan klasik: Kemarin, Hari ini, Hambatan |
+| Hubungan dengan to-do | Terisi otomatis sekali dari to-do, lalu bisa diedit. To-do tidak berubah |
+| "Kemarin" kalau kemarin kosong | Hari terakhir yang punya to-do selesai atau daily scrum |
+| Level dan streak | Tidak berpengaruh |
+| Letak | Kartu di layar Hari ini, di bawah To-do. Tap membuka layar isi daily scrum |
+| Riwayat | Di bottom sheet detail hari Kontribusi, di bawah habit dan to-do |
+| Edit hari lama | Tidak bisa, hanya hari ini |
+| Bagikan | Tombol "Bagikan" membuka share sheet Android dengan teks rapi |
+| Pengingat | Ada. Diatur di Tentang (switch dan jam), awalnya mati. Hanya muncul kalau belum diisi |
+
+**Rencana teknis:**
+- Tabel baru `daily_scrums`: `date` (ISO, primary key), `yesterdayDate` (tanggal sumber
+  "Kemarin", boleh null), `yesterday`, `today`, `blockers` (teks), `updatedAt`.
+- Database naik dari versi 1 ke 2 dengan `Migration` yang membuat tabel. **Jangan**
+  memakai `fallbackToDestructiveMigration`, karena data habit dan to-do harus tetap.
+- Isian otomatis dan pencarian "hari terakhir yang ada isinya" ditulis di `domain/`
+  sebagai Kotlin murni dengan unit test, seperti aturan inti lain.
+- Pengingat memakai `AlarmManager` (alarm tidak presisi, tanpa izin exact alarm) dan
+  `BroadcastReceiver`, tanpa dependency baru. Alarm dijadwalkan ulang setelah HP
+  dinyalakan ulang (`BOOT_COMPLETED`) dan saat jam atau zona waktu berubah. Saat alarm
+  berbunyi, receiver memeriksa database: kalau daily scrum hari ini sudah ada, notifikasi
+  dilewati.
+- Izin `POST_NOTIFICATIONS` (Android 13+) diminta saat switch pengingat dinyalakan.
+  Kalau ditolak, switch kembali mati dengan pesan singkat.
+- Tap notifikasi membuka app langsung ke layar daily scrum hari ini.
+
+**Selesai jika:**
+- Update dari versi lama (database versi 1) tidak menghapus habit, riwayat, dan to-do.
+- Membuka daily scrum hari ini pertama kali: Kemarin dan Hari ini terisi dari to-do
+  sesuai aturan, Hambatan kosong. Label Kemarin menyebut tanggal sumbernya.
+- Senin dengan Sabtu-Minggu kosong mengambil "Kemarin" dari Jumat.
+- Isi bisa diedit dan tetap tersimpan setelah app ditutup. Mengubah to-do setelah itu
+  tidak mengubah daily scrum.
+- Kartu di Hari ini menunjukkan "Belum diisi" atau ringkasan isi.
+- Detail hari Kontribusi menampilkan daily scrum hari itu (hanya baca), atau tidak
+  menampilkan apa-apa kalau tidak ada.
+- Tombol Bagikan membuka share sheet dengan format teks yang disepakati.
+- Pengingat: mati secara default. Dinyalakan meminta izin notifikasi. Notifikasi muncul
+  di jam yang dipilih kalau belum diisi, dan tidak muncul kalau sudah diisi. Tetap
+  berjalan setelah emulator di-restart.
+- Level, streak, dan unit test domain yang ada tidak berubah.
 
 ## Tahap 16: Kotak heatmap di Kontribusi lebih mudah ditekan (diskusi)
 
