@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -17,9 +19,28 @@ android {
         versionName = "1.0"
     }
 
+    // Keystore release disimpan di luar repo. Lokasinya bisa diganti lewat properti
+    // Gradle `habitflow.signing`. Kalau file tidak ada, release dibuat tanpa signing.
+    val signingFile = file(
+        providers.gradleProperty("habitflow.signing").orNull
+            ?: "${System.getProperty("user.home")}/.habitflow/keystore.properties"
+    )
+    val releaseSigning = if (signingFile.exists()) {
+        val props = Properties().apply { signingFile.inputStream().use { load(it) } }
+        signingConfigs.create("release") {
+            storeFile = file(props.getProperty("storeFile"))
+            storePassword = props.getProperty("storePassword")
+            keyAlias = props.getProperty("keyAlias")
+            keyPassword = props.getProperty("keyPassword")
+        }
+    } else {
+        null
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = releaseSigning
         }
     }
     compileOptions {
