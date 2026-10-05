@@ -252,23 +252,32 @@ sempat punya Scaffold kedua yang membuat jarak status bar ganda, dan sudah dihap
 teks hanya ada di `AlertDialog` (jendela terpisah), jadi tidak tertutup keyboard. Splash di
 Android 8-11 belum diuji di perangkat.
 
-## Tahap 14: Habit wajib bisa diatur sendiri (diskusi)
+## Tahap 14: Habit wajib bisa diatur sendiri (diputuskan, belum dikoding)
 
-**Aturan sekarang** (`docs/rancangan.md`): habit wajib ditentukan saat seed (Sholat
-5 waktu dan Baca Al-Quran), tidak bisa dihapus, dan tidak bisa diubah statusnya.
+**Aturan sebelumnya:** habit wajib ditentukan saat seed (Sholat 5 waktu dan Baca
+Al-Quran), tidak bisa dihapus, dan tidak bisa diubah statusnya.
 
-**Usulan:** status wajib menjadi toggle. Habit apa pun bisa dijadikan wajib atau
-tidak wajib dari layar Kelola habit.
+**Keputusan (5 Oktober 2026):**
+- Habit mana pun bisa dijadikan wajib atau tidak wajib dari layar Kelola habit.
+- Arti wajib tetap: **tidak bisa dihapus** dan **tampil paling atas** dengan label
+  "Wajib". Untuk menghapus, matikan dulu status wajibnya.
+- Wajib **tidak** mengubah aturan level dan streak. Unit test domain tidak berubah.
+- Toggle berupa **switch "Wajib" di setiap kartu** Kelola habit.
+- Menyalakan wajib langsung berlaku. **Mematikan wajib meminta konfirmasi** lewat
+  dialog, karena setelah itu habit bisa dihapus.
+- Habit baru dibuat tidak wajib. Dua habit seed tetap wajib sebagai nilai awal.
+- Kolom `isMandatory` sudah ada, jadi tidak perlu migrasi skema. Cukup query update
+  di DAO dan aksi di repository dan ViewModel.
 
-**Yang perlu diputuskan:**
-- Arti "wajib" setelah bisa di-toggle: tetap tidak bisa dihapus selama wajib (harus
-  dimatikan dulu wajibnya), atau wajib hanya berarti tampil paling atas dan bertanda.
-- Apakah habit wajib punya bobot berbeda di level dan streak (sekarang sama seperti
-  habit lain).
-- Bentuk toggle di kartu habit: switch, chip, atau menu di dialog ubah habit.
-- Konfirmasi saat mematikan status wajib, atau langsung berlaku.
-- Data lama: `isMandatory` sudah ada di tabel `habits`, jadi kemungkinan cukup
-  menambah aksi ubah tanpa migrasi skema.
+**Selesai jika:**
+- Switch wajib tampil di semua kartu Kelola habit dan mencerminkan status sekarang.
+- Menyalakan wajib pada habit biasa: label "Wajib" muncul, tombol Hapus hilang, dan
+  habit pindah ke kelompok atas di layar Hari ini dan Kelola habit.
+- Mematikan wajib memunculkan dialog. Batal membuat status tetap wajib. Setuju membuat
+  tombol Hapus muncul lagi dan habit kembali ke urutan biasa.
+- Habit yang sedang wajib tetap ditolak dihapus di repository, walau dipanggil langsung.
+- Riwayat centang, level, dan streak tidak berubah saat status wajib diganti.
+- Status wajib tetap setelah app ditutup dan dibuka lagi.
 
 ## Tahap 15: Daily scrum di dalam app (diskusi konsep)
 

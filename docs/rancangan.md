@@ -23,6 +23,9 @@ divisualisasikan seperti kontribusi GitHub.
 - **Habit wajib** (ditandai `isMandatory`) tidak bisa dihapus dan selalu tampil
   paling atas di layar Hari ini dan Habit. Habit wajib tetap dihitung di level
   dan streak seperti habit lain.
+- Status wajib bisa diatur sendiri untuk habit mana pun (tahap 14). Habit baru dibuat
+  tidak wajib. Menyalakan wajib langsung berlaku. Mematikan wajib meminta konfirmasi,
+  setelah itu habit bisa dihapus. Dua habit seed tetap wajib sebagai nilai awal.
 - Habit lain bisa ditambah, diubah, dan dihapus.
 - Setiap habit hanya punya status centang: sudah atau belum, per hari.
 - Tidak ada input angka di versi ini (tekanan darah, gula, berat badan belum masuk).
