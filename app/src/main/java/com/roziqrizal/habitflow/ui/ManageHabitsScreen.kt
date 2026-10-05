@@ -2,12 +2,15 @@ package com.roziqrizal.habitflow.ui
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -27,6 +30,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -189,8 +193,8 @@ private fun HabitManageRow(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Switch(checked = habit.isMandatory, onCheckedChange = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    SmallSwitch(checked = habit.isMandatory)
                 }
             }
             // Habit wajib tidak punya tombol hapus, sesuai aturan di rancangan.
@@ -198,6 +202,23 @@ private fun HabitManageRow(
                 TextButton(onClick = onDelete) { Text("Hapus") }
             }
         }
+    }
+}
+
+/**
+ * Switch Material 3 yang dikecilkan ke 70% (sekitar 36x22dp). Ukuran bawaan 52x32dp terlalu
+ * besar untuk baris keterangan. Area sentuh ada di baris pemanggil, jadi switch ini hanya tampilan.
+ */
+@Composable
+private fun SmallSwitch(checked: Boolean) {
+    Box(modifier = Modifier.size(width = 37.dp, height = 23.dp), contentAlignment = Alignment.Center) {
+        Switch(
+            checked = checked,
+            onCheckedChange = null,
+            modifier = Modifier
+                .requiredSize(width = 52.dp, height = 32.dp)
+                .scale(0.7f),
+        )
     }
 }
 
