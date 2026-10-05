@@ -237,6 +237,13 @@ Latar di belakang kartu memakai `surfaceContainerLow`, bukan `background`, supay
 - Kotak 9dp dengan jarak 3dp, sudut 2dp. Lebar grid = kolom × 12dp − 3dp (309dp untuk 26 kolom).
 - Hari setelah hari ini tidak digambar. Sel sebelum habit dibuat tidak digambar.
 - Tap pada kotak memanggil detail hari. Celah antar kotak tidak merespons tap.
+  (Tahap 16, belum diterapkan: tap di celah dihitung ke kotak terdekat.)
+- **Tekan lalu geser (tahap 16, belum diterapkan).** Setelah ditahan sekitar 0,3 detik:
+  - Kotak di bawah jari diberi bingkai 1,5dp `onSurface`, di luar kotak.
+  - Tooltip di atas jari: latar `inverseSurface`, teks `inverseOnSurface` labelMedium, sudut
+    small (8dp), padding 8dp × 4dp, jarak 12dp di atas kotak. Isi "<hari, tgl bln> · Level n",
+    atau "Selesai"/"Belum" di heatmap per habit. Posisi digeser supaya tidak keluar layar.
+  - Getar `HapticFeedbackType.LongPress` saat aktif, `TextHandleMove` setiap pindah kotak.
 - Legenda "Less" dan "More" dengan lima kotak level di antaranya, di bawah grid gabungan,
   rata kanan dengan tepi kanan grid.
 - Deskripsi aksesibilitas: "Heatmap gabungan <n> minggu terakhir" atau "Heatmap <nama habit> <n> minggu terakhir".

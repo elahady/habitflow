@@ -89,7 +89,10 @@ divisualisasikan seperti kontribusi GitHub.
      ditambah minggu sampai lebar kartu terisi, paling banyak 53 minggu (setahun).
      Sisa ruang dibagi rata di kiri dan kanan grid.
    - Heatmap per habit di bawahnya, dengan jumlah minggu yang sama.
-   - Tap kotak mana pun untuk melihat detail hari itu.
+   - Tap kotak mana pun untuk melihat detail hari itu. Tap di celah antar kotak dihitung
+     ke kotak terdekat.
+   - Tahan sebentar lalu geser di heatmap untuk menelusuri hari: tooltip di atas jari
+     menunjukkan tanggal dan level, dan detail hari terbuka saat jari diangkat (tahap 16).
 3. **Kelola habit**
    - Tambah, ubah nama, dan hapus habit.
 4. **Tentang**

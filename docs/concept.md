@@ -335,22 +335,38 @@ Daily scrum.
   berjalan setelah emulator di-restart.
 - Level, streak, dan unit test domain yang ada tidak berubah.
 
-## Tahap 16: Kotak heatmap di Kontribusi lebih mudah ditekan (diskusi)
+## Tahap 16: Kotak heatmap lebih mudah ditekan (diputuskan, belum dikoding)
 
-**Masalah sekarang:** kotak heatmap berukuran 9dp dengan jarak 3dp
-(`docs/design/README.md`), jauh di bawah target sentuh yang nyaman (sekitar 48dp).
-Akibatnya sulit menekan tanggal yang dimaksud.
+**Masalah:** kotak heatmap 9dp dengan jarak 3dp, jauh di bawah target sentuh nyaman (sekitar
+48dp). Tap di celah juga diabaikan, sehingga hanya sekitar 56% area grid yang merespons.
 
-**Pilihan yang bisa dibahas:**
-- Area sentuh lebih besar dari kotaknya (kotak tetap kecil, tap di sekitarnya ikut
-  terbaca), termasuk celah antar kotak yang sekarang tidak merespons.
-- Kotak diperbesar dengan jumlah minggu lebih sedikit, atau heatmap bisa digulir
-  ke samping.
-- Tap membuka tampilan perbesar (zoom) satu bulan, lalu pilih tanggal di sana.
-- Tekan dan geser di atas heatmap, dengan penanda tanggal yang mengikuti jari.
-- Navigasi tanggal di dalam bottom sheet detail hari (tombol hari sebelumnya dan
-  sesudahnya), sehingga tidak perlu tepat menekan kotak.
-- Heatmap per habit ikut diubah atau hanya heatmap gabungan.
+**Keputusan (5 Oktober 2026): tekan lalu geser (scrubbing).**
+- **Mulai:** tahan jari sekitar 0,3 detik di heatmap sampai terasa getar, lalu geser ke
+  segala arah, termasuk naik-turun antar hari. Gesekan tanpa menahan tetap untuk scroll
+  layar Kontribusi, jadi tidak bentrok.
+- **Selama geser:** tooltip di atas jari menunjukkan tanggal dan level kotak di bawah jari
+  ("Rabu, 23 Sep · Level 3", atau "Selesai"/"Belum" untuk heatmap per habit). Kotak itu
+  diberi bingkai. Tooltip tidak keluar dari tepi layar.
+- **Getar halus** saat mode geser aktif dan setiap pindah ke kotak lain, mengikuti
+  pengaturan getar HP.
+- **Lepas jari:** membuka bottom sheet detail hari untuk kotak terakhir. Lepas di luar grid,
+  atau di kotak yang tidak digambar (hari depan, sebelum habit dibuat), berarti batal.
+- **Tap biasa tetap berfungsi**, dan tap di celah dihitung ke kotak terdekat.
+- Berlaku untuk heatmap gabungan dan per habit, karena keduanya memakai `HeatmapGrid`.
+- Ukuran kotak dan jumlah minggu tidak berubah. Node aksesibilitas per kotak tetap.
+
+Ide lain yang dibahas tapi tidak dipilih: tombol hari sebelum dan sesudah di detail hari,
+dan memperbesar kotak (mengurangi jumlah minggu atau harus digulir ke samping).
+
+**Selesai jika:**
+- Tap di celah antar kotak membuka hari terdekat. Tap di kotak tetap seperti sebelumnya.
+- Gesekan cepat tanpa menahan menggulir layar Kontribusi seperti biasa.
+- Tahan lalu geser memunculkan tooltip yang mengikuti jari, berganti tanggal setiap pindah
+  kotak, dengan getar halus.
+- Melepas jari di kotak membuka detail hari yang benar. Melepas di luar grid tidak membuka
+  apa pun.
+- Di tepi kiri dan kanan grid, tooltip tetap terlihat utuh.
+- Berfungsi di heatmap gabungan dan per habit, di tema terang dan gelap.
 
 ## Daftar pertanyaan terbuka
 
