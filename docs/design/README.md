@@ -296,13 +296,16 @@ Latar di belakang kartu memakai `surfaceContainerLow`, bukan `background`, supay
   selalu di bawah satu kolom, 12dp).
 - Kotak 9dp dengan jarak 3dp, sudut 2dp. Lebar grid = kolom × 12dp − 3dp (309dp untuk 26 kolom).
 - Hari setelah hari ini tidak digambar. Sel sebelum habit dibuat tidak digambar.
-- Tap pada kotak memanggil detail hari. Celah antar kotak tidak merespons tap.
-  (Tahap 16, belum diterapkan: tap di celah dihitung ke kotak terdekat.)
-- **Tekan lalu geser (tahap 16, belum diterapkan).** Setelah ditahan sekitar 0,3 detik:
+- Tap pada kotak memanggil detail hari. Tap di celah dihitung ke kotak terdekat (celah dibagi
+  dua), jadi seluruh area grid merespons. Tap di kotak yang tidak digambar diabaikan.
+- **Tekan lalu geser.** Setelah ditahan 300 ms:
   - Kotak di bawah jari diberi bingkai 1,5dp `onSurface`, di luar kotak.
   - Tooltip di atas jari: latar `inverseSurface`, teks `inverseOnSurface` labelMedium, sudut
-    small (8dp), padding 8dp × 4dp, jarak 12dp di atas kotak. Isi "<hari, tgl bln> · Level n",
+    small (8dp), padding 8dp × 4dp, jarak 32dp di atas kotak supaya tidak tertutup ujung jari. Isi "<hari, tgl bln> · Level n",
     atau "Selesai"/"Belum" di heatmap per habit. Posisi digeser supaya tidak keluar layar.
+    Tooltip memakai `Popup`, jadi tidak terpotong oleh kartu.
+  - Lepas jari membuka detail hari. Lepas di luar grid atau di kotak yang tidak digambar
+    berarti batal.
   - Getar `HapticFeedbackType.LongPress` saat aktif, `TextHandleMove` setiap pindah kotak.
 - Legenda "Less" dan "More" dengan lima kotak level di antaranya, di bawah grid gabungan,
   rata kanan dengan tepi kanan grid.

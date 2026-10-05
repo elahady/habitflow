@@ -341,7 +341,7 @@ Daily scrum.
   berjalan setelah emulator di-restart.
 - Level, streak, dan unit test domain yang ada tidak berubah.
 
-## Tahap 16: Kotak heatmap lebih mudah ditekan (diputuskan, belum dikoding)
+## Tahap 16: Kotak heatmap lebih mudah ditekan (selesai, 5 Oktober 2026)
 
 **Masalah:** kotak heatmap 9dp dengan jarak 3dp, jauh di bawah target sentuh nyaman (sekitar
 48dp). Tap di celah juga diabaikan, sehingga hanya sekitar 56% area grid yang merespons.
@@ -373,6 +373,18 @@ dan memperbesar kotak (mengurangi jumlah minggu atau harus digulir ke samping).
   apa pun.
 - Di tepi kiri dan kanan grid, tooltip tetap terlihat utuh.
 - Berfungsi di heatmap gabungan dan per habit, di tema terang dan gelap.
+
+**Hasil verifikasi di emulator (Android 16, 1080×2400):**
+- Tap di celah antara kolom 0 dan 1 membuka Senin, 9 Maret 2026 (kotak pertama).
+- Tahan lalu geser ke kolom 22 baris 3 menampilkan tooltip "Kamis, 13 Agu · Level 0" dengan
+  bingkai. Geser satu baris ke bawah lalu lepas membuka Jumat, 14 Agustus 2026.
+- Gesekan cepat di atas heatmap menggulir layar seperti biasa.
+- Lepas di luar grid tidak membuka apa pun.
+- Heatmap per habit menampilkan "Senin, 5 Okt · Selesai". Kotak di tepi kanan membuat tooltip
+  digeser ke dalam layar dan tetap utuh.
+- Di tema gelap, tooltip dan bingkai berganti warna dan tetap terbaca.
+- Unit test `heatmapCellAt` (kotak, celah, tepi, luar grid) lulus.
+- Getar tidak bisa dirasakan di emulator, jadi perlu dicoba di HP.
 
 ## Tahap 17-24: HabitFlow sebagai asisten harian (diskusi dulu, belum dikoding)
 

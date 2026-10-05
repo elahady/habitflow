@@ -79,6 +79,8 @@ fun ContributionScreen(state: ContributionUiState) {
                     onDayClick = onDayClick,
                     label = "Heatmap ${heat.habit.name}",
                     showLegend = false,
+                    // Heatmap per habit hanya punya dua keadaan: level 4 (selesai) dan 0 (belum).
+                    describeLevel = { if (it >= 4) "Selesai" else "Belum" },
                 )
             }
         }
