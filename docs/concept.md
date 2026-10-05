@@ -693,8 +693,60 @@ berdekatan. Mengikuti aturan tiga tingkat notifikasi di visi.
 - Tab Progres bagian Kesehatan menampilkan ringkasan mingguan: berapa hari Isi Piringku
   lengkap (keempat komponen di makan siang atau malam), jumlah gorengan, manis, dan kopi.
 
-### Tahap 24: Asisten AI
-Opsional dan paling akhir karena butuh internet.
+### Tahap 24: Asisten AI (diputuskan, belum dikoding)
+
+Butuh tahap 19B (server dan sinkron) selesai lebih dulu.
+
+**Keputusan (5 Oktober 2026).** Aturan fitur di `docs/rancangan.md` bagian Asisten AI.
+
+| Pertanyaan | Keputusan |
+|---|---|
+| Fitur | Ringkasan mingguan, tanya jawab atas data sendiri, bantu EOD dan daily scrum, saran pola otomatis |
+| Model | **Claude Sonnet 5.5** (`claude-sonnet-5-5`), dipilih Roziq karena lebih hemat |
+| Data yang dikirim | Semua data: habit, jadwal, follow-up kerja, kesehatan. Hanya saat fitur AI dipakai |
+| Batas biaya | **$5 per bulan**, dihitung di server |
+| Jalur | Lewat backend Laravel tahap 19B. HP tidak pernah memegang API key |
+
+**Rencana teknis:**
+- Backend Laravel memanggil Claude API dengan SDK resmi Anthropic untuk PHP. API key
+  disimpan di environment server. Endpoint HabitFlow di server dilindungi token yang sama
+  dengan sinkron 19B.
+- AI membaca data lewat **tool use**, bukan seluruh data sekaligus. Alat yang direncanakan:
+  ambil habit dan riwayat (rentang tanggal), ambil follow-up (status, orang, rentang),
+  ambil catatan EOD, ambil kesehatan (langkah, berat, tensi, makan, rentang), ambil jadwal dan
+  acara (tanggal). Semua alat hanya membaca. AI tidak pernah mengubah data sendiri.
+- Bantu EOD menghasilkan **usulan** (status follow-up, perapian Inbox, draf catatan EOD dan
+  rencana besok) yang harus disetujui di HP sebelum disimpan.
+- **Prompt caching**: instruksi sistem dan daftar alat dibuat tetap (tanpa tanggal atau data
+  yang berubah di dalamnya), lalu diberi cache. Tanggal hari ini dan pertanyaan diletakkan
+  setelah bagian yang di-cache.
+- Pengaturan request: adaptive thinking, effort `low` untuk tanya jawab dan bantu EOD,
+  `medium` untuk ringkasan mingguan dan saran pola. Streaming untuk tanya jawab. Tidak
+  memakai forced `tool_choice` (ditolak model ini). Pakai `tool_choice` auto, `strict: true`
+  pada alat, dan fallback server-side mode default untuk penolakan.
+- Ringkasan mingguan dan saran pola dibuat oleh jadwal di server (Minggu malam), disimpan di
+  server, dan diambil HP saat sinkron berikutnya. Saran pola tampil sesekali di dashboard.
+- **Anggaran**: server mencatat `usage` setiap request dan menghitung biaya per bulan. $1
+  dicadangkan untuk ringkasan mingguan dan bantu EOD. Saat sisa anggaran mencapai cadangan,
+  tanya jawab dan saran pola berhenti sampai bulan berikutnya, dengan pesan tenang di app.
+- Tanpa internet, fitur AI tidak tersedia dan app tetap jalan seperti biasa.
+
+**Perkiraan biaya** (Sonnet 5.5, $2 input dan $10 output per 1 juta token): ringkasan
+mingguan sekitar $0,08 per minggu, bantu EOD sekitar $0,02 per hari kerja, tanya jawab
+sekitar $0,025 per pertanyaan. Dengan batas $5, cukup untuk sekitar 5 pertanyaan per hari.
+Angka ini perkiraan kasar dan diperiksa ulang dari `usage` setelah sebulan dipakai.
+
+**Selesai jika:**
+- HP memanggil AI hanya lewat server. Tidak ada API key Anthropic di APK.
+- Tanya jawab menjawab pertanyaan tentang follow-up, habit, dan kesehatan memakai alat, dan
+  menyebut tanggal atau angka yang bisa dicek di app.
+- Bantu EOD menghasilkan usulan yang bisa disetujui, diubah, atau ditolak per item. Tidak ada
+  data yang berubah tanpa persetujuan.
+- Ringkasan mingguan muncul di app setelah sinkron Senin pagi.
+- `cache_read_input_tokens` lebih dari 0 pada pertanyaan kedua dan seterusnya dalam satu sesi.
+- Pencatatan biaya di server cocok dengan `usage` dari API, dan batas $5 menghentikan tanya
+  jawab saat cadangan tercapai.
+- Tanpa internet, layar AI menampilkan pesan dan bagian lain app tidak terganggu.
 
 ## Daftar pertanyaan terbuka
 

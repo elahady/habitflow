@@ -143,8 +143,9 @@ Subuh besok 04.12 · alarm 03.57
 
 ## Asisten AI ("Jarvis")
 
-Paling akhir dan opsional karena butuh internet: ringkasan mingguan, saran pola, dan
-tanya jawab atas data sendiri.
+Paling akhir dan opsional karena butuh internet: ringkasan mingguan, tanya jawab atas data
+sendiri, bantu EOD dan daily scrum, dan saran pola. Memakai Claude Sonnet 5.5 lewat server
+sendiri (tahap 19B), dengan batas biaya $5 per bulan. Rinciannya di tahap 24.
 
 ## Urutan pengerjaan
 

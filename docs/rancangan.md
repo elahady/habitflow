@@ -136,6 +136,18 @@ divisualisasikan seperti kontribusi GitHub.
   Centang manual selalu menang. Kopi ke-3 memunculkan pesan tenang.
 - Satu pengingat Info sebelum batas tidur kalau ada waktu makan yang belum dicatat.
 
+## Asisten AI (tahap 24)
+
+- Empat fitur: **ringkasan mingguan** (Minggu malam), **tanya jawab** atas data sendiri,
+  **bantu EOD dan daily scrum**, dan **saran pola** yang tampil sesekali di dashboard.
+- Model Claude Sonnet 5.5, dipanggil lewat server sendiri (tahap 19B), bukan dari HP.
+- AI hanya membaca data. Usulan AI (misalnya status follow-up saat EOD) harus disetujui
+  dulu sebelum disimpan.
+- Semua data boleh dikirim ke AI, tapi hanya saat fitur AI dipakai.
+- Batas biaya $5 per bulan. Saat hampir habis, tanya jawab dan saran pola berhenti sampai
+  bulan berikutnya. Ringkasan mingguan dan bantu EOD tetap jalan dari anggaran cadangan.
+- Fitur AI butuh internet. Tanpa internet, app tetap jalan seperti biasa.
+
 ## Daily scrum (tahap 15, dibatalkan)
 
 > Aturan di bawah tidak jadi dipakai. Daily scrum akan dibangun dari follow-up kerja di
