@@ -111,7 +111,8 @@ Rinciannya di tahap 19 dan 19B.
 ## Kesehatan
 
 - **Langkah**: dari Health Connect (data HP atau smartwatch). Target 8.000 langkah per hari
-  ditonjolkan di dashboard, dan mencentang habit "Jalan kaki" secara otomatis.
+  ditonjolkan di dashboard. Habit "Jalan kaki 20 menit" menjadi "8.000 langkah" yang
+  tercentang otomatis.
 - **Berat badan dan BMI**: catat berkala, tinggi badan diisi sekali. Grafik tren dan
   rentang BMI sehat.
 - **Tensi**: catat sistolik dan diastolik, dengan kategori dan grafik tren.
@@ -163,5 +164,3 @@ sebelum dikoding.
 - Jadwal akhir pekan dan hari libur.
 - Nama app setelah berkembang.
 - Apakah blok jadwal bisa ditandai selesai, dan apakah memengaruhi level hari.
-- Kategori tensi mengikuti pedoman mana.
-- Perangkat langkah: HP saja atau ada smartwatch.

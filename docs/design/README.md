@@ -219,6 +219,20 @@ memakai latar `primaryFixed` dan teks `onPrimaryContainer`, sama dengan `TonalBu
    bar navigasi. Membuka `ModalBottomSheet` berisi satu `OutlinedTextField` yang langsung
    fokus. Enter menyimpan, mengosongkan kolom, dan sheet tetap terbuka.
 
+### Kesehatan (tahap 21, belum diterapkan)
+1. **Kartu di Hari ini**, di bawah kartu skor: kartu Langkah selebar layar (angka "3.240 /
+   8.000" dengan displayMedium kecil, bar kemajuan `primary` di atas `surfaceContainerHighest`),
+   lalu dua kartu berdampingan Tensi dan Berat (angka terakhir, keterangan waktu, tombol teks
+   "+ Catat").
+2. **Bottom sheet catat**: berat satu kolom angka (kg, satu desimal). Tensi dua kolom
+   sistolik/diastolik berdampingan, nadi dan catatan opsional. Setelah simpan, tampil
+   kategori sebagai teks.
+3. **Tab Progres** (dulu Kontribusi): dua segmen di atas, "Habit" (isi lama) dan
+   "Kesehatan". Kesehatan berisi grafik garis berat dengan garis putus-putus target, dan
+   grafik tensi dua garis (sistolik dan diastolik). Grafik digambar dengan Canvas.
+4. Kategori selalu berupa teks ("Normal-tinggi"), warna hanya penguat. Tidak memakai merah,
+   termasuk untuk tensi sangat tinggi.
+
 ### Daily scrum (tahap 15, dibatalkan)
 1. **Kartu di Hari ini**, di bawah tombol "+ To-do": `AppCard` berisi judul "Daily scrum"
    (titleMedium) dan satu baris status (bodySmall, `onSurfaceVariant`): "Belum diisi" atau

@@ -28,7 +28,9 @@ divisualisasikan seperti kontribusi GitHub.
   setelah itu habit bisa dihapus. Dua habit seed tetap wajib sebagai nilai awal.
 - Habit lain bisa ditambah, diubah, dan dihapus.
 - Setiap habit hanya punya status centang: sudah atau belum, per hari.
-- Tidak ada input angka di versi ini (tekanan darah, gula, berat badan belum masuk).
+- Tidak ada input angka di habit. Berat badan dan tensi dicatat di fitur Kesehatan (tahap 21).
+- Habit boleh punya sumber otomatis. Saat ini hanya satu: habit "8.000 langkah" (dulu
+  "Jalan kaki 20 menit") tercentang otomatis dari Health Connect (tahap 21).
 
 ## To-do
 
@@ -86,6 +88,22 @@ divisualisasikan seperti kontribusi GitHub.
 - Orang terkait diketik bebas dengan saran nama yang pernah dipakai, dan bisa difilter.
 - HabitFlow menggantikan task harian di Notion. Task lama tidak dimigrasi.
 
+## Kesehatan (tahap 21)
+
+- **Langkah** dibaca dari Health Connect (HP atau smartwatch). Target 8.000 langkah per hari.
+  Saat tercapai, habit "8.000 langkah" tercentang otomatis. Habit itu tetap bisa dicentang
+  manual.
+- **Berat badan** dicatat kapan saja. Tinggi badan diisi sekali. BMI dan kategorinya mengikuti
+  Kemenkes RI (kurus < 18,5, normal 18,5–25,0, gemuk > 25,0–27,0, obesitas > 27,0). Ada target
+  berat (default batas atas BMI normal), sisa ke target, dan tren 4 minggu.
+- **Tensi** dicatat sebagai sistolik/diastolik, dengan nadi dan catatan opsional. Kategori
+  mengikuti PERHI/ESH. Kalau ≥ 180/110, app menampilkan saran tenang untuk istirahat, ukur
+  ulang, dan menghubungi dokter bila tetap tinggi atau ada keluhan.
+- Kategori adalah informasi, bukan diagnosis.
+- Pengingat: berat setiap Senin pagi setelah bangun, tensi pagi setelah bangun dengan
+  frekuensi yang bisa diatur (default mingguan). Keduanya bisa dimatikan.
+- Kesehatan tidak mengubah aturan level, kecuali lewat centang otomatis habit langkah.
+
 ## Daily scrum (tahap 15, dibatalkan)
 
 > Aturan di bawah tidak jadi dipakai. Daily scrum akan dibangun dari follow-up kerja di
@@ -135,10 +153,11 @@ divisualisasikan seperti kontribusi GitHub.
    - Header: tanggal, skor hari ini (contoh: "Habit 5/7 · To-do 2/5"), dan streak.
    - Bagian Habit ditampilkan dulu, lalu bagian To-do di bawahnya.
    - Jumlah Inbox yang belum dirapikan dan follow-up lewat tanggal (tahap 19).
+   - Kartu Langkah, Berat, dan Tensi dengan tombol catat (tahap 21).
    - Tombol tambah to-do, dinonaktifkan jika sudah 5.
 2. **Kerja** (tahap 19)
    - Inbox, Lewat tanggal, Hari ini, Menunggu, Nanti. Mode daily scrum dan EOD.
-3. **Kontribusi**
+3. **Progres** (dulu Kontribusi, diganti nama di tahap 21)
    - Heatmap gabungan (gaya GitHub), warna dari level hari. Minimal 26 minggu, dan
      ditambah minggu sampai lebar kartu terisi, paling banyak 53 minggu (setahun).
      Sisa ruang dibagi rata di kiri dan kanan grid.

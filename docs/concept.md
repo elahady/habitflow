@@ -566,9 +566,50 @@ Sudah diputuskan: minum air **setiap 60 menit** di jam kerja dengan tombol "Suda
 (8 gelas mencentang "Air putih 2 liter"), break **setiap 90 menit**, digabung kalau
 berdekatan. Mengikuti aturan tiga tingkat notifikasi di visi.
 
-### Tahap 21: Kesehatan
-Langkah dari Health Connect (target 8.000, mencentang "Jalan kaki"), berat badan dan BMI,
-tensi. Belum dibahas: pedoman kategori tensi, perangkat langkah, frekuensi pencatatan.
+### Tahap 21: Kesehatan (diputuskan, belum dikoding)
+
+**Keputusan (5 Oktober 2026).** Aturan fitur di `docs/rancangan.md` bagian Kesehatan.
+
+| Pertanyaan | Keputusan |
+|---|---|
+| Sumber langkah | Health Connect, dari HP atau smartwatch apa pun |
+| Letak | Input lewat kartu di dashboard Hari ini. Grafik di tab Kontribusi yang diganti nama **Progres** (Habit dan Kesehatan). Tetap 5 tab |
+| Langkah dan habit | Habit "Jalan kaki 20 menit" diganti nama **"8.000 langkah"** dan tercentang otomatis saat target tercapai. Tetap bisa dicentang manual |
+| Kategori BMI | Kemenkes RI: kurus < 18,5, normal 18,5–25,0, gemuk > 25,0–27,0, obesitas > 27,0 |
+| Target berat | Ada target berat dan tren 4 minggu. Default target = batas atas BMI normal |
+| Kategori tensi | PERHI/ESH: optimal < 120/80, normal 120–129/80–84, normal-tinggi 130–139/85–89, hipertensi derajat 1 ≥ 140/90, derajat 2 ≥ 160/100, derajat 3 ≥ 180/110 |
+| Tensi sangat tinggi | Pesan tenang dengan saran ukur ulang dan hubungi dokter. Tanpa alarm atau warna merah |
+| Pengingat | Berat: Senin pagi setelah bangun. Tensi: pagi setelah bangun, frekuensi bisa diatur (harian, mingguan, mati), default mingguan |
+
+**Rencana teknis:**
+- Health Connect lewat `androidx.health.connect:connect-client`, izin baca langkah saja.
+  Health Connect bawaan Android 14+. Di Android 9-13 perlu app Health Connect, dan app tetap
+  jalan tanpa itu (kartu langkah menampilkan cara mengaktifkan). Wajib ada layar penjelasan
+  izin (privacy rationale) yang diminta Health Connect.
+- Langkah hari ini dibaca saat app dibuka, saat dashboard tampil, dan berkala lewat
+  `AlarmManager` (sekitar setiap jam) untuk mencentang habit otomatis walau app tidak dibuka.
+- Habit punya sumber otomatis opsional (langkah) dan target. Migrasi mengganti nama habit
+  "Jalan kaki 20 menit" menjadi "8.000 langkah" dan memberinya sumber langkah, tanpa
+  mengubah riwayat centang.
+- Tabel baru `weight_entries` (waktu, kg) dan `blood_pressure_entries` (waktu, sistolik,
+  diastolik, nadi opsional, catatan). Tinggi badan dan target berat di pengaturan.
+- Kategori BMI dan tensi, tren berat, dan sisa ke target di `domain/` dengan unit test,
+  termasuk angka batas tiap kategori.
+- Grafik di Progres digambar sendiri dengan Canvas Compose, seperti heatmap, tanpa library
+  grafik baru.
+
+**Selesai jika:**
+- Dengan izin Health Connect, kartu langkah menampilkan langkah hari ini. Mencapai 8.000
+  mencentang habit "8.000 langkah" dalam waktu paling lama sekitar 1 jam walau app tertutup.
+- Tanpa Health Connect atau tanpa izin, app tetap jalan dan habit bisa dicentang manual.
+- Mencatat berat dan tensi bisa dari dashboard dalam satu bottom sheet. BMI dan kategori
+  tampil langsung setelah disimpan.
+- Unit test kategori BMI (Kemenkes) dan tensi (PERHI) lulus untuk semua angka batas.
+- Tensi ≥ 180/110 memunculkan pesan saran, bukan alarm.
+- Tab Progres menampilkan heatmap habit seperti sebelumnya dan grafik berat (dengan garis
+  target) serta tensi (sistolik dan diastolik).
+- Pengingat berat dan tensi muncul sesuai pengaturan dan bisa dimatikan.
+- Migrasi mengganti nama habit tanpa menghapus riwayatnya.
 
 ### Tahap 22: Kalender dan acara rutin
 Acara berulang (misalnya meeting setiap 2 minggu), pengingat −15 menit, kemungkinan
