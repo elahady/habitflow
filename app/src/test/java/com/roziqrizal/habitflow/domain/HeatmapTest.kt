@@ -76,4 +76,36 @@ class HeatmapTest {
         assertEquals(HEATMAP_WEEKS, heatmapWeeksFor(available = 100f, step = 12f, gap = 3f))
         assertEquals(HEATMAP_MAX_WEEKS, heatmapWeeksFor(available = 2000f, step = 12f, gap = 3f))
     }
+
+    // Kotak 9, jarak 3, langkah 12, 26 kolom: lebar grid 309, tinggi 81.
+    private fun cellAt(x: Float, y: Float) = heatmapCellAt(x, y, step = 12f, gap = 3f, weeks = 26)
+
+    @Test
+    fun `titik di dalam kotak mengenai kotak itu`() {
+        assertEquals(HeatmapCell(0, 0), cellAt(4f, 4f))
+        assertEquals(HeatmapCell(2, 3), cellAt(2 * 12f + 8f, 3 * 12f + 1f))
+    }
+
+    @Test
+    fun `celah dibagi dua ke kotak terdekat`() {
+        // Kotak kolom 0 berakhir di 9, kolom 1 mulai di 12. Batasnya di 10,5.
+        assertEquals(HeatmapCell(0, 0), cellAt(10.4f, 4f))
+        assertEquals(HeatmapCell(1, 0), cellAt(10.6f, 4f))
+        assertEquals(HeatmapCell(0, 0), cellAt(4f, 10.4f))
+        assertEquals(HeatmapCell(0, 1), cellAt(4f, 10.6f))
+    }
+
+    @Test
+    fun `tepi grid masih mengenai kotak terluar`() {
+        assertEquals(HeatmapCell(0, 0), cellAt(-1f, -1f))
+        assertEquals(HeatmapCell(25, 6), cellAt(310f, 82f))
+    }
+
+    @Test
+    fun `titik jauh di luar grid tidak mengenai kotak`() {
+        assertEquals(null, cellAt(-2f, 4f))
+        assertEquals(null, cellAt(4f, -2f))
+        assertEquals(null, cellAt(311f, 4f))
+        assertEquals(null, cellAt(4f, 83f))
+    }
 }

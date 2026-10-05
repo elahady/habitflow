@@ -29,3 +29,22 @@ fun heatmapWeeksFor(available: Float, step: Float, gap: Float): Int =
 /** Tanggal untuk sel ([col], [row]). Baris 0 = Senin, baris 6 = Minggu. */
 fun heatmapDate(start: LocalDate, col: Int, row: Int): LocalDate =
     start.plusDays(col * 7L + row)
+
+/** Posisi sel di heatmap: kolom (minggu) dan baris (hari, 0 = Senin). */
+data class HeatmapCell(val col: Int, val row: Int)
+
+/**
+ * Sel terdekat dari titik ([x], [y]) di grid berisi [weeks] kolom dan 7 baris, dengan kotak
+ * selebar `step - gap` dan jarak [gap]. Celah antar kotak dibagi dua ke kotak di kiri-kanan
+ * atau atas-bawahnya, jadi seluruh area grid mengenai satu kotak. Titik yang lebih jauh dari
+ * setengah celah di luar grid menghasilkan null.
+ */
+fun heatmapCellAt(x: Float, y: Float, step: Float, gap: Float, weeks: Int): HeatmapCell? {
+    val half = gap / 2
+    val width = step * weeks - gap
+    val height = step * 7 - gap
+    if (x < -half || y < -half || x > width + half || y > height + half) return null
+    val col = ((x + half) / step).toInt().coerceIn(0, weeks - 1)
+    val row = ((y + half) / step).toInt().coerceIn(0, 6)
+    return HeatmapCell(col, row)
+}
