@@ -219,19 +219,32 @@ dan diputuskan bersama.** Setelah keputusan diambil, aturan fiturnya ditulis dul
 `docs/rancangan.md` (dan `docs/design/README.md` untuk tampilan), lalu tahap ini diberi
 kriteria "Selesai jika" seperti tahap lain.
 
-## Tahap 13: Status bar menyatu dengan warna layar (diskusi)
+## Tahap 13: Status bar menyatu dengan warna layar (diputuskan, belum dikoding)
 
 **Masalah sekarang:** status bar (bar notifikasi di atas) berwarna abu-abu, tidak
 mengikuti latar app. Di mode gelap terlihat makin kontras. Splash screen juga tetap
 terang walau pilihan tampilan Gelap.
 
-**Yang perlu diputuskan:**
-- Status bar memakai warna latar layar (`surfaceContainerLow`), atau app digambar
-  sampai ke belakang status bar (edge-to-edge) sehingga warnanya otomatis sama.
-- Bar navigasi sistem di bawah (garis gesture) ikut disamakan atau tidak.
-- Ikon status bar (jam, baterai) harus gelap di tema terang dan terang di tema gelap,
-  mengikuti pilihan tampilan di app, bukan pengaturan HP.
-- Splash dan latar jendela sebelum Compose menggambar ikut mengikuti pilihan tampilan.
+**Keputusan (5 Oktober 2026):**
+- App memakai **edge-to-edge**: digambar sampai ke belakang status bar, sehingga warna
+  status bar otomatis sama dengan latar layar. Tidak memakai warna status bar manual.
+- **Bar gesture bawah** ikut warna bar navigasi app (`surfaceContainer`), tidak hitam lagi.
+- **Ikon status bar** (jam, baterai) mengikuti pilihan tampilan di app: gelap di tema
+  terang, terang di tema gelap. Bukan mengikuti pengaturan HP.
+- **Splash screen** mengikuti pilihan tampilan di app untuk Android 12+. Di Android 8-11
+  splash mengikuti tema HP karena batasan sistem, jadi kilasan singkat masih mungkin
+  kalau pilihan app berbeda dengan tema HP.
+- Isi layar tidak boleh tertutup status bar atau bar gesture. Jarak dari Scaffold tetap
+  dipakai, dan bottom sheet detail hari tetap di atas bar gesture.
+
+**Selesai jika:**
+- Di keempat tab, status bar berwarna sama dengan latar layar, baik di tema terang
+  maupun gelap, dan ikon status bar terbaca.
+- Bar gesture bawah berwarna sama dengan bar navigasi.
+- Mengganti pilihan tampilan di Tentang langsung mengubah warna ikon status bar.
+- Dengan HP terang dan pilihan Gelap, splash di Android 12+ tampil gelap.
+- Tidak ada teks atau tombol yang tertutup status bar, bar gesture, atau keyboard
+  (dialog tambah to-do dan tambah habit).
 
 ## Tahap 14: Habit wajib bisa diatur sendiri (diskusi)
 

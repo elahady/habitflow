@@ -198,6 +198,13 @@ memakai latar `primaryFixed` dan teks `onPrimaryContainer`, sama dengan `TonalBu
 **Belum diterapkan:** tab belum punya ikon, jadi indikator pill mengecil menjadi garis tipis di atas
 label. Kalau ikon ditambahkan, indikator akan tampil seperti pill penuh.
 
+### System bar (tahap 13, belum diterapkan)
+- Edge-to-edge. Status bar transparan di atas latar layar (`surfaceContainerLow`).
+- Bar gesture bawah memakai `surfaceContainer`, menyambung dengan bar navigasi app.
+- Ikon system bar gelap di tema terang dan terang di tema gelap, mengikuti pilihan
+  tampilan di app.
+- Splash memakai latar `background` sesuai pilihan tampilan (Android 12+).
+
 ### Latar layar
 Latar di belakang kartu memakai `surfaceContainerLow`, bukan `background`, supaya kartu putih terlihat.
 
