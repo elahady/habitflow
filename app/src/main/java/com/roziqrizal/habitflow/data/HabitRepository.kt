@@ -42,6 +42,11 @@ class HabitRepository(private val db: HabitDatabase) {
         habits.update(habit.copy(name = newName.trim()))
     }
 
+    /** Status wajib bisa diatur untuk habit mana pun. Riwayat centang tidak berubah. */
+    suspend fun setMandatory(habitId: Long, mandatory: Boolean) {
+        habits.setMandatory(habitId, mandatory)
+    }
+
     /** Habit wajib tidak bisa dihapus. Mengembalikan false kalau penghapusan ditolak. */
     suspend fun deleteHabit(habitId: Long): Boolean = db.withTransaction {
         // Riwayat baru dihapus setelah habitnya benar-benar terhapus, supaya riwayat habit wajib

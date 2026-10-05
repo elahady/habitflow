@@ -31,6 +31,10 @@ class ManageHabitsViewModel(
         viewModelScope.launch { repo.renameHabit(habit, name) }
     }
 
+    fun setMandatory(habit: Habit, mandatory: Boolean) {
+        viewModelScope.launch { repo.setMandatory(habit.id, mandatory) }
+    }
+
     /** Habit wajib ditolak di repository, jadi tombol hapus untuk habit wajib tidak berpengaruh. */
     fun deleteHabit(habit: Habit) {
         viewModelScope.launch { repo.deleteHabit(habit.id) }

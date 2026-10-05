@@ -252,7 +252,7 @@ sempat punya Scaffold kedua yang membuat jarak status bar ganda, dan sudah dihap
 teks hanya ada di `AlertDialog` (jendela terpisah), jadi tidak tertutup keyboard. Splash di
 Android 8-11 belum diuji di perangkat.
 
-## Tahap 14: Habit wajib bisa diatur sendiri (diputuskan, belum dikoding)
+## Tahap 14: Habit wajib bisa diatur sendiri (selesai, 5 Oktober 2026)
 
 **Aturan sebelumnya:** habit wajib ditentukan saat seed (Sholat 5 waktu dan Baca
 Al-Quran), tidak bisa dihapus, dan tidak bisa diubah statusnya.
@@ -278,6 +278,12 @@ Al-Quran), tidak bisa dihapus, dan tidak bisa diubah statusnya.
 - Habit yang sedang wajib tetap ditolak dihapus di repository, walau dipanggil langsung.
 - Riwayat centang, level, dan streak tidak berubah saat status wajib diganti.
 - Status wajib tetap setelah app ditutup dan dibuka lagi.
+
+**Hasil verifikasi di emulator:** "Tanpa minuman manis" dinyalakan wajib, lalu naik ke
+kelompok atas dan tombol Hapus hilang. "Sholat 5 waktu" dimatikan: Batal membuat status
+tetap wajib, Lepas membuatnya pindah ke urutan biasa dengan tombol Hapus. Setelah app
+ditutup paksa, urutan di Hari ini ikut berubah, centang hari ini tetap, dan skor tetap
+4/9 Level 1. Penolakan hapus di repository tidak diubah (`deleteIfNotMandatory`).
 
 ## Tahap 15: Daily scrum di dalam app (diskusi konsep)
 

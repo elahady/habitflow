@@ -25,6 +25,9 @@ interface HabitDao {
     @Update
     suspend fun update(habit: Habit)
 
+    @Query("UPDATE habits SET isMandatory = :mandatory WHERE id = :id")
+    suspend fun setMandatory(id: Long, mandatory: Boolean)
+
     @Query("DELETE FROM habits WHERE id = :id AND isMandatory = 0")
     suspend fun deleteIfNotMandatory(id: Long): Int
 }

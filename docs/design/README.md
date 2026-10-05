@@ -178,12 +178,11 @@ detail hari memakai `ModalBottomSheet`.
 ### Kelola habit
 1. Judul "Kelola habit".
 2. Tombol `TonalButton` "+ Habit".
-3. Satu kartu per habit: nama (tap untuk ubah), label "Wajib" untuk habit wajib, dan tombol
-   "Hapus" hanya untuk habit tidak wajib.
-4. (Tahap 14, belum diterapkan) Di bawah nama setiap kartu ada baris "Wajib" (bodySmall,
-   `onSurfaceVariant`) dengan `Switch` Material 3. Switch aktif memakai track `primary` dan
-   thumb `onPrimary`. Mematikan switch membuka `AlertDialog` "Lepas status wajib?" dengan
-   tombol "Batal" dan "Lepas". Label "Wajib, tidak bisa dihapus" diganti oleh switch ini.
+3. Satu kartu per habit: nama (tap untuk ubah), lalu baris "Wajib" (bodySmall,
+   `onSurfaceVariant`) dengan `Switch` Material 3 bawaan (track `primary`, thumb `onPrimary`
+   saat aktif). Seluruh baris bisa ditekan. Tombol "Hapus" hanya ada untuk habit tidak wajib.
+4. Mematikan switch membuka `AlertDialog` "Lepas status wajib?" dengan tombol "Batal" dan
+   "Lepas". Menyalakan switch langsung berlaku.
 
 ### Tentang
 Nama app (headlineMedium), "Versi x.y" (bodyMedium, `onSurfaceVariant`), dan "Dibuat oleh Roziq Rizal".

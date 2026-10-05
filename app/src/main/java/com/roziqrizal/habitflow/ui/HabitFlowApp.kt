@@ -98,6 +98,7 @@ fun HabitFlowApp(
                         habits = habits,
                         onAdd = manage::addHabit,
                         onRename = manage::renameHabit,
+                        onSetMandatory = manage::setMandatory,
                         onDelete = manage::deleteHabit,
                     )
                 }
