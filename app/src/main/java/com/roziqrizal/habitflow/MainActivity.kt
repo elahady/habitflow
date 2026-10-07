@@ -34,7 +34,6 @@ import com.roziqrizal.habitflow.data.NotificationSettings
 import com.roziqrizal.habitflow.data.ScheduleRepository
 import com.roziqrizal.habitflow.data.WorkRepository
 import com.roziqrizal.habitflow.data.ThemeMode
-import com.roziqrizal.habitflow.data.ThemeSettings
 import com.roziqrizal.habitflow.notify.ScheduleNotifier
 import com.roziqrizal.habitflow.ui.ContributionViewModel
 import com.roziqrizal.habitflow.ui.DayClock
@@ -61,10 +60,11 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         readWorkRequest(intent)
-        val themeSettings = ThemeSettings(applicationContext)
-        val locationSettings = LocationSettings(applicationContext)
-        val notificationSettings = NotificationSettings(applicationContext)
-        val alarmSettings = AlarmSettings(applicationContext)
+        val graph = (application as HabitFlowApplication).graph
+        val themeSettings = graph.themeSettings
+        val locationSettings = graph.locationSettings
+        val notificationSettings = graph.notificationSettings
+        val alarmSettings = graph.alarmSettings
         requestNotificationPermission()
         keepNotificationsInSync(locationSettings, notificationSettings, alarmSettings)
         themeSettings.syncWithSystem()
