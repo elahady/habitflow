@@ -26,6 +26,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.roziqrizal.habitflow.data.AlarmSettings
 import com.roziqrizal.habitflow.data.HabitDatabase
 import com.roziqrizal.habitflow.data.HabitRepository
 import com.roziqrizal.habitflow.data.LocationSettings
@@ -58,8 +59,9 @@ class MainActivity : ComponentActivity() {
         val themeSettings = ThemeSettings(applicationContext)
         val locationSettings = LocationSettings(applicationContext)
         val notificationSettings = NotificationSettings(applicationContext)
+        val alarmSettings = AlarmSettings(applicationContext)
         requestNotificationPermission()
-        keepNotificationsInSync(locationSettings, notificationSettings)
+        keepNotificationsInSync(locationSettings, notificationSettings, alarmSettings)
         themeSettings.syncWithSystem()
         setContent {
             val themeMode by themeSettings.mode.collectAsState()
@@ -110,6 +112,7 @@ class MainActivity : ComponentActivity() {
                     location = locationSettings.location.collectAsState().value,
                     onLocationChange = locationSettings::set,
                     persistentNotification = notificationSettings.persistent.collectAsState().value,
+                    alarmSettings = alarmSettings,
                     onPersistentNotificationChange = notificationSettings::setPersistent,
                     onThemeModeChange = themeSettings::setMode,
                 )
@@ -136,7 +139,11 @@ class MainActivity : ComponentActivity() {
      * berubah, dan setiap app dibuka (lewat tanggal) selama layar aktif.
      */
     @OptIn(FlowPreview::class)
-    private fun keepNotificationsInSync(locationSettings: LocationSettings, notificationSettings: NotificationSettings) {
+    private fun keepNotificationsInSync(
+        locationSettings: LocationSettings,
+        notificationSettings: NotificationSettings,
+        alarmSettings: AlarmSettings,
+    ) {
         val repo = ScheduleRepository(HabitDatabase.get(applicationContext))
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -145,8 +152,10 @@ class MainActivity : ComponentActivity() {
                     repo.observeDaysOff(),
                     locationSettings.location,
                     notificationSettings.persistent,
+                    alarmSettings.skipped,
+                    alarmSettings.adzan,
                     clock.date,
-                ) { _, _, _, _, _ -> }
+                ) { _ -> }
                     .debounce(500)
                     .collect { ScheduleNotifier.refresh(applicationContext, announce = false) }
             }

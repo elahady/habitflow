@@ -21,16 +21,21 @@ import com.roziqrizal.habitflow.data.LocationSettings
 import com.roziqrizal.habitflow.data.NotificationSettings
 import com.roziqrizal.habitflow.data.ScheduleRepository
 import com.roziqrizal.habitflow.domain.prayer.EphemerisPrayerCalculator
+import com.roziqrizal.habitflow.domain.schedule.AlarmTime
 import com.roziqrizal.habitflow.domain.schedule.NotificationLevel
 import com.roziqrizal.habitflow.domain.schedule.ResolvedBlock
 import com.roziqrizal.habitflow.domain.schedule.adzanPrayer
 import com.roziqrizal.habitflow.domain.schedule.blocksStartedBetween
 import com.roziqrizal.habitflow.domain.schedule.boundaryMinutes
 import com.roziqrizal.habitflow.domain.schedule.nextBoundaryMinute
+import com.roziqrizal.habitflow.domain.schedule.nextAlarm
 import com.roziqrizal.habitflow.domain.schedule.notificationWindow
 import com.roziqrizal.habitflow.domain.schedule.nowAndNext
 import com.roziqrizal.habitflow.domain.schedule.resolveBlocks
 import com.roziqrizal.habitflow.ui.formatMinute
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -47,6 +52,7 @@ object ScheduleNotifier {
 
     const val ACTION_ALARM = "com.roziqrizal.habitflow.SCHEDULE_ALARM"
     const val ACTION_DONE = "com.roziqrizal.habitflow.BLOCK_DONE"
+    const val ACTION_RING = "com.roziqrizal.habitflow.ALARM_RING"
     const val EXTRA_BLOCK_ID = "blockId"
     const val EXTRA_DATE = "date"
 
@@ -54,6 +60,7 @@ object ScheduleNotifier {
     private const val CHANNEL_REMINDER = "schedule_reminder"
     private const val CHANNEL_ONGOING = "schedule_ongoing"
     private const val ONGOING_ID = 1
+    private const val REQUEST_ALARM_CLOCK = 1
     private const val BLOCK_ID_BASE = 1000
 
     /** Jendela mundur untuk blok yang baru mulai, kalau alarm terlambat atau HP baru menyala. */
@@ -68,9 +75,10 @@ object ScheduleNotifier {
 
     /**
      * Hitung ulang notifikasi tetap dan jadwalkan alarm berikutnya. Dengan [announce], blok yang
-     * baru mulai ikut dinotifikasikan (dipakai saat alarm berbunyi).
+     * baru mulai ikut dinotifikasikan (dipakai saat alarm berbunyi). Tidak bisa dibatalkan: keluar dari
+     * app di tengah proses tidak boleh membuat alarm batal terjadwal.
      */
-    suspend fun refresh(context: Context, announce: Boolean) {
+    suspend fun refresh(context: Context, announce: Boolean) = withContext(NonCancellable + Dispatchers.Default) {
         val app = context.applicationContext
         ensureChannels(app)
 
@@ -100,6 +108,15 @@ object ScheduleNotifier {
             tomorrow.atStartOfDay(zone).plusMinutes(first.toLong())
         }
         scheduleAlarm(app, trigger.toInstant().toEpochMilli())
+
+        val alarmSettings = AlarmSettings(app)
+        scheduleAlarmClock(
+            app,
+            nextAlarm(blocks, now.toLocalDateTime(), alarmSettings.skipped.value) { date ->
+                EphemerisPrayerCalculator.calculate(date, place.latitude, place.longitude, zone)
+            },
+            zone,
+        )
     }
 
     private fun announceStarted(context: Context, resolved: List<ResolvedBlock>, today: LocalDate, nowMinute: Int) {
@@ -176,7 +193,7 @@ object ScheduleNotifier {
 
     private fun blockNotificationId(blockId: Long) = BLOCK_ID_BASE + blockId.toInt()
 
-    private fun openAppIntent(context: Context): PendingIntent = PendingIntent.getActivity(
+    fun openAppIntent(context: Context): PendingIntent = PendingIntent.getActivity(
         context, 0, Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
     )
@@ -188,6 +205,36 @@ object ScheduleNotifier {
         )
         context.getSystemService(AlarmManager::class.java)
             .setWindow(AlarmManager.RTC_WAKEUP, triggerAtMillis, ALARM_WINDOW_MILLIS, pending)
+    }
+
+    /** Alarm jam (`setAlarmClock`): presisi, menembus Doze, dan ikon alarm tampil di status bar. Null membatalkan. */
+    private fun scheduleAlarmClock(context: Context, alarm: AlarmTime?, zone: ZoneId) {
+        val manager = context.getSystemService(AlarmManager::class.java)
+        val intent = Intent(context, ScheduleReceiver::class.java).setAction(ACTION_RING)
+        if (alarm == null) {
+            PendingIntent.getBroadcast(context, REQUEST_ALARM_CLOCK, intent, PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE)
+                ?.let { manager.cancel(it) }
+            return
+        }
+        intent.putExtra(AlarmService.EXTRA_NAME, alarm.block.name)
+        val pending = PendingIntent.getBroadcast(
+            context, REQUEST_ALARM_CLOCK, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+        val triggerAt = alarm.dateTime.atZone(zone).toInstant().toEpochMilli()
+        setClockAlarm(context, triggerAt, pending)
+    }
+
+    /**
+     * Alarm jam presisi yang menembus Doze. Kalau izin alarm presisi dicabut pengguna (Android 12),
+     * jangan jatuhkan app: pakai alarm tidak presisi sebagai gantinya.
+     */
+    fun setClockAlarm(context: Context, triggerAtMillis: Long, pending: PendingIntent) {
+        val manager = context.getSystemService(AlarmManager::class.java)
+        try {
+            manager.setAlarmClock(AlarmManager.AlarmClockInfo(triggerAtMillis, openAppIntent(context)), pending)
+        } catch (e: SecurityException) {
+            manager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pending)
+        }
     }
 
     private fun canNotify(context: Context): Boolean =

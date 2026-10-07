@@ -20,6 +20,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Modifier
+import com.roziqrizal.habitflow.data.AlarmSettings
 import com.roziqrizal.habitflow.data.PlaceLocation
 import com.roziqrizal.habitflow.data.ThemeMode
 import com.roziqrizal.habitflow.ui.theme.tokens
@@ -42,6 +43,7 @@ fun HabitFlowApp(
     location: PlaceLocation,
     onLocationChange: (PlaceLocation) -> Unit,
     persistentNotification: Boolean,
+    alarmSettings: AlarmSettings,
     onPersistentNotificationChange: (Boolean) -> Unit,
     onThemeModeChange: (ThemeMode) -> Unit,
 ) {
@@ -126,15 +128,20 @@ fun HabitFlowApp(
                         onDelete = manage::deleteHabit,
                     )
                 }
-                Tab.ABOUT -> AboutScreen(
-                    versionName = versionName,
-                    themeMode = themeMode,
-                    location = location,
-                    onLocationChange = onLocationChange,
-                    persistentNotification = persistentNotification,
-                    onPersistentNotificationChange = onPersistentNotificationChange,
-                    onThemeModeChange = onThemeModeChange,
-                )
+                Tab.ABOUT -> {
+                    val nextAlarm by schedule.nextAlarm.collectAsState()
+                    AboutScreen(
+                        versionName = versionName,
+                        themeMode = themeMode,
+                        location = location,
+                        onLocationChange = onLocationChange,
+                        persistentNotification = persistentNotification,
+                        nextAlarm = nextAlarm,
+                        alarmSettings = alarmSettings,
+                        onPersistentNotificationChange = onPersistentNotificationChange,
+                        onThemeModeChange = onThemeModeChange,
+                    )
+                }
             }
         }
     }

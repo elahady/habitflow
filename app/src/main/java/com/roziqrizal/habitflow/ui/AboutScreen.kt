@@ -1,5 +1,10 @@
 package com.roziqrizal.habitflow.ui
 
+import android.app.Activity
+import android.content.Intent
+import android.media.RingtoneManager
+import android.net.Uri
+import android.os.Build
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -23,6 +28,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,12 +39,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.roziqrizal.habitflow.data.AlarmSettings
 import com.roziqrizal.habitflow.data.DeviceLocation
 import com.roziqrizal.habitflow.data.LocationSettings
 import com.roziqrizal.habitflow.data.PlaceLocation
 import com.roziqrizal.habitflow.data.ThemeMode
+import com.roziqrizal.habitflow.domain.prayer.PrayerName
+import com.roziqrizal.habitflow.domain.schedule.AlarmTime
 import com.roziqrizal.habitflow.ui.theme.tokens
 import kotlinx.coroutines.launch
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 private val ThemeMode.label: String
     get() = when (this) {
@@ -56,6 +67,8 @@ fun AboutScreen(
     onLocationChange: (PlaceLocation) -> Unit,
     persistentNotification: Boolean,
     onPersistentNotificationChange: (Boolean) -> Unit,
+    nextAlarm: AlarmTime?,
+    alarmSettings: AlarmSettings,
 ) {
     Column(
         modifier = Modifier
@@ -99,6 +112,12 @@ fun AboutScreen(
             }
             Switch(checked = persistentNotification, onCheckedChange = onPersistentNotificationChange)
         }
+
+        SettingLabel("Alarm")
+        AlarmSection(nextAlarm = nextAlarm, settings = alarmSettings)
+
+        SettingLabel("Pengingat adzan")
+        AdzanSection(settings = alarmSettings)
     }
 }
 
@@ -227,6 +246,86 @@ private fun ThemeModeSelector(selected: ThemeMode, onSelect: (ThemeMode) -> Unit
                     activeContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                 ),
                 label = { Text(mode.label) },
+            )
+        }
+    }
+}
+
+private val ALARM_DATE_FORMAT = DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy", Locale("id", "ID"))
+
+@Composable
+private fun AlarmSection(nextAlarm: AlarmTime?, settings: AlarmSettings) {
+    val context = LocalContext.current
+    val skipped by settings.skipped.collectAsState()
+    val ringtone by settings.ringtone.collectAsState()
+
+    if (nextAlarm == null) {
+        Text(
+            "Belum ada alarm. Ubah tingkat notifikasi sebuah blok menjadi Alarm di Atur jadwal.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    } else {
+        val off = nextAlarm.date in skipped
+        Text("Alarm berikutnya · ${nextAlarm.block.name}", style = MaterialTheme.typography.bodyLarge)
+        Text(
+            "${nextAlarm.date.format(ALARM_DATE_FORMAT)}, ${formatMinute(nextAlarm.dateTime.hour * 60 + nextAlarm.dateTime.minute)}" +
+                if (off) " (dimatikan)" else "",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        TextButton(onClick = { settings.setSkipped(nextAlarm.date, !off) }) {
+            Text(if (off) "Nyalakan lagi" else "Matikan untuk tanggal itu")
+        }
+    }
+
+    val picker = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val picked: Uri? = result.data?.let {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    it.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI, Uri::class.java)
+                } else {
+                    @Suppress("DEPRECATION")
+                    it.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+                }
+            }
+            settings.setRingtone(picked?.toString())
+        }
+    }
+    val title = remember(ringtone) {
+        runCatching { RingtoneManager.getRingtone(context, settings.ringtoneUri()).getTitle(context) }.getOrDefault("Nada alarm bawaan")
+    }
+    TextButton(
+        onClick = {
+            picker.launch(
+                Intent(RingtoneManager.ACTION_RINGTONE_PICKER)
+                    .putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_ALARM)
+                    .putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
+                    .putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, settings.ringtoneUri()),
+            )
+        },
+    ) { Text("Pilih nada") }
+    Text(title, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+}
+
+private val PrayerName.label: String
+    get() = when (this) {
+        PrayerName.SUBUH -> "Subuh"
+        PrayerName.DZUHUR -> "Dzuhur"
+        PrayerName.ASHAR -> "Ashar"
+        PrayerName.MAGHRIB -> "Maghrib"
+        PrayerName.ISYA -> "Isya"
+    }
+
+@Composable
+private fun AdzanSection(settings: AlarmSettings) {
+    val enabled by settings.adzan.collectAsState()
+    PrayerName.entries.forEach { name ->
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+            Text(name.label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+            Switch(
+                checked = enabled[name] ?: true,
+                onCheckedChange = { settings.setAdzanEnabled(name, it) },
             )
         }
     }

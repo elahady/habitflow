@@ -3,6 +3,7 @@ package com.roziqrizal.habitflow.notify
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import androidx.core.content.ContextCompat
 import com.roziqrizal.habitflow.data.HabitDatabase
 import com.roziqrizal.habitflow.data.ScheduleRepository
 import kotlinx.coroutines.CoroutineScope
@@ -24,12 +25,22 @@ class ScheduleReceiver : BroadcastReceiver() {
                 when (intent.action) {
                     ScheduleNotifier.ACTION_DONE -> markDone(app, intent)
                     ScheduleNotifier.ACTION_ALARM -> ScheduleNotifier.refresh(app, announce = true)
+                    ScheduleNotifier.ACTION_RING -> ring(app, intent)
                     else -> ScheduleNotifier.refresh(app, announce = false)
                 }
             } finally {
                 pending.finish()
             }
         }
+    }
+
+    /** Alarm jam berbunyi: nyalakan service, lalu jadwalkan alarm berikutnya dan umumkan blok lain yang mulai. */
+    private suspend fun ring(context: Context, intent: Intent) {
+        val service = Intent(context, AlarmService::class.java)
+            .putExtra(AlarmService.EXTRA_NAME, intent.getStringExtra(AlarmService.EXTRA_NAME))
+            .putExtra(AlarmService.EXTRA_SNOOZE_COUNT, intent.getIntExtra(AlarmService.EXTRA_SNOOZE_COUNT, 0))
+        ContextCompat.startForegroundService(context, service)
+        ScheduleNotifier.refresh(context, announce = true)
     }
 
     private suspend fun markDone(context: Context, intent: Intent) {

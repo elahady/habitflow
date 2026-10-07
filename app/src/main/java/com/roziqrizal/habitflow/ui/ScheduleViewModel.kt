@@ -9,8 +9,10 @@ import com.roziqrizal.habitflow.data.PlaceLocation
 import com.roziqrizal.habitflow.data.ScheduleRepository
 import com.roziqrizal.habitflow.domain.prayer.EphemerisPrayerCalculator
 import com.roziqrizal.habitflow.domain.prayer.PrayerTimes
+import com.roziqrizal.habitflow.domain.schedule.AlarmTime
 import com.roziqrizal.habitflow.domain.schedule.ResolvedBlock
 import com.roziqrizal.habitflow.domain.schedule.ScheduleBlock
+import com.roziqrizal.habitflow.domain.schedule.nextAlarm as computeNextAlarm
 import com.roziqrizal.habitflow.domain.schedule.nowAndNext
 import com.roziqrizal.habitflow.domain.schedule.resolveBlocks
 import kotlinx.coroutines.delay
@@ -24,6 +26,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
 
@@ -98,6 +101,22 @@ class ScheduleViewModel(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = ScheduleUiState(date = clock.date.value),
+    )
+
+    /** Alarm berikutnya tanpa memandang tanggal yang dimatikan, supaya tanggal itu bisa dinyalakan lagi dari Tentang. */
+    val nextAlarm: StateFlow<AlarmTime?> = combine(
+        repo.observeBlocks(),
+        locationSettings.location,
+        clock.date,
+        minuteTicker(),
+    ) { blocks, place, _, _ ->
+        computeNextAlarm(blocks, LocalDateTime.now(), emptySet()) { date ->
+            EphemerisPrayerCalculator.calculate(date, place.latitude, place.longitude, zone())
+        }
+    }.flowOn(Dispatchers.Default).stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = null,
     )
 
     val editor: StateFlow<ScheduleEditorState> = combine(
