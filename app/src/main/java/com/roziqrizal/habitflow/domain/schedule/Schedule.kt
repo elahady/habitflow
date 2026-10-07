@@ -119,3 +119,10 @@ fun nextBoundaryMinute(resolved: List<ResolvedBlock>, afterMinute: Int): Int? =
  */
 fun blocksStartedBetween(resolved: List<ResolvedBlock>, sinceMinute: Int, nowMinute: Int): List<ResolvedBlock> =
     resolved.filter { it.startMinute > sinceMinute && it.startMinute <= nowMinute }
+
+/**
+ * Waktu sholat yang diumumkan blok ini sebagai adzan: blok yang mulai tepat di waktu sholat
+ * (selisih 0). Switch "Pengingat adzan" per waktu sholat mematikan notifikasi blok seperti ini.
+ */
+fun ScheduleBlock.adzanPrayer(): PrayerName? =
+    (start as? BlockStart.Prayer)?.takeIf { it.offsetMinutes == 0 }?.name

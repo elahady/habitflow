@@ -15,6 +15,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.roziqrizal.habitflow.MainActivity
 import com.roziqrizal.habitflow.R
+import com.roziqrizal.habitflow.data.AlarmSettings
 import com.roziqrizal.habitflow.data.HabitDatabase
 import com.roziqrizal.habitflow.data.LocationSettings
 import com.roziqrizal.habitflow.data.NotificationSettings
@@ -22,6 +23,7 @@ import com.roziqrizal.habitflow.data.ScheduleRepository
 import com.roziqrizal.habitflow.domain.prayer.EphemerisPrayerCalculator
 import com.roziqrizal.habitflow.domain.schedule.NotificationLevel
 import com.roziqrizal.habitflow.domain.schedule.ResolvedBlock
+import com.roziqrizal.habitflow.domain.schedule.adzanPrayer
 import com.roziqrizal.habitflow.domain.schedule.blocksStartedBetween
 import com.roziqrizal.habitflow.domain.schedule.boundaryMinutes
 import com.roziqrizal.habitflow.domain.schedule.nextBoundaryMinute
@@ -109,7 +111,12 @@ object ScheduleNotifier {
         }.coerceAtLeast(nowMinute - CATCH_UP_MINUTES)
         state.edit().putString(KEY_LAST_DATE, today.toString()).putInt(KEY_LAST_MINUTE, nowMinute).apply()
 
-        blocksStartedBetween(resolved, since, nowMinute).forEach { notifyBlock(context, it, today) }
+        val alarmSettings = AlarmSettings(context)
+        blocksStartedBetween(resolved, since, nowMinute)
+            // Alarm dibunyikan AlarmService, bukan notifikasi biasa. Adzan yang dimatikan tidak dinotifikasikan.
+            .filter { it.block.level != NotificationLevel.ALARM }
+            .filter { item -> item.block.adzanPrayer()?.let(alarmSettings::isAdzanEnabled) ?: true }
+            .forEach { notifyBlock(context, it, today) }
     }
 
     @SuppressLint("MissingPermission")

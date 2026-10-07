@@ -148,4 +148,11 @@ class ScheduleTest {
         assertEquals(emptyList<Long>(), blocksStartedBetween(r, min(11, 40), min(11, 45)).map { it.block.id })
         assertEquals(listOf(1L), blocksStartedBetween(r, min(3, 0), min(3, 50)).map { it.block.id })
     }
+
+    @Test
+    fun adzanHanyaUntukBlokYangMulaiTepatDiWaktuSholat() {
+        assertEquals(PrayerName.DZUHUR, blocks.first { it.id == 3L }.adzanPrayer())
+        assertNull(blocks.first { it.id == 1L }.adzanPrayer())
+        assertNull(blocks.first { it.id == 2L }.adzanPrayer())
+    }
 }
