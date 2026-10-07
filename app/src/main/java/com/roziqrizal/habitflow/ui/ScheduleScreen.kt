@@ -53,6 +53,7 @@ private val NotificationLevel.label: String
     get() = when (this) {
         NotificationLevel.INFO -> "Info"
         NotificationLevel.REMINDER -> "Pengingat"
+        NotificationLevel.ALARM -> "Alarm"
     }
 
 private val DAY_LABELS = listOf("Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min")

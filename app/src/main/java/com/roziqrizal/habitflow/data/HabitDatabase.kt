@@ -11,7 +11,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         Habit::class, HabitEntry::class, Todo::class,
         ScheduleBlockEntity::class, ScheduleBlockHabit::class, DayOff::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = false,
 )
 abstract class HabitDatabase : RoomDatabase() {
@@ -34,7 +34,7 @@ abstract class HabitDatabase : RoomDatabase() {
                     HabitDatabase::class.java,
                     NAME,
                 )
-                    .addMigrations(MIGRATION_1_2)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                     .addCallback(SeedCallback)
                     .build()
                     .also { instance = it }

@@ -50,7 +50,7 @@ private fun fixed(hour: Int, minute: Int) = hour * 60 + minute
 
 /** Jadwal awal dari tabel di docs/concept.md tahap 17. */
 private val SEED_BLOCKS = listOf(
-    SeedBlock("Bangun", ScheduleBlockEntity.START_PRAYER, -15, PrayerName.SUBUH, 15, level = NotificationLevel.REMINDER),
+    SeedBlock("Bangun", ScheduleBlockEntity.START_PRAYER, -15, PrayerName.SUBUH, 15, level = NotificationLevel.ALARM),
     SeedBlock(
         "Jamaah Subuh dan ngaji", ScheduleBlockEntity.START_PRAYER, 0, PrayerName.SUBUH, 60,
         level = NotificationLevel.REMINDER, habitName = "Baca Al-Quran",
@@ -125,5 +125,18 @@ fun seedSchedule(db: SupportSQLiteDatabase) {
                 arrayOf<Any?>(block.habitName),
             )
         }
+    }
+}
+
+/**
+ * Database versi 2 ke 3: blok Bangun bawaan naik dari Pengingat ke Alarm. Tidak ada perubahan
+ * skema. Blok yang sudah diubah pengguna (nama, patokan, atau tingkatnya) tidak disentuh.
+ */
+val MIGRATION_2_3 = object : Migration(2, 3) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "UPDATE schedule_blocks SET level = 'ALARM' WHERE name = 'Bangun' AND startType = " +
+                "${ScheduleBlockEntity.START_PRAYER} AND prayer = 'SUBUH' AND startValue = -15 AND level = 'REMINDER'"
+        )
     }
 }

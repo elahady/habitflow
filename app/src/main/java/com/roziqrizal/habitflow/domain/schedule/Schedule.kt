@@ -26,8 +26,8 @@ sealed interface BlockStart {
     data class Prayer(val name: PrayerName, val offsetMinutes: Int) : BlockStart
 }
 
-/** Tingkat notifikasi. Alarm menyusul di tahap 18. */
-enum class NotificationLevel { INFO, REMINDER }
+/** Tingkat notifikasi. [ALARM] berbunyi penuh dan tidak ikut "Hari ini libur" (tahap 18). */
+enum class NotificationLevel { INFO, REMINDER, ALARM }
 
 /**
  * Satu blok jadwal. Selesainya ditentukan [endMinuteOfDay] kalau ada, kalau tidak mulai +
