@@ -66,7 +66,9 @@ divisualisasikan seperti kontribusi GitHub.
   akhir pekan dan hari libur. Bisa dimatikan untuk satu tanggal saja.
 - Suara memakai nada alarm HP yang bisa dipilih. Volume naik perlahan.
 - Tunda 5 menit, paling banyak 2 kali. Alarm berhenti sendiri setelah 10 menit.
-- Pengingat adzan bisa dimatikan per waktu sholat. Default semua nyala.
+- Pengingat adzan bisa dimatikan per waktu sholat. Default semua nyala. Mematikannya menghentikan
+  notifikasi blok yang mulai tepat di waktu sholat itu (misalnya "Sholat Dzuhur").
+- Alarm adalah tingkat notifikasi sebuah blok, bukan hanya Bangun. Alarm tidak ikut "Hari ini libur".
 
 ## Follow-up kerja (tahap 19)
 

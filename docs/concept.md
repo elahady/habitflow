@@ -486,7 +486,7 @@ diubah.
   perbandingan waktu sholat lokasi Roziq dengan app Al-Kaukaba; jadwal saat HP dalam Doze
   (alarm dengan jendela 5 menit bisa tertunda sampai jendela pemeliharaan).
 
-### Tahap 18: Alarm Subuh dan pengingat adzan (diputuskan, belum dikoding)
+### Tahap 18: Alarm Subuh dan pengingat adzan (selesai, 7 Oktober 2026)
 
 Mesin waktu sholat dan lokasi ada di tahap 17. Tahap ini menambah tingkat notifikasi
 **Alarm** dan pengaturan pengingat adzan.
@@ -524,6 +524,39 @@ Mesin waktu sholat dan lokasi ada di tahap 17. Tahap ini menambah tingkat notifi
 - Mematikan pengingat Dzuhur menghentikan notifikasi Dzuhur saja.
 - Alarm berhenti sendiri setelah 10 menit.
 - Alarm tetap terjadwal setelah emulator di-restart.
+
+**Keputusan saat membangun:**
+- Switch adzan mematikan notifikasi blok yang mulai tepat di waktu sholat itu (patokan waktu
+  sholat dengan selisih 0). Tidak ada notifikasi adzan terpisah, supaya tidak dobel dengan blok
+  "Sholat Dzuhur" dan sejenisnya. Blok tetap tampil di timeline.
+- Alarm adalah tingkat notifikasi ketiga (Info, Pengingat, Alarm) yang bisa dipasang ke blok
+  mana pun, bukan hanya Bangun. Blok Bangun bawaan jadi Alarm (migrasi database 2 ke 3).
+- Tanggal alarm yang dimatikan sekali dan nada pilihan disimpan di SharedPreferences, bukan tabel.
+- Izin `USE_EXACT_ALARM` (Android 13+) dan `SCHEDULE_EXACT_ALARM` (Android 12) dibutuhkan
+  `setAlarmClock`. Tanpa izin itu app crash saat menjadwalkan, jadi ada pengaman: kalau ditolak,
+  jatuh ke alarm tidak presisi.
+
+**Hasil verifikasi (7 Oktober 2026, emulator Pixel 6 API 34):**
+- Alarm berbunyi tepat di waktunya (10.23.03 untuk alarm 10.23) saat layar terkunci dan app
+  ditutup: layar menyala sendiri, layar alarm tampil, suara `USAGE_ALARM` dan getar berjalan.
+  Saat layar sedang dipakai, alarm tampil sebagai notifikasi dengan tombol yang sama.
+- Ikon alarm tampil di status bar dan "alarm berikutnya" terdaftar di sistem (03.39 besok).
+- Tunda bekerja dua kali (bunyi ulang 5 menit kemudian), bunyi ketiga tanpa tombol Tunda.
+  Matikan menghentikan suara dan menghapus notifikasi, alarm berikutnya dijadwalkan ulang.
+- Alarm tanpa disentuh berhenti sendiri tepat 10 menit (10.41.01 sampai 10.51.01).
+- "Matikan untuk tanggal itu" menggeser alarm ke tanggal berikutnya, "Nyalakan lagi" mengembalikan.
+- Mematikan pengingat Dzuhur: alarm jadwal 11.19 tetap jalan tetapi tidak ada notifikasi Dzuhur.
+- Setelah emulator di-restart, alarm jam dan alarm jadwal terdaftar ulang tanpa membuka app
+  (proses dimulai oleh broadcast boot).
+- Alarm tetap bunyi di akhir pekan dan hari libur, serta dilewati di tanggal dimatikan: diuji
+  lewat unit test `AlarmTest`, belum di layar.
+
+**Belum diverifikasi:** pemilih nada (tombol "Pilih nada" belum diketuk, baru nada bawaan yang
+terdengar); layar alarm di perangkat Android 14+ asli, karena izin full-screen intent di sana
+bisa perlu diberikan pengguna; Android 12 dengan izin alarm presisi dicabut; perilaku di HP
+sungguhan saat Doze semalaman. Catatan: di emulator, cold start pertama app sampai alarm
+terdaftar memakan sekitar 25 detik karena Astronomy Engine lambat dimuat. Di HP asli lebih cepat,
+tapi kalau terasa lambat, Baseline Profile bisa dipertimbangkan.
 
 ### Tahap 19: Catat cepat, follow-up kerja, daily scrum dan EOD (diputuskan, belum dikoding)
 
