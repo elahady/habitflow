@@ -132,4 +132,20 @@ class ScheduleTest {
         assertEquals(b.sorted().distinct(), b)
         assertEquals(true, min(22, 0) in b)
     }
+
+    @Test
+    fun batasBerikutnyaSetelahMenitTertentu() {
+        val r = resolve(rabu)
+        assertEquals(min(4, 5), nextBoundaryMinute(r, min(3, 50)))
+        assertEquals(min(22, 0), nextBoundaryMinute(r, min(21, 0)))
+        assertNull(nextBoundaryMinute(r, min(22, 0)))
+    }
+
+    @Test
+    fun blokYangMulaiDalamRentangDinotifikasi() {
+        val r = resolve(rabu)
+        assertEquals(listOf(3L), blocksStartedBetween(r, min(11, 30), min(11, 45)).map { it.block.id })
+        assertEquals(emptyList<Long>(), blocksStartedBetween(r, min(11, 40), min(11, 45)).map { it.block.id })
+        assertEquals(listOf(1L), blocksStartedBetween(r, min(3, 0), min(3, 50)).map { it.block.id })
+    }
 }

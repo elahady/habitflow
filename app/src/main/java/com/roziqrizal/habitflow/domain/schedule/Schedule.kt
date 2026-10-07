@@ -108,3 +108,14 @@ fun notificationWindow(resolved: List<ResolvedBlock>): IntRange? {
 /** Semua menit batas blok (mulai dan selesai), tanpa duplikat, urut. Dipakai menjadwalkan pembaruan notifikasi. */
 fun boundaryMinutes(resolved: List<ResolvedBlock>): List<Int> =
     resolved.flatMap { listOf(it.startMinute, it.endMinute) }.filter { it < MINUTES_PER_DAY }.distinct().sorted()
+
+/** Menit batas blok pertama setelah [afterMinute] hari ini, atau null kalau sudah lewat semuanya. */
+fun nextBoundaryMinute(resolved: List<ResolvedBlock>, afterMinute: Int): Int? =
+    boundaryMinutes(resolved).firstOrNull { it > afterMinute }
+
+/**
+ * Blok yang mulai di rentang ([sinceMinute], [nowMinute]], untuk dinotifikasikan. Alarm tidak presisi,
+ * jadi rentang dipakai, bukan satu menit tepat. Titik waktu ikut, karena batas tidur juga perlu pengingat.
+ */
+fun blocksStartedBetween(resolved: List<ResolvedBlock>, sinceMinute: Int, nowMinute: Int): List<ResolvedBlock> =
+    resolved.filter { it.startMinute > sinceMinute && it.startMinute <= nowMinute }
