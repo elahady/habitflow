@@ -45,6 +45,8 @@ import java.util.Locale
 fun TodayScreen(
     state: TodayUiState,
     schedule: ScheduleUiState,
+    work: WorkUiState,
+    onOpenWork: () -> Unit,
     onSetDayOff: (Boolean) -> Unit,
     onOpenSchedule: () -> Unit,
     onToggleHabit: (Long) -> Unit,
@@ -60,6 +62,10 @@ fun TodayScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item { ScheduleCard(state = schedule, onSetDayOff = onSetDayOff, onOpenEditor = onOpenSchedule) }
+
+        if (work.inboxCount > 0 || work.overdueCount > 0) {
+            item { WorkSummaryCard(work, onOpenWork) }
+        }
 
         item { DayHeader(state) }
 
@@ -240,4 +246,15 @@ private fun AddTodoDialog(
             TextButton(onClick = onDismiss) { Text("Batal") }
         },
     )
+}
+
+/** Ringkasan follow-up kerja di dashboard. Hanya tampil kalau ada Inbox atau yang lewat tanggal. */
+@Composable
+private fun WorkSummaryCard(work: WorkUiState, onOpen: () -> Unit) {
+    AppCard(modifier = Modifier.fillMaxWidth(), onClick = onOpen) {
+        Text(
+            "Kerja · Inbox ${work.inboxCount} · Lewat tanggal ${work.overdueCount} · Hari ini ${work.todayCount}",
+            style = MaterialTheme.typography.bodyMedium,
+        )
+    }
 }

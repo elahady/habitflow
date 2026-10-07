@@ -32,6 +32,7 @@ import com.roziqrizal.habitflow.data.HabitRepository
 import com.roziqrizal.habitflow.data.LocationSettings
 import com.roziqrizal.habitflow.data.NotificationSettings
 import com.roziqrizal.habitflow.data.ScheduleRepository
+import com.roziqrizal.habitflow.data.WorkRepository
 import com.roziqrizal.habitflow.data.ThemeMode
 import com.roziqrizal.habitflow.data.ThemeSettings
 import com.roziqrizal.habitflow.notify.ScheduleNotifier
@@ -41,8 +42,11 @@ import com.roziqrizal.habitflow.ui.HabitFlowApp
 import com.roziqrizal.habitflow.ui.ManageHabitsViewModel
 import com.roziqrizal.habitflow.ui.ScheduleViewModel
 import com.roziqrizal.habitflow.ui.TodayViewModel
+import com.roziqrizal.habitflow.ui.WorkViewModel
+import com.roziqrizal.habitflow.domain.schedule.WorkAction
 import com.roziqrizal.habitflow.ui.theme.HabitFlowTheme
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
@@ -56,6 +60,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        readWorkRequest(intent)
         val themeSettings = ThemeSettings(applicationContext)
         val locationSettings = LocationSettings(applicationContext)
         val notificationSettings = NotificationSettings(applicationContext)
@@ -95,6 +100,11 @@ class MainActivity : ComponentActivity() {
                         initializer { ScheduleViewModel(scheduleRepo, repo, locationSettings, clock) }
                     },
                 )
+                val workRepo = remember { WorkRepository(HabitDatabase.get(applicationContext)) }
+                val work: WorkViewModel = viewModel(
+                    factory = viewModelFactory { initializer { WorkViewModel(workRepo, clock) } },
+                )
+                val workRequest by pendingWork.collectAsState()
                 val manage: ManageHabitsViewModel = viewModel(
                     factory = viewModelFactory { initializer { ManageHabitsViewModel(repo) } },
                 )
@@ -107,6 +117,9 @@ class MainActivity : ComponentActivity() {
                     contribution = contribution,
                     manage = manage,
                     schedule = schedule,
+                    work = work,
+                    workRequest = workRequest,
+                    onWorkRequestHandled = { pendingWork.value = null },
                     versionName = versionName,
                     themeMode = themeMode,
                     location = locationSettings.location.collectAsState().value,
@@ -162,6 +175,18 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        readWorkRequest(intent)
+    }
+
+    private fun readWorkRequest(intent: Intent?) {
+        val name = intent?.getStringExtra(EXTRA_WORK_ACTION) ?: return
+        pendingWork.value = WorkAction.entries.firstOrNull { it.name == name }
+        intent.removeExtra(EXTRA_WORK_ACTION)
+    }
+
     override fun onStart() {
         super.onStart()
         val filter = IntentFilter().apply {
@@ -186,5 +211,10 @@ class MainActivity : ComponentActivity() {
     companion object {
         // Disimpan di luar activity supaya ViewModel yang selamat dari rotasi tetap memakai jam yang sama.
         private val clock = DayClock()
+
+        /** Permintaan membuka daily scrum atau EOD dari notifikasi, dibaca layar lalu dikosongkan. */
+        private val pendingWork = MutableStateFlow<WorkAction?>(null)
+
+        const val EXTRA_WORK_ACTION = "workAction"
     }
 }

@@ -10,6 +10,7 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -23,14 +24,19 @@ import androidx.compose.ui.Modifier
 import com.roziqrizal.habitflow.data.AlarmSettings
 import com.roziqrizal.habitflow.data.PlaceLocation
 import com.roziqrizal.habitflow.data.ThemeMode
+import com.roziqrizal.habitflow.domain.schedule.WorkAction
 import com.roziqrizal.habitflow.ui.theme.tokens
 
 enum class Tab(val label: String) {
     TODAY("Hari ini"),
+    WORK("Kerja"),
     CONTRIBUTION("Kontribusi"),
     HABITS("Habit"),
     ABOUT("Tentang"),
 }
+
+/** Layar penuh di atas tab Kerja. */
+private enum class WorkSession { SCRUM, EOD }
 
 @Composable
 fun HabitFlowApp(
@@ -38,6 +44,10 @@ fun HabitFlowApp(
     contribution: ContributionViewModel,
     manage: ManageHabitsViewModel,
     schedule: ScheduleViewModel,
+    work: WorkViewModel,
+    /** Permintaan membuka daily scrum atau EOD dari notifikasi. Null kalau tidak ada. */
+    workRequest: WorkAction?,
+    onWorkRequestHandled: () -> Unit,
     versionName: String,
     themeMode: ThemeMode,
     location: PlaceLocation,
@@ -56,14 +66,36 @@ fun HabitFlowApp(
     ) { mutableStateListOf(Tab.TODAY) }
     val current = history.last()
     var showSchedule by rememberSaveable { mutableStateOf(false) }
+    var sessionName by rememberSaveable { mutableStateOf<String?>(null) }
+    var showCapture by rememberSaveable { mutableStateOf(false) }
+    val session = sessionName?.let { WorkSession.valueOf(it) }
 
+    // Notifikasi daily scrum atau EOD membuka tab Kerja langsung di layar yang sesuai.
+    LaunchedEffect(workRequest) {
+        if (workRequest != null) {
+            if (current != Tab.WORK) {
+                history.remove(Tab.WORK)
+                history.add(Tab.WORK)
+            }
+            showSchedule = false
+            sessionName = (if (workRequest == WorkAction.SCRUM) WorkSession.SCRUM else WorkSession.EOD).name
+            onWorkRequestHandled()
+        }
+    }
+
+    BackHandler(enabled = showCapture) { showCapture = false }
     BackHandler(enabled = showSchedule) { showSchedule = false }
-    BackHandler(enabled = !showSchedule && history.size > 1) {
+    BackHandler(enabled = session != null) { sessionName = null }
+    BackHandler(enabled = !showSchedule && session == null && history.size > 1) {
         history.removeAt(history.lastIndex)
     }
 
+    val workState by work.state.collectAsState()
+    val fullScreen = showSchedule || session != null
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        floatingActionButton = { if (!fullScreen) QuickCaptureButton { showCapture = true } },
         bottomBar = {
             // Indikator pill hijau muda dan label terpilih gelap, seperti navigasi di prototipe Rizqflow.
             NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainer) {
@@ -99,6 +131,29 @@ fun HabitFlowApp(
                 )
                 return@Box
             }
+            when (session) {
+                WorkSession.SCRUM -> {
+                    ScrumScreen(
+                        state = workState,
+                        onPick = work::pickForToday,
+                        onFinish = {
+                            work.completeScrum()
+                            sessionName = null
+                        },
+                        onClose = { sessionName = null },
+                    )
+                    return@Box
+                }
+                WorkSession.EOD -> {
+                    EodScreen(
+                        state = workState,
+                        onSave = work::completeEod,
+                        onClose = { sessionName = null },
+                    )
+                    return@Box
+                }
+                null -> Unit
+            }
             when (current) {
                 Tab.TODAY -> {
                     val state by today.state.collectAsState()
@@ -106,6 +161,11 @@ fun HabitFlowApp(
                     TodayScreen(
                         state = state,
                         schedule = scheduleState,
+                        work = workState,
+                        onOpenWork = {
+                            history.remove(Tab.WORK)
+                            history.add(Tab.WORK)
+                        },
                         onSetDayOff = schedule::setDayOff,
                         onOpenSchedule = { showSchedule = true },
                         onToggleHabit = today::toggleHabit,
@@ -114,6 +174,15 @@ fun HabitFlowApp(
                         onDeleteTodo = today::deleteTodo,
                     )
                 }
+                Tab.WORK -> WorkScreen(
+                    state = workState,
+                    onOpenScrum = { sessionName = WorkSession.SCRUM.name },
+                    onOpenEod = { sessionName = WorkSession.EOD.name },
+                    onSelectPerson = work::selectPerson,
+                    onDone = work::setDone,
+                    onSave = work::save,
+                    onDelete = work::delete,
+                )
                 Tab.CONTRIBUTION -> {
                     val state by contribution.state.collectAsState()
                     ContributionScreen(state = state)
@@ -144,5 +213,9 @@ fun HabitFlowApp(
                 }
             }
         }
+    }
+
+    if (showCapture) {
+        QuickCaptureSheet(onAdd = work::quickAdd, onDismiss = { showCapture = false })
     }
 }

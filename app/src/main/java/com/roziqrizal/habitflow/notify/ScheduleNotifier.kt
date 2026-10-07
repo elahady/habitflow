@@ -28,6 +28,7 @@ import com.roziqrizal.habitflow.domain.schedule.adzanPrayer
 import com.roziqrizal.habitflow.domain.schedule.blocksStartedBetween
 import com.roziqrizal.habitflow.domain.schedule.boundaryMinutes
 import com.roziqrizal.habitflow.domain.schedule.nextBoundaryMinute
+import com.roziqrizal.habitflow.domain.schedule.WorkAction
 import com.roziqrizal.habitflow.domain.schedule.nextAlarm
 import com.roziqrizal.habitflow.domain.schedule.notificationWindow
 import com.roziqrizal.habitflow.domain.schedule.nowAndNext
@@ -146,7 +147,7 @@ object ScheduleNotifier {
             .setSmallIcon(R.drawable.ic_launcher_monochrome)
             .setContentTitle(block.name)
             .setContentText("Mulai ${formatMinute(item.startMinute)}$detail")
-            .setContentIntent(openAppIntent(context))
+            .setContentIntent(openAppIntent(context, block.workAction))
             .setAutoCancel(true)
         if (block.habitIds.isNotEmpty()) {
             val done = Intent(context, ScheduleReceiver::class.java).apply {
@@ -193,10 +194,15 @@ object ScheduleNotifier {
 
     private fun blockNotificationId(blockId: Long) = BLOCK_ID_BASE + blockId.toInt()
 
-    fun openAppIntent(context: Context): PendingIntent = PendingIntent.getActivity(
-        context, 0, Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
-        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-    )
+    /** Membuka app. Dengan [workAction], app langsung membuka daily scrum atau EOD di tab Kerja. */
+    fun openAppIntent(context: Context, workAction: WorkAction? = null): PendingIntent {
+        val intent = Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        workAction?.let { intent.putExtra(MainActivity.EXTRA_WORK_ACTION, it.name) }
+        return PendingIntent.getActivity(
+            context, 100 + (workAction?.ordinal?.plus(1) ?: 0), intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+    }
 
     private fun scheduleAlarm(context: Context, triggerAtMillis: Long) {
         val intent = Intent(context, ScheduleReceiver::class.java).setAction(ACTION_ALARM)
