@@ -392,7 +392,7 @@ Arah besarnya ada di [visi-super-app.md](visi-super-app.md). Setiap tahap dibaha
 diputuskan dulu, lalu aturannya ditulis di `rancangan.md`, baru dikoding. Keputusan yang
 sudah diambil saat menyusun visi dicatat di tiap tahap.
 
-### Tahap 17: Jadwal harian, waktu sholat, dan dashboard (diputuskan, belum dikoding)
+### Tahap 17: Jadwal harian, waktu sholat, dan dashboard (sebagian selesai, 7 Oktober 2026)
 
 **Keputusan (5 Oktober 2026).** Aturan fitur di `docs/rancangan.md` bagian Jadwal harian.
 
@@ -414,7 +414,7 @@ sudah diambil saat menyusun visi dicatat di tiap tahap.
   (tanggal libur). Database naik ke versi 2 dengan `Migration`, tanpa destructive migration.
 - Mesin waktu sholat di `domain/prayer/` sebagai Kotlin murni: rumus Ephemeris dari
   `EphemerisPrayerCalculator.kt` Al-Kaukaba, posisi matahari dari Astronomy Engine
-  (dependency Maven, MIT). Unit test memakai contoh Lamongan 1 Januari 2009 dari
+  (MIT, source disalin ke `io/github/cosinekitty/astronomy/` seperti di Al-Kaukaba, karena artefak Maven tidak ditemukan). Unit test memakai contoh Lamongan 1 Januari 2009 dari
   `rumus-hisab-ephemeris.md`, dan pembanding beberapa tanggal dari app Al-Kaukaba.
 - Penentuan Sekarang dan Berikutnya, hari aktif, libur, dan tumpang tindih di `domain/`
   dengan unit test.
@@ -468,6 +468,23 @@ diubah.
   berjalan setelah emulator di-restart.
 - Lokasi GPS dan manual sama-sama bekerja. Tanpa izin lokasi, app tetap jalan dengan
   lokasi manual.
+
+**Hasil verifikasi (7 Oktober 2026, emulator Pixel 6 API 34):**
+- Selesai dan diuji: update database v1 ke v2 (9 habit, 2 centang, 1 to-do utuh, 16 blok jadwal
+  terisi, tautan habit dicari lewat nama sehingga habit yang sudah diganti nama tidak tertaut);
+  unit test waktu sholat (Lamongan 1 Januari 2009 selisih paling banyak 1 menit dari buku,
+  Terbit 2 menit karena ikhtiyat tetap 2 menit yang dikurangkan, sama dengan Al-Kaukaba) dan
+  logika jadwal (Sekarang/Berikutnya pagi, jam kerja, Dzuhur di tengah Kerja pagi, malam,
+  setelah batas tidur, akhir pekan, libur); kartu Sekarang/Berikutnya dan timeline di layar;
+  Atur jadwal membuka dan menampilkan blok; tombol "Hari ini libur" menyembunyikan blok hari
+  kerja dan tersimpan; notifikasi tetap muncul; notifikasi blok muncul
+  dalam jendela 5 menit (alarm 09.42, muncul 09.47); "Sudah" mencentang habit dan menutup
+  notifikasi.
+- **Belum diverifikasi:** simpan hasil editor blok (tambah, ubah, hapus) di layar;
+  notifikasi tetap hilang setelah batas tidur dan muncul lagi di blok pertama
+  besok; alarm tetap berjalan setelah emulator di-restart; lokasi GPS dan dialog lokasi manual;
+  perbandingan waktu sholat lokasi Roziq dengan app Al-Kaukaba; jadwal saat HP dalam Doze
+  (alarm dengan jendela 5 menit bisa tertunda sampai jendela pemeliharaan).
 
 ### Tahap 18: Alarm Subuh dan pengingat adzan (diputuskan, belum dikoding)
 
