@@ -162,27 +162,11 @@ detail hari memakai `ModalBottomSheet`.
 ## Pola layar
 
 ### Hari ini
-1. Kartu **Sekarang/Berikutnya** (`AppCard` biasa, sudut medium) di paling atas: label "Sekarang"
-   (labelMedium, `onSurfaceVariant`), nama blok (titleMedium) dengan rentang waktunya (bodyMedium),
-   lalu "Berikutnya" dengan nama blok dan jam mulainya. Tanpa blok aktif: "Tidak ada blok sekarang".
-   Setelah blok terakhir: "Selesai untuk hari ini". Di bawahnya tiga `TextButton`: "Lihat jadwal"
-   (membuka timeline), "Hari ini libur" (jadi "Batalkan libur" saat aktif), dan "Atur jadwal".
-2. **Timeline** di dalam kartu yang sama, tertutup awalnya. Satu baris per blok: jam mulai-selesai
-   (bodySmall, lebar tetap 96dp) dan nama (bodyMedium). Blok yang sedang berjalan memakai latar
-   `primaryFixed` dengan sudut 8dp dan nama SemiBold; blok yang sudah lewat memakai `onSurfaceVariant`.
-   Titik waktu (misalnya batas tidur) hanya menampilkan jam mulai.
-3. Kartu hero: tanggal (labelMedium), dua `StatBlock` (Habit, To-do), lalu baris level dan streak.
-4. Judul "Habit", lalu daftar habit (habit wajib di atas, bertanda "Wajib").
-5. Judul "To-do hari ini (x/5)", daftar to-do, lalu tombol `TonalButton` "+ To-do".
+1. Kartu hero **Sekarang** dengan timeline (lihat [Dashboard di Hari ini](#dashboard-di-hari-ini-tahap-17)).
+2. Kartu hero: tanggal (labelMedium), dua `StatBlock` (Habit, To-do), lalu baris level dan streak.
+3. Judul "Habit", lalu daftar habit (habit wajib di atas, bertanda "Wajib").
+4. Judul "To-do hari ini (x/5)", daftar to-do, lalu tombol `TonalButton` "+ To-do".
    Tombol nonaktif saat sudah 5, dan pesan penuh muncul di bawahnya.
-
-### Atur jadwal
-Layar penuh di atas tab (tab tetap empat), dibuka dari "Atur jadwal" di dashboard. Judul
-"Atur jadwal" (headlineMedium), tombol `TonalButton` "+ Blok", lalu satu `AppCard` per blok: nama,
-waktu mulai dan durasi (bodyMedium), hari aktif dan tingkat notifikasi (bodySmall). Tap kartu
-membuka editor (`AlertDialog` gulir) dengan field nama, patokan waktu (jam tetap atau waktu
-sholat dengan selisih menit), durasi, hari aktif (chip), tingkat notifikasi, dan habit yang
-ditautkan. Tombol kembali menutup layar.
 
 ### Kontribusi
 1. Judul layar "Kontribusi" (headlineMedium).
@@ -207,28 +191,31 @@ ditautkan. Tombol kembali menutup layar.
 Nama app (headlineMedium), "Versi x.y" (bodyMedium, `onSurfaceVariant`), dan "Dibuat oleh Roziq Rizal".
 Teks dipusatkan. Di bawahnya tiga bagian pengaturan, masing-masing dengan label labelMedium (`onSurfaceVariant`) dan jarak 32dp di atasnya:
 
-- **Tampilan**: pilihan Sistem, Terang, Gelap (tombol segmen).
+- **Tampilan**: `SingleChoiceSegmentedButtonRow` dengan segmen Sistem, Terang, Gelap. Segmen aktif memakai latar `primaryFixed` dan teks `onPrimaryContainer`, sama dengan `TonalButton`.
 - **Lokasi untuk waktu sholat**: nama (bodyLarge) dan koordinat (bodySmall), lalu `TonalButton` "Pakai lokasi saat ini" dan `TextButton` "Atur manual" (dialog nama kota, lintang, bujur).
 - **Notifikasi**: satu baris dengan judul "Notifikasi tetap", keterangan bodySmall, dan `Switch` di kanan.
 
 Layar bisa digulir karena isinya lebih panjang dari layar kecil.
 
-Di bawahnya, berjarak 32dp: label "Tampilan" (labelMedium, `onSurfaceVariant`), lalu
-`SingleChoiceSegmentedButtonRow` dengan tiga segmen "Sistem", "Terang", "Gelap". Segmen aktif
-memakai latar `primaryFixed` dan teks `onPrimaryContainer`, sama dengan `TonalButton`.
-
-### Dashboard di Hari ini (tahap 17, belum diterapkan)
+### Dashboard di Hari ini (tahap 17)
 1. Kartu hero "Sekarang" paling atas, di atas kartu skor: label "Sekarang" (labelMedium,
-   `onSurfaceVariant`), nama blok (titleLarge Caslon), sisa waktu (bodyMedium). Di bawahnya
-   garis pemisah `outlineVariant`, lalu "Berikutnya" dengan nama dan jam blok.
-2. Baris "Lihat jadwal hari ini" dengan chevron membuka timeline: satu baris per blok
-   (jam di kiri dengan angka tabular, nama di kanan). Blok yang sedang berjalan memakai latar
-   `primaryFixed`. Blok yang sudah lewat memakai `onSurfaceVariant`.
+   `onSurfaceVariant`) dengan tombol teks "Atur" di kanan, nama blok (titleLarge Caslon), lalu
+   rentang waktu dan sisa waktu (bodyMedium). Di bawahnya garis pemisah `outlineVariant`, lalu
+   "Berikutnya" dengan nama dan jam mulai. Tanpa blok aktif: "Tidak ada blok sekarang". Setelah
+   blok terakhir: "Selesai untuk hari ini".
+2. Baris "Lihat jadwal hari ini" dengan chevron (▾ tertutup, ▴ terbuka) membuka timeline: satu
+   baris per blok (jam di kiri dengan angka tabular, lebar tetap 96dp, nama di kanan). Blok yang
+   sedang berjalan memakai latar `primaryFixed` (sudut 8dp) dan nama SemiBold. Blok yang sudah
+   lewat memakai `onSurfaceVariant`. Titik waktu (batas tidur) hanya menampilkan jam mulai.
 3. Tombol teks "Hari ini libur" di bawah timeline. Saat aktif, kartu menampilkan
    "Hari libur, blok kantor dimatikan" dengan tombol "Batalkan".
-4. Layar **Atur jadwal**: daftar kartu blok (nama, jam atau patokan sholat, hari aktif
-   sebagai tujuh huruf S S R K J S M, tingkat notifikasi). Tap membuka editor blok.
-   Pintu masuk dari tautan "Atur" di kartu Sekarang.
+4. Layar **Atur jadwal** (layar penuh di atas tab, tab tetap empat; tombol kembali menutupnya):
+   judul (headlineMedium), keterangan lokasi sholat, `TonalButton` "+ Blok", lalu satu kartu per
+   blok: nama, jam atau patokan sholat dan durasi, hari aktif sebagai tujuh huruf S S R K J S M
+   (hari aktif tebal, tidak aktif redup `outlineVariant`), dan tingkat notifikasi. Tap membuka editor
+   (`AlertDialog` gulir): nama, patokan waktu (jam tetap atau waktu sholat dengan selisih menit),
+   durasi, jam selesai tetap (opsional), hari aktif (chip), tingkat notifikasi, habit yang ditautkan.
+   Pintu masuk dari tombol "Atur" di kartu Sekarang.
 
 ### Kerja (tahap 19, belum diterapkan)
 1. Tab kedua "Kerja". Judul layar "Kerja" (headlineMedium), lalu dua `TonalButton`
