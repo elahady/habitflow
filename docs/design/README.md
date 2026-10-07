@@ -205,7 +205,13 @@ ditautkan. Tombol kembali menutup layar.
 
 ### Tentang
 Nama app (headlineMedium), "Versi x.y" (bodyMedium, `onSurfaceVariant`), dan "Dibuat oleh Roziq Rizal".
-Teks dipusatkan.
+Teks dipusatkan. Di bawahnya tiga bagian pengaturan, masing-masing dengan label labelMedium (`onSurfaceVariant`) dan jarak 32dp di atasnya:
+
+- **Tampilan**: pilihan Sistem, Terang, Gelap (tombol segmen).
+- **Lokasi untuk waktu sholat**: nama (bodyLarge) dan koordinat (bodySmall), lalu `TonalButton` "Pakai lokasi saat ini" dan `TextButton` "Atur manual" (dialog nama kota, lintang, bujur).
+- **Notifikasi**: satu baris dengan judul "Notifikasi tetap", keterangan bodySmall, dan `Switch` di kanan.
+
+Layar bisa digulir karena isinya lebih panjang dari layar kecil.
 
 Di bawahnya, berjarak 32dp: label "Tampilan" (labelMedium, `onSurfaceVariant`), lalu
 `SingleChoiceSegmentedButtonRow` dengan tiga segmen "Sistem", "Terang", "Gelap". Segmen aktif
