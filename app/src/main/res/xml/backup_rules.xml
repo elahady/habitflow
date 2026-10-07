@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 11 ke bawah: Auto Backup menyimpan database dan pengaturan. Pengaman sementara sampai sinkron server (tahap 19B). -->
+<full-backup-content>
+    <include domain="database" path="habitflow.db" />
+    <include domain="sharedpref" path="settings.xml" />
+</full-backup-content>

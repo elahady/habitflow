@@ -26,6 +26,9 @@ sealed interface BlockStart {
     data class Prayer(val name: PrayerName, val offsetMinutes: Int) : BlockStart
 }
 
+/** Notifikasi blok membuka daily scrum atau EOD di tab Kerja (tahap 19). */
+enum class WorkAction { SCRUM, EOD }
+
 /** Tingkat notifikasi. [ALARM] berbunyi penuh dan tidak ikut "Hari ini libur" (tahap 18). */
 enum class NotificationLevel { INFO, REMINDER, ALARM }
 
@@ -43,6 +46,7 @@ data class ScheduleBlock(
     val level: NotificationLevel = NotificationLevel.INFO,
     val sortOrder: Int = 0,
     val habitIds: Set<Long> = emptySet(),
+    val workAction: WorkAction? = null,
 )
 
 /** Blok dengan waktu yang sudah dihitung untuk satu tanggal, dalam menit sejak 00.00. */

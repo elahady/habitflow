@@ -10,8 +10,9 @@ import androidx.sqlite.db.SupportSQLiteDatabase
     entities = [
         Habit::class, HabitEntry::class, Todo::class,
         ScheduleBlockEntity::class, ScheduleBlockHabit::class, DayOff::class,
+        FollowUpEntity::class, WorkDayEntity::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = false,
 )
 abstract class HabitDatabase : RoomDatabase() {
@@ -20,6 +21,8 @@ abstract class HabitDatabase : RoomDatabase() {
     abstract fun habitEntryDao(): HabitEntryDao
     abstract fun todoDao(): TodoDao
     abstract fun scheduleDao(): ScheduleDao
+    abstract fun followUpDao(): FollowUpDao
+    abstract fun workDayDao(): WorkDayDao
 
     companion object {
         private const val NAME = "habitflow.db"
@@ -34,7 +37,7 @@ abstract class HabitDatabase : RoomDatabase() {
                     HabitDatabase::class.java,
                     NAME,
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                     .addCallback(SeedCallback)
                     .build()
                     .also { instance = it }

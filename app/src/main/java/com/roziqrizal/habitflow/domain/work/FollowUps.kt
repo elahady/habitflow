@@ -131,3 +131,11 @@ fun List<FollowUp>.forPerson(person: String?): List<FollowUp> =
 fun reminderTimes(items: List<FollowUp>, date: LocalDate): List<FollowUp> =
     items.filter { it.isOpen() && it.status != FollowUpStatus.INBOX && it.date == date && it.time != null }
         .sortedBy { it.time }
+
+/** Catatan harian kerja. [eodNote] adalah catatan EOD; waktu selesai dalam milidetik, null kalau belum. */
+data class WorkDay(
+    val date: LocalDate,
+    val eodNote: String? = null,
+    val scrumDoneAt: Long? = null,
+    val eodDoneAt: Long? = null,
+)

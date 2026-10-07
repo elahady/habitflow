@@ -124,3 +124,35 @@ interface ScheduleDao {
     @Query("SELECT habitId FROM schedule_block_habits WHERE blockId = :blockId")
     suspend fun habitIdsOf(blockId: Long): List<Long>
 }
+
+@Dao
+interface FollowUpDao {
+
+    @Query("SELECT * FROM follow_ups")
+    fun observeAll(): Flow<List<FollowUpEntity>>
+
+    @Query("SELECT * FROM follow_ups")
+    suspend fun getAll(): List<FollowUpEntity>
+
+    @Insert
+    suspend fun insert(item: FollowUpEntity): Long
+
+    @Update
+    suspend fun update(item: FollowUpEntity)
+
+    @Query("DELETE FROM follow_ups WHERE id = :id")
+    suspend fun delete(id: Long): Int
+}
+
+@Dao
+interface WorkDayDao {
+
+    @Query("SELECT * FROM work_days")
+    fun observeAll(): Flow<List<WorkDayEntity>>
+
+    @Query("SELECT * FROM work_days WHERE date = :date")
+    suspend fun get(date: String): WorkDayEntity?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsert(day: WorkDayEntity)
+}

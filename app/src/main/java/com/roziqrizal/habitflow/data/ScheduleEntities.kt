@@ -8,6 +8,7 @@ import com.roziqrizal.habitflow.domain.prayer.PrayerName
 import com.roziqrizal.habitflow.domain.schedule.BlockStart
 import com.roziqrizal.habitflow.domain.schedule.NotificationLevel
 import com.roziqrizal.habitflow.domain.schedule.ScheduleBlock
+import com.roziqrizal.habitflow.domain.schedule.WorkAction
 import java.time.LocalTime
 
 /**
@@ -27,6 +28,8 @@ data class ScheduleBlockEntity(
     val activeDays: Int,
     val level: String,
     val sortOrder: Int,
+    /** Nama [WorkAction] kalau notifikasi blok ini membuka daily scrum atau EOD di tab Kerja. */
+    val workAction: String? = null,
 ) {
     companion object {
         const val START_FIXED = 0
@@ -78,6 +81,7 @@ fun ScheduleBlockEntity.toDomain(habitIds: Set<Long>): ScheduleBlock = ScheduleB
     activeDays = activeDays,
     level = runCatching { NotificationLevel.valueOf(level) }.getOrDefault(NotificationLevel.INFO),
     sortOrder = sortOrder,
+    workAction = workAction?.let { name -> WorkAction.entries.firstOrNull { it.name == name } },
     habitIds = habitIds,
 )
 
@@ -97,5 +101,6 @@ fun ScheduleBlock.toEntity(): ScheduleBlockEntity {
         activeDays = activeDays,
         level = level.name,
         sortOrder = sortOrder,
+        workAction = workAction?.name,
     )
 }
