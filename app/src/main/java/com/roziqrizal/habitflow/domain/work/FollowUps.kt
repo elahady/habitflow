@@ -139,3 +139,23 @@ data class WorkDay(
     val scrumDoneAt: Long? = null,
     val eodDoneAt: Long? = null,
 )
+
+/** Pilihan merapikan satu item Inbox saat EOD. */
+sealed interface InboxChoice {
+    /** Biarkan di Inbox. */
+    data object Keep : InboxChoice
+    /** Aktif tanpa tanggal, masuk Nanti. */
+    data object Later : InboxChoice
+    data class OnDate(val date: LocalDate) : InboxChoice
+    data class Wait(val recheckDate: LocalDate) : InboxChoice
+    data object Delete : InboxChoice
+}
+
+/** Hasil merapikan item Inbox, atau null kalau item harus dihapus. */
+fun FollowUp.applyInbox(choice: InboxChoice): FollowUp? = when (choice) {
+    InboxChoice.Keep -> this
+    InboxChoice.Later -> tidyAsActive(null)
+    is InboxChoice.OnDate -> tidyAsActive(choice.date)
+    is InboxChoice.Wait -> tidyAsWaiting(choice.recheckDate)
+    InboxChoice.Delete -> null
+}

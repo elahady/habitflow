@@ -191,4 +191,14 @@ class FollowUpsTest {
         )
         assertEquals(listOf(1L), reminderTimes(items, today).map { it.id })
     }
+
+    @Test
+    fun merapikanInboxLewatPilihanEod() {
+        val inbox = fu(1, FollowUpStatus.INBOX)
+        assertEquals(inbox, inbox.applyInbox(InboxChoice.Keep))
+        assertEquals(WorkSection.LATER, inbox.applyInbox(InboxChoice.Later)?.sectionFor(today))
+        assertEquals(WorkSection.TODAY, inbox.applyInbox(InboxChoice.OnDate(today))?.sectionFor(today))
+        assertEquals(WorkSection.WAITING, inbox.applyInbox(InboxChoice.Wait(tomorrow))?.sectionFor(today))
+        assertNull(inbox.applyInbox(InboxChoice.Delete))
+    }
 }
