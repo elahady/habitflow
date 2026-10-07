@@ -29,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.roziqrizal.habitflow.data.Habit
 import com.roziqrizal.habitflow.domain.prayer.PrayerName
@@ -55,13 +56,6 @@ private val NotificationLevel.label: String
     }
 
 private val DAY_LABELS = listOf("Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min")
-
-private fun describeDays(mask: Int): String = when (mask) {
-    Days.ALL -> "Setiap hari"
-    Days.WEEKDAYS -> "Senin–Jumat"
-    Days.WEEKEND -> "Sabtu–Minggu"
-    else -> DayOfWeek.entries.filter { Days.contains(mask, it) }.joinToString(", ") { DAY_LABELS[it.value - 1] }
-}
 
 private fun describeStart(start: BlockStart): String = when (start) {
     is BlockStart.Fixed -> formatMinute(start.time.hour * 60 + start.time.minute)
@@ -128,11 +122,14 @@ fun ScheduleScreen(
             AppCard(modifier = Modifier.fillMaxWidth(), onClick = { editing = block }) {
                 Text(block.name, style = MaterialTheme.typography.bodyLarge)
                 Text(describeBlock(block), style = MaterialTheme.typography.bodyMedium)
-                Text(
-                    "${describeDays(block.activeDays)} · ${block.level.label}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    DayLetters(block.activeDays)
+                    Text(
+                        " · ${block.level.label}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         }
     }
@@ -314,4 +311,22 @@ private fun BlockEditorDialog(
             }
         },
     )
+}
+
+private val DAY_LETTERS = listOf("S", "S", "R", "K", "J", "S", "M")
+
+/** Tujuh huruf hari (Senin sampai Minggu); hari aktif tebal, hari tidak aktif redup. */
+@Composable
+private fun DayLetters(mask: Int) {
+    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        DayOfWeek.entries.forEach { day ->
+            val active = Days.contains(mask, day)
+            Text(
+                DAY_LETTERS[day.value - 1],
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = if (active) FontWeight.Bold else FontWeight.Normal,
+                color = if (active) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outlineVariant,
+            )
+        }
+    }
 }

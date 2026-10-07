@@ -1,12 +1,14 @@
 package com.roziqrizal.habitflow.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -17,6 +19,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.roziqrizal.habitflow.domain.schedule.ResolvedBlock
@@ -31,9 +34,20 @@ fun formatMinute(minuteOfDay: Int): String {
 private fun ResolvedBlock.range(): String =
     if (isPoint) formatMinute(startMinute) else "${formatMinute(startMinute)}–${formatMinute(endMinute)}"
 
+/** "Sisa 45 menit" atau "Sisa 1 jam 20 menit". */
+private fun remaining(minutes: Int): String {
+    val hours = minutes / 60
+    val rest = minutes % 60
+    return when {
+        hours == 0 -> "Sisa $rest menit"
+        rest == 0 -> "Sisa $hours jam"
+        else -> "Sisa $hours jam $rest menit"
+    }
+}
+
 /**
- * Kartu dashboard: blok yang sedang berjalan, blok berikutnya, dan timeline hari ini yang bisa
- * dibuka. Aturannya ada di docs/rancangan.md bagian Jadwal harian.
+ * Kartu hero dashboard: blok yang sedang berjalan dan berikutnya, lalu timeline hari ini yang
+ * bisa dibuka. Pola visualnya ada di docs/design/README.md bagian Dashboard di Hari ini.
  */
 @Composable
 fun ScheduleCard(
@@ -43,22 +57,30 @@ fun ScheduleCard(
 ) {
     var showTimeline by rememberSaveable { mutableStateOf(false) }
 
-    AppCard(modifier = Modifier.fillMaxWidth()) {
-        Text("Sekarang", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    AppCard(modifier = Modifier.fillMaxWidth(), hero = true) {
+        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                "Sekarang",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.weight(1f),
+            )
+            TextButton(onClick = onOpenEditor) { Text("Atur") }
+        }
         val now = state.now
         if (now != null) {
-            Text(now.block.name, style = MaterialTheme.typography.titleMedium)
-            Text(now.range(), style = MaterialTheme.typography.bodyMedium)
+            Text(now.block.name, style = MaterialTheme.typography.titleLarge)
+            Text(
+                "${now.range()} · ${remaining(now.endMinute - state.nowMinute)}",
+                style = MaterialTheme.typography.bodyMedium,
+            )
         } else {
-            Text("Tidak ada blok sekarang", style = MaterialTheme.typography.bodyMedium)
+            Text("Tidak ada blok sekarang", style = MaterialTheme.typography.titleLarge)
         }
 
-        Text(
-            "Berikutnya",
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 12.dp),
-        )
+        HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = MaterialTheme.colorScheme.outlineVariant)
+
+        Text("Berikutnya", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         val next = state.next
         if (next != null) {
             Text(next.block.name, style = MaterialTheme.typography.titleMedium)
@@ -70,29 +92,40 @@ fun ScheduleCard(
             )
         }
 
-        if (state.isDayOff) {
-            Text(
-                "Hari ini libur: blok hari kerja dimatikan.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 8.dp),
-            )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { showTimeline = !showTimeline }
+                .padding(top = 12.dp, bottom = 4.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text("Lihat jadwal hari ini", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+            Text(if (showTimeline) "▴" else "▾", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
         }
-
-        Row(modifier = Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-            TextButton(onClick = { showTimeline = !showTimeline }) {
-                Text(if (showTimeline) "Sembunyikan jadwal" else "Lihat jadwal")
-            }
-            TextButton(onClick = { onSetDayOff(!state.isDayOff) }) {
-                Text(if (state.isDayOff) "Batalkan libur" else "Hari ini libur")
-            }
-        }
-        TextButton(onClick = onOpenEditor) { Text("Atur jadwal") }
 
         if (showTimeline) {
             Column(modifier = Modifier.padding(top = 4.dp)) {
                 state.timeline.forEach { item -> TimelineRow(item) }
             }
+        }
+
+        if (state.isDayOff) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    "Hari libur, blok kantor dimatikan",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.weight(1f),
+                )
+                TextButton(onClick = { onSetDayOff(false) }) { Text("Batalkan") }
+            }
+        } else {
+            TextButton(onClick = { onSetDayOff(true) }) { Text("Hari ini libur") }
         }
     }
 }
@@ -108,14 +141,16 @@ private fun TimelineRow(item: TimelineItem) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(
-                if (current) MaterialTheme.tokens.primaryFixed else androidx.compose.ui.graphics.Color.Transparent,
-                MaterialTheme.shapes.small,
-            )
+            .background(if (current) MaterialTheme.tokens.primaryFixed else Color.Transparent, MaterialTheme.shapes.small)
             .padding(horizontal = 8.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(item.resolved.range(), style = MaterialTheme.typography.bodySmall, color = color, modifier = Modifier.width(96.dp))
+        Text(
+            item.resolved.range(),
+            style = MaterialTheme.typography.bodySmall.copy(fontFeatureSettings = "tnum"),
+            color = color,
+            modifier = Modifier.width(96.dp),
+        )
         Text(
             item.resolved.block.name,
             style = MaterialTheme.typography.bodyMedium,
