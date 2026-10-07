@@ -23,6 +23,7 @@ abstract class HabitDatabase : RoomDatabase() {
     abstract fun scheduleDao(): ScheduleDao
     abstract fun followUpDao(): FollowUpDao
     abstract fun workDayDao(): WorkDayDao
+    abstract fun syncDao(): SyncDao
 
     companion object {
         private const val NAME = "habitflow.db"
