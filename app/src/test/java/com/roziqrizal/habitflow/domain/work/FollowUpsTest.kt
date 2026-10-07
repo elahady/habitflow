@@ -201,4 +201,52 @@ class FollowUpsTest {
         assertEquals(WorkSection.WAITING, inbox.applyInbox(InboxChoice.Wait(tomorrow))?.sectionFor(today))
         assertNull(inbox.applyInbox(InboxChoice.Delete))
     }
+
+    @Test
+    fun tanggalSelesaiMengikutiZonaWaktu() {
+        val jakarta = java.time.ZoneId.of("Asia/Jakarta")
+        // 2026-10-07 18.30 UTC = 2026-10-08 01.30 WIB.
+        val millis = java.time.LocalDateTime.of(2026, 10, 7, 18, 30).toInstant(java.time.ZoneOffset.UTC).toEpochMilli()
+        val done = fu(1, FollowUpStatus.DONE).copy(doneAt = millis)
+        assertEquals(LocalDate.of(2026, 10, 8), done.doneDate(jakarta))
+        assertEquals(LocalDate.of(2026, 10, 7), done.doneDate(java.time.ZoneOffset.UTC))
+        assertNull(fu(2).copy(doneAt = millis).doneDate(jakarta))
+        assertNull(fu(3, FollowUpStatus.DONE).doneDate(jakarta))
+    }
+
+    @Test
+    fun yangSelesaiDiTanggalTertentuUrutMenurutWaktu() {
+        val utc = java.time.ZoneOffset.UTC
+        fun at(h: Int) = java.time.LocalDateTime.of(2026, 10, 7, h, 0).toInstant(utc).toEpochMilli()
+        val items = listOf(
+            fu(1, FollowUpStatus.DONE).copy(doneAt = at(15)),
+            fu(2, FollowUpStatus.DONE).copy(doneAt = at(9)),
+            fu(3, FollowUpStatus.DONE).copy(doneAt = java.time.LocalDateTime.of(2026, 10, 8, 9, 0).toInstant(utc).toEpochMilli()),
+            fu(4),
+        )
+        assertEquals(listOf(2L, 1L), items.doneOn(today, utc).map { it.id })
+    }
+
+    @Test
+    fun pengingatDalamRentangMenitDipilih() {
+        val items = listOf(
+            fu(1, date = today, time = LocalTime.of(9, 0)),
+            fu(2, date = today, time = LocalTime.of(9, 5)),
+            fu(3, date = today, time = LocalTime.of(14, 0)),
+        )
+        assertEquals(listOf(2L), remindersBetween(items, today, 9 * 60 + 2, 9 * 60 + 10).map { it.id })
+        assertEquals(listOf(1L), remindersBetween(items, today, 8 * 60 + 59, 9 * 60).map { it.id })
+        assertEquals(emptyList<Long>(), remindersBetween(items, today, 9 * 60, 9 * 60 + 4).map { it.id })
+    }
+
+    @Test
+    fun pengingatBerikutnyaHariIniLaluHariBerikutnya() {
+        val items = listOf(
+            fu(1, date = today, time = LocalTime.of(9, 0)),
+            fu(2, date = tomorrow, time = LocalTime.of(8, 0)),
+        )
+        assertEquals(today.atTime(9, 0), nextReminder(items, today.atTime(7, 0)))
+        assertEquals(tomorrow.atTime(8, 0), nextReminder(items, today.atTime(9, 0)))
+        assertNull(nextReminder(items, tomorrow.atTime(8, 0)))
+    }
 }

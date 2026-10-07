@@ -558,7 +558,7 @@ sungguhan saat Doze semalaman. Catatan: di emulator, cold start pertama app samp
 terdaftar memakan sekitar 25 detik karena Astronomy Engine lambat dimuat. Di HP asli lebih cepat,
 tapi kalau terasa lambat, Baseline Profile bisa dipertimbangkan.
 
-### Tahap 19: Catat cepat, follow-up kerja, daily scrum dan EOD (diputuskan, belum dikoding)
+### Tahap 19: Catat cepat, follow-up kerja, daily scrum dan EOD (selesai, 7 Oktober 2026)
 
 Menggantikan tahap 15. **HabitFlow menggantikan jurnal task harian di Notion** ("Ruang Kerja :
 I am a Leader"). Task lama di Notion dihabiskan di sana sampai cut off. Task baru dicatat di
@@ -605,6 +605,39 @@ HabitFlow, tanpa migrasi data dari Notion.
 - Filter per orang menampilkan semua follow-up terkait orang itu.
 - Level hari, streak, dan to-do pribadi tidak berubah.
 - Update dari versi database sebelumnya tidak menghapus data.
+
+**Keputusan saat membangun:**
+- Blok jadwal punya kolom `workAction` (Daily scrum atau EOD). Blok Kerja pagi dan EOD bawaan
+  ditandai lewat migrasi 3 ke 4; blok yang sudah diubah pengguna tidak disentuh. Tap notifikasi blok
+  bertanda itu membuka layar yang sesuai di tab Kerja. Penanda belum bisa diubah dari editor blok.
+- Lewat tanggal yang sudah dipilih hari ini pindah ke Hari ini (bukan ditampilkan dua kali), dan Menunggu
+  yang cek ulangnya hari ini masuk Hari ini. "Lanjut besok" memilih item untuk besok sehingga besok pagi
+  sudah masuk Hari ini dan siap dipilih di daily scrum.
+- EOD: follow-up hari ini awalnya "Lanjut besok" dan Inbox awalnya "Biarkan", supaya Simpan EOD selalu
+  bisa ditekan. Tanggal selesai mengikuti zona waktu perangkat.
+- Pemilih tanggal dan jam memakai komponen Material 3, jadi bahasanya mengikuti locale perangkat.
+- Pengingat jam khusus memakai alarm jadwal yang sama (jendela 5 menit), bukan alarm presisi.
+
+**Hasil verifikasi (7 Oktober 2026, emulator Pixel 6 API 34):**
+- Database v3 berisi data naik ke v4 tanpa kehilangan habit atau blok; Kerja pagi dan EOD tertanda.
+- Tombol Catat ada di semua tab; mengetik lalu Enter menyimpan ke Inbox, kolom kosong lagi, sheet tetap
+  terbuka dan siap untuk catatan berikutnya (dua item berturut-turut diuji).
+- Tab Kerja menampilkan Inbox, Hari ini, Lewat tanggal, Menunggu, dan Nanti dengan jumlah dan keterangan
+  yang benar (tanggal, jam, orang, "Lewat n hari", "cek <tanggal>"). Filter per orang (Budi) menyaring semua
+  bagian. Kartu ringkasan di Hari ini muncul dengan angka yang benar.
+- Daily scrum: kandidat dan "Ambil dari Nanti" tampil, memilih item tersimpan langsung, "Selesai daily
+  scrum" mengisi `scrumDoneAt`.
+- EOD: Selesai, Lanjut besok, Nanti, dan Hapus (Inbox) tersimpan benar, catatan EOD tersimpan, status
+  "selesai" dan "dipilih besok" sesuai di database.
+- Detail hari Kontribusi menampilkan bagian Kerja (follow-up yang selesai dan EOD).
+- Pengingat follow-up berjam khusus muncul di jendela 5 menit (12.39 muncul 12.44). Pembukaan Daily scrum
+  dan EOD lewat intent notifikasi diuji saat app belum dan sudah berjalan.
+- Level hari, streak, dan to-do pribadi tidak berubah (follow-up tidak ikut dihitung).
+
+**Belum diverifikasi:** tombol Bagikan (share sheet belum diketuk); EOD dengan "Pindah tanggal" dan
+"Menunggu" lewat pemilih tanggal (kodenya diuji unit test, belum di layar); simpan editor follow-up;
+Android Auto Backup (aturan sudah dipasang, pencadangan dan pemulihan belum dicoba); tap notifikasi
+sungguhan (yang diuji adalah intent yang sama lewat `am start`); sinkron server di tahap 19B.
 
 ### Tahap 19B: Sinkron ke server sendiri (diputuskan, belum dikoding)
 

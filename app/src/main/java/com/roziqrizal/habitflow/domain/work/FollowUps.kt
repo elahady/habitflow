@@ -159,3 +159,33 @@ fun FollowUp.applyInbox(choice: InboxChoice): FollowUp? = when (choice) {
     is InboxChoice.Wait -> tidyAsWaiting(choice.recheckDate)
     InboxChoice.Delete -> null
 }
+
+/** Tanggal (di zona waktu [zone]) follow-up ini diselesaikan, atau null kalau belum selesai. */
+fun FollowUp.doneDate(zone: java.time.ZoneId): LocalDate? =
+    doneAt?.takeIf { status == FollowUpStatus.DONE }
+        ?.let { java.time.Instant.ofEpochMilli(it).atZone(zone).toLocalDate() }
+
+/** Follow-up yang selesai pada [date], urut menurut waktu selesai. */
+fun List<FollowUp>.doneOn(date: LocalDate, zone: java.time.ZoneId): List<FollowUp> =
+    filter { it.doneDate(zone) == date }.sortedBy { it.doneAt }
+
+private fun FollowUp.minuteOfDay(): Int = time!!.hour * 60 + time.minute
+
+/**
+ * Follow-up berjam khusus pada [date] yang jamnya jatuh di rentang ([sinceMinute], [nowMinute]],
+ * untuk dinotifikasikan. Rentang dipakai karena alarm tidak presisi.
+ */
+fun remindersBetween(items: List<FollowUp>, date: LocalDate, sinceMinute: Int, nowMinute: Int): List<FollowUp> =
+    reminderTimes(items, date).filter { it.minuteOfDay() in (sinceMinute + 1)..nowMinute }
+
+/** Waktu pengingat follow-up berikutnya setelah [now] dalam [horizonDays] hari, atau null. */
+fun nextReminder(items: List<FollowUp>, now: java.time.LocalDateTime, horizonDays: Int = 8): java.time.LocalDateTime? {
+    for (offset in 0 until horizonDays) {
+        val date = now.toLocalDate().plusDays(offset.toLong())
+        val next = reminderTimes(items, date)
+            .map { date.atTime(it.time!!) }
+            .firstOrNull { it.isAfter(now) }
+        if (next != null) return next
+    }
+    return null
+}

@@ -189,16 +189,18 @@ fun EodScreen(
                     Text(caption, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
-                    FilterChip(selected = kind == EodKind.DONE, onClick = { eodKinds[item.id] = EodKind.DONE }, label = { Text("Selesai") })
-                    FilterChip(selected = kind == EodKind.TOMORROW, onClick = { eodKinds[item.id] = EodKind.TOMORROW }, label = { Text("Lanjut besok") })
+                    FilterChip(colors = appFilterChipColors(), selected = kind == EodKind.DONE, onClick = { eodKinds[item.id] = EodKind.DONE }, label = { Text("Selesai") })
+                    FilterChip(colors = appFilterChipColors(), selected = kind == EodKind.TOMORROW, onClick = { eodKinds[item.id] = EodKind.TOMORROW }, label = { Text("Lanjut besok") })
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 4.dp)) {
                     FilterChip(
+                        colors = appFilterChipColors(),
                         selected = kind == EodKind.RESCHEDULE,
                         onClick = { pickingFor = Triple(item.id, false, "RESCHEDULE") },
                         label = { Text(if (kind == EodKind.RESCHEDULE) "Pindah ${eodDates[item.id]?.let(::formatShortDate)}" else "Pindah tanggal") },
                     )
                     FilterChip(
+                        colors = appFilterChipColors(),
                         selected = kind == EodKind.WAIT,
                         onClick = { pickingFor = Triple(item.id, false, "WAIT") },
                         label = { Text(if (kind == EodKind.WAIT) "Menunggu ${eodDates[item.id]?.let(::formatShortDate)}" else "Menunggu") },
@@ -214,17 +216,19 @@ fun EodScreen(
                 AppCard(modifier = Modifier.fillMaxWidth()) {
                     Text(item.title, style = MaterialTheme.typography.bodyLarge)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
-                        FilterChip(selected = kind == InboxKind.KEEP, onClick = { inboxKinds[item.id] = InboxKind.KEEP }, label = { Text("Biarkan") })
-                        FilterChip(selected = kind == InboxKind.LATER, onClick = { inboxKinds[item.id] = InboxKind.LATER }, label = { Text("Nanti") })
-                        FilterChip(selected = kind == InboxKind.DELETE, onClick = { inboxKinds[item.id] = InboxKind.DELETE }, label = { Text("Hapus") })
+                        FilterChip(colors = appFilterChipColors(), selected = kind == InboxKind.KEEP, onClick = { inboxKinds[item.id] = InboxKind.KEEP }, label = { Text("Biarkan") })
+                        FilterChip(colors = appFilterChipColors(), selected = kind == InboxKind.LATER, onClick = { inboxKinds[item.id] = InboxKind.LATER }, label = { Text("Nanti") })
+                        FilterChip(colors = appFilterChipColors(), selected = kind == InboxKind.DELETE, onClick = { inboxKinds[item.id] = InboxKind.DELETE }, label = { Text("Hapus") })
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 4.dp)) {
                         FilterChip(
+                            colors = appFilterChipColors(),
                             selected = kind == InboxKind.DATE,
                             onClick = { pickingFor = Triple(item.id, true, "DATE") },
                             label = { Text(if (kind == InboxKind.DATE) formatShortDate(inboxDates[item.id] ?: state.today) else "Pilih tanggal") },
                         )
                         FilterChip(
+                            colors = appFilterChipColors(),
                             selected = kind == InboxKind.WAIT,
                             onClick = { pickingFor = Triple(item.id, true, "WAIT") },
                             label = { Text(if (kind == InboxKind.WAIT) "Menunggu ${inboxDates[item.id]?.let(::formatShortDate)}" else "Menunggu") },

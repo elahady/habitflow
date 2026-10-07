@@ -92,7 +92,7 @@ class MainActivity : ComponentActivity() {
                     factory = viewModelFactory { initializer { TodayViewModel(repo, clock) } },
                 )
                 val contribution: ContributionViewModel = viewModel(
-                    factory = viewModelFactory { initializer { ContributionViewModel(repo, clock) } },
+                    factory = viewModelFactory { initializer { ContributionViewModel(repo, WorkRepository(HabitDatabase.get(applicationContext)), clock) } },
                 )
                 val scheduleRepo = remember { ScheduleRepository(HabitDatabase.get(applicationContext)) }
                 val schedule: ScheduleViewModel = viewModel(

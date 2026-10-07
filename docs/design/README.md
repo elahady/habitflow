@@ -156,6 +156,10 @@ Komponen bersama ada di `ui/Components.kt`. Pakai ulang, jangan membuat versi ba
 | `TonalButton` | Tombol tonal dengan latar primaryFixed | Aksi utama layar, misalnya "+ To-do", "+ Habit" |
 | `HeatmapGrid` | Grid 7 baris × 26–53 minggu (mengisi lebar), dengan legenda opsional | Kontribusi. Gabungan dan per habit |
 
+Pilihan memakai `FilterChip` dan tombol segmen. Warna terpilihnya selalu dari `appFilterChipColors()` dan
+`appSegmentedColors()` di `ui/Components.kt` (latar `primaryFixed`, teks `onPrimaryContainer`), bukan biru
+bawaan Material.
+
 Tombol hapus dan aksi sekunder memakai `TextButton`. Dialog memakai `AlertDialog`, dan
 detail hari memakai `ModalBottomSheet`.
 
@@ -242,7 +246,7 @@ sendiri setelah 10 menit.
    keterangan (bodySmall, `onSurfaceVariant`) berisi tanggal, jam, dan orang. Lewat tanggal ditandai
    teks "Lewat n hari", bukan warna merah. Yang dipilih untuk hari ini diberi teks "Dipilih hari ini".
    Tap kartu membuka editor.
-5. **Editor follow-up** (`AlertDialog` gulir): judul, status (tombol segmen Inbox, Aktif, Menunggu),
+5. **Editor follow-up** (`AlertDialog` gulir): judul, status (baris `FilterChip` Inbox, Aktif, Menunggu),
    tanggal dan jam (tombol teks yang membuka `DatePickerDialog` dan `TimePicker`, dengan tombol "Hapus"
    untuk mengosongkan), orang (`OutlinedTextField` dengan chip saran di bawahnya), catatan, lalu
    tombol Simpan, Hapus, Batal. Jam hanya muncul setelah tanggal diisi.

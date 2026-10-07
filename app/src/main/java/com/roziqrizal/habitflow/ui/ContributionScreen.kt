@@ -152,6 +152,23 @@ private fun DayDetail(state: ContributionUiState, date: LocalDate) {
         todos.forEach { todo ->
             StatusRow(name = todo.title, done = todo.done)
         }
+
+        val doneFollowUps = state.followUpsDoneByDate[date].orEmpty()
+        val workDay = state.workDays[date]
+        if (doneFollowUps.isNotEmpty() || workDay?.eodNote != null || workDay?.eodDoneAt != null) {
+            SectionTitle("Kerja")
+            doneFollowUps.forEach { StatusRow(name = it.title, done = true) }
+            if (workDay?.eodDoneAt != null) {
+                Text(
+                    text = "EOD selesai",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            workDay?.eodNote?.let {
+                Text(text = "Catatan EOD: $it", style = MaterialTheme.typography.bodyMedium)
+            }
+        }
     }
 }
 

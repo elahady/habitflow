@@ -20,8 +20,12 @@ import com.roziqrizal.habitflow.data.HabitDatabase
 import com.roziqrizal.habitflow.data.LocationSettings
 import com.roziqrizal.habitflow.data.NotificationSettings
 import com.roziqrizal.habitflow.data.ScheduleRepository
+import com.roziqrizal.habitflow.data.WorkRepository
 import com.roziqrizal.habitflow.domain.prayer.EphemerisPrayerCalculator
 import com.roziqrizal.habitflow.domain.schedule.AlarmTime
+import com.roziqrizal.habitflow.domain.work.FollowUp
+import com.roziqrizal.habitflow.domain.work.nextReminder
+import com.roziqrizal.habitflow.domain.work.remindersBetween
 import com.roziqrizal.habitflow.domain.schedule.NotificationLevel
 import com.roziqrizal.habitflow.domain.schedule.ResolvedBlock
 import com.roziqrizal.habitflow.domain.schedule.adzanPrayer
@@ -63,6 +67,7 @@ object ScheduleNotifier {
     private const val ONGOING_ID = 1
     private const val REQUEST_ALARM_CLOCK = 1
     private const val BLOCK_ID_BASE = 1000
+    private const val FOLLOW_UP_ID_BASE = 100_000
 
     /** Jendela mundur untuk blok yang baru mulai, kalau alarm terlambat atau HP baru menyala. */
     private const val CATCH_UP_MINUTES = 10
@@ -90,6 +95,7 @@ object ScheduleNotifier {
         val today = now.toLocalDate()
         val nowMinute = now.hour * 60 + now.minute
         val blocks = repo.getBlocks()
+        val followUps = WorkRepository(HabitDatabase.get(app)).getFollowUps()
 
         fun resolveFor(date: LocalDate, off: Boolean) = resolveBlocks(
             blocks, EphemerisPrayerCalculator.calculate(date, place.latitude, place.longitude, zone), date, off,
@@ -97,7 +103,7 @@ object ScheduleNotifier {
 
         val resolved = resolveFor(today, repo.isDayOff(today))
 
-        if (announce) announceStarted(app, resolved, today, nowMinute)
+        if (announce) announceStarted(app, resolved, followUps, today, nowMinute)
         updateOngoing(app, resolved, nowMinute)
 
         val nextToday = nextBoundaryMinute(resolved, nowMinute)
@@ -108,7 +114,10 @@ object ScheduleNotifier {
             val first = boundaryMinutes(resolveFor(tomorrow, repo.isDayOff(tomorrow))).firstOrNull() ?: 5
             tomorrow.atStartOfDay(zone).plusMinutes(first.toLong())
         }
-        scheduleAlarm(app, trigger.toInstant().toEpochMilli())
+        // Pengingat follow-up berjam khusus ikut menentukan alarm berikutnya.
+        val reminder = nextReminder(followUps, now.toLocalDateTime())?.atZone(zone)
+        val windowTrigger = if (reminder != null && reminder.isBefore(trigger)) reminder else trigger
+        scheduleAlarm(app, windowTrigger.toInstant().toEpochMilli())
 
         val alarmSettings = AlarmSettings(app)
         scheduleAlarmClock(
@@ -120,7 +129,13 @@ object ScheduleNotifier {
         )
     }
 
-    private fun announceStarted(context: Context, resolved: List<ResolvedBlock>, today: LocalDate, nowMinute: Int) {
+    private fun announceStarted(
+        context: Context,
+        resolved: List<ResolvedBlock>,
+        followUps: List<FollowUp>,
+        today: LocalDate,
+        nowMinute: Int,
+    ) {
         val state = context.getSharedPreferences(STATE_PREFS, Context.MODE_PRIVATE)
         val since = if (state.getString(KEY_LAST_DATE, null) == today.toString()) {
             state.getInt(KEY_LAST_MINUTE, -1)
@@ -135,6 +150,7 @@ object ScheduleNotifier {
             .filter { it.block.level != NotificationLevel.ALARM }
             .filter { item -> item.block.adzanPrayer()?.let(alarmSettings::isAdzanEnabled) ?: true }
             .forEach { notifyBlock(context, it, today) }
+        remindersBetween(followUps, today, since, nowMinute).forEach { notifyFollowUp(context, it) }
     }
 
     @SuppressLint("MissingPermission")
@@ -186,6 +202,22 @@ object ScheduleNotifier {
             .setSilent(true)
             .build()
         manager.notify(ONGOING_ID, notification)
+    }
+
+    /** Pengingat follow-up berjam khusus: notifikasi tingkat Pengingat yang membuka tab Kerja. */
+    @SuppressLint("MissingPermission")
+    private fun notifyFollowUp(context: Context, item: FollowUp) {
+        if (!canNotify(context)) return
+        val time = item.time ?: return
+        val detail = listOfNotNull(item.person).joinToString(" · ")
+        val notification = NotificationCompat.Builder(context, CHANNEL_REMINDER)
+            .setSmallIcon(R.drawable.ic_launcher_monochrome)
+            .setContentTitle(item.title)
+            .setContentText("Follow-up " + formatMinute(time.hour * 60 + time.minute) + if (detail.isEmpty()) "" else " · $detail")
+            .setContentIntent(openAppIntent(context))
+            .setAutoCancel(true)
+            .build()
+        NotificationManagerCompat.from(context).notify(FOLLOW_UP_ID_BASE + item.id.toInt(), notification)
     }
 
     fun cancelBlockNotification(context: Context, blockId: Long) {

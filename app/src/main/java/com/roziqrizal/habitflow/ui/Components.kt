@@ -9,6 +9,8 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -93,3 +95,17 @@ fun TonalButton(
         ),
     ) { Text(text) }
 }
+
+/** Warna `FilterChip` mengikuti palet sage: chip terpilih memakai latar `primaryFixed`, bukan biru bawaan Material. */
+@Composable
+fun appFilterChipColors() = FilterChipDefaults.filterChipColors(
+    selectedContainerColor = MaterialTheme.tokens.primaryFixed,
+    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+)
+
+/** Warna tombol segmen mengikuti palet sage, sama dengan pemilih tampilan di Tentang. */
+@Composable
+fun appSegmentedColors() = SegmentedButtonDefaults.colors(
+    activeContainerColor = MaterialTheme.tokens.primaryFixed,
+    activeContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+)

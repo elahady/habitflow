@@ -5,6 +5,10 @@ import androidx.lifecycle.viewModelScope
 import com.roziqrizal.habitflow.data.Habit
 import com.roziqrizal.habitflow.data.HabitRepository
 import com.roziqrizal.habitflow.data.Todo
+import com.roziqrizal.habitflow.data.WorkRepository
+import com.roziqrizal.habitflow.domain.work.FollowUp
+import com.roziqrizal.habitflow.domain.work.WorkDay
+import com.roziqrizal.habitflow.domain.work.doneDate
 import com.roziqrizal.habitflow.domain.HEATMAP_MAX_WEEKS
 import com.roziqrizal.habitflow.domain.completeDays
 import com.roziqrizal.habitflow.domain.currentStreak
@@ -17,6 +21,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import java.time.LocalDate
+import java.time.ZoneId
 
 /** Level sel heatmap satu habit untuk setiap hari dalam jendela heatmap terlebar. */
 data class HabitHeat(
@@ -34,10 +39,14 @@ data class ContributionUiState(
     val todosByDate: Map<LocalDate, List<Todo>> = emptyMap(),
     val currentStreak: Int = 0,
     val longestStreak: Int = 0,
+    /** Follow-up yang selesai per tanggal dan catatan harian kerja (EOD), untuk detail hari. */
+    val followUpsDoneByDate: Map<LocalDate, List<FollowUp>> = emptyMap(),
+    val workDays: Map<LocalDate, WorkDay> = emptyMap(),
 )
 
 class ContributionViewModel(
     repo: HabitRepository,
+    work: WorkRepository,
     private val clock: DayClock,
 ) : ViewModel() {
 
@@ -45,8 +54,10 @@ class ContributionViewModel(
         repo.observeHabits(),
         repo.observeAllEntries(),
         repo.observeAllTodos(),
+        combine(work.observeFollowUps(), work.observeWorkDays()) { followUps, days -> followUps to days },
         clock.date,
-    ) { habits, entries, todos, now ->
+    ) { habits, entries, todos, workData, now ->
+        val (followUps, workDays) = workData
         val createdOn = habits.associate { it.id to LocalDate.parse(it.createdAt) }
         val doneIdsByDate = entries.groupBy({ LocalDate.parse(it.date) }, { it.habitId }).mapValues { it.value.toSet() }
         val todosByDate = todos.groupBy { LocalDate.parse(it.date) }
@@ -84,6 +95,9 @@ class ContributionViewModel(
             todosByDate = todosByDate,
             currentStreak = currentStreak(complete, now),
             longestStreak = longestStreak(complete),
+            followUpsDoneByDate = followUps.mapNotNull { f -> f.doneDate(ZoneId.systemDefault())?.let { it to f } }
+                .groupBy({ it.first }, { it.second }),
+            workDays = workDays,
         )
     }.stateIn(
         scope = viewModelScope,

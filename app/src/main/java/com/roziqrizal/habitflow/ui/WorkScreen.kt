@@ -20,9 +20,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -114,6 +111,7 @@ fun WorkScreen(
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     item {
                         FilterChip(
+                            colors = appFilterChipColors(),
                             selected = state.selectedPerson == null,
                             onClick = { onSelectPerson(null) },
                             label = { Text("Semua") },
@@ -121,6 +119,7 @@ fun WorkScreen(
                     }
                     items(state.people) { name ->
                         FilterChip(
+                            colors = appFilterChipColors(),
                             selected = name.equals(state.selectedPerson, ignoreCase = true),
                             onClick = { onSelectPerson(name) },
                             label = { Text(name) },
@@ -207,12 +206,12 @@ fun FollowUpEditorDialog(
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Text("Status", style = MaterialTheme.typography.labelMedium)
-                SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                    EDITABLE_STATUSES.forEachIndexed { index, s ->
-                        SegmentedButton(
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    EDITABLE_STATUSES.forEach { s ->
+                        FilterChip(
+                            colors = appFilterChipColors(),
                             selected = s == status,
                             onClick = { status = s },
-                            shape = SegmentedButtonDefaults.itemShape(index, EDITABLE_STATUSES.size),
                             label = { Text(s.label()) },
                         )
                     }
@@ -249,7 +248,7 @@ fun FollowUpEditorDialog(
                 if (suggestions.isNotEmpty()) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         suggestions.forEach { name ->
-                            FilterChip(selected = false, onClick = { person = name }, label = { Text(name) })
+                            FilterChip(colors = appFilterChipColors(), selected = false, onClick = { person = name }, label = { Text(name) })
                         }
                     }
                 }

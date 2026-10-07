@@ -218,6 +218,7 @@ private fun BlockEditorDialog(
                             selected = (index == 1) == byPrayer,
                             onClick = { byPrayer = index == 1 },
                             shape = SegmentedButtonDefaults.itemShape(index, 2),
+                            colors = appSegmentedColors(),
                             label = { Text(label) },
                         )
                     }
@@ -225,7 +226,7 @@ private fun BlockEditorDialog(
                 if (byPrayer) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         PrayerName.entries.forEach { p ->
-                            FilterChip(selected = p == prayer, onClick = { prayer = p }, label = { Text(p.label) })
+                            FilterChip(colors = appFilterChipColors(), selected = p == prayer, onClick = { prayer = p }, label = { Text(p.label) })
                         }
                     }
                     OutlinedTextField(
@@ -256,6 +257,7 @@ private fun BlockEditorDialog(
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     DayOfWeek.entries.forEach { day ->
                         FilterChip(
+                            colors = appFilterChipColors(),
                             selected = Days.contains(days, day),
                             onClick = { days = days xor Days.bit(day) },
                             label = { Text(DAY_LABELS[day.value - 1]) },
@@ -270,6 +272,7 @@ private fun BlockEditorDialog(
                             selected = l == level,
                             onClick = { level = l },
                             shape = SegmentedButtonDefaults.itemShape(index, NotificationLevel.entries.size),
+                            colors = appSegmentedColors(),
                             label = { Text(l.label) },
                         )
                     }
