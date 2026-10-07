@@ -75,3 +75,52 @@ interface TodoDao {
     @Query("DELETE FROM todos WHERE id = :id")
     suspend fun delete(id: Long): Int
 }
+
+@Dao
+interface ScheduleDao {
+
+    @Query("SELECT * FROM schedule_blocks ORDER BY sortOrder ASC, id ASC")
+    fun observeBlocks(): Flow<List<ScheduleBlockEntity>>
+
+    @Query("SELECT * FROM schedule_block_habits")
+    fun observeLinks(): Flow<List<ScheduleBlockHabit>>
+
+    @Query("SELECT date FROM days_off")
+    fun observeDaysOff(): Flow<List<String>>
+
+    @Query("SELECT * FROM schedule_blocks ORDER BY sortOrder ASC, id ASC")
+    suspend fun getBlocks(): List<ScheduleBlockEntity>
+
+    @Query("SELECT * FROM schedule_block_habits")
+    suspend fun getLinks(): List<ScheduleBlockHabit>
+
+    @Query("SELECT COUNT(*) FROM days_off WHERE date = :date")
+    suspend fun countDayOff(date: String): Int
+
+    @Query("SELECT COALESCE(MAX(sortOrder), -1) + 1 FROM schedule_blocks")
+    suspend fun nextSortOrder(): Int
+
+    @Insert
+    suspend fun insertBlock(block: ScheduleBlockEntity): Long
+
+    @Update
+    suspend fun updateBlock(block: ScheduleBlockEntity)
+
+    @Query("DELETE FROM schedule_blocks WHERE id = :id")
+    suspend fun deleteBlock(id: Long): Int
+
+    @Query("DELETE FROM schedule_block_habits WHERE blockId = :blockId")
+    suspend fun clearLinks(blockId: Long)
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertLinks(links: List<ScheduleBlockHabit>)
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertDayOff(dayOff: DayOff)
+
+    @Query("DELETE FROM days_off WHERE date = :date")
+    suspend fun deleteDayOff(date: String)
+
+    @Query("SELECT habitId FROM schedule_block_habits WHERE blockId = :blockId")
+    suspend fun habitIdsOf(blockId: Long): List<Long>
+}
