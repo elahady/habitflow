@@ -639,22 +639,84 @@ HabitFlow, tanpa migrasi data dari Notion.
 Android Auto Backup (aturan sudah dipasang, pencadangan dan pemulihan belum dicoba); tap notifikasi
 sungguhan (yang diuji adalah intent yang sama lewat `am start`); sinkron server di tahap 19B.
 
-### Tahap 19B: Sinkron ke server sendiri (diputuskan, belum dikoding)
+### Tahap 19B: Sinkron ke server sendiri (diputuskan 7 Oktober 2026, sedang dikoding)
 
 Dikerjakan **tepat setelah tahap 19, sebelum cut off Notion**, karena data kerja tidak boleh
-hanya ada di satu HP.
+hanya ada di satu HP. Aturan fitur di `docs/rancangan.md` bagian Sinkron ke server.
 
 | Pertanyaan | Keputusan |
 |---|---|
 | Fungsi | Backup dan pindah HP. Tidak ada akses web atau laptop |
 | Arah | Satu arah HP → server, plus pulihkan dari server saat install ulang atau ganti HP |
-| Server | **Laravel baru** di VPS Al-Kaukaba (`202.155.17.2`), terpisah dari app Al-Kaukaba |
-| Cakupan | Semua data HabitFlow: habit, riwayat, to-do, jadwal, follow-up, EOD, nanti kesehatan |
+| Server | **Laravel baru** (Laravel 12, PHP 8.2) di VPS Al-Kaukaba (`202.155.17.2`), terpisah dari app Al-Kaukaba |
+| Letak kode server | Folder `server/` di repo ini. Pemilik yang men-deploy ke VPS; kode di repo tidak mengakses VPS |
+| Cakupan | Semua data HabitFlow: habit, riwayat, to-do, jadwal, follow-up, EOD, pengaturan. Nanti kesehatan |
 | Sifat app | Tetap offline-first. HP adalah sumber data. Sinkron berjalan saat ada internet |
+| Login | Token pribadi. Dibuat sekali di server lewat perintah artisan, ditempel di Tentang. Tanpa akun |
+| Cara sinkron | Snapshot lengkap (satu berkas JSON bernomor versi), bukan per baris |
+| Kapan | Otomatis ±5 menit setelah ada perubahan (hanya saat ada internet) dan sekali sehari. Tombol "Sinkron sekarang" |
+| Pulihkan | Manual dari Tentang, dengan konfirmasi yang menyebut waktu snapshot. Mengganti seluruh data di HP |
+| Perlindungan | HTTPS wajib (kecuali emulator saat debug). Isi disimpan terenkripsi di server dengan kunci app Laravel |
+| Beban VPS | Tanpa layanan baru: Laravel stateless di PHP-FPM yang sudah ada, SQLite untuk metadata, berkas snapshot di storage. Satu permintaan per sinkron |
 
-Belum dibahas: subdomain, cara login (token pribadi sekali buat atau akun), frekuensi
-sinkron, enkripsi data di server, dan dampaknya ke RAM VPS yang juga melayani Al-Kaukaba
-produksi.
+**Kontrak API** (semua di bawah `/api/v1`, header `Authorization: Bearer <token>`):
+
+| Metode dan jalur | Fungsi |
+|---|---|
+| `GET /ping` | Uji koneksi dan token. 200 `{"ok":true}` |
+| `PUT /snapshot` | Unggah snapshot. 200 `{"id","receivedAt","bytes","unchanged"}`. Kalau isinya sama persis dengan snapshot terakhir, tidak ditulis ulang (`unchanged: true`) |
+| `GET /snapshot/latest` | Snapshot terakhir apa adanya. 404 kalau belum ada. Header `X-Received-At` berisi waktu terima (epoch milidetik) |
+
+Kesalahan: 401 token kosong atau salah, 413 lebih dari 5 MB, 422 isi bukan JSON snapshot yang sah,
+429 terlalu sering (60 permintaan per menit per token). Server menyimpan 14 snapshot terakhir dan
+menghapus yang lebih lama.
+
+**Format snapshot** (`schemaVersion` 1). Server hanya memeriksa bahwa `schemaVersion` bilangan bulat
+dan `data` objek; isinya tidak ditafsirkan.
+
+```json
+{
+  "schemaVersion": 1,
+  "createdAt": 1791350953356,
+  "deviceId": "uuid",
+  "appVersion": "1.0",
+  "data": {
+    "habits": [{"id": 1, "name": "...", "createdAt": "2026-10-07", "sortOrder": 0, "isMandatory": true}],
+    "habitEntries": [{"habitId": 1, "date": "2026-10-07"}],
+    "todos": [{"id": 1, "title": "...", "date": "2026-10-07", "done": false, "createdAt": 0}],
+    "scheduleBlocks": [{"id": 1, "name": "...", "startType": 0, "startValue": 480, "prayer": null,
+      "durationMinutes": 240, "endMinuteOfDay": null, "activeDays": 31, "level": "REMINDER",
+      "sortOrder": 0, "workAction": null}],
+    "scheduleBlockHabits": [{"blockId": 1, "habitId": 1}],
+    "daysOff": ["2026-10-07"],
+    "followUps": [{"id": 1, "title": "...", "status": "ACTIVE", "date": null, "time": null, "person": null,
+      "note": null, "createdAt": 0, "doneAt": null, "pickedDate": null}],
+    "workDays": [{"date": "2026-10-07", "eodNote": null, "scrumDoneAt": null, "eodDoneAt": null}],
+    "settings": {"location": {"name": "Surabaya", "latitude": -7.2575, "longitude": 112.7521},
+      "persistentNotification": true, "adzan": {"SUBUH": true, "DZUHUR": true, "ASHAR": true,
+      "MAGHRIB": true, "ISYA": true}, "themeMode": "SYSTEM"}
+  }
+}
+```
+
+Nada alarm dan tanggal alarm yang dimatikan sekali tidak ikut (khusus perangkat dan sementara).
+
+**Aturan pulihkan:** snapshot dengan `schemaVersion` lebih baru dari yang dikenal app ditolak dengan
+pesan untuk memperbarui app. Pemulihan mengganti semua tabel dalam satu transaksi, jadi gagal di
+tengah tidak meninggalkan data setengah. Setelah pulih, notifikasi dan alarm dijadwalkan ulang.
+
+**Selesai jika:**
+- Server menolak tanpa token (401), dengan isi bukan JSON snapshot (422), dan terlalu besar (413).
+- Unggah snapshot yang sama dua kali tidak menulis berkas kedua; yang lama dari 14 snapshot dipangkas.
+- Isi di storage terenkripsi (tidak terbaca sebagai teks biasa), dan `GET latest` mengembalikan isi
+  yang persis sama dengan yang diunggah.
+- Di app: pengaturan URL dan token tersimpan, "Uji koneksi" menunjukkan berhasil atau gagal dengan pesan
+  yang jelas, "Sinkron sekarang" mengunggah, dan status terakhir tampil di Tentang.
+- Perubahan data memicu sinkron otomatis tertunda; tanpa internet ia menunggu dan jalan saat tersambung.
+- Pulihkan di app dengan data berbeda mengembalikan semua tabel persis seperti snapshot, termasuk
+  pengaturan, dan gagal dengan aman kalau server tidak terjangkau.
+- Round-trip diuji: data di HP → snapshot → data kosong → pulihkan → data sama (unit test untuk
+  serialisasi, uji di emulator terhadap server lokal untuk alur utuh).
 
 ### Tahap 20: Pengingat kerja
 Sudah diputuskan: minum air **setiap 60 menit** di jam kerja dengan tombol "Sudah minum"

@@ -171,6 +171,22 @@ divisualisasikan seperti kontribusi GitHub.
 - **Pengingat**: opsional, diatur di layar Tentang (switch dan jam), awalnya mati.
   Notifikasi muncul sekali sehari di jam itu, hanya kalau daily scrum hari itu belum diisi.
 
+## Sinkron ke server (tahap 19B)
+
+- Fungsinya **backup dan pindah HP**, bukan akses dari web atau laptop. HP tetap sumber data dan app
+  tetap bisa dipakai penuh tanpa internet.
+- Arah satu jalur: HP mengirim **snapshot lengkap** (satu berkas JSON) ke server Laravel sendiri.
+  Otomatis sekitar 5 menit setelah ada perubahan (hanya saat ada internet) dan sekali sehari, atau
+  lewat tombol "Sinkron sekarang" di Tentang.
+- Login memakai **token pribadi** yang dibuat sekali di server dan ditempel di Tentang, bersama alamat
+  server (HTTPS). Tanpa akun.
+- **Pulihkan dari server** hanya manual, di Tentang, dengan konfirmasi yang menyebut waktu snapshot.
+  Pemulihan **mengganti seluruh data** di HP (habit, riwayat, to-do, jadwal, follow-up, EOD,
+  pengaturan) dalam satu transaksi.
+- Nada alarm dan tanggal alarm yang dimatikan sekali tidak ikut disinkron.
+- Isi snapshot disimpan terenkripsi di server. Server menyimpan 14 snapshot terakhir.
+- Kontrak API dan format snapshot ada di `docs/concept.md` tahap 19B.
+
 ## Level warna per hari
 
 | Level | Syarat |
@@ -238,11 +254,12 @@ gradasi sage dengan level 0 abu-abu netral. UI memakai Jetpack Compose (Material
 - `habit_entries`: id habit, tanggal (ISO `yyyy-MM-dd`). Satu baris = habit selesai di tanggal itu.
 - `todos`: id, judul, tanggal, selesai (boolean), tanggal dibuat.
 
-Semua disimpan lokal di perangkat lewat Room. Tidak ada akun dan server.
+Semua disimpan lokal di perangkat lewat Room. Tidak ada akun. Cadangan opsional ke server sendiri lewat
+token pribadi (lihat Sinkron ke server).
 
 ## Di luar versi ini
 
 - Input angka untuk tekanan darah, gula darah, berat badan, dan lingkar perut.
 - Notifikasi pengingat.
 - Ekspor CSV.
-- Sinkronisasi antar perangkat.
+- Sinkronisasi dua arah antar perangkat (yang ada hanya cadangan satu arah ke server, tahap 19B).
