@@ -230,17 +230,45 @@ latar `surfaceContainerLow`. Isi dipusatkan dan diletakkan di tengah vertikal:
 Tanpa warna merah atau animasi. Layar menutup sendiri begitu alarm dimatikan, ditunda, atau berhenti
 sendiri setelah 10 menit.
 
-### Kerja (tahap 19, belum diterapkan)
-1. Tab kedua "Kerja". Judul layar "Kerja" (headlineMedium), lalu dua `TonalButton`
-   berdampingan: "Daily scrum" dan "EOD".
-2. Bagian dengan `SectionTitle` dan jumlah: "Inbox (n)", "Lewat tanggal (n)", "Hari ini (n)",
-   "Menunggu (n)", "Nanti (n)". Bagian kosong disembunyikan, kecuali Hari ini.
-3. Satu `AppCard` per follow-up: judul (bodyLarge), baris keterangan (bodySmall,
-   `onSurfaceVariant`) berisi tanggal, jam, dan orang. Lewat tanggal ditandai dengan teks
-   "Lewat n hari", bukan warna merah.
-4. **Tombol Catat**: `FloatingActionButton` kecil "Catat" di kanan bawah semua tab, di atas
-   bar navigasi. Membuka `ModalBottomSheet` berisi satu `OutlinedTextField` yang langsung
-   fokus. Enter menyimpan, mengosongkan kolom, dan sheet tetap terbuka.
+### Kerja (tahap 19)
+1. Tab kedua "Kerja" (urutan tab: Hari ini, Kerja, Kontribusi, Habit, Tentang). Judul layar "Kerja"
+   (headlineMedium), lalu dua `TonalButton` berdampingan: "Daily scrum" dan "EOD".
+2. Kalau ada nama orang yang pernah dipakai, baris `FilterChip` di bawah tombol: "Semua" lalu
+   satu chip per nama. Chip terpilih memfilter semua bagian.
+3. Bagian dengan `SectionTitle` dan jumlah: "Inbox (n)", "Hari ini (n)", "Lewat tanggal (n)",
+   "Menunggu (n)", "Nanti (n)". Bagian kosong disembunyikan, kecuali Hari ini yang menampilkan
+   "Belum ada yang dikerjakan hari ini." (bodyMedium, `onSurfaceVariant`).
+4. Satu `AppCard` per follow-up: `Checkbox` di kiri (centang = selesai), judul (bodyLarge) dan baris
+   keterangan (bodySmall, `onSurfaceVariant`) berisi tanggal, jam, dan orang. Lewat tanggal ditandai
+   teks "Lewat n hari", bukan warna merah. Yang dipilih untuk hari ini diberi teks "Dipilih hari ini".
+   Tap kartu membuka editor.
+5. **Editor follow-up** (`AlertDialog` gulir): judul, status (tombol segmen Inbox, Aktif, Menunggu),
+   tanggal dan jam (tombol teks yang membuka `DatePickerDialog` dan `TimePicker`, dengan tombol "Hapus"
+   untuk mengosongkan), orang (`OutlinedTextField` dengan chip saran di bawahnya), catatan, lalu
+   tombol Simpan, Hapus, Batal. Jam hanya muncul setelah tanggal diisi.
+6. **Kartu ringkasan di Hari ini**: kalau ada Inbox atau lewat tanggal, satu `AppCard` kecil berisi
+   "Kerja · Inbox n · Lewat tanggal n · Hari ini n" (bodyMedium). Tap membuka tab Kerja. Disembunyikan
+   kalau semuanya nol.
+7. **Tombol Catat**: `ExtendedFloatingActionButton` "Catat" (latar `primaryFixed`, tanpa ikon) di kanan
+   bawah semua tab, di atas bar navigasi. Membuka `ModalBottomSheet` berisi satu `OutlinedTextField` satu
+   baris yang langsung fokus, dengan aksi keyboard Selesai. Enter menyimpan ke Inbox, mengosongkan
+   kolom, dan sheet tetap terbuka dengan teks "Tersimpan di Inbox" (bodySmall) yang hilang sendiri.
+
+### Daily scrum dan EOD (tahap 19)
+Dua layar penuh di atas tab (tab tetap lima, tombol kembali menutupnya), dibuka dari tombol di tab
+Kerja atau dari notifikasi blok Kerja pagi dan EOD.
+1. **Daily scrum**: judul "Daily scrum" (headlineMedium) dan tanggal (bodySmall). Daftar kartu
+   kandidat (lewat tanggal, jatuh tempo hari ini, dipilih kemarin, menunggu yang dicek ulang hari
+   ini), masing-masing dengan `Checkbox` "Kerjakan hari ini" yang langsung tersimpan. Di bawahnya
+   judul "Ambil dari Nanti (n)" dengan kartu yang sama untuk Nanti dan Menunggu. Tombol
+   `TonalButton` "Selesai daily scrum" menandai selesai dan menutup layar.
+2. **EOD**: judul "EOD" dan tanggal. Bagian "Hari ini (n)": satu kartu per follow-up dengan baris
+   `FilterChip` Selesai, Lanjut besok, Pindah tanggal, Menunggu (awalnya Lanjut besok). Pindah tanggal
+   dan Menunggu membuka `DatePickerDialog`; tanggalnya tampil di chip. Bagian "Inbox (n)": satu kartu
+   per item dengan `FilterChip` Biarkan, Nanti, Pilih tanggal, Menunggu, Hapus (awalnya Biarkan).
+   Lalu `OutlinedTextField` "Catatan EOD" beberapa baris, dan dua tombol: `TonalButton` "Simpan EOD"
+   serta `TextButton` "Bagikan" yang membuka share sheet berisi ringkasan.
+3. Layar ini tidak memakai warna status. Yang belum diputuskan tidak ditandai merah.
 
 ### Asupan makan (tahap 23, belum diterapkan)
 1. Kartu "Makan" di dashboard: empat chip kecil Sarapan, Siang, Malam, Camilan. Chip yang
@@ -293,7 +321,7 @@ sendiri setelah 10 menit.
    switch mati.
 
 ### Navigasi bawah
-- Empat tab: Hari ini, Kontribusi, Habit, Tentang.
+- Lima tab: Hari ini, Kerja, Kontribusi, Habit, Tentang.
 - Bar memakai `surfaceContainer`. Tab aktif memakai indikator pill `primaryFixed` dan teks `onSurface`.
   Tab tidak aktif memakai `onSurfaceVariant`.
 - Tombol kembali membuka tab sebelumnya. Dari tab pertama, tombol kembali menutup app.
