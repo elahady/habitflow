@@ -189,13 +189,15 @@ detail hari memakai `ModalBottomSheet`.
 
 ### Tentang
 Nama app (headlineMedium), "Versi x.y" (bodyMedium, `onSurfaceVariant`), dan "Dibuat oleh Roziq Rizal".
-Teks dipusatkan. Di bawahnya tiga bagian pengaturan, masing-masing dengan label labelMedium (`onSurfaceVariant`) dan jarak 32dp di atasnya:
+Teks dipusatkan. Di bawahnya lima bagian pengaturan, masing-masing dengan label labelMedium (`onSurfaceVariant`) dan jarak 32dp di atasnya:
 
 - **Tampilan**: `SingleChoiceSegmentedButtonRow` dengan segmen Sistem, Terang, Gelap. Segmen aktif memakai latar `primaryFixed` dan teks `onPrimaryContainer`, sama dengan `TonalButton`.
 - **Lokasi untuk waktu sholat**: nama (bodyLarge) dan koordinat (bodySmall), lalu `TonalButton` "Pakai lokasi saat ini" dan `TextButton` "Atur manual" (dialog nama kota, lintang, bujur).
 - **Notifikasi**: satu baris dengan judul "Notifikasi tetap", keterangan bodySmall, dan `Switch` di kanan.
+- **Alarm**: "Alarm berikutnya" (bodyLarge) dengan hari, tanggal, dan jam (bodySmall); tombol teks "Matikan untuk tanggal itu" (jadi "Nyalakan lagi" kalau sudah dimatikan); tombol teks "Pilih nada" dengan nama nada terpilih di bawahnya.
+- **Pengingat adzan**: lima baris (Subuh, Dzuhur, Ashar, Maghrib, Isya), masing-masing nama (bodyLarge) dan `Switch` di kanan. Mematikan satu hanya menghentikan notifikasi waktu sholat itu.
 
-Layar bisa digulir karena isinya lebih panjang dari layar kecil.
+Layar bisa digulir karena isinya lebih panjang dari layar kecil. Urutan bagian: Tampilan, Lokasi, Notifikasi, Alarm, Pengingat adzan.
 
 ### Dashboard di Hari ini (tahap 17)
 1. Kartu hero "Sekarang" paling atas, di atas kartu skor: label "Sekarang" (labelMedium,
@@ -216,6 +218,17 @@ Layar bisa digulir karena isinya lebih panjang dari layar kecil.
    (`AlertDialog` gulir): nama, patokan waktu (jam tetap atau waktu sholat dengan selisih menit),
    durasi, jam selesai tetap (opsional), hari aktif (chip), tingkat notifikasi, habit yang ditautkan.
    Pintu masuk dari tombol "Atur" di kartu Sekarang.
+
+### Layar alarm (tahap 18)
+Layar penuh yang muncul di atas lock screen saat alarm berbunyi (layar menyala), memakai tema app dan
+latar `surfaceContainerLow`. Isi dipusatkan dan diletakkan di tengah vertikal:
+1. Label "Alarm" (labelMedium, `onSurfaceVariant`).
+2. Jam sekarang (displayMedium, angka tabular), misalnya "03.55".
+3. Nama blok (titleLarge Caslon), misalnya "Bangun".
+4. `TonalButton` "Matikan" selebar layar (tinggi 56dp), lalu `TextButton` "Tunda 5 menit" di bawahnya dengan
+   keterangan "Tunda ke-1 dari 2" (bodySmall). Setelah dua kali tunda, tombol Tunda dan keterangannya hilang.
+Tanpa warna merah atau animasi. Layar menutup sendiri begitu alarm dimatikan, ditunda, atau berhenti
+sendiri setelah 10 menit.
 
 ### Kerja (tahap 19, belum diterapkan)
 1. Tab kedua "Kerja". Judul layar "Kerja" (headlineMedium), lalu dua `TonalButton`
