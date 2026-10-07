@@ -162,10 +162,27 @@ detail hari memakai `ModalBottomSheet`.
 ## Pola layar
 
 ### Hari ini
-1. Kartu hero: tanggal (labelMedium), dua `StatBlock` (Habit, To-do), lalu baris level dan streak.
-2. Judul "Habit", lalu daftar habit (habit wajib di atas, bertanda "Wajib").
-3. Judul "To-do hari ini (x/5)", daftar to-do, lalu tombol `TonalButton` "+ To-do".
+1. Kartu **Sekarang/Berikutnya** (`AppCard` biasa, sudut medium) di paling atas: label "Sekarang"
+   (labelMedium, `onSurfaceVariant`), nama blok (titleMedium) dengan rentang waktunya (bodyMedium),
+   lalu "Berikutnya" dengan nama blok dan jam mulainya. Tanpa blok aktif: "Tidak ada blok sekarang".
+   Setelah blok terakhir: "Selesai untuk hari ini". Di bawahnya tiga `TextButton`: "Lihat jadwal"
+   (membuka timeline), "Hari ini libur" (jadi "Batalkan libur" saat aktif), dan "Atur jadwal".
+2. **Timeline** di dalam kartu yang sama, tertutup awalnya. Satu baris per blok: jam mulai-selesai
+   (bodySmall, lebar tetap 96dp) dan nama (bodyMedium). Blok yang sedang berjalan memakai latar
+   `primaryFixed` dengan sudut 8dp dan nama SemiBold; blok yang sudah lewat memakai `onSurfaceVariant`.
+   Titik waktu (misalnya batas tidur) hanya menampilkan jam mulai.
+3. Kartu hero: tanggal (labelMedium), dua `StatBlock` (Habit, To-do), lalu baris level dan streak.
+4. Judul "Habit", lalu daftar habit (habit wajib di atas, bertanda "Wajib").
+5. Judul "To-do hari ini (x/5)", daftar to-do, lalu tombol `TonalButton` "+ To-do".
    Tombol nonaktif saat sudah 5, dan pesan penuh muncul di bawahnya.
+
+### Atur jadwal
+Layar penuh di atas tab (tab tetap empat), dibuka dari "Atur jadwal" di dashboard. Judul
+"Atur jadwal" (headlineMedium), tombol `TonalButton` "+ Blok", lalu satu `AppCard` per blok: nama,
+waktu mulai dan durasi (bodyMedium), hari aktif dan tingkat notifikasi (bodySmall). Tap kartu
+membuka editor (`AlertDialog` gulir) dengan field nama, patokan waktu (jam tetap atau waktu
+sholat dengan selisih menit), durasi, hari aktif (chip), tingkat notifikasi, dan habit yang
+ditautkan. Tombol kembali menutup layar.
 
 ### Kontribusi
 1. Judul layar "Kontribusi" (headlineMedium).
