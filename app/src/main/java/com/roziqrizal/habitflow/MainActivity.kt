@@ -21,12 +21,15 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.roziqrizal.habitflow.data.HabitDatabase
 import com.roziqrizal.habitflow.data.HabitRepository
+import com.roziqrizal.habitflow.data.LocationSettings
+import com.roziqrizal.habitflow.data.ScheduleRepository
 import com.roziqrizal.habitflow.data.ThemeMode
 import com.roziqrizal.habitflow.data.ThemeSettings
 import com.roziqrizal.habitflow.ui.ContributionViewModel
 import com.roziqrizal.habitflow.ui.DayClock
 import com.roziqrizal.habitflow.ui.HabitFlowApp
 import com.roziqrizal.habitflow.ui.ManageHabitsViewModel
+import com.roziqrizal.habitflow.ui.ScheduleViewModel
 import com.roziqrizal.habitflow.ui.TodayViewModel
 import com.roziqrizal.habitflow.ui.theme.HabitFlowTheme
 
@@ -40,6 +43,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val themeSettings = ThemeSettings(applicationContext)
+        val locationSettings = LocationSettings(applicationContext)
         themeSettings.syncWithSystem()
         setContent {
             val themeMode by themeSettings.mode.collectAsState()
@@ -67,6 +71,12 @@ class MainActivity : ComponentActivity() {
                 val contribution: ContributionViewModel = viewModel(
                     factory = viewModelFactory { initializer { ContributionViewModel(repo, clock) } },
                 )
+                val scheduleRepo = remember { ScheduleRepository(HabitDatabase.get(applicationContext)) }
+                val schedule: ScheduleViewModel = viewModel(
+                    factory = viewModelFactory {
+                        initializer { ScheduleViewModel(scheduleRepo, repo, locationSettings, clock) }
+                    },
+                )
                 val manage: ManageHabitsViewModel = viewModel(
                     factory = viewModelFactory { initializer { ManageHabitsViewModel(repo) } },
                 )
@@ -78,6 +88,7 @@ class MainActivity : ComponentActivity() {
                     today = today,
                     contribution = contribution,
                     manage = manage,
+                    schedule = schedule,
                     versionName = versionName,
                     themeMode = themeMode,
                     onThemeModeChange = themeSettings::setMode,

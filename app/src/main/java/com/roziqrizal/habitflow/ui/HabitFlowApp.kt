@@ -13,6 +13,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.snapshots.SnapshotStateList
@@ -33,6 +35,7 @@ fun HabitFlowApp(
     today: TodayViewModel,
     contribution: ContributionViewModel,
     manage: ManageHabitsViewModel,
+    schedule: ScheduleViewModel,
     versionName: String,
     themeMode: ThemeMode,
     onThemeModeChange: (ThemeMode) -> Unit,
@@ -45,8 +48,10 @@ fun HabitFlowApp(
         ),
     ) { mutableStateListOf(Tab.TODAY) }
     val current = history.last()
+    var showSchedule by rememberSaveable { mutableStateOf(false) }
 
-    BackHandler(enabled = history.size > 1) {
+    BackHandler(enabled = showSchedule) { showSchedule = false }
+    BackHandler(enabled = !showSchedule && history.size > 1) {
         history.removeAt(history.lastIndex)
     }
 
@@ -77,11 +82,25 @@ fun HabitFlowApp(
         },
     ) { padding ->
         Box(modifier = Modifier.padding(padding)) {
+            if (showSchedule) {
+                val editor by schedule.editor.collectAsState()
+                ScheduleScreen(
+                    state = editor,
+                    onSave = schedule::saveBlock,
+                    onDelete = schedule::deleteBlock,
+                    onClose = { showSchedule = false },
+                )
+                return@Box
+            }
             when (current) {
                 Tab.TODAY -> {
                     val state by today.state.collectAsState()
+                    val scheduleState by schedule.state.collectAsState()
                     TodayScreen(
                         state = state,
+                        schedule = scheduleState,
+                        onSetDayOff = schedule::setDayOff,
+                        onOpenSchedule = { showSchedule = true },
                         onToggleHabit = today::toggleHabit,
                         onAddTodo = today::addTodo,
                         onToggleTodo = today::toggleTodo,

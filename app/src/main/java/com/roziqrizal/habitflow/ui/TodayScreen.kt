@@ -44,6 +44,9 @@ import java.util.Locale
 @Composable
 fun TodayScreen(
     state: TodayUiState,
+    schedule: ScheduleUiState,
+    onSetDayOff: (Boolean) -> Unit,
+    onOpenSchedule: () -> Unit,
     onToggleHabit: (Long) -> Unit,
     onAddTodo: (String) -> Unit,
     onToggleTodo: (Todo) -> Unit,
@@ -56,6 +59,8 @@ fun TodayScreen(
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 96.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        item { ScheduleCard(state = schedule, onSetDayOff = onSetDayOff, onOpenEditor = onOpenSchedule) }
+
         item { DayHeader(state) }
 
         item { SectionTitle("Habit") }
