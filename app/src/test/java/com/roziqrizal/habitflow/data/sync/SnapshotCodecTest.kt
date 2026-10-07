@@ -1,0 +1,135 @@
+package com.roziqrizal.habitflow.data.sync
+
+import com.roziqrizal.habitflow.data.DayOff
+import com.roziqrizal.habitflow.data.FollowUpEntity
+import com.roziqrizal.habitflow.data.Habit
+import com.roziqrizal.habitflow.data.HabitEntry
+import com.roziqrizal.habitflow.data.ScheduleBlockEntity
+import com.roziqrizal.habitflow.data.ScheduleBlockHabit
+import com.roziqrizal.habitflow.data.Todo
+import com.roziqrizal.habitflow.data.WorkDayEntity
+import org.json.JSONObject
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
+import org.junit.Test
+
+class SnapshotCodecTest {
+
+    private fun sample() = Snapshot(
+        createdAt = 1791350953356,
+        deviceId = "perangkat-1",
+        appVersion = "1.0",
+        habits = listOf(
+            Habit(1, "Sholat 5 waktu", "2026-10-07", 0, true),
+            Habit(2, "Air putih \"2 liter\"", "2026-10-07", 1, false),
+        ),
+        habitEntries = listOf(HabitEntry(1, "2026-10-07"), HabitEntry(2, "2026-10-06")),
+        todos = listOf(Todo(1, "Tulis laporan\nbaris kedua", "2026-10-07", true, 1791350000000)),
+        scheduleBlocks = listOf(
+            ScheduleBlockEntity(1, "Bangun", 1, -15, "SUBUH", 15, null, 127, "ALARM", 0, null),
+            ScheduleBlockEntity(2, "Aktivitas fisik", 1, 60, "SUBUH", 0, 360, 127, "INFO", 1, "EOD"),
+            ScheduleBlockEntity(3, "Kerja pagi", 0, 480, null, 240, null, 31, "REMINDER", 2, "SCRUM"),
+        ),
+        scheduleBlockHabits = listOf(ScheduleBlockHabit(1, 1)),
+        daysOff = listOf(DayOff("2026-10-07")),
+        followUps = listOf(
+            FollowUpEntity(1, "Telepon vendor", "ACTIVE", "2026-10-07", "14:00", "Budi", "Bawa kontrak", 5, null, "2026-10-08"),
+            FollowUpEntity(2, "Catatan lepas", "INBOX", null, null, null, null, 6, null, null),
+            FollowUpEntity(3, "Selesai", "DONE", "2026-10-05", null, "Sari", null, 7, 1791350953356, null),
+        ),
+        workDays = listOf(
+            WorkDayEntity("2026-10-07", "Besok fokus demo", 100L, 200L),
+            WorkDayEntity("2026-10-06", null, null, null),
+        ),
+        settings = SnapshotSettings(
+            locationName = "Surabaya",
+            latitude = -7.2575,
+            longitude = 112.7521,
+            persistentNotification = true,
+            adzan = mapOf("SUBUH" to true, "DZUHUR" to false, "ASHAR" to true, "MAGHRIB" to true, "ISYA" to true),
+            themeMode = "DARK",
+        ),
+    )
+
+    @Test
+    fun roundTripMengembalikanSemuaDataPersisSama() {
+        val original = sample()
+        assertEquals(original, SnapshotCodec.decode(SnapshotCodec.encode(original)))
+    }
+
+    @Test
+    fun jsonMemuatSchemaVersionDanSemuaTabel() {
+        val root = JSONObject(SnapshotCodec.encode(sample()))
+        assertEquals(1, root.getInt("schemaVersion"))
+        val data = root.getJSONObject("data")
+        listOf("habits", "habitEntries", "todos", "scheduleBlocks", "scheduleBlockHabits", "daysOff", "followUps", "workDays", "settings")
+            .forEach { assertTrue("$it hilang", data.has(it)) }
+        assertEquals(2, data.getJSONArray("habits").length())
+    }
+
+    @Test
+    fun nilaiNullDitulisSebagaiJsonNullDanKembaliNull() {
+        val block = JSONObject(SnapshotCodec.encode(sample())).getJSONObject("data")
+            .getJSONArray("scheduleBlocks").getJSONObject(0)
+        assertTrue(block.isNull("endMinuteOfDay"))
+        assertTrue(block.isNull("workAction"))
+
+        val decoded = SnapshotCodec.decode(SnapshotCodec.encode(sample()))
+        assertEquals(null, decoded.scheduleBlocks[0].endMinuteOfDay)
+        assertEquals(null, decoded.followUps[1].date)
+        assertEquals(null, decoded.workDays[1].eodNote)
+    }
+
+    @Test
+    fun dataKosongTetapSah() {
+        val empty = sample().copy(
+            habits = emptyList(), habitEntries = emptyList(), todos = emptyList(), scheduleBlocks = emptyList(),
+            scheduleBlockHabits = emptyList(), daysOff = emptyList(), followUps = emptyList(), workDays = emptyList(),
+        )
+        assertEquals(empty, SnapshotCodec.decode(SnapshotCodec.encode(empty)))
+    }
+
+    @Test
+    fun teksBukanJsonDitolakDenganPesanJelas() {
+        try {
+            SnapshotCodec.decode("ini bukan json")
+            fail("seharusnya ditolak")
+        } catch (e: SnapshotFormatException) {
+            assertTrue(e.message!!.contains("rusak"))
+        }
+    }
+
+    @Test
+    fun tanpaSchemaVersionDitolak() {
+        try {
+            SnapshotCodec.decode("""{"data": {}}""")
+            fail("seharusnya ditolak")
+        } catch (e: SnapshotFormatException) {
+            assertTrue(e.message!!.contains("schemaVersion"))
+        }
+    }
+
+    @Test
+    fun versiLebihBaruDitolakDenganPesanMemperbaruiApp() {
+        val newer = JSONObject(SnapshotCodec.encode(sample())).put("schemaVersion", 2).toString()
+        try {
+            SnapshotCodec.decode(newer)
+            fail("seharusnya ditolak")
+        } catch (e: SnapshotFormatException) {
+            assertTrue(e.message!!.contains("Perbarui"))
+        }
+    }
+
+    @Test
+    fun tabelHilangDitolakBukanCrash() {
+        val broken = JSONObject(SnapshotCodec.encode(sample()))
+        broken.getJSONObject("data").remove("habits")
+        try {
+            SnapshotCodec.decode(broken.toString())
+            fail("seharusnya ditolak")
+        } catch (e: SnapshotFormatException) {
+            assertTrue(e.message!!.contains("rusak"))
+        }
+    }
+}

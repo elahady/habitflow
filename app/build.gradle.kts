@@ -69,4 +69,6 @@ dependencies {
     ksp("androidx.room:room-compiler:2.6.1")
 
     testImplementation("junit:junit:4.13.2")
+    // org.json bawaan Android tidak ada di JVM unit test; versi ini setara dan hanya dipakai untuk tes.
+    testImplementation("org.json:json:20240303")
 }
