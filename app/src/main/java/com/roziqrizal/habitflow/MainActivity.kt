@@ -1,14 +1,18 @@
 package com.roziqrizal.habitflow
 
+import android.Manifest
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Color
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.DisposableEffect
@@ -16,15 +20,20 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.roziqrizal.habitflow.data.HabitDatabase
 import com.roziqrizal.habitflow.data.HabitRepository
 import com.roziqrizal.habitflow.data.LocationSettings
+import com.roziqrizal.habitflow.data.NotificationSettings
 import com.roziqrizal.habitflow.data.ScheduleRepository
 import com.roziqrizal.habitflow.data.ThemeMode
 import com.roziqrizal.habitflow.data.ThemeSettings
+import com.roziqrizal.habitflow.notify.ScheduleNotifier
 import com.roziqrizal.habitflow.ui.ContributionViewModel
 import com.roziqrizal.habitflow.ui.DayClock
 import com.roziqrizal.habitflow.ui.HabitFlowApp
@@ -32,6 +41,10 @@ import com.roziqrizal.habitflow.ui.ManageHabitsViewModel
 import com.roziqrizal.habitflow.ui.ScheduleViewModel
 import com.roziqrizal.habitflow.ui.TodayViewModel
 import com.roziqrizal.habitflow.ui.theme.HabitFlowTheme
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
@@ -44,6 +57,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val themeSettings = ThemeSettings(applicationContext)
         val locationSettings = LocationSettings(applicationContext)
+        val notificationSettings = NotificationSettings(applicationContext)
+        requestNotificationPermission()
+        keepNotificationsInSync(locationSettings, notificationSettings)
         themeSettings.syncWithSystem()
         setContent {
             val themeMode by themeSettings.mode.collectAsState()
@@ -91,8 +107,48 @@ class MainActivity : ComponentActivity() {
                     schedule = schedule,
                     versionName = versionName,
                     themeMode = themeMode,
+                    location = locationSettings.location.collectAsState().value,
+                    onLocationChange = locationSettings::set,
+                    persistentNotification = notificationSettings.persistent.collectAsState().value,
+                    onPersistentNotificationChange = notificationSettings::setPersistent,
                     onThemeModeChange = themeSettings::setMode,
                 )
+            }
+        }
+    }
+
+    private val notificationPermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (granted) lifecycleScope.launch { ScheduleNotifier.refresh(applicationContext, announce = false) }
+        }
+
+    private fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+
+    /**
+     * Notifikasi dan alarm dihitung ulang saat jadwal, hari libur, lokasi, atau pengaturan notifikasi
+     * berubah, dan setiap app dibuka (lewat tanggal) selama layar aktif.
+     */
+    @OptIn(FlowPreview::class)
+    private fun keepNotificationsInSync(locationSettings: LocationSettings, notificationSettings: NotificationSettings) {
+        val repo = ScheduleRepository(HabitDatabase.get(applicationContext))
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                combine(
+                    repo.observeBlocks(),
+                    repo.observeDaysOff(),
+                    locationSettings.location,
+                    notificationSettings.persistent,
+                    clock.date,
+                ) { _, _, _, _, _ -> }
+                    .debounce(500)
+                    .collect { ScheduleNotifier.refresh(applicationContext, announce = false) }
             }
         }
     }

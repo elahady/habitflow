@@ -20,6 +20,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Modifier
+import com.roziqrizal.habitflow.data.PlaceLocation
 import com.roziqrizal.habitflow.data.ThemeMode
 import com.roziqrizal.habitflow.ui.theme.tokens
 
@@ -38,6 +39,10 @@ fun HabitFlowApp(
     schedule: ScheduleViewModel,
     versionName: String,
     themeMode: ThemeMode,
+    location: PlaceLocation,
+    onLocationChange: (PlaceLocation) -> Unit,
+    persistentNotification: Boolean,
+    onPersistentNotificationChange: (Boolean) -> Unit,
     onThemeModeChange: (ThemeMode) -> Unit,
 ) {
     // Riwayat tab, dari yang paling lama sampai tab aktif. Tombol kembali membuka tab sebelumnya.
@@ -124,6 +129,10 @@ fun HabitFlowApp(
                 Tab.ABOUT -> AboutScreen(
                     versionName = versionName,
                     themeMode = themeMode,
+                    location = location,
+                    onLocationChange = onLocationChange,
+                    persistentNotification = persistentNotification,
+                    onPersistentNotificationChange = onPersistentNotificationChange,
                     onThemeModeChange = onThemeModeChange,
                 )
             }
