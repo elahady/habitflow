@@ -40,6 +40,7 @@ import com.roziqrizal.habitflow.ui.DayClock
 import com.roziqrizal.habitflow.ui.HabitFlowApp
 import com.roziqrizal.habitflow.ui.ManageHabitsViewModel
 import com.roziqrizal.habitflow.ui.ScheduleViewModel
+import com.roziqrizal.habitflow.ui.SyncViewModel
 import com.roziqrizal.habitflow.ui.TodayViewModel
 import com.roziqrizal.habitflow.ui.WorkViewModel
 import com.roziqrizal.habitflow.domain.schedule.WorkAction
@@ -105,6 +106,11 @@ class MainActivity : ComponentActivity() {
                     factory = viewModelFactory { initializer { WorkViewModel(workRepo, clock) } },
                 )
                 val workRequest by pendingWork.collectAsState()
+                val syncViewModel: SyncViewModel = viewModel(
+                    factory = viewModelFactory {
+                        initializer { SyncViewModel(graph.syncManager, graph.syncSettings, graph.syncScheduler) }
+                    },
+                )
                 val manage: ManageHabitsViewModel = viewModel(
                     factory = viewModelFactory { initializer { ManageHabitsViewModel(repo) } },
                 )
@@ -118,6 +124,7 @@ class MainActivity : ComponentActivity() {
                     manage = manage,
                     schedule = schedule,
                     work = work,
+                    syncViewModel = syncViewModel,
                     workRequest = workRequest,
                     onWorkRequestHandled = { pendingWork.value = null },
                     versionName = versionName,

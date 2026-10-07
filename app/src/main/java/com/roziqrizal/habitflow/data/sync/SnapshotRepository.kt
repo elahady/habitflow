@@ -11,15 +11,17 @@ class SnapshotRepository(private val db: HabitDatabase) {
     /** Membaca semua tabel dalam satu transaksi supaya hasilnya konsisten. [settings] datang dari penyimpanan pengaturan. */
     suspend fun export(settings: SnapshotSettings, deviceId: String, appVersion: String, nowMillis: Long): Snapshot =
         db.withTransaction {
+            val habitRows = dao.habits()
+            val blockRows = dao.scheduleBlocks()
             Snapshot(
                 createdAt = nowMillis,
                 deviceId = deviceId,
                 appVersion = appVersion,
-                habits = dao.habits(),
+                habits = habitRows,
                 habitEntries = dao.habitEntries(),
                 todos = dao.todos(),
-                scheduleBlocks = dao.scheduleBlocks(),
-                scheduleBlockHabits = dao.scheduleBlockHabits(),
+                scheduleBlocks = blockRows,
+                scheduleBlockHabits = consistentLinks(dao.scheduleBlockHabits(), habitRows, blockRows),
                 daysOff = dao.daysOff(),
                 followUps = dao.followUps(),
                 workDays = dao.workDays(),
@@ -46,7 +48,7 @@ class SnapshotRepository(private val db: HabitDatabase) {
         dao.insertTodos(snapshot.todos)
         dao.insertHabitEntries(snapshot.habitEntries)
         dao.insertScheduleBlocks(snapshot.scheduleBlocks)
-        dao.insertScheduleBlockHabits(snapshot.scheduleBlockHabits)
+        dao.insertScheduleBlockHabits(consistentLinks(snapshot.scheduleBlockHabits, snapshot.habits, snapshot.scheduleBlocks))
         dao.insertDaysOff(snapshot.daysOff)
         dao.insertFollowUps(snapshot.followUps)
         dao.insertWorkDays(snapshot.workDays)

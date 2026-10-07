@@ -45,6 +45,7 @@ fun HabitFlowApp(
     manage: ManageHabitsViewModel,
     schedule: ScheduleViewModel,
     work: WorkViewModel,
+    syncViewModel: SyncViewModel,
     /** Permintaan membuka daily scrum atau EOD dari notifikasi. Null kalau tidak ada. */
     workRequest: WorkAction?,
     onWorkRequestHandled: () -> Unit,
@@ -199,6 +200,7 @@ fun HabitFlowApp(
                 }
                 Tab.ABOUT -> {
                     val nextAlarm by schedule.nextAlarm.collectAsState()
+                    val syncState by syncViewModel.state.collectAsState()
                     AboutScreen(
                         versionName = versionName,
                         themeMode = themeMode,
@@ -207,6 +209,16 @@ fun HabitFlowApp(
                         persistentNotification = persistentNotification,
                         nextAlarm = nextAlarm,
                         alarmSettings = alarmSettings,
+                        sync = syncState,
+                        syncActions = SyncActions(
+                            onSaveServer = syncViewModel::saveServer,
+                            onSetEnabled = syncViewModel::setEnabled,
+                            onTest = syncViewModel::testConnection,
+                            onSync = syncViewModel::syncNow,
+                            onPrepareRestore = syncViewModel::prepareRestore,
+                            onDismissRestore = syncViewModel::dismissRestore,
+                            onConfirmRestore = syncViewModel::confirmRestore,
+                        ),
                         onPersistentNotificationChange = onPersistentNotificationChange,
                         onThemeModeChange = onThemeModeChange,
                     )

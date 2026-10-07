@@ -167,3 +167,17 @@ object SnapshotCodec {
 
     private fun JSONObject.long(key: String): Long? = if (isNull(key)) null else getLong(key)
 }
+
+/**
+ * Tautan blok ke habit yang kedua ujungnya ada. Tautan yatim (misalnya sisa penghapusan di luar app) dibuang saat
+ * ekspor dan pulihkan, supaya satu baris rusak tidak menggagalkan seluruh pemulihan lewat foreign key.
+ */
+fun consistentLinks(
+    links: List<ScheduleBlockHabit>,
+    habits: List<Habit>,
+    blocks: List<ScheduleBlockEntity>,
+): List<ScheduleBlockHabit> {
+    val habitIds = habits.mapTo(HashSet()) { it.id }
+    val blockIds = blocks.mapTo(HashSet()) { it.id }
+    return links.filter { it.habitId in habitIds && it.blockId in blockIds }
+}

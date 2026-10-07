@@ -193,15 +193,26 @@ detail hari memakai `ModalBottomSheet`.
 
 ### Tentang
 Nama app (headlineMedium), "Versi x.y" (bodyMedium, `onSurfaceVariant`), dan "Dibuat oleh Roziq Rizal".
-Teks dipusatkan. Di bawahnya lima bagian pengaturan, masing-masing dengan label labelMedium (`onSurfaceVariant`) dan jarak 32dp di atasnya:
+Teks dipusatkan. Di bawahnya enam bagian pengaturan, masing-masing dengan label labelMedium (`onSurfaceVariant`) dan jarak 32dp di atasnya:
 
 - **Tampilan**: `SingleChoiceSegmentedButtonRow` dengan segmen Sistem, Terang, Gelap. Segmen aktif memakai latar `primaryFixed` dan teks `onPrimaryContainer`, sama dengan `TonalButton`.
 - **Lokasi untuk waktu sholat**: nama (bodyLarge) dan koordinat (bodySmall), lalu `TonalButton` "Pakai lokasi saat ini" dan `TextButton` "Atur manual" (dialog nama kota, lintang, bujur).
 - **Notifikasi**: satu baris dengan judul "Notifikasi tetap", keterangan bodySmall, dan `Switch` di kanan.
 - **Alarm**: "Alarm berikutnya" (bodyLarge) dengan hari, tanggal, dan jam (bodySmall); tombol teks "Matikan untuk tanggal itu" (jadi "Nyalakan lagi" kalau sudah dimatikan); tombol teks "Pilih nada" dengan nama nada terpilih di bawahnya.
 - **Pengingat adzan**: lima baris (Subuh, Dzuhur, Ashar, Maghrib, Isya), masing-masing nama (bodyLarge) dan `Switch` di kanan. Mematikan satu hanya menghentikan notifikasi waktu sholat itu.
+- **Sinkron ke server**: baris status (bodyLarge) "Belum diatur" atau "Terakhir berhasil: Rab 7 Okt 12.44", dengan
+  pesan hasil terakhir di bawahnya (bodySmall, `onSurfaceVariant`; gagal ditulis sebagai kalimat biasa, bukan merah).
+  Lalu satu baris "Sinkron otomatis" dengan `Switch` (nonaktif sebelum server diisi), `TonalButton` "Sinkron sekarang",
+  dan tiga `TextButton`: "Atur server", "Uji koneksi", "Pulihkan dari server". Tombol yang sedang berjalan menampilkan
+  "Memproses..." dan semuanya nonaktif selama itu.
+  - **Dialog Atur server** (`AlertDialog`): kolom alamat (placeholder `https://...`) dan kolom token (disamarkan), dengan
+    keterangan bodySmall "Token dibuat di server dengan `php artisan habitflow:token`". Simpan menolak alamat tanpa
+    `https://` dengan teks galat di bawah kolom.
+  - **Dialog pulihkan** (`AlertDialog`): judul "Pulihkan dari server?", isi menyebut waktu snapshot dan ringkasan
+    jumlahnya (habit, follow-up), lalu "Semua data di HP ini akan diganti. Ini tidak bisa dibatalkan." Tombol utama
+    `Button` "Ganti semua data", dan `TextButton` "Batal".
 
-Layar bisa digulir karena isinya lebih panjang dari layar kecil. Urutan bagian: Tampilan, Lokasi, Notifikasi, Alarm, Pengingat adzan.
+Layar bisa digulir karena isinya lebih panjang dari layar kecil. Urutan bagian: Tampilan, Lokasi, Notifikasi, Alarm, Pengingat adzan, Sinkron ke server.
 
 ### Dashboard di Hari ini (tahap 17)
 1. Kartu hero "Sekarang" paling atas, di atas kartu skor: label "Sekarang" (labelMedium,

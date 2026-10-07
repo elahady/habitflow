@@ -69,12 +69,15 @@ fun AboutScreen(
     onPersistentNotificationChange: (Boolean) -> Unit,
     nextAlarm: AlarmTime?,
     alarmSettings: AlarmSettings,
+    sync: SyncUiState,
+    syncActions: SyncActions,
 ) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(24.dp),
+            .padding(24.dp)
+            .padding(bottom = 72.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -118,6 +121,9 @@ fun AboutScreen(
 
         SettingLabel("Pengingat adzan")
         AdzanSection(settings = alarmSettings)
+
+        SettingLabel("Sinkron ke server")
+        SyncSection(state = sync, actions = syncActions)
     }
 }
 

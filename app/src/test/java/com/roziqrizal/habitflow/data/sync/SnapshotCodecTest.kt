@@ -132,4 +132,18 @@ class SnapshotCodecTest {
             assertTrue(e.message!!.contains("rusak"))
         }
     }
+
+    @Test
+    fun tautanYatimDibuangDanYangSahDipertahankan() {
+        val habits = listOf(Habit(1, "A", "2026-10-07", 0, false), Habit(3, "C", "2026-10-07", 1, false))
+        val blocks = listOf(ScheduleBlockEntity(2, "B", 0, 480, null, 60, null, 127, "INFO", 0, null))
+        val links = listOf(
+            ScheduleBlockHabit(2, 1), // sah
+            ScheduleBlockHabit(2, 3), // sah
+            ScheduleBlockHabit(17, 3), // blok tidak ada
+            ScheduleBlockHabit(2, 99), // habit tidak ada
+        )
+        assertEquals(listOf(ScheduleBlockHabit(2, 1), ScheduleBlockHabit(2, 3)), consistentLinks(links, habits, blocks))
+        assertEquals(emptyList<ScheduleBlockHabit>(), consistentLinks(links, emptyList(), blocks))
+    }
 }
