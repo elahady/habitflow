@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import androidx.core.content.ContextCompat
+import com.roziqrizal.habitflow.data.DrinkRepository
 import com.roziqrizal.habitflow.data.HabitDatabase
 import com.roziqrizal.habitflow.data.ScheduleRepository
 import kotlinx.coroutines.CoroutineScope
@@ -12,7 +13,7 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 
 /**
- * Menerima alarm jadwal, tombol "Sudah" di notifikasi, dan perubahan yang membuat jadwal harus
+ * Menerima alarm jadwal, tombol "Sudah" dan "Sudah minum" di notifikasi, dan perubahan yang membuat jadwal harus
  * dihitung ulang (boot, jam, zona waktu, pembaruan app).
  */
 class ScheduleReceiver : BroadcastReceiver() {
@@ -24,6 +25,7 @@ class ScheduleReceiver : BroadcastReceiver() {
             try {
                 when (intent.action) {
                     ScheduleNotifier.ACTION_DONE -> markDone(app, intent)
+                    ScheduleNotifier.ACTION_WATER -> drankGlass(app)
                     ScheduleNotifier.ACTION_ALARM -> ScheduleNotifier.refresh(app, announce = true)
                     ScheduleNotifier.ACTION_RING -> ring(app, intent)
                     else -> ScheduleNotifier.refresh(app, announce = false)
@@ -41,6 +43,12 @@ class ScheduleReceiver : BroadcastReceiver() {
             .putExtra(AlarmService.EXTRA_SNOOZE_COUNT, intent.getIntExtra(AlarmService.EXTRA_SNOOZE_COUNT, 0))
         ContextCompat.startForegroundService(context, service)
         ScheduleNotifier.refresh(context, announce = true)
+    }
+
+    /** Tombol "Sudah minum" di notifikasi pengingat: tambah satu gelas hari ini dan tutup notifikasinya. */
+    private suspend fun drankGlass(context: Context) {
+        DrinkRepository(HabitDatabase.get(context)).addGlass(LocalDate.now())
+        ScheduleNotifier.cancelWorkReminder(context)
     }
 
     private suspend fun markDone(context: Context, intent: Intent) {

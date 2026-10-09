@@ -8,6 +8,7 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.app.NotificationCompat
@@ -16,23 +17,33 @@ import androidx.core.content.ContextCompat
 import com.roziqrizal.habitflow.MainActivity
 import com.roziqrizal.habitflow.R
 import com.roziqrizal.habitflow.data.AlarmSettings
+import com.roziqrizal.habitflow.data.DrinkRepository
 import com.roziqrizal.habitflow.data.HabitDatabase
 import com.roziqrizal.habitflow.data.LocationSettings
 import com.roziqrizal.habitflow.data.NotificationSettings
 import com.roziqrizal.habitflow.data.ScheduleRepository
+import com.roziqrizal.habitflow.data.WorkReminderSettings
 import com.roziqrizal.habitflow.data.WorkRepository
 import com.roziqrizal.habitflow.domain.prayer.EphemerisPrayerCalculator
 import com.roziqrizal.habitflow.domain.schedule.AlarmTime
 import com.roziqrizal.habitflow.domain.work.FollowUp
 import com.roziqrizal.habitflow.domain.work.nextReminder
 import com.roziqrizal.habitflow.domain.work.remindersBetween
+import com.roziqrizal.habitflow.domain.schedule.GLASSES_TARGET
 import com.roziqrizal.habitflow.domain.schedule.NotificationLevel
 import com.roziqrizal.habitflow.domain.schedule.ResolvedBlock
 import com.roziqrizal.habitflow.domain.schedule.adzanPrayer
 import com.roziqrizal.habitflow.domain.schedule.blocksStartedBetween
 import com.roziqrizal.habitflow.domain.schedule.boundaryMinutes
 import com.roziqrizal.habitflow.domain.schedule.nextBoundaryMinute
+import com.roziqrizal.habitflow.domain.schedule.WaterReminderState
 import com.roziqrizal.habitflow.domain.schedule.WorkAction
+import com.roziqrizal.habitflow.domain.schedule.WorkReminder
+import com.roziqrizal.habitflow.domain.schedule.WorkReminderKind
+import com.roziqrizal.habitflow.domain.schedule.decideWaterReminder
+import com.roziqrizal.habitflow.domain.schedule.nextWorkReminderMinute
+import com.roziqrizal.habitflow.domain.schedule.workReminders
+import com.roziqrizal.habitflow.domain.schedule.workRemindersBetween
 import com.roziqrizal.habitflow.domain.schedule.nextAlarm
 import com.roziqrizal.habitflow.domain.schedule.notificationWindow
 import com.roziqrizal.habitflow.domain.schedule.nowAndNext
@@ -49,8 +60,8 @@ import java.time.ZonedDateTime
  * Notifikasi jadwal harian: satu notifikasi per blok saat mulai (sesuai tingkatnya), dan satu
  * notifikasi tetap "Sekarang · Berikutnya" dari blok pertama sampai batas tidur.
  *
- * Alarm dijadwalkan di batas blok berikutnya dengan `setWindow` 5 menit (tidak presisi, bisa
- * terlambat sampai 5 menit; saat HP dalam Doze bisa tertunda sampai jendela pemeliharaan).
+ * Alarm dijadwalkan di batas blok berikutnya dengan `setWindow` (tidak presisi; sistem melebarkannya ke 10 menit, jadi bisa
+ * terlambat sampai 10 menit; saat HP dalam Doze bisa tertunda sampai jendela pemeliharaan).
  * Setiap [refresh] menjadwalkan ulang alarm berikutnya.
  */
 object ScheduleNotifier {
@@ -58,6 +69,7 @@ object ScheduleNotifier {
     const val ACTION_ALARM = "com.roziqrizal.habitflow.SCHEDULE_ALARM"
     const val ACTION_DONE = "com.roziqrizal.habitflow.BLOCK_DONE"
     const val ACTION_RING = "com.roziqrizal.habitflow.ALARM_RING"
+    const val ACTION_WATER = "com.roziqrizal.habitflow.WATER_DRUNK"
     const val EXTRA_BLOCK_ID = "blockId"
     const val EXTRA_DATE = "date"
 
@@ -65,19 +77,29 @@ object ScheduleNotifier {
     private const val CHANNEL_REMINDER = "schedule_reminder"
     private const val CHANNEL_ONGOING = "schedule_ongoing"
     private const val ONGOING_ID = 1
+    private const val WORK_REMINDER_ID = 2
     private const val REQUEST_ALARM_CLOCK = 1
+    private const val REQUEST_WATER = 2000
     private const val BLOCK_ID_BASE = 1000
     private const val FOLLOW_UP_ID_BASE = 100_000
 
-    /** Jendela mundur untuk blok yang baru mulai, kalau alarm terlambat atau HP baru menyala. */
-    private const val CATCH_UP_MINUTES = 10
+    /**
+     * Jendela mundur untuk blok dan pengingat yang baru jatuh tempo, kalau alarm terlambat atau HP baru menyala.
+     * Harus lebih panjang dari jendela alarm: sistem melebarkan jendela di bawah 10 menit menjadi 10 menit, dan awal
+     * rentang bersifat eksklusif, jadi alarm yang berbunyi di ujung jendela akan melewatkan pengingat tepat di
+     * batasnya kalau jendela mundur hanya 10 menit.
+     */
+    private const val CATCH_UP_MINUTES = 15
 
-    /** Jendela alarm tidak presisi: bunyi paling lambat 5 menit setelah batas blok. */
+    /** Jendela alarm tidak presisi yang diminta. Sistem memakai paling sedikit 10 menit, jadi bunyi bisa terlambat sejauh itu. */
     private const val ALARM_WINDOW_MILLIS = 5 * 60 * 1000L
 
     private const val STATE_PREFS = "schedule_notifier_state"
     private const val KEY_LAST_DATE = "last_date"
     private const val KEY_LAST_MINUTE = "last_minute"
+    private const val KEY_WATER_SEGMENT = "water_segment"
+    private const val KEY_WATER_IGNORED = "water_ignored"
+    private const val KEY_WATER_GLASSES = "water_glasses"
 
     /**
      * Hitung ulang notifikasi tetap dan jadwalkan alarm berikutnya. Dengan [announce], blok yang
@@ -102,8 +124,10 @@ object ScheduleNotifier {
         )
 
         val resolved = resolveFor(today, repo.isDayOff(today))
+        val reminderSettings = WorkReminderSettings(app)
+        val reminders = workReminders(resolved, reminderSettings.water.value, reminderSettings.breaks.value)
 
-        if (announce) announceStarted(app, resolved, followUps, today, nowMinute)
+        if (announce) announceStarted(app, resolved, reminders, followUps, today, nowMinute)
         updateOngoing(app, resolved, nowMinute)
 
         val nextToday = nextBoundaryMinute(resolved, nowMinute)
@@ -114,9 +138,13 @@ object ScheduleNotifier {
             val first = boundaryMinutes(resolveFor(tomorrow, repo.isDayOff(tomorrow))).firstOrNull() ?: 5
             tomorrow.atStartOfDay(zone).plusMinutes(first.toLong())
         }
-        // Pengingat follow-up berjam khusus ikut menentukan alarm berikutnya.
+        // Pengingat follow-up berjam khusus dan pengingat air dan break ikut menentukan alarm berikutnya.
         val reminder = nextReminder(followUps, now.toLocalDateTime())?.atZone(zone)
-        val windowTrigger = if (reminder != null && reminder.isBefore(trigger)) reminder else trigger
+        val workReminder = nextWorkReminderMinute(reminders, nowMinute)
+            ?.let { today.atStartOfDay(zone).plusMinutes(it.toLong()) }
+        var windowTrigger = trigger
+        if (reminder != null && reminder.isBefore(windowTrigger)) windowTrigger = reminder
+        if (workReminder != null && workReminder.isBefore(windowTrigger)) windowTrigger = workReminder
         scheduleAlarm(app, windowTrigger.toInstant().toEpochMilli())
 
         val alarmSettings = AlarmSettings(app)
@@ -129,9 +157,10 @@ object ScheduleNotifier {
         )
     }
 
-    private fun announceStarted(
+    private suspend fun announceStarted(
         context: Context,
         resolved: List<ResolvedBlock>,
+        reminders: List<WorkReminder>,
         followUps: List<FollowUp>,
         today: LocalDate,
         nowMinute: Int,
@@ -151,6 +180,69 @@ object ScheduleNotifier {
             .filter { item -> item.block.adzanPrayer()?.let(alarmSettings::isAdzanEnabled) ?: true }
             .forEach { notifyBlock(context, it, today) }
         remindersBetween(followUps, today, since, nowMinute).forEach { notifyFollowUp(context, it) }
+        // Notifikasi Info bersifat menggantikan: kalau lebih dari satu terlewat, hanya yang terakhir yang tampil.
+        workRemindersBetween(reminders, since, nowMinute).lastOrNull()?.let { notifyWorkReminder(context, it, today) }
+    }
+
+    /**
+     * Pengingat air dan break (tingkat Info): satu notifikasi senyap dengan id tetap yang menggantikan sebelumnya.
+     * Pengingat air yang tak dijawab tiga kali berturut-turut di satu blok berhenti; break tetap jalan.
+     */
+    @SuppressLint("MissingPermission")
+    private suspend fun notifyWorkReminder(context: Context, reminder: WorkReminder, today: LocalDate) {
+        if (!canNotify(context)) return
+        val glasses = DrinkRepository(HabitDatabase.get(context)).glasses(today)
+
+        var kind = reminder.kind
+        if (kind.includesWater) {
+            val state = context.getSharedPreferences(STATE_PREFS, Context.MODE_PRIVATE)
+            val decision = decideWaterReminder(readWaterState(state), "$today:${reminder.blockId}", glasses)
+            writeWaterState(state, decision.state)
+            if (!decision.send) {
+                if (kind == WorkReminderKind.WATER) return
+                kind = WorkReminderKind.BREAK
+            }
+        }
+
+        val (title, text) = when (kind) {
+            WorkReminderKind.WATER -> "Waktunya minum" to "$glasses dari $GLASSES_TARGET gelas hari ini"
+            WorkReminderKind.BREAK -> "Break sebentar" to "Berdiri dan regangkan badan."
+            WorkReminderKind.BREAK_AND_WATER -> "Break + minum" to "$glasses dari $GLASSES_TARGET gelas hari ini"
+        }
+        val builder = NotificationCompat.Builder(context, CHANNEL_INFO)
+            .setSmallIcon(R.drawable.ic_launcher_monochrome)
+            .setContentTitle(title)
+            .setContentText(text)
+            .setContentIntent(openAppIntent(context))
+            .setAutoCancel(true)
+            .setOnlyAlertOnce(true)
+            .setSilent(true)
+        if (kind.includesWater) {
+            val drunk = Intent(context, ScheduleReceiver::class.java).setAction(ACTION_WATER)
+            val pending = PendingIntent.getBroadcast(
+                context, REQUEST_WATER, drunk, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
+            builder.addAction(0, "Sudah minum", pending)
+        }
+        NotificationManagerCompat.from(context).notify(WORK_REMINDER_ID, builder.build())
+    }
+
+    private fun readWaterState(prefs: SharedPreferences) = WaterReminderState(
+        segment = prefs.getString(KEY_WATER_SEGMENT, null),
+        ignored = prefs.getInt(KEY_WATER_IGNORED, 0),
+        glassesAtLast = prefs.getInt(KEY_WATER_GLASSES, -1).takeIf { it >= 0 },
+    )
+
+    private fun writeWaterState(prefs: SharedPreferences, state: WaterReminderState) {
+        prefs.edit()
+            .putString(KEY_WATER_SEGMENT, state.segment)
+            .putInt(KEY_WATER_IGNORED, state.ignored)
+            .putInt(KEY_WATER_GLASSES, state.glassesAtLast ?: -1)
+            .apply()
+    }
+
+    fun cancelWorkReminder(context: Context) {
+        NotificationManagerCompat.from(context).cancel(WORK_REMINDER_ID)
     }
 
     @SuppressLint("MissingPermission")
