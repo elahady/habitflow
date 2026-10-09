@@ -9,6 +9,9 @@ import com.roziqrizal.habitflow.data.NotificationSettings
 import com.roziqrizal.habitflow.data.PlaceLocation
 import com.roziqrizal.habitflow.data.ThemeMode
 import com.roziqrizal.habitflow.data.ThemeSettings
+import com.roziqrizal.habitflow.data.health.HealthConnectStepsSource
+import com.roziqrizal.habitflow.data.health.StepsTracker
+import com.roziqrizal.habitflow.data.health.StepsWorker
 import com.roziqrizal.habitflow.data.WorkReminderSettings
 import com.roziqrizal.habitflow.data.sync.AppSettingsGateway
 import com.roziqrizal.habitflow.data.sync.SnapshotRepository
@@ -28,6 +31,8 @@ class HabitFlowApplication : Application() {
         // Sinkron otomatis: pasang jadwal harian kalau aktif, dan pantau perubahan data di proses mana pun.
         graph.syncScheduler.onConfigChanged()
         graph.syncScheduler.observeChanges(graph.db, SyncScheduler.newScope())
+        // Cek langkah sekitar tiap jam untuk mencentang habit langkah walau app tertutup (tahap 21).
+        StepsWorker.ensureScheduled(this)
     }
 }
 
@@ -45,6 +50,7 @@ class AppGraph(app: Application) {
     val healthSettings = HealthSettings(app)
     val syncSettings = SyncSettings(app)
     val syncScheduler = SyncScheduler(app, syncSettings)
+    val stepsTracker: StepsTracker by lazy { StepsTracker(HealthConnectStepsSource(app), db, healthSettings) }
 
     private val versionName: String =
         runCatching { app.packageManager.getPackageInfo(app.packageName, 0).versionName.orEmpty() }.getOrDefault("")
