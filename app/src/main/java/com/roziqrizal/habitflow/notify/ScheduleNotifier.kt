@@ -19,11 +19,18 @@ import com.roziqrizal.habitflow.R
 import com.roziqrizal.habitflow.data.AlarmSettings
 import com.roziqrizal.habitflow.data.DrinkRepository
 import com.roziqrizal.habitflow.data.HabitDatabase
+import com.roziqrizal.habitflow.data.HealthRepository
+import com.roziqrizal.habitflow.data.HealthSettings
 import com.roziqrizal.habitflow.data.LocationSettings
 import com.roziqrizal.habitflow.data.NotificationSettings
 import com.roziqrizal.habitflow.data.ScheduleRepository
 import com.roziqrizal.habitflow.data.WorkReminderSettings
 import com.roziqrizal.habitflow.data.WorkRepository
+import com.roziqrizal.habitflow.domain.health.BpFrequency
+import com.roziqrizal.habitflow.domain.health.HealthReminderKind
+import com.roziqrizal.habitflow.domain.health.healthReminderKind
+import com.roziqrizal.habitflow.domain.health.healthReminderMinute
+import com.roziqrizal.habitflow.domain.health.nextHealthReminderDate
 import com.roziqrizal.habitflow.domain.prayer.EphemerisPrayerCalculator
 import com.roziqrizal.habitflow.domain.schedule.AlarmTime
 import com.roziqrizal.habitflow.domain.work.FollowUp
@@ -78,6 +85,7 @@ object ScheduleNotifier {
     private const val CHANNEL_ONGOING = "schedule_ongoing"
     private const val ONGOING_ID = 1
     private const val WORK_REMINDER_ID = 2
+    private const val HEALTH_REMINDER_ID = 3
     private const val REQUEST_ALARM_CLOCK = 1
     private const val REQUEST_WATER = 2000
     private const val BLOCK_ID_BASE = 1000
@@ -124,7 +132,14 @@ object ScheduleNotifier {
         val reminderSettings = WorkReminderSettings(app)
         val reminders = workReminders(resolved, reminderSettings.water.value, reminderSettings.breaks.value)
 
-        if (announce) announceStarted(app, resolved, reminders, followUps, today, nowMinute)
+        val health = HealthSettings(app)
+        fun healthMinuteFor(date: LocalDate): Int? =
+            EphemerisPrayerCalculator.calculate(date, place.latitude, place.longitude, zone).subuh
+                ?.let { healthReminderMinute(it.hour * 60 + it.minute) }
+
+        if (announce) {
+            announceStarted(app, resolved, reminders, followUps, today, nowMinute, healthMinuteFor(today), health, zone)
+        }
         updateOngoing(app, resolved, nowMinute)
 
         val nextToday = nextBoundaryMinute(resolved, nowMinute)
@@ -142,6 +157,10 @@ object ScheduleNotifier {
         var windowTrigger = trigger
         if (reminder != null && reminder.isBefore(windowTrigger)) windowTrigger = reminder
         if (workReminder != null && workReminder.isBefore(windowTrigger)) windowTrigger = workReminder
+        val healthReminder = nextHealthReminder(
+            today, nowMinute, zone, health.weightReminder.value, health.bpFrequency.value, ::healthMinuteFor,
+        )
+        if (healthReminder != null && healthReminder.isBefore(windowTrigger)) windowTrigger = healthReminder
         scheduleAlarm(app, windowTrigger.toInstant().toEpochMilli())
 
         val alarmSettings = AlarmSettings(app)
@@ -161,6 +180,9 @@ object ScheduleNotifier {
         followUps: List<FollowUp>,
         today: LocalDate,
         nowMinute: Int,
+        healthMinute: Int?,
+        health: HealthSettings,
+        zone: ZoneId,
     ) {
         val state = context.getSharedPreferences(STATE_PREFS, Context.MODE_PRIVATE)
         val since = if (state.getString(KEY_LAST_DATE, null) == today.toString()) {
@@ -179,6 +201,62 @@ object ScheduleNotifier {
         remindersBetween(followUps, today, since, nowMinute).forEach { notifyFollowUp(context, it) }
         // Notifikasi Info bersifat menggantikan: kalau lebih dari satu terlewat, hanya yang terakhir yang tampil.
         workRemindersBetween(reminders, since, nowMinute).lastOrNull()?.let { notifyWorkReminder(context, it, today) }
+        if (healthMinute != null && healthMinute > since && healthMinute <= nowMinute) {
+            notifyHealthReminder(context, today, health, zone)
+        }
+    }
+
+    /**
+     * Pengingat timbang dan ukur tensi (tingkat Info): satu notifikasi senyap dengan id tetap. Jenis yang hari itu
+     * sudah dicatat tidak diingatkan, dan kalau keduanya sudah dicatat tidak ada notifikasi sama sekali.
+     */
+    @SuppressLint("MissingPermission")
+    private suspend fun notifyHealthReminder(context: Context, today: LocalDate, health: HealthSettings, zone: ZoneId) {
+        if (!canNotify(context)) return
+        val repo = HealthRepository(HabitDatabase.get(context))
+        val kind = healthReminderKind(
+            date = today,
+            weightEnabled = health.weightReminder.value,
+            bpFrequency = health.bpFrequency.value,
+            weightLoggedToday = repo.hasWeightOn(today, zone),
+            bpLoggedToday = repo.hasBloodPressureOn(today, zone),
+        ) ?: return
+        val title = when (kind) {
+            HealthReminderKind.WEIGHT -> "Waktunya timbang"
+            HealthReminderKind.BLOOD_PRESSURE -> "Waktunya ukur tensi"
+            HealthReminderKind.BOTH -> "Timbang dan ukur tensi"
+        }
+        val notification = NotificationCompat.Builder(context, CHANNEL_INFO)
+            .setSmallIcon(R.drawable.ic_launcher_monochrome)
+            .setContentTitle(title)
+            .setContentText("Sebelum aktivitas pagi.")
+            .setContentIntent(openAppIntent(context))
+            .setAutoCancel(true)
+            .setOnlyAlertOnce(true)
+            .setSilent(true)
+            .build()
+        NotificationManagerCompat.from(context).notify(HEALTH_REMINDER_ID, notification)
+    }
+
+    /** Waktu pengingat kesehatan berikutnya setelah sekarang, atau null kalau keduanya mati atau Subuh tidak ada. */
+    private fun nextHealthReminder(
+        today: LocalDate,
+        nowMinute: Int,
+        zone: ZoneId,
+        weightEnabled: Boolean,
+        bpFrequency: BpFrequency,
+        minuteFor: (LocalDate) -> Int?,
+    ): ZonedDateTime? {
+        var from = today
+        repeat(8) {
+            val date = nextHealthReminderDate(from, weightEnabled, bpFrequency) ?: return null
+            val minute = minuteFor(date)
+            if (minute != null && (date != today || minute > nowMinute)) {
+                return date.atStartOfDay(zone).plusMinutes(minute.toLong())
+            }
+            from = date.plusDays(1)
+        }
+        return null
     }
 
     /**

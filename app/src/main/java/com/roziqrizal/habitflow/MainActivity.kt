@@ -30,6 +30,7 @@ import com.roziqrizal.habitflow.data.AlarmSettings
 import com.roziqrizal.habitflow.data.DrinkRepository
 import com.roziqrizal.habitflow.data.HabitDatabase
 import com.roziqrizal.habitflow.data.HabitRepository
+import com.roziqrizal.habitflow.data.HealthSettings
 import com.roziqrizal.habitflow.data.LocationSettings
 import com.roziqrizal.habitflow.data.NotificationSettings
 import com.roziqrizal.habitflow.data.ScheduleRepository
@@ -70,7 +71,7 @@ class MainActivity : ComponentActivity() {
         val alarmSettings = graph.alarmSettings
         val workReminderSettings = graph.workReminderSettings
         requestNotificationPermission()
-        keepNotificationsInSync(locationSettings, notificationSettings, alarmSettings, workReminderSettings)
+        keepNotificationsInSync(locationSettings, notificationSettings, alarmSettings, workReminderSettings, graph.healthSettings)
         themeSettings.syncWithSystem()
         setContent {
             val themeMode by themeSettings.mode.collectAsState()
@@ -172,6 +173,7 @@ class MainActivity : ComponentActivity() {
         notificationSettings: NotificationSettings,
         alarmSettings: AlarmSettings,
         workReminderSettings: WorkReminderSettings,
+        healthSettings: HealthSettings,
     ) {
         val repo = ScheduleRepository(HabitDatabase.get(applicationContext))
         lifecycleScope.launch {
@@ -185,6 +187,8 @@ class MainActivity : ComponentActivity() {
                     alarmSettings.adzan,
                     workReminderSettings.water,
                     workReminderSettings.breaks,
+                    healthSettings.weightReminder,
+                    healthSettings.bpFrequency,
                     clock.date,
                 ) { _ -> }
                     .debounce(500)
