@@ -818,7 +818,7 @@ yang mulai 12.27 dengan pengingat air tetap mengumumkan blok dan pengingat airny
 sekali per 9 menit per app) tidak masalah untuk pengingat per 60 menit. Belum diuji: Doze nyata semalaman dan
 dampak baterainya.
 
-### Tahap 21: Kesehatan (diputuskan 5 Oktober 2026, dirinci 9 Oktober 2026, sedang dikoding)
+### Tahap 21: Kesehatan (selesai dikoding dan diuji di emulator, 9 Oktober 2026)
 
 **Keputusan (5 Oktober 2026).** Aturan fitur di `docs/rancangan.md` bagian Kesehatan.
 
@@ -876,6 +876,44 @@ dampak baterainya.
   target) serta tensi (sistolik dan diastolik).
 - Pengingat berat dan tensi muncul sesuai pengaturan dan bisa dimatikan.
 - Migrasi mengganti nama habit tanpa menghapus riwayatnya.
+
+**Hasil verifikasi (9 Oktober 2026, emulator Pixel 6 API 34 dengan Health Connect bawaan versi 14, database yang sudah
+berisi data tahap 20):**
+- Unit test: 26 tes `domain/health` (setiap angka batas BMI dan tensi, tren, pengingat), 3 tes codec, dan 8 tes pemformat
+  teks. Seluruhnya 178 tes lulus.
+- Migrasi 5 → 6 pada database nyata: habit "Jalan kaki 20 menit" menjadi "8.000 langkah" bersumber STEPS, 3 centang dan 7
+  follow-up utuh, tautan blok "Aktivitas fisik" ke habit itu tetap ada, dua tabel baru ada.
+- Izin lewat layar Health Connect asli: hanya "Steps" yang ditawarkan. Sebelum diizinkan kartu menampilkan "Izinkan akses
+  langkah". Sesudahnya, 3.240 langkah tampil "3.240 / 8.000" dengan bar, dan 8.200 langkah mencentang habit otomatis.
+  Centang yang dibatalkan manual tidak dicentang ulang saat langkah dibaca lagi.
+- Layar penjelasan izin (`PermissionRationaleActivity`) tampil lewat intent `ACTION_SHOW_PERMISSIONS_RATIONALE`.
+- Sheet berat: tinggi ditanyakan sekali, 72,4 kg dan 170 cm menghasilkan "BMI 25,1 · Gemuk" dan "0,1 kg lagi ke target"
+  (target bawaan 72,3). Sheet tensi: 182/112 menghasilkan "Hipertensi derajat 3" dengan saran tenang tanpa warna merah.
+- Tab Progres: segmen Habit (isi lama) dan Kesehatan. Grafik berat dengan garis target putus-putus dan tren 4 minggu
+  ("turun 1,2 kg"), grafik tensi dengan dua garis yang dibedakan lewat ketebalan.
+- Tentang: bagian Kesehatan (tinggi, target 70,5 kg disimpan) dan Pengingat kesehatan.
+- Pengingat (lewat jam palsu `DebugClockReceiver`, karena tidak bisa menunggu Senin pagi): Senin dengan berat nyala dan tensi
+  mingguan menghasilkan "Timbang dan ukur tensi"; Selasa mingguan tidak ada; Selasa harian hanya "Waktunya ukur tensi";
+  hari yang tensinya sudah dicatat tidak ada; semua mati tidak ada. Semuanya senyap di channel Info.
+- Snapshot: ekspor berisi `weightEntries`, `bloodPressureEntries`, `settings.health`, dan `autoSource`. Setelah data dan
+  pengaturan kesehatan dihapus di HP, pulihkan mengembalikan 10 catatan berat, 9 tensi (termasuk nadi dan catatan), tinggi,
+  target, dan pengingat.
+- Temuan: (1) petunjuk "izinkan akses latar belakang" di kartu langkah awalnya tampil walau Health Connect di HP ini
+  tidak menawarkan izinnya, jadi jalan buntu; sekarang hanya tampil kalau fiturnya tersedia. (2) Satu kali dialog "tidak
+  merespons" saat cold start di emulator yang kehabisan memori (sisa RAM sekitar 100 MB, beban 7,8); tidak terulang dan
+  tidak ada kerja berat di thread utama dari kode ini, tapi belum diuji di HP nyata.
+
+**Belum diverifikasi:** pembacaan langkah di latar belakang saat app tertutup (kriteria "sekitar 1 jam"): Health Connect di
+emulator ini tidak mendukung izin latar belakang, jadi worker per jam hanya terdaftar dan belum terbukti mencentang habit.
+Di HP dengan Health Connect yang lebih baru izin itu akan ditawarkan; di HP tanpanya langkah hanya dibaca saat app dibuka,
+dan kartu menjelaskannya. Juga belum: tombol "Pasang" dan "Perbarui Health Connect" (emulator ini sudah punya Health Connect
+terbaru); pengingat Senin pagi lewat alarm sungguhan (hanya lewat jam palsu); data langkah dari smartwatch.
+
+**Catatan teknis.** Library `androidx.health.connect:connect-client` dipasang di **1.1.0-alpha08**, versi terbaru yang masih
+cocok dengan compileSdk 34 dan AGP 8.5.2 (versi 1.1.0 stabil butuh compileSdk 36). Nama konstanta fitur latar belakang di
+versi ini `FEATURE_HEALTH_DATA_BACKGROUND_READ`; pindah ke 1.1.0 stabil menunggu pembaruan AGP dan compileSdk. Alat uji
+build debug: `DebugStepsReceiver` (tulis dan hapus langkah uji) dan `DebugClockReceiver` (jalankan notifikasi dengan jam
+palsu), keduanya hanya ada di `app/src/debug`.
 
 ### Tahap 22: Kalender dan acara rutin (diputuskan, belum dikoding)
 
