@@ -120,7 +120,7 @@ class SnapshotApiTest extends TestCase
     public function test_hanya_14_snapshot_terakhir_disimpan(): void
     {
         for ($i = 1; $i <= 16; $i++) {
-            $this->unggah($this->snapshot(['createdAt' => $i]))->assertOk();
+            $this->unggah($this->snapshot(['createdAt' => $i, 'data' => ['todos' => [['id' => $i]]]]))->assertOk();
         }
 
         $this->assertSame(14, Snapshot::count());
@@ -198,5 +198,15 @@ class SnapshotApiTest extends TestCase
         $this->assertSame(0, Snapshot::count());
         $this->assertCount(0, Storage::disk('local')->allFiles('snapshots'));
         $this->getJson('/api/v1/ping', $this->auth())->assertStatus(401);
+    }
+
+    public function test_isi_data_sama_tapi_waktu_kirim_beda_dianggap_tidak_berubah(): void
+    {
+        $this->unggah($this->snapshot(['createdAt' => 1000]))->assertOk()->assertJson(['unchanged' => false]);
+        $this->unggah($this->snapshot(['createdAt' => 2000, 'deviceId' => 'perangkat-lain']))
+            ->assertOk()->assertJson(['unchanged' => true]);
+
+        $this->assertSame(1, Snapshot::count());
+        $this->assertCount(1, Storage::disk('local')->allFiles('snapshots'));
     }
 }

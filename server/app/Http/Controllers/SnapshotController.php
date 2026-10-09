@@ -53,7 +53,9 @@ class SnapshotController extends Controller
             return response()->json(['message' => 'Snapshot tidak sah.', 'errors' => $validator->errors()], 422);
         }
 
-        $sha = hash('sha256', $body);
+        // Hash isi saja (versi skema dan data): createdAt dan deviceId berubah di setiap kirim, jadi kalau ikut
+        // dihitung, "isi tidak berubah" tidak akan pernah terdeteksi.
+        $sha = hash('sha256', json_encode([$payload['schemaVersion'], $payload['data']]));
         $latest = $token->snapshots()->latest('id')->first();
         if ($latest && $latest->sha256 === $sha) {
             return response()->json($this->summary($latest, unchanged: true));
