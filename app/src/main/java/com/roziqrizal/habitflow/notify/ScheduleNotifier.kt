@@ -60,8 +60,8 @@ import java.time.ZonedDateTime
  * Notifikasi jadwal harian: satu notifikasi per blok saat mulai (sesuai tingkatnya), dan satu
  * notifikasi tetap "Sekarang · Berikutnya" dari blok pertama sampai batas tidur.
  *
- * Alarm dijadwalkan di batas blok berikutnya dengan `setWindow` (tidak presisi; sistem melebarkannya ke 10 menit, jadi bisa
- * terlambat sampai 10 menit; saat HP dalam Doze bisa tertunda sampai jendela pemeliharaan).
+ * Alarm dijadwalkan di batas blok atau pengingat berikutnya dengan `setAndAllowWhileIdle` (tidak presisi, bisa
+ * terlambat beberapa menit, tapi tetap berbunyi saat HP dalam Doze).
  * Setiap [refresh] menjadwalkan ulang alarm berikutnya.
  */
 object ScheduleNotifier {
@@ -85,14 +85,11 @@ object ScheduleNotifier {
 
     /**
      * Jendela mundur untuk blok dan pengingat yang baru jatuh tempo, kalau alarm terlambat atau HP baru menyala.
-     * Harus lebih panjang dari jendela alarm: sistem melebarkan jendela di bawah 10 menit menjadi 10 menit, dan awal
-     * rentang bersifat eksklusif, jadi alarm yang berbunyi di ujung jendela akan melewatkan pengingat tepat di
-     * batasnya kalau jendela mundur hanya 10 menit.
+     * Alarm tidak presisi bisa terlambat beberapa menit (di Doze, pembatasan sistem sekitar sekali per 9 menit),
+     * dan awal rentang bersifat eksklusif, jadi jendela ini sengaja lebih lebar dari 10 menit supaya pengingat tepat
+     * di batasnya tidak terlewat.
      */
     private const val CATCH_UP_MINUTES = 15
-
-    /** Jendela alarm tidak presisi yang diminta. Sistem memakai paling sedikit 10 menit, jadi bunyi bisa terlambat sejauh itu. */
-    private const val ALARM_WINDOW_MILLIS = 5 * 60 * 1000L
 
     private const val STATE_PREFS = "schedule_notifier_state"
     private const val KEY_LAST_DATE = "last_date"
@@ -333,8 +330,10 @@ object ScheduleNotifier {
         val pending = PendingIntent.getBroadcast(
             context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
+        // Tetap berbunyi saat HP dalam Doze (dibatasi sistem sekitar sekali per 9 menit), supaya pengingat air dan
+        // blok tidak tertahan di HP yang diam di meja.
         context.getSystemService(AlarmManager::class.java)
-            .setWindow(AlarmManager.RTC_WAKEUP, triggerAtMillis, ALARM_WINDOW_MILLIS, pending)
+            .setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pending)
     }
 
     /** Alarm jam (`setAlarmClock`): presisi, menembus Doze, dan ikon alarm tampil di status bar. Null membatalkan. */
