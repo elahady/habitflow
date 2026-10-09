@@ -13,7 +13,7 @@ divisualisasikan seperti kontribusi GitHub.
 - Daftar habit awal:
   1. **Sholat 5 waktu** (wajib)
   2. **Baca Al-Quran** (wajib)
-  3. Jalan kaki 20 menit
+  3. Jalan kaki 20 menit (menjadi "8.000 langkah" di tahap 21)
   4. Air putih 2 liter
   5. Tanpa minuman manis
   6. Ngopi maksimal 2 gelas (sepulang kerja)
@@ -132,6 +132,33 @@ divisualisasikan seperti kontribusi GitHub.
 - Pengingat: berat setiap Senin pagi setelah bangun, tensi pagi setelah bangun dengan
   frekuensi yang bisa diatur (default mingguan). Keduanya bisa dimatikan.
 - Kesehatan tidak mengubah aturan level, kecuali lewat centang otomatis habit langkah.
+
+Rincian (9 Oktober 2026):
+
+- **Langkah.** Dibaca dari Health Connect saat app dibuka, saat dashboard Hari ini tampil, dan setiap sekitar 1 jam
+  di latar belakang. Habit "8.000 langkah" dicentang otomatis **sekali per tanggal**, saat langkah mencapai 8.000.
+  Kalau centang itu dibatalkan manual, tidak dicentang ulang di hari yang sama. Tanpa Health Connect, tanpa izin, atau
+  tanpa data, app tetap jalan penuh dan habit dicentang manual. Kartu langkah menjelaskan cara mengaktifkan dengan
+  tenang.
+- **Berat.** Satu angka kg dengan satu desimal (20,0 sampai 300,0). Tinggi badan (100 sampai 250 cm) diisi sekali di
+  sheet berat kalau belum ada, dan bisa diubah di Tentang bagian Kesehatan. BMI = kg / (m²), dibulatkan satu desimal
+  dan kategorinya dihitung dari angka yang tampil: kurus < 18,5, normal 18,5 sampai 25,0, gemuk di atas 25,0 sampai
+  27,0, obesitas di atas 27,0. Target berat bisa diisi sendiri; tanpa itu dipakai batas atas BMI normal
+  (25,0 × tinggi²). Sisa ke target = berat terakhir − target. **Tren 4 minggu** = berat terbaru dikurangi berat
+  paling awal dalam 28 hari terakhir (butuh dua catatan atau lebih), dianggap stabil kalau selisihnya kurang dari
+  0,2 kg.
+- **Tensi.** Sistolik 50 sampai 300, diastolik 30 sampai 200 (sistolik harus lebih besar), nadi opsional 20 sampai 250,
+  catatan opsional. Kategori diambil dari yang **lebih tinggi** antara tingkat sistolik dan tingkat diastolik:
+  optimal < 120 dan < 80, normal 120 sampai 129 atau 80 sampai 84, normal-tinggi 130 sampai 139 atau 85 sampai 89,
+  hipertensi derajat 1 mulai 140 atau 90, derajat 2 mulai 160 atau 100, derajat 3 mulai 180 atau 110. Saran khusus
+  ("istirahat, ukur ulang, hubungi dokter kalau tetap tinggi atau ada keluhan") muncul bila sistolik ≥ 180 atau
+  diastolik ≥ 110, sebagai teks biasa tanpa warna merah dan tanpa alarm.
+- **Pengingat** bertingkat Info (senyap, satu notifikasi yang menggantikan dirinya sendiri) pada **Subuh + 60 menit**
+  (akhir blok Jamaah Subuh dan ngaji, sebelum aktivitas fisik dan kopi). Berat: hari Senin. Tensi: setiap hari, setiap
+  Senin (mingguan, default), atau mati. Kalau jatuh di hari dan jam yang sama, digabung menjadi satu notifikasi.
+  Pengingat tidak dikirim kalau hari itu sudah ada catatan jenis itu. Tap membuka app di Hari ini.
+- **Grafik** di tab Progres memakai catatan 90 hari terakhir. Tanpa data, tampil teks ajakan mencatat, bukan grafik
+  kosong.
 
 ## Kalender (tahap 22)
 

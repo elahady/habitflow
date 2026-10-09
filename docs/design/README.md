@@ -168,7 +168,8 @@ detail hari memakai `ModalBottomSheet`.
 ### Hari ini
 1. Kartu hero **Sekarang** dengan timeline (lihat [Dashboard di Hari ini](#dashboard-di-hari-ini-tahap-17)).
 2. Kartu hero: tanggal (labelMedium), dua `StatBlock` (Habit, To-do), lalu baris level dan streak.
-3. Kartu air (tahap 20, lihat [Pengingat kerja](#pengingat-kerja-tahap-20)).
+3. Kartu Langkah (tahap 21), kartu air (tahap 20, lihat [Pengingat kerja](#pengingat-kerja-tahap-20)), lalu kartu Tensi
+   dan Berat berdampingan (lihat [Kesehatan](#kesehatan-tahap-21)).
 4. Judul "Habit", lalu daftar habit (habit wajib di atas, bertanda "Wajib").
 5. Judul "To-do hari ini (x/5)", daftar to-do, lalu tombol `TonalButton` "+ To-do".
    Tombol nonaktif saat sudah 5, dan pesan penuh muncul di bawahnya.
@@ -322,11 +323,14 @@ Kerja atau dari notifikasi blok Kerja pagi dan EOD.
    (`DatePicker`, `TimePicker` Material 3), pengulangan, tanggal berakhir, pengingat.
 5. Di timeline dashboard, acara tampil seperti blok dengan penanda kecil "Acara" dan label.
 
-### Kesehatan (tahap 21, belum diterapkan)
+### Kesehatan (tahap 21)
 1. **Kartu di Hari ini**, di bawah kartu skor: kartu Langkah selebar layar (angka "3.240 /
    8.000" dengan displayMedium kecil, bar kemajuan `primary` di atas `surfaceContainerHighest`),
-   lalu dua kartu berdampingan Tensi dan Berat (angka terakhir, keterangan waktu, tombol teks
-   "+ Catat").
+   lalu kartu Air (tahap 20), lalu dua kartu berdampingan Tensi dan Berat (angka terakhir, keterangan waktu,
+   tombol teks "+ Catat"). Tanpa catatan: "Belum ada catatan". Kartu Langkah tanpa akses menampilkan satu kalimat
+   tenang dan satu `TextButton`: "Izinkan akses langkah" (belum diizinkan), "Pasang Health Connect" (belum ada, di
+   Android 13 ke bawah), atau "Perbarui Health Connect". Tanpa data hari ini: "0 / 8.000". Habit yang tercentang
+   otomatis tidak diberi tanda khusus.
 2. **Bottom sheet catat**: berat satu kolom angka (kg, satu desimal). Tensi dua kolom
    sistolik/diastolik berdampingan, nadi dan catatan opsional. Setelah simpan, tampil
    kategori sebagai teks.
@@ -335,6 +339,25 @@ Kerja atau dari notifikasi blok Kerja pagi dan EOD.
    grafik tensi dua garis (sistolik dan diastolik). Grafik digambar dengan Canvas.
 4. Kategori selalu berupa teks ("Normal-tinggi"), warna hanya penguat. Tidak memakai merah,
    termasuk untuk tensi sangat tinggi.
+5. **Sheet catat, rincian.** Mode Berat: judul "Catat berat", kolom "Berat (kg)" dengan keyboard angka, dan kolom
+   "Tinggi badan (cm)" hanya kalau tinggi belum diisi. Mode Tensi: judul "Catat tensi", dua kolom berdampingan
+   "Sistolik" dan "Diastolik", lalu "Nadi (opsional)" dan "Catatan (opsional)". Tombol `TonalButton` "Simpan"
+   selebar sheet, nonaktif sampai angkanya sah (teks galat bodySmall di bawah kolom, bukan merah). Setelah simpan,
+   isi sheet berganti hasil: baris kategori (titleMedium, misalnya "BMI 24,3 · Normal" atau "Normal-tinggi"), baris
+   keterangan (bodySmall: sisa ke target, atau saran bila tensi ≥ 180/110), dan `TextButton` "Selesai".
+6. **Progres, Kesehatan.** Judul "Progres" dengan `SingleChoiceSegmentedButtonRow` Habit dan Kesehatan di bawahnya.
+   Kesehatan: kartu ringkasan berat (angka terakhir displayMedium kecil, baris BMI dan kategori, baris target dan sisa,
+   baris tren 4 minggu), kartu grafik berat (garis `primary`, titik di tiap catatan, garis putus-putus `outline`
+   untuk target), lalu kartu ringkasan tensi (angka terakhir dan kategori) dan kartu grafik tensi (sistolik garis
+   `primary`, diastolik garis `onSurfaceVariant`). Sumbu: tiga label tanggal dan dua label nilai (labelSmall).
+   Rentang 90 hari terakhir. Tanpa catatan: teks "Belum ada catatan berat. Catat dari Hari ini." (bodyMedium).
+7. **Tentang.** Bagian baru "Kesehatan" (dua baris: "Tinggi badan" dengan nilainya dan "Target berat" dengan nilainya
+   atau "Otomatis (25,0 BMI)", tap membuka `AlertDialog` satu kolom angka) dan "Pengingat kesehatan" (switch "Timbang
+   berat, setiap Senin" dan "Ukur tensi" dengan `SingleChoiceSegmentedButtonRow` Harian, Mingguan, Mati). Urutan
+   bagian: Tampilan, Lokasi, Notifikasi, Pengingat kerja, Kesehatan, Pengingat kesehatan, Alarm, Pengingat adzan,
+   Sinkron ke server.
+8. **Notifikasi** (Info, senyap): judul "Waktunya timbang", "Waktunya ukur tensi", atau "Timbang dan ukur tensi",
+   isi "Sebelum aktivitas pagi." Tap membuka app di Hari ini.
 
 ### Daily scrum (tahap 15, dibatalkan)
 1. **Kartu di Hari ini**, di bawah tombol "+ To-do": `AppCard` berisi judul "Daily scrum"

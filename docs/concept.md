@@ -818,9 +818,23 @@ yang mulai 12.27 dengan pengingat air tetap mengumumkan blok dan pengingat airny
 sekali per 9 menit per app) tidak masalah untuk pengingat per 60 menit. Belum diuji: Doze nyata semalaman dan
 dampak baterainya.
 
-### Tahap 21: Kesehatan (diputuskan, belum dikoding)
+### Tahap 21: Kesehatan (diputuskan 5 Oktober 2026, dirinci 9 Oktober 2026, sedang dikoding)
 
 **Keputusan (5 Oktober 2026).** Aturan fitur di `docs/rancangan.md` bagian Kesehatan.
+
+**Keputusan tambahan (9 Oktober 2026)**, yang menggantikan rencana awal bila bertentangan:
+
+| Pertanyaan | Keputusan |
+|---|---|
+| Baca langkah di latar belakang | **WorkManager periodik 1 jam**, bukan AlarmManager: hemat baterai, bertahan setelah restart, dan tidak butuh izin alarm. Health Connect mewajibkan izin `READ_HEALTH_DATA_IN_BACKGROUND` untuk membaca saat app tidak tampil; kalau fiturnya tidak tersedia atau ditolak, langkah hanya dibaca saat app terbuka dan kartu menjelaskannya |
+| Centang otomatis | Sekali per tanggal, saat langkah ≥ 8.000. Tanggal terakhir centang otomatis disimpan, jadi centang yang dibatalkan manual tidak dicentang ulang |
+| Letak kartu di Hari ini | Skor, Langkah, Air, lalu Tensi dan Berat berdampingan |
+| Sheet catat | Satu komponen `ModalBottomSheet` dengan dua mode (Berat, Tensi), dibuka dari "+ Catat" kartu masing-masing |
+| Tinggi dan target | Tinggi ditanyakan di sheet berat kalau belum ada. Tinggi dan target berat juga bisa diubah di Tentang bagian Kesehatan. Disimpan di pengaturan dan ikut snapshot |
+| Pengingat | Tingkat Info, Subuh + 60 menit, hanya kalau hari itu belum dicatat, berat hari Senin, tensi harian atau mingguan (Senin) atau mati, digabung kalau sama |
+| Pembulatan | BMI satu desimal, kategori dihitung dari angka yang tampil. Kategori tensi dari yang lebih tinggi antara sistolik dan diastolik |
+| Nama habit | Migrasi 5 → 6 mengganti "Jalan kaki 20 menit" menjadi "8.000 langkah" dengan `autoSource` STEPS. Habit yang sudah diganti namanya oleh pengguna tidak disentuh |
+| Snapshot | `data.weightEntries`, `data.bloodPressureEntries`, dan `settings.health` (tinggi, target, pengingat). Opsional saat dibaca, `schemaVersion` tetap 1 |
 
 | Pertanyaan | Keputusan |
 |---|---|
@@ -839,7 +853,7 @@ dampak baterainya.
   jalan tanpa itu (kartu langkah menampilkan cara mengaktifkan). Wajib ada layar penjelasan
   izin (privacy rationale) yang diminta Health Connect.
 - Langkah hari ini dibaca saat app dibuka, saat dashboard tampil, dan berkala lewat
-  `AlarmManager` (sekitar setiap jam) untuk mencentang habit otomatis walau app tidak dibuka.
+  WorkManager (sekitar setiap jam, lihat keputusan tambahan) untuk mencentang habit otomatis walau app tidak dibuka.
 - Habit punya sumber otomatis opsional (langkah) dan target. Migrasi mengganti nama habit
   "Jalan kaki 20 menit" menjadi "8.000 langkah" dan memberinya sumber langkah, tanpa
   mengubah riwayat centang.
