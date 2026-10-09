@@ -29,8 +29,9 @@ divisualisasikan seperti kontribusi GitHub.
 - Habit lain bisa ditambah, diubah, dan dihapus.
 - Setiap habit hanya punya status centang: sudah atau belum, per hari.
 - Tidak ada input angka di habit. Berat badan dan tensi dicatat di fitur Kesehatan (tahap 21).
-- Habit boleh punya sumber otomatis. Saat ini hanya satu: habit "8.000 langkah" (dulu
-  "Jalan kaki 20 menit") tercentang otomatis dari Health Connect (tahap 21).
+- Habit boleh punya sumber otomatis. Yang sudah ada: "Air putih 2 liter" tercentang otomatis dari
+  penghitung 8 gelas (tahap 20). Yang direncanakan: habit "8.000 langkah" (dulu "Jalan kaki 20 menit")
+  dari Health Connect (tahap 21).
 
 ## To-do
 
@@ -89,6 +90,32 @@ divisualisasikan seperti kontribusi GitHub.
 - Tidak ada notifikasi per follow-up, kecuali item yang diberi jam khusus.
 - Orang terkait diketik bebas dengan saran nama yang pernah dipakai, dan bisa difilter.
 - HabitFlow menggantikan task harian di Notion. Task lama tidak dimigrasi.
+
+## Pengingat kerja (tahap 20)
+
+- Dua pengingat tingkat **Info** di jam kerja: **minum air** setiap 60 menit dan **break** setiap 90 menit.
+  Tanpa bunyi, getar, atau pop-up. Satu notifikasi senyap yang menggantikan dirinya sendiri, tidak menumpuk.
+- **Jam kerja** adalah blok jadwal yang punya tanda "Pengingat air dan break". Bawaan: Kerja pagi dan Kerja
+  sore. Tanda ini bisa diubah di editor blok (Atur jadwal), jadi jam kerja ikut berubah kalau blok diubah.
+  Karena berasal dari blok, **Hari ini libur** otomatis mematikan pengingat (blok Kerja hanya aktif Senin sampai
+  Jumat).
+- **Waktu pengingat** dihitung per blok bertanda: air di menit mulai blok, lalu setiap 60 menit selama masih
+  sebelum blok berakhir (08.00, 09.00, 10.00, 11.00 dan 13.00, 14.00, 15.00 = 7 kali). Break di mulai + 90,
+  + 180, dan seterusnya (09.30, 11.00 dan 14.30). Pengingat tidak pernah jatuh tepat di akhir blok.
+- **Digabung.** Air dan break yang berjarak 15 menit atau kurang menjadi satu notifikasi "Break + minum" di waktu
+  yang lebih awal (11.00 bawaan).
+- **Ditahan.** Pengingat yang jatuh di tengah blok sholat (blok yang mulai tepat di waktu sholat) digeser ke akhir
+  blok sholat itu. Kalau akhirnya di luar blok kerja, pengingat itu dibuang.
+- **Penghitung gelas** per hari, target 8 gelas. Tombol "Sudah minum" di notifikasi dan tombol "+ Segelas" di
+  kartu air dashboard menambah satu. Tombol "−" mengurangi satu (tidak di bawah 0). Gelas boleh lebih dari 8.
+- **Habit "Air putih 2 liter"** tercentang otomatis saat hitungan naik sampai 8. Centang manual tetap menang:
+  membatalkan centang tidak dicentang ulang oleh gelas ke-9, dan mengurangi gelas tidak membatalkan centang.
+- **Diabaikan.** Pengingat air yang tidak dijawab (tidak ada gelas bertambah sampai pengingat air berikutnya)
+  tiga kali berturut-turut di satu blok menghentikan pengingat air sampai blok berikutnya. Break tetap jalan.
+- Pengingat air dan break masing-masing bisa dimatikan di Tentang. Awalnya nyala.
+- Teks dan nada tenang, tanpa menyalahkan: "Waktunya minum" dengan "3 dari 8 gelas hari ini", dan "Break sebentar"
+  dengan "Berdiri dan regangkan badan."
+- Pengingat air dan break tidak memengaruhi level hari, selain lewat centang otomatis habit air.
 
 ## Kesehatan (tahap 21)
 

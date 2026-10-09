@@ -168,8 +168,9 @@ detail hari memakai `ModalBottomSheet`.
 ### Hari ini
 1. Kartu hero **Sekarang** dengan timeline (lihat [Dashboard di Hari ini](#dashboard-di-hari-ini-tahap-17)).
 2. Kartu hero: tanggal (labelMedium), dua `StatBlock` (Habit, To-do), lalu baris level dan streak.
-3. Judul "Habit", lalu daftar habit (habit wajib di atas, bertanda "Wajib").
-4. Judul "To-do hari ini (x/5)", daftar to-do, lalu tombol `TonalButton` "+ To-do".
+3. Kartu air (tahap 20, lihat [Pengingat kerja](#pengingat-kerja-tahap-20)).
+4. Judul "Habit", lalu daftar habit (habit wajib di atas, bertanda "Wajib").
+5. Judul "To-do hari ini (x/5)", daftar to-do, lalu tombol `TonalButton` "+ To-do".
    Tombol nonaktif saat sudah 5, dan pesan penuh muncul di bawahnya.
 
 ### Kontribusi
@@ -212,7 +213,7 @@ Teks dipusatkan. Di bawahnya enam bagian pengaturan, masing-masing dengan label 
     jumlahnya (habit, follow-up), lalu "Semua data di HP ini akan diganti. Ini tidak bisa dibatalkan." Tombol utama
     `Button` "Ganti semua data", dan `TextButton` "Batal".
 
-Layar bisa digulir karena isinya lebih panjang dari layar kecil. Urutan bagian: Tampilan, Lokasi, Notifikasi, Alarm, Pengingat adzan, Sinkron ke server.
+Layar bisa digulir karena isinya lebih panjang dari layar kecil. Urutan bagian: Tampilan, Lokasi, Notifikasi, Pengingat kerja (tahap 20), Alarm, Pengingat adzan, Sinkron ke server.
 
 ### Dashboard di Hari ini (tahap 17)
 1. Kartu hero "Sekarang" paling atas, di atas kartu skor: label "Sekarang" (labelMedium,
@@ -284,6 +285,21 @@ Kerja atau dari notifikasi blok Kerja pagi dan EOD.
    Lalu `OutlinedTextField` "Catatan EOD" beberapa baris, dan dua tombol: `TonalButton` "Simpan EOD"
    serta `TextButton` "Bagikan" yang membuka share sheet berisi ringkasan.
 3. Layar ini tidak memakai warna status. Yang belum diputuskan tidak ditandai merah.
+
+### Pengingat kerja (tahap 20)
+1. **Kartu air** di Hari ini, tepat di bawah kartu skor dan di atas judul "Habit": `AppCard` dengan label "Air putih"
+   (labelMedium, `onSurfaceVariant`), lalu angka "3 / 8" (displayMedium kecil, angka tabular) dengan keterangan "gelas
+   hari ini" (bodySmall), dan bar kemajuan setinggi 8dp (`primary` di atas `surfaceContainerHighest`, penuh di 8 atau
+   lebih). Di kanan angka, `TonalButton` "+ Segelas" dan `TextButton` "−" di sebelahnya (nonaktif di 0). Area sentuh
+   tombol minimal 48dp. Tanpa warna status dan tanpa animasi saat target tercapai, hanya teks "Target tercapai".
+2. **Notifikasi** (channel Info jadwal, senyap): judul "Waktunya minum", "Break sebentar", atau "Break + minum"
+   (bodyLarge), isi "3 dari 8 gelas hari ini" atau "Berdiri dan regangkan badan." Tombol "Sudah minum" untuk air dan
+   gabungan, tanpa tombol untuk break. Tap membuka app.
+3. **Tentang**: bagian baru "Pengingat kerja" di antara Notifikasi dan Alarm, berisi dua baris dengan `Switch`:
+   "Minum air" (keterangan "Setiap 60 menit di jam kerja") dan "Break" (keterangan "Setiap 90 menit di jam kerja").
+4. **Editor blok** (Atur jadwal): satu baris `Switch` "Pengingat air dan break" di bawah pilihan hari aktif, dengan
+   keterangan bodySmall "Dihitung dari jam mulai blok ini." Kartu blok di daftar menambah teks "Air dan break"
+   (bodySmall) bila menyala.
 
 ### Asupan makan (tahap 23, belum diterapkan)
 1. Kartu "Makan" di dashboard: empat chip kecil Sarapan, Siang, Malam, Camilan. Chip yang

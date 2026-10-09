@@ -736,10 +736,52 @@ tengah tidak meninggalkan data setengah. Setelah pulih, notifikasi dan alarm dij
 menunggu saat tanpa internet; pulihkan dengan server mati; penolakan alamat `http://` di build rilis;
 pulihkan ke HP kosong (hanya diuji di HP yang datanya sama); pemasangan di VPS (dikerjakan pemilik).
 
-### Tahap 20: Pengingat kerja
-Sudah diputuskan: minum air **setiap 60 menit** di jam kerja dengan tombol "Sudah minum"
-(8 gelas mencentang "Air putih 2 liter"), break **setiap 90 menit**, digabung kalau
-berdekatan. Mengikuti aturan tiga tingkat notifikasi di visi.
+### Tahap 20: Pengingat kerja (diputuskan 9 Oktober 2026, sedang dikoding)
+
+Aturan fitur di `docs/rancangan.md` bagian Pengingat kerja. Minum air **setiap 60 menit** di jam kerja
+dengan tombol "Sudah minum" (8 gelas mencentang "Air putih 2 liter"), break **setiap 90 menit**, digabung
+kalau berdekatan. Mengikuti aturan tiga tingkat notifikasi di visi.
+
+| Pertanyaan | Keputusan |
+|---|---|
+| Jam kerja | Blok jadwal bertanda `workReminders`. Bawaan Kerja pagi dan Kerja sore. Ikut "Hari ini libur" dan blok sholat tanpa aturan tambahan |
+| Waktu pengingat | Air di mulai blok lalu tiap 60 menit sebelum blok berakhir (7 kali di jadwal bawaan). Break di mulai + 90, + 180 |
+| Digabung | Air dan break berjarak ≤ 15 menit menjadi "Break + minum" di waktu lebih awal |
+| Ditahan | Yang jatuh di blok sholat digeser ke akhir blok sholat, dibuang kalau lewat akhir blok kerja. Meeting menyusul di tahap 22 |
+| Bentuk Info | Notifikasi senyap (channel `IMPORTANCE_LOW`) dengan id tetap, menggantikan dirinya sendiri. Bukan teks tambahan di notifikasi tetap, supaya tetap muncul kalau notifikasi tetap dimatikan dan bisa punya tombol "Sudah minum". Ini mempersempit baris "hanya memperbarui notifikasi tetap" di visi |
+| Penghitung | Tabel `drink_counts` (tanggal, jenis, jumlah), jenis awal `WATER`. Tahap 23 menambah kopi dan minuman manis di tabel yang sama |
+| Habit air | Kolom baru `habits.autoSource` ("WATER"). Tercentang saat hitungan naik melewati 8. Centang manual menang |
+| Diabaikan | 3 pengingat air berturut-turut tanpa tambahan gelas di satu blok menghentikan pengingat air sampai blok berikutnya. Break tetap |
+| Interval | Tetap 60 dan 90 menit, tidak bisa diubah di pengaturan. Yang bisa diatur: nyala atau mati per jenis di Tentang, dan tanda per blok di editor blok |
+
+**Rencana teknis:**
+- `domain/schedule/WorkReminders.kt` (Kotlin murni, unit test): menghitung daftar pengingat dari blok yang sudah
+  di-resolve (waktu, jenis `WATER`, `BREAK`, `BREAK_AND_WATER`, blok asal), termasuk gabung dan geser. Fungsi
+  kecil untuk pengingat air yang diabaikan dan untuk menentukan kapan hitungan melewati target.
+- Database 4 → 5: kolom `habits.autoSource` (diisi "WATER" untuk habit bernama "Air putih 2 liter"), kolom
+  `schedule_blocks.workReminders` (diisi nyala untuk Kerja pagi 08.00 dan Kerja sore 13.00 bawaan yang belum
+  diubah), dan tabel `drink_counts`. Riwayat tidak disentuh. Jadwal awal untuk instalasi baru ikut diperbarui.
+- `ScheduleNotifier.refresh` menambah pengingat kerja ke penentuan alarm berikutnya dan ke `announceStarted`
+  (jendela mundur 10 menit yang sama). Tombol "Sudah minum" dikirim ke `ScheduleReceiver` (aksi baru).
+- Snapshot 19B: `data.drinkCounts`, `habits[].autoSource`, `scheduleBlocks[].workReminders`, dan
+  `settings.workReminders` (air, break). Semuanya **opsional saat dibaca** (snapshot lama tetap bisa dipulihkan),
+  jadi `schemaVersion` tetap 1. Tabel `drink_counts` ikut dipantau pemicu sinkron otomatis.
+
+**Selesai jika:**
+- Unit test lulus untuk: 7 pengingat air dan 3 break di jadwal bawaan, gabung ≤ 15 menit (dan 16 menit tidak),
+  geser keluar blok sholat dan dibuang di luar blok kerja, tanpa pengingat di akhir blok, blok tanpa tanda
+  tidak menghasilkan apa-apa, blok mati karena libur tidak menghasilkan apa-apa, hitungan melewati target
+  tepat sekali, dan aturan diabaikan tiga kali.
+- Pengingat air muncul senyap di waktunya (tanpa bunyi dan pop-up), isinya menyebut jumlah gelas, dan
+  menggantikan pengingat sebelumnya, bukan menumpuk.
+- "Sudah minum" di notifikasi menambah satu gelas, menutup notifikasi, dan angkanya sama di kartu air.
+- Gelas ke-8 mencentang "Air putih 2 liter". Centang manual dibatalkan tidak dicentang ulang gelas ke-9.
+- "Hari ini libur" mematikan semua pengingat kerja hari itu. Mematikan switch air atau break di Tentang
+  menghentikan jenis itu saja. Tanda blok di editor mengubah jam kerja.
+- Migrasi 4 → 5 pada database yang sudah berisi data mempertahankan semua riwayat, dan habit air serta blok kerja
+  bawaan mendapat tanda.
+- Snapshot: ekspor lalu pulihkan mengembalikan penghitung gelas, autoSource, dan tanda blok. Snapshot lama tanpa
+  bidang itu tetap bisa dipulihkan.
 
 ### Tahap 21: Kesehatan (diputuskan, belum dikoding)
 
