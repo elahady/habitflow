@@ -736,7 +736,7 @@ tengah tidak meninggalkan data setengah. Setelah pulih, notifikasi dan alarm dij
 menunggu saat tanpa internet; pulihkan dengan server mati; penolakan alamat `http://` di build rilis;
 pulihkan ke HP kosong (hanya diuji di HP yang datanya sama); pemasangan di VPS (dikerjakan pemilik).
 
-### Tahap 20: Pengingat kerja (diputuskan 9 Oktober 2026, sedang dikoding)
+### Tahap 20: Pengingat kerja (selesai dikoding dan diuji di emulator, 9 Oktober 2026)
 
 Aturan fitur di `docs/rancangan.md` bagian Pengingat kerja. Minum air **setiap 60 menit** di jam kerja
 dengan tombol "Sudah minum" (8 gelas mencentang "Air putih 2 liter"), break **setiap 90 menit**, digabung
@@ -782,6 +782,33 @@ kalau berdekatan. Mengikuti aturan tiga tingkat notifikasi di visi.
   bawaan mendapat tanda.
 - Snapshot: ekspor lalu pulihkan mengembalikan penghitung gelas, autoSource, dan tanda blok. Snapshot lama tanpa
   bidang itu tetap bisa dipulihkan.
+
+**Hasil verifikasi (9 Oktober 2026, emulator Pixel 6 API 34, database yang sudah berisi data tahap 19B):**
+- Unit test: 16 tes `WorkRemindersTest` dan 2 tes codec baru, seluruhnya 141 tes lulus.
+- Migrasi 4 → 5 pada database nyata: versi jadi 5, 3 centang habit dan 7 follow-up utuh, "Air putih 2 liter"
+  bersumber WATER, Kerja pagi dan Kerja sore bertanda, tabel `drink_counts` ada.
+- Kartu air: 7 gelas belum mencentang habit, gelas ke-8 mencentang dan menampilkan "Target tercapai". Centang
+  dibatalkan manual lalu gelas ke-9: tidak dicentang ulang. "−" ke 8: centang tidak berubah. Turun ke 7 lalu naik ke 8
+  lagi: dicentang lagi (aturannya: hanya kenaikan yang melewati 8).
+- Notifikasi (dibaca dari `dumpsys notification`): break "Break sebentar" tanpa tombol, air "Waktunya minum" dengan
+  "8 dari 8 gelas hari ini" dan tombol "Sudah minum", gabungan "Break + minum" dengan tombol yang sama. Semuanya di
+  channel `schedule_info` (importance rendah, tanpa suara, getar, atau pop-up), satu id yang menggantikan.
+- "Sudah minum" di notifikasi: gelas naik 8 → 9 dan notifikasi tertutup.
+- Blok baru lewat Atur jadwal dengan switch "Pengingat air dan break" menghasilkan pengingat air di jam mulainya.
+- Tentang: bagian "Pengingat kerja" tampil di antara Notifikasi dan Alarm. Mematikan Break menyimpan pengaturan.
+- Snapshot dari emulator ke server lokal berisi `drinkCounts`, `settings.workReminders`, `autoSource`, dan
+  `workReminders` blok. Pulihkan mengembalikan gelas dari 5 ke 3 dan switch Break dari nyala ke mati (nilai snapshot).
+- Temuan dan perbaikan: sistem melebarkan jendela alarm tak presisi menjadi 10 menit, dan jendela mundur
+  pengumuman (10 menit, awal eksklusif) melewatkan pengingat tepat di batasnya saat alarm berbunyi di ujung
+  jendela (pengingat air 10.00 yang berbunyi 10.10 hilang). Jendela mundur naik ke 15 menit; pengingat 11.00
+  sesudahnya tidak hilang.
+
+**Belum diverifikasi:** "Hari ini libur" mematikan pengingat dan blok sholat menggeser pengingat (hanya unit test,
+belum di layar); mematikan switch Minum air menghentikan pengingat air (yang diuji hanya Break dan penyimpanan
+pengaturan); aturan "diabaikan tiga kali" (hanya unit test); menit tepat munculnya notifikasi (jam emulator
+melompat); perilaku di HP nyata saat Doze: alarm `setWindow` tidak berbunyi selama Doze mendalam, jadi pengingat di
+HP yang diam di meja bisa terlambat atau terlewat (jendela mundur 15 menit). Keputusan terbuka: pindah ke
+`setAndAllowWhileIdle` untuk jadwal notifikasi (berlaku juga untuk blok tahap 17 dan 19).
 
 ### Tahap 21: Kesehatan (diputuskan, belum dikoding)
 

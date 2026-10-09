@@ -76,7 +76,7 @@ Tiga tingkat, ditambah satu notifikasi tetap.
 |---|---|---|
 | **Alarm** | Subuh − 15 | Bunyi penuh, layar penuh, menembus mode senyap. Hanya untuk ini |
 | **Pengingat** | Adzan, berangkat, mulai kerja, EOD, meeting −15 mnt, batas tidur | Heads-up dengan getar. Tombol Sudah, Tunda 10 mnt, Lewati |
-| **Info** | Minum air, break | Tanpa bunyi dan tanpa pop-up. Hanya memperbarui notifikasi tetap |
+| **Info** | Minum air, break | Tanpa bunyi dan tanpa pop-up. Satu notifikasi senyap yang menggantikan dirinya sendiri (tahap 20) |
 
 - **Notifikasi tetap** di status bar: "Sekarang: … · Berikutnya: …". Ini juga menjadi
   ringkasan dashboard di luar app.
