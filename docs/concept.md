@@ -915,9 +915,25 @@ versi ini `FEATURE_HEALTH_DATA_BACKGROUND_READ`; pindah ke 1.1.0 stabil menunggu
 build debug: `DebugStepsReceiver` (tulis dan hapus langkah uji) dan `DebugClockReceiver` (jalankan notifikasi dengan jam
 palsu), keduanya hanya ada di `app/src/debug`.
 
-### Tahap 22: Kalender dan acara rutin (diputuskan, belum dikoding)
+### Tahap 22: Kalender dan acara rutin (diputuskan 5 Oktober 2026, dirinci 9 Oktober 2026, sedang dikoding)
 
 **Keputusan (5 Oktober 2026).** Aturan fitur di `docs/rancangan.md` bagian Kalender.
+
+**Keputusan tambahan (9 Oktober 2026)**, yang menggantikan rencana awal bila bertentangan:
+
+| Pertanyaan | Keputusan |
+|---|---|
+| Tanggal yang tidak ada di bulan itu | Jatuh di hari terakhir bulan itu (31 dan 29 Februari) |
+| Libur nasional di database | **Dihitung, bukan disimpan** di `days_off`: libur efektif = libur manual ∪ (libur nasional − pembatalan). Tabel baru `holiday_cancellations` menyimpan tanggal yang dibatalkan. Daftar yang diperbarui langsung berlaku tanpa migrasi data |
+| Cuti bersama | Sama dengan libur nasional, bisa dibatalkan per tanggal |
+| Sumber libur | `assets/libur/2026.json` dan `2027.json` dari setneg.go.id (SKB 3 Menteri), dibaca 9 Oktober 2026. Tahun tanpa berkas: tidak ada libur otomatis. Pembaruan lewat update app |
+| Acara di tampilan | Timeline dan Sekarang/Berikutnya memuat semua acara berjam, kedua label. Agenda memuat semua acara. Tidak ada kartu "Acara hari ini" terpisah (rancangan awal membedakan Kerja ke Agenda dan Pribadi ke dashboard; timeline sudah memenuhinya) |
+| Acara Kerja di hari libur | Mati (timeline, Agenda, pengingat), juga untuk kalender HP berlabel Kerja |
+| Pengecualian satu kejadian | Tabel `event_exceptions` berisi lewati atau nilai pengganti penuh (tanggal, jam, durasi, judul). Mengubah seri tidak mengubah kejadian yang sudah diubah satu per satu |
+| Pengingat | Tingkat Pengingat, −15 menit bawaan, pilihan Tanpa/5/10/15/30/60, hanya acara HabitFlow berjam |
+| Kalender HP | `CalendarContract.Instances`, izin `READ_CALENDAR`, dipilih dan dilabeli per kalender di Tentang (bawaan tidak ada, label Pribadi). Tidak ikut snapshot (nomor kalender khusus perangkat) |
+| Tautan catat cepat | Kolom `eventId`, `eventDate`, `eventTitle` di `follow_ups`. Acara kalender HP hanya menyimpan judul dan tanggal (tanpa id) |
+| Snapshot | `data.events`, `data.eventExceptions`, `data.holidayCancellations`, dan tiga kolom follow-up. Opsional saat dibaca, `schemaVersion` tetap 1 |
 
 | Pertanyaan | Keputusan |
 |---|---|

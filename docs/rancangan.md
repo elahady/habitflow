@@ -177,6 +177,37 @@ Rincian (9 Oktober 2026):
   tanggal.
 - Catatan cepat yang dibuat selama acara Kerja berlangsung tertaut ke acara itu.
 
+Rincian (9 Oktober 2026):
+
+- **Acara** punya judul, label, tanggal mulai, jam mulai dan durasi menit (bawaan 60) atau "Sepanjang hari", pengulangan,
+  tanggal berakhir (ikut dihitung), pengingat, dan catatan. Acara tidak melewati satu hari: yang jamnya melewati 24.00
+  dipotong di 24.00 pada timeline.
+- **Pengulangan:** Sekali, Harian, Mingguan, Bulanan, Tahunan. Mingguan berarti setiap N minggu (1 sampai 12) di hari
+  terpilih (bawaan hari tanggal mulai); minggu dihitung mulai Senin dan minggu pertama adalah minggu yang memuat tanggal
+  mulai. Bulanan bisa per tanggal (setiap tanggal 12) atau per urutan hari (Senin kedua; urutan 5 menjadi "terakhir").
+  Tahunan jatuh di tanggal dan bulan yang sama. **Tanggal yang tidak ada di bulan itu** (31 di bulan pendek, atau 29
+  Februari di tahun biasa) jatuh di **hari terakhir bulan itu**.
+- **Satu kejadian** bisa dilewati (hilang dari semua tampilan dan pengingat) atau diubah sendiri (judul, tanggal, jam, durasi).
+  Mengubah acara berarti mengubah seluruh seri; kejadian yang sudah diubah satu per satu tetap memakai ubahannya. Menghapus
+  acara menghapus semua kejadian dan pengecualiannya.
+- **Kalender HP** dipilih per kalender di Tentang, masing-masing berlabel Kerja atau Pribadi (bawaan Pribadi). Hanya baca, tanpa
+  notifikasi dari HabitFlow, dan tidak ikut cadangan karena nomor kalender khusus perangkat. Acara yang dibatalkan di kalender
+  HP tidak tampil. Acara sepanjang hari memakai tanggal lokal.
+- **Tampilan:** timeline dan Sekarang/Berikutnya di Hari ini memuat semua acara berjam (HabitFlow dan HP, kedua label) dengan
+  penanda "Acara". Acara sepanjang hari tampil sebagai baris di awal timeline. Agenda di tab Kerja memuat 7 hari ke depan dan
+  tampilan bulan.
+- **Libur nasional** memakai daftar SKB 3 Menteri per tahun yang disimpan di app (2026 dan 2027, bersumber setneg.go.id).
+  Tahun tanpa daftar berarti tidak ada libur otomatis. **Cuti bersama diperlakukan sama dengan libur nasional**, dan keduanya
+  bisa dibatalkan per tanggal (misalnya kantor tetap masuk saat cuti bersama). "Hari ini libur" manual tetap ada. Pada hari
+  libur (manual atau nasional): blok yang hanya aktif hari kerja dan semua acara berlabel Kerja (HabitFlow maupun kalender HP)
+  mati, termasuk pengingatnya. Sholat, alarm Subuh, dan acara Pribadi tetap.
+- **Pengingat acara:** hanya untuk acara HabitFlow berjam. Pilihan Tanpa, 5, 10, 15 (bawaan), 30, atau 60 menit sebelum mulai.
+  Tingkat Pengingat (heads-up) dengan judul acara dan jam mulainya. Kejadian yang dilewati tidak diingatkan, dan kejadian yang
+  diubah diingatkan menurut jam barunya.
+- **Catat cepat tertaut** ke acara Kerja berjam yang sedang berlangsung (dari jam mulai sampai selesai, HabitFlow atau kalender
+  HP). Follow-up menyimpan judul dan tanggal acara, jadi keterangannya tetap ada walau acaranya dihapus. Di EOD, Inbox
+  dikelompokkan per acara, dan di daftar Kerja kartunya diberi keterangan "Dari acara: ...".
+
 ## Asupan makan (tahap 23)
 
 - Makan dicatat per waktu makan (sarapan, siang, malam, camilan) dengan pola **Isi Piringku**:

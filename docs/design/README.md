@@ -311,17 +311,41 @@ Kerja atau dari notifikasi blok Kerja pagi dan EOD.
 3. Kartu air (tahap 20) mendapat dua tombol teks kecil "+ Kopi" dan "+ Manis" dengan
    jumlahnya. Kopi ke-3 menampilkan teks tenang di bawah kartu, bukan dialog.
 
-### Kalender (tahap 22, belum diterapkan)
-1. Tab Kerja mendapat tombol ketiga "Agenda" di samping "Daily scrum" dan "EOD".
-2. **Agenda**: daftar 7 hari ke depan dikelompokkan per tanggal (labelMedium), satu baris per
-   acara: jam dengan angka tabular, judul (bodyLarge), keterangan pengulangan atau nama
-   kalender HP (bodySmall, `onSurfaceVariant`). Hari libur nasional tampil sebagai baris
-   "Libur: <nama>".
-3. **Tampilan bulan**: grid 7 kolom, tanggal dengan titik kecil `primary` kalau ada acara.
-   Tap tanggal membuka agenda hari itu.
-4. **Editor acara**: judul, label Kerja/Pribadi (segmented button), tanggal dan jam
-   (`DatePicker`, `TimePicker` Material 3), pengulangan, tanggal berakhir, pengingat.
-5. Di timeline dashboard, acara tampil seperti blok dengan penanda kecil "Acara" dan label.
+### Kalender (tahap 22)
+1. Tab Kerja mendapat tombol ketiga "Agenda" di samping "Daily scrum" dan "EOD" (tiga `TonalButton` berdampingan, setiap
+   tombol mengisi sepertiga lebar).
+2. **Agenda** (layar penuh di atas tab, seperti Daily scrum dan EOD): tombol "‹ Kembali", judul "Agenda" (headlineMedium),
+   `SingleChoiceSegmentedButtonRow` "7 hari" dan "Bulan", lalu `TonalButton` "+ Acara". **7 hari**: hari ini sampai enam hari
+   lagi, tiap hari satu judul (labelMedium, misalnya "Jumat, 9 Oktober"; "Hari ini" untuk hari ini) lalu satu baris per acara:
+   jam dengan angka tabular selebar 96dp ("14.00–15.00" atau "Sepanjang hari"), judul (bodyLarge), dan keterangan (bodySmall,
+   `onSurfaceVariant`) berisi label, pengulangan ("Setiap 2 minggu") atau nama kalender HP. Hari tanpa acara menampilkan
+   "Tidak ada acara." (bodySmall). Libur nasional tampil sebagai baris "Libur: <nama>" (bodyMedium) di awal hari, dan acara
+   Kerja pada hari itu tidak tampil. Baris acara HabitFlow bisa ditekan, baris kalender HP tidak.
+3. **Menu kejadian** (`AlertDialog` berisi `TextButton` bertumpuk) saat baris acara HabitFlow ditekan: "Ubah acara", "Ubah
+   kejadian ini" dan "Lewati kejadian ini" (hanya untuk acara berulang), "Hapus acara", dan "Batal". Lewati langsung berlaku;
+   Hapus meminta konfirmasi satu dialog.
+4. **Tampilan bulan**: judul bulan dan tahun (titleLarge) dengan tombol teks "‹" dan "›" di kedua sisi, baris nama hari (Sen
+   sampai Min, labelSmall), lalu grid 7 kolom. Tiap sel setinggi 48dp berisi angka tanggal (bodyMedium, angka tabular) dan titik
+   `primary` 6dp di bawahnya kalau ada acara. Hari ini memakai latar `primaryFixed`, hari libur memakai teks `onSurfaceVariant`
+   dengan garis bawah tipis. Tap tanggal menampilkan daftar acara tanggal itu di bawah grid (format baris sama dengan 7 hari).
+5. **Editor acara** (`AlertDialog` gulir): judul, `SingleChoiceSegmentedButtonRow` label Kerja dan Pribadi, switch "Sepanjang
+   hari", tombol teks tanggal mulai dan jam mulai (`AppDatePickerDialog`, `AppTimePickerDialog`; jam disembunyikan kalau
+   sepanjang hari), kolom durasi menit, baris `FilterChip` pengulangan (Sekali, Harian, Mingguan, Bulanan, Tahunan). Mingguan
+   menambah kolom "Setiap berapa minggu" dan tujuh `FilterChip` hari. Bulanan menambah dua `FilterChip` pilihan: "Tanggal 12" dan
+   "Senin kedua" (menyesuaikan tanggal mulai). Pengulangan selain Sekali menambah tombol teks "Berakhir: ..." (dengan "Hapus").
+   Lalu baris `FilterChip` pengingat (Tanpa, 5, 10, 15, 30, 60 menit), kolom catatan, dan tombol Simpan, Batal. Untuk "Ubah kejadian
+   ini" editor hanya memuat judul, tanggal, jam, dan durasi.
+6. **Timeline dashboard**: acara tampil seperti blok dengan penanda kecil "Acara · Kerja" atau "Acara · Pribadi" (labelSmall,
+   `onSurfaceVariant`) di bawah nama. Acara sepanjang hari tampil di awal timeline dengan jam "Sepanjang hari".
+7. **Kartu hari libur** (di kartu Sekarang, menggantikan baris "Hari libur"): libur nasional aktif menampilkan "Libur nasional:
+   <nama>, blok kantor dimatikan" dengan tombol "Batalkan"; libur nasional yang dibatalkan menampilkan "Libur nasional
+   dibatalkan, blok kantor jalan" dengan tombol "Libur lagi"; libur manual seperti sebelumnya.
+8. **Tentang, Kalender HP**: bagian baru "Kalender HP" setelah Pengingat kesehatan. Tanpa izin: satu kalimat bodySmall dan
+   `TonalButton` "Izinkan akses kalender". Dengan izin: satu baris per kalender (nama bodyLarge, nama akun bodySmall) dengan
+   `Switch`, dan kalau menyala dua `FilterChip` Kerja dan Pribadi di bawahnya.
+9. **Notifikasi pengingat acara** (tingkat Pengingat): judul = judul acara, isi "Mulai 14.00 · Kerja".
+10. **Catat cepat tertaut**: sheet Catat menampilkan baris bodySmall "Tertaut ke acara: <judul>" saat ada acara Kerja berlangsung.
+    Di EOD, Inbox diberi judul kelompok (labelMedium) "Dari acara: <judul>, <jam>" di atas item-item dari acara itu.
 
 ### Kesehatan (tahap 21)
 1. **Kartu di Hari ini**, di bawah kartu skor: kartu Langkah selebar layar (angka "3.240 /
