@@ -421,7 +421,8 @@ sudah diambil saat menyusun visi dicatat di tiap tahap.
 - Lokasi: izin lokasi kasar, `LocationManager` bawaan (tanpa Google Play Services), lokasi
   terakhir disimpan. Opsi manual: nama kota dan koordinat.
 - Notifikasi blok dan pembaruan notifikasi tetap dijadwalkan dengan `AlarmManager` pada
-  setiap batas blok (alarm tidak presisi, jendela paling lama 5 menit), dijadwalkan ulang
+  setiap batas blok (alarm tidak presisi `setAndAllowWhileIdle`, bisa terlambat beberapa menit; sejak tahap 20,
+  sebelumnya `setWindow` 5 menit yang tidak berbunyi saat Doze), dijadwalkan ulang
   setelah restart dan saat jam, zona waktu, atau lokasi berubah. Alarm presisi baru dipakai
   di tahap 18 untuk alarm Subuh.
 - Tingkat notifikasi di tahap ini: Pengingat dan Info (lihat visi). Tingkat Alarm menunggu
@@ -616,7 +617,7 @@ HabitFlow, tanpa migrasi data dari Notion.
 - EOD: follow-up hari ini awalnya "Lanjut besok" dan Inbox awalnya "Biarkan", supaya Simpan EOD selalu
   bisa ditekan. Tanggal selesai mengikuti zona waktu perangkat.
 - Pemilih tanggal dan jam memakai komponen Material 3, jadi bahasanya mengikuti locale perangkat.
-- Pengingat jam khusus memakai alarm jadwal yang sama (jendela 5 menit), bukan alarm presisi.
+- Pengingat jam khusus memakai alarm jadwal yang sama (tidak presisi), bukan alarm presisi.
 
 **Hasil verifikasi (7 Oktober 2026, emulator Pixel 6 API 34):**
 - Database v3 berisi data naik ke v4 tanpa kehilangan habit atau blok; Kerja pagi dan EOD tertanda.
@@ -806,9 +807,16 @@ kalau berdekatan. Mengikuti aturan tiga tingkat notifikasi di visi.
 **Belum diverifikasi:** "Hari ini libur" mematikan pengingat dan blok sholat menggeser pengingat (hanya unit test,
 belum di layar); mematikan switch Minum air menghentikan pengingat air (yang diuji hanya Break dan penyimpanan
 pengaturan); aturan "diabaikan tiga kali" (hanya unit test); menit tepat munculnya notifikasi (jam emulator
-melompat); perilaku di HP nyata saat Doze: alarm `setWindow` tidak berbunyi selama Doze mendalam, jadi pengingat di
-HP yang diam di meja bisa terlambat atau terlewat (jendela mundur 15 menit). Keputusan terbuka: pindah ke
-`setAndAllowWhileIdle` untuk jadwal notifikasi (berlaku juga untuk blok tahap 17 dan 19).
+melompat); perilaku Doze di HP nyata (hanya diuji dengan Doze paksa di emulator, lihat di bawah).
+
+**Doze (9 Oktober 2026, setelah verifikasi di atas).** Alarm `setWindow` tidak berbunyi selama Doze mendalam, jadi
+pengingat di HP yang diam di meja bisa terlambat atau terlewat. Jadwal notifikasi dipindah ke
+`setAndAllowWhileIdle` (berlaku juga untuk blok tahap 17 dan 19, dan untuk pengingat follow-up berjam). Alarm
+Subuh tidak berubah karena sudah memakai `setAlarmClock`. Di emulator: `dumpsys alarm` menunjukkan alarm jadwal
+berflag `ALLOW_WHILE_IDLE_COMPAT` (0x20, sebelumnya 0x0). Dengan `deviceidle force-idle` (status `IDLE`), blok uji
+yang mulai 12.27 dengan pengingat air tetap mengumumkan blok dan pengingat airnya. Pembatasan sistem di Doze (sekitar
+sekali per 9 menit per app) tidak masalah untuk pengingat per 60 menit. Belum diuji: Doze nyata semalaman dan
+dampak baterainya.
 
 ### Tahap 21: Kesehatan (diputuskan, belum dikoding)
 
