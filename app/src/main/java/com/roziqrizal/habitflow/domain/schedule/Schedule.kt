@@ -1,5 +1,6 @@
 package com.roziqrizal.habitflow.domain.schedule
 
+import com.roziqrizal.habitflow.domain.calendar.EventLabel
 import com.roziqrizal.habitflow.domain.prayer.PrayerName
 import com.roziqrizal.habitflow.domain.prayer.PrayerTimes
 import com.roziqrizal.habitflow.domain.prayer.of
@@ -51,11 +52,18 @@ data class ScheduleBlock(
     val workReminders: Boolean = false,
 )
 
-/** Blok dengan waktu yang sudah dihitung untuk satu tanggal, dalam menit sejak 00.00. */
+/** Penanda blok yang berasal dari acara (tahap 22), bukan dari jadwal: labelnya, dan nama kalender HP kalau dari kalender HP. */
+data class EventMarker(val label: EventLabel, val source: String? = null)
+
+/**
+ * Blok dengan waktu yang sudah dihitung untuk satu tanggal, dalam menit sejak 00.00. [event] terisi kalau blok ini
+ * sebenarnya acara (tahap 22): ia ikut Sekarang/Berikutnya dan timeline, tapi tidak diumumkan sebagai blok.
+ */
 data class ResolvedBlock(
     val block: ScheduleBlock,
     val startMinute: Int,
     val endMinute: Int,
+    val event: EventMarker? = null,
 ) {
     val isPoint: Boolean get() = endMinute <= startMinute
 }
