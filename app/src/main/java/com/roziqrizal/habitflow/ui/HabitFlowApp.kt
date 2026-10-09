@@ -56,6 +56,10 @@ fun HabitFlowApp(
     persistentNotification: Boolean,
     alarmSettings: AlarmSettings,
     onPersistentNotificationChange: (Boolean) -> Unit,
+    waterReminders: Boolean,
+    onWaterRemindersChange: (Boolean) -> Unit,
+    breakReminders: Boolean,
+    onBreakRemindersChange: (Boolean) -> Unit,
     onThemeModeChange: (ThemeMode) -> Unit,
 ) {
     // Riwayat tab, dari yang paling lama sampai tab aktif. Tombol kembali membuka tab sebelumnya.
@@ -170,6 +174,8 @@ fun HabitFlowApp(
                         onSetDayOff = schedule::setDayOff,
                         onOpenSchedule = { showSchedule = true },
                         onToggleHabit = today::toggleHabit,
+                        onAddGlass = today::addGlass,
+                        onRemoveGlass = today::removeGlass,
                         onAddTodo = today::addTodo,
                         onToggleTodo = today::toggleTodo,
                         onDeleteTodo = today::deleteTodo,
@@ -220,6 +226,10 @@ fun HabitFlowApp(
                             onConfirmRestore = syncViewModel::confirmRestore,
                         ),
                         onPersistentNotificationChange = onPersistentNotificationChange,
+                        waterReminders = waterReminders,
+                        onWaterRemindersChange = onWaterRemindersChange,
+                        breakReminders = breakReminders,
+                        onBreakRemindersChange = onBreakRemindersChange,
                         onThemeModeChange = onThemeModeChange,
                     )
                 }

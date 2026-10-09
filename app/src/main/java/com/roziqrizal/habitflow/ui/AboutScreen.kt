@@ -11,8 +11,10 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -67,6 +69,10 @@ fun AboutScreen(
     onLocationChange: (PlaceLocation) -> Unit,
     persistentNotification: Boolean,
     onPersistentNotificationChange: (Boolean) -> Unit,
+    waterReminders: Boolean,
+    onWaterRemindersChange: (Boolean) -> Unit,
+    breakReminders: Boolean,
+    onBreakRemindersChange: (Boolean) -> Unit,
     nextAlarm: AlarmTime?,
     alarmSettings: AlarmSettings,
     sync: SyncUiState,
@@ -104,17 +110,27 @@ fun AboutScreen(
         LocationSection(location = location, onLocationChange = onLocationChange)
 
         SettingLabel("Notifikasi")
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text("Notifikasi tetap", style = MaterialTheme.typography.bodyLarge)
-                Text(
-                    "Sekarang dan berikutnya, dari blok pertama sampai batas tidur.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            Switch(checked = persistentNotification, onCheckedChange = onPersistentNotificationChange)
-        }
+        SettingSwitchRow(
+            title = "Notifikasi tetap",
+            description = "Sekarang dan berikutnya, dari blok pertama sampai batas tidur.",
+            checked = persistentNotification,
+            onCheckedChange = onPersistentNotificationChange,
+        )
+
+        SettingLabel("Pengingat kerja")
+        SettingSwitchRow(
+            title = "Minum air",
+            description = "Setiap 60 menit di jam kerja.",
+            checked = waterReminders,
+            onCheckedChange = onWaterRemindersChange,
+        )
+        Spacer(Modifier.height(12.dp))
+        SettingSwitchRow(
+            title = "Break",
+            description = "Setiap 90 menit di jam kerja.",
+            checked = breakReminders,
+            onCheckedChange = onBreakRemindersChange,
+        )
 
         SettingLabel("Alarm")
         AlarmSection(nextAlarm = nextAlarm, settings = alarmSettings)
@@ -124,6 +140,22 @@ fun AboutScreen(
 
         SettingLabel("Sinkron ke server")
         SyncSection(state = sync, actions = syncActions)
+    }
+}
+
+/** Satu baris pengaturan: judul dan keterangan di kiri, `Switch` di kanan. */
+@Composable
+private fun SettingSwitchRow(title: String, description: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.bodyLarge)
+            Text(
+                description,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }
 

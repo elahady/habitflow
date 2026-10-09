@@ -27,11 +27,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.roziqrizal.habitflow.data.AlarmSettings
+import com.roziqrizal.habitflow.data.DrinkRepository
 import com.roziqrizal.habitflow.data.HabitDatabase
 import com.roziqrizal.habitflow.data.HabitRepository
 import com.roziqrizal.habitflow.data.LocationSettings
 import com.roziqrizal.habitflow.data.NotificationSettings
 import com.roziqrizal.habitflow.data.ScheduleRepository
+import com.roziqrizal.habitflow.data.WorkReminderSettings
 import com.roziqrizal.habitflow.data.WorkRepository
 import com.roziqrizal.habitflow.data.ThemeMode
 import com.roziqrizal.habitflow.notify.ScheduleNotifier
@@ -66,8 +68,9 @@ class MainActivity : ComponentActivity() {
         val locationSettings = graph.locationSettings
         val notificationSettings = graph.notificationSettings
         val alarmSettings = graph.alarmSettings
+        val workReminderSettings = graph.workReminderSettings
         requestNotificationPermission()
-        keepNotificationsInSync(locationSettings, notificationSettings, alarmSettings)
+        keepNotificationsInSync(locationSettings, notificationSettings, alarmSettings, workReminderSettings)
         themeSettings.syncWithSystem()
         setContent {
             val themeMode by themeSettings.mode.collectAsState()
@@ -89,8 +92,9 @@ class MainActivity : ComponentActivity() {
             }
             HabitFlowTheme(darkTheme = darkTheme) {
                 val repo = remember { HabitRepository(HabitDatabase.get(applicationContext)) }
+                val drinkRepo = remember { DrinkRepository(HabitDatabase.get(applicationContext)) }
                 val today: TodayViewModel = viewModel(
-                    factory = viewModelFactory { initializer { TodayViewModel(repo, clock) } },
+                    factory = viewModelFactory { initializer { TodayViewModel(repo, drinkRepo, clock) } },
                 )
                 val contribution: ContributionViewModel = viewModel(
                     factory = viewModelFactory { initializer { ContributionViewModel(repo, WorkRepository(HabitDatabase.get(applicationContext)), clock) } },
@@ -134,6 +138,10 @@ class MainActivity : ComponentActivity() {
                     persistentNotification = notificationSettings.persistent.collectAsState().value,
                     alarmSettings = alarmSettings,
                     onPersistentNotificationChange = notificationSettings::setPersistent,
+                    waterReminders = workReminderSettings.water.collectAsState().value,
+                    onWaterRemindersChange = workReminderSettings::setWater,
+                    breakReminders = workReminderSettings.breaks.collectAsState().value,
+                    onBreakRemindersChange = workReminderSettings::setBreaks,
                     onThemeModeChange = themeSettings::setMode,
                 )
             }
@@ -163,6 +171,7 @@ class MainActivity : ComponentActivity() {
         locationSettings: LocationSettings,
         notificationSettings: NotificationSettings,
         alarmSettings: AlarmSettings,
+        workReminderSettings: WorkReminderSettings,
     ) {
         val repo = ScheduleRepository(HabitDatabase.get(applicationContext))
         lifecycleScope.launch {
@@ -174,6 +183,8 @@ class MainActivity : ComponentActivity() {
                     notificationSettings.persistent,
                     alarmSettings.skipped,
                     alarmSettings.adzan,
+                    workReminderSettings.water,
+                    workReminderSettings.breaks,
                     clock.date,
                 ) { _ -> }
                     .debounce(500)

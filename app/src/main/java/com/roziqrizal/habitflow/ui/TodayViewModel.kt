@@ -2,6 +2,7 @@ package com.roziqrizal.habitflow.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.roziqrizal.habitflow.data.DrinkRepository
 import com.roziqrizal.habitflow.data.Habit
 import com.roziqrizal.habitflow.data.HabitRepository
 import com.roziqrizal.habitflow.data.Todo
@@ -9,9 +10,11 @@ import com.roziqrizal.habitflow.domain.canAddTodo
 import com.roziqrizal.habitflow.domain.completeDays
 import com.roziqrizal.habitflow.domain.currentStreak
 import com.roziqrizal.habitflow.domain.scoreDay
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -31,10 +34,14 @@ data class TodayUiState(
     val level: Int = 0,
     val streak: Int = 0,
     val canAddTodo: Boolean = true,
+    /** Gelas air hari ini (tahap 20). */
+    val glasses: Int = 0,
 )
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class TodayViewModel(
     private val repo: HabitRepository,
+    private val drinks: DrinkRepository,
     private val clock: DayClock,
 ) : ViewModel() {
 
@@ -43,7 +50,8 @@ class TodayViewModel(
         repo.observeAllEntries(),
         repo.observeAllTodos(),
         clock.date,
-    ) { habits, entries, todos, now ->
+        clock.date.flatMapLatest { drinks.observeGlasses(it) },
+    ) { habits, entries, todos, now, glasses ->
         val nowKey = now.toString()
         val createdOn = habits.associate { it.id to LocalDate.parse(it.createdAt) }
 
@@ -67,6 +75,7 @@ class TodayViewModel(
             level = score.level,
             streak = currentStreak(complete, now),
             canAddTodo = canAddTodo(todosToday.size),
+            glasses = glasses,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -82,6 +91,14 @@ class TodayViewModel(
 
     fun toggleHabit(habitId: Long) {
         viewModelScope.launch { repo.toggleHabit(habitId, clock.date.value) }
+    }
+
+    fun addGlass() {
+        viewModelScope.launch { drinks.addGlass(clock.date.value) }
+    }
+
+    fun removeGlass() {
+        viewModelScope.launch { drinks.removeGlass(clock.date.value) }
     }
 
     fun addTodo(title: String) {

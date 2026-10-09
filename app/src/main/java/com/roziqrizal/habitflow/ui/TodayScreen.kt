@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -18,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -29,6 +31,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -37,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import com.roziqrizal.habitflow.data.Todo
 import com.roziqrizal.habitflow.domain.MAX_TODOS_PER_DAY
 import com.roziqrizal.habitflow.domain.TODOS_FOR_LEVEL_4
+import com.roziqrizal.habitflow.domain.schedule.GLASSES_TARGET
 import com.roziqrizal.habitflow.ui.theme.LocalHeatColors
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -50,6 +54,8 @@ fun TodayScreen(
     onSetDayOff: (Boolean) -> Unit,
     onOpenSchedule: () -> Unit,
     onToggleHabit: (Long) -> Unit,
+    onAddGlass: () -> Unit,
+    onRemoveGlass: () -> Unit,
     onAddTodo: (String) -> Unit,
     onToggleTodo: (Todo) -> Unit,
     onDeleteTodo: (Todo) -> Unit,
@@ -68,6 +74,8 @@ fun TodayScreen(
         }
 
         item { DayHeader(state) }
+
+        item { WaterCard(glasses = state.glasses, onAdd = onAddGlass, onRemove = onRemoveGlass) }
 
         item { SectionTitle("Habit") }
         items(state.habits, key = { "habit-${it.habit.id}" }) { item ->
@@ -160,6 +168,46 @@ private fun DayHeader(state: TodayUiState) {
             text = "Level 4 butuh semua habit dan $TODOS_FOR_LEVEL_4 to-do selesai.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+/** Penghitung gelas air hari ini (tahap 20). Gelas ke-8 mencentang habit "Air putih 2 liter". */
+@Composable
+private fun WaterCard(glasses: Int, onAdd: () -> Unit, onRemove: () -> Unit) {
+    AppCard(modifier = Modifier.fillMaxWidth()) {
+        Text("Air putih", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "$glasses / $GLASSES_TARGET",
+                    style = MaterialTheme.typography.displayMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Text(
+                    text = if (glasses >= GLASSES_TARGET) "gelas hari ini · Target tercapai" else "gelas hari ini",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            TextButton(
+                onClick = onRemove,
+                enabled = glasses > 0,
+                modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp),
+            ) { Text("−") }
+            TonalButton(text = "+ Segelas", onClick = onAdd)
+        }
+        LinearProgressIndicator(
+            progress = { (glasses.toFloat() / GLASSES_TARGET).coerceIn(0f, 1f) },
+            modifier = Modifier.fillMaxWidth().padding(top = 12.dp).height(8.dp),
+            color = MaterialTheme.colorScheme.primary,
+            trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+            strokeCap = StrokeCap.Round,
+            gapSize = 0.dp,
+            drawStopIndicator = {},
         )
     }
 }

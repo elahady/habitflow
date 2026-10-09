@@ -20,6 +20,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -126,7 +127,7 @@ fun ScheduleScreen(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     DayLetters(block.activeDays)
                     Text(
-                        " · ${block.level.label}",
+                        " · ${block.level.label}" + if (block.workReminders) " · Air dan break" else "",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -189,6 +190,7 @@ private fun BlockEditorDialog(
     var endText by remember { mutableStateOf(initial.endMinuteOfDay?.let(::formatMinute).orEmpty()) }
     var days by remember { mutableStateOf(initial.activeDays) }
     var level by remember { mutableStateOf(initial.level) }
+    var workReminders by remember { mutableStateOf(initial.workReminders) }
     var habitIds by remember { mutableStateOf(initial.habitIds) }
 
     val start: BlockStart? = if (byPrayer) {
@@ -265,6 +267,18 @@ private fun BlockEditorDialog(
                     }
                 }
 
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Pengingat air dan break", style = MaterialTheme.typography.bodyLarge)
+                        Text(
+                            "Dihitung dari jam mulai blok ini.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Switch(checked = workReminders, onCheckedChange = { workReminders = it })
+                }
+
                 Text("Notifikasi", style = MaterialTheme.typography.labelMedium)
                 SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
                     NotificationLevel.entries.forEachIndexed { index, l ->
@@ -303,6 +317,7 @@ private fun BlockEditorDialog(
                             activeDays = days,
                             level = level,
                             habitIds = habitIds,
+                            workReminders = workReminders,
                         ),
                     )
                 },
