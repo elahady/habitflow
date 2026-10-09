@@ -639,7 +639,7 @@ HabitFlow, tanpa migrasi data dari Notion.
 Android Auto Backup (aturan sudah dipasang, pencadangan dan pemulihan belum dicoba); tap notifikasi
 sungguhan (yang diuji adalah intent yang sama lewat `am start`); sinkron server di tahap 19B.
 
-### Tahap 19B: Sinkron ke server sendiri (diputuskan 7 Oktober 2026, sedang dikoding)
+### Tahap 19B: Sinkron ke server sendiri (selesai dikoding dan diuji lokal, 9 Oktober 2026)
 
 Dikerjakan **tepat setelah tahap 19, sebelum cut off Notion**, karena data kerja tidak boleh
 hanya ada di satu HP. Aturan fitur di `docs/rancangan.md` bagian Sinkron ke server.
@@ -717,6 +717,24 @@ tengah tidak meninggalkan data setengah. Setelah pulih, notifikasi dan alarm dij
   pengaturan, dan gagal dengan aman kalau server tidak terjangkau.
 - Round-trip diuji: data di HP → snapshot → data kosong → pulihkan → data sama (unit test untuk
   serialisasi, uji di emulator terhadap server lokal untuk alur utuh).
+
+**Hasil verifikasi (9 Oktober 2026, emulator Pixel 6 API 34, server lokal `php artisan serve`, alamat
+`http://10.0.2.2:8000`):**
+- Tes server: 18 lulus (token, 401, 413, 422, 429, pemangkasan 14 snapshot, enkripsi, cabut token).
+- Perbaikan yang ditemukan: hash snapshot dulu dihitung dari seluruh badan, padahal `createdAt` dan
+  `deviceId` berubah di setiap kirim, jadi `unchanged` tidak pernah `true`. Sekarang hash dari
+  `schemaVersion` dan `data` saja (ada tesnya).
+- Token salah di app: status Tentang menampilkan "Token ditolak server. Periksa token di pengaturan."
+- "Uji koneksi" dan "Sinkron sekarang" dengan token benar: snapshot masuk, berkas di storage
+  terenkripsi (teks habit tidak terbaca). Sinkron kedua tanpa perubahan: status "Data sudah sama dengan
+  di server.", tidak ada baris atau berkas kedua.
+- Pulihkan: dialog menyebut waktu snapshot dan isinya (9 habit, 7 follow-up, 1 to-do). Setelah satu
+  habit dicentang di HP, "Ganti semua data" mengembalikan Hari ini dari 1/9 ke 0/9, status "Data
+  dipulihkan dari server."
+
+**Belum diverifikasi:** sinkron otomatis ±5 menit dan harian lewat WorkManager (belum ditunggu);
+menunggu saat tanpa internet; pulihkan dengan server mati; penolakan alamat `http://` di build rilis;
+pulihkan ke HP kosong (hanya diuji di HP yang datanya sama); pemasangan di VPS (dikerjakan pemilik).
 
 ### Tahap 20: Pengingat kerja
 Sudah diputuskan: minum air **setiap 60 menit** di jam kerja dengan tombol "Sudah minum"
