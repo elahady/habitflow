@@ -25,6 +25,13 @@ data class FollowUp(
     val createdAt: Long = 0,
     val doneAt: Long? = null,
     val pickedDate: LocalDate? = null,
+    /**
+     * Acara tempat follow-up ini dicatat (tahap 22): [eventId] kosong untuk acara kalender HP, [eventTitle] dan [eventDate]
+     * disimpan supaya keterangannya tetap ada walau acaranya dihapus.
+     */
+    val eventId: Long? = null,
+    val eventDate: LocalDate? = null,
+    val eventTitle: String? = null,
 )
 
 /** Kelompok di tab Kerja. Selesai tidak ditampilkan di daftar. */

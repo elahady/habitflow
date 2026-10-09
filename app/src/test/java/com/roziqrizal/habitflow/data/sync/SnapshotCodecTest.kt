@@ -3,9 +3,12 @@ package com.roziqrizal.habitflow.data.sync
 import com.roziqrizal.habitflow.data.BloodPressureEntry
 import com.roziqrizal.habitflow.data.DayOff
 import com.roziqrizal.habitflow.data.DrinkCount
+import com.roziqrizal.habitflow.data.EventEntity
+import com.roziqrizal.habitflow.data.EventExceptionEntity
 import com.roziqrizal.habitflow.data.FollowUpEntity
 import com.roziqrizal.habitflow.data.Habit
 import com.roziqrizal.habitflow.data.HabitEntry
+import com.roziqrizal.habitflow.data.HolidayCancellation
 import com.roziqrizal.habitflow.data.ScheduleBlockEntity
 import com.roziqrizal.habitflow.data.ScheduleBlockHabit
 import com.roziqrizal.habitflow.data.Todo
@@ -51,6 +54,19 @@ class SnapshotCodecTest {
             BloodPressureEntry(1, 1791350000000, 128, 82, 70, "Setelah ngaji"),
             BloodPressureEntry(2, 1791436400000, 118, 76, null, null),
         ),
+        events = listOf(
+            EventEntity(
+                id = 1, title = "Meeting reguler", label = "WORK", startDate = "2026-10-13", startMinute = 840,
+                durationMinutes = 60, recurrence = "WEEKLY", intervalWeeks = 2, weekDays = 0, weekOfMonth = 1,
+                untilDate = "2027-03-30", reminderMinutes = 15, note = "Ruang Merapi",
+            ),
+            EventEntity(2, "Ulang tahun", "PERSONAL", "2026-11-02", null, 60, "YEARLY", 1, 0, 1, null, null, null),
+        ),
+        eventExceptions = listOf(
+            EventExceptionEntity(1, "2026-10-27", true, null, null, null, null),
+            EventExceptionEntity(1, "2026-11-10", false, "2026-11-11", 900, 30, "Rapat khusus"),
+        ),
+        holidayCancellations = listOf(HolidayCancellation("2026-12-24")),
         settings = SnapshotSettings(
             locationName = "Surabaya",
             latitude = -7.2575,
@@ -120,6 +136,75 @@ class SnapshotCodecTest {
         assertEquals(null, decoded.settings.heightCm)
         assertEquals(null, decoded.settings.targetKg)
         assertEquals(kosong, decoded)
+    }
+
+    @Test
+    fun bidangTahap22DitulisDenganNamaYangDiHarapkan() {
+        val data = JSONObject(SnapshotCodec.encode(sample())).getJSONObject("data")
+        val event = data.getJSONArray("events").getJSONObject(0)
+        assertEquals("Meeting reguler", event.getString("title"))
+        assertEquals("WEEKLY", event.getString("recurrence"))
+        assertEquals(2, event.getInt("intervalWeeks"))
+        assertEquals(840, event.getInt("startMinute"))
+        assertTrue(data.getJSONArray("events").getJSONObject(1).isNull("startMinute"))
+        assertTrue(data.getJSONArray("events").getJSONObject(1).isNull("untilDate"))
+        val skipped = data.getJSONArray("eventExceptions").getJSONObject(0)
+        assertTrue(skipped.getBoolean("skipped"))
+        assertTrue(skipped.isNull("newDate"))
+        assertEquals("Rapat khusus", data.getJSONArray("eventExceptions").getJSONObject(1).getString("newTitle"))
+        assertEquals("2026-12-24", data.getJSONArray("holidayCancellations").getString(0))
+    }
+
+    @Test
+    fun tautanAcaraDiFollowUpTertulisDanTerbaca() {
+        val withLink = sample().copy(
+            followUps = listOf(
+                FollowUpEntity(
+                    1, "Kirim notulen", "INBOX", null, null, null, null, 5, null, null,
+                    eventId = 1, eventDate = "2026-10-27", eventTitle = "Meeting reguler",
+                ),
+                FollowUpEntity(2, "Tanpa acara", "INBOX", null, null, null, null, 6, null, null),
+            ),
+        )
+        val decoded = SnapshotCodec.decode(SnapshotCodec.encode(withLink))
+        assertEquals(withLink, decoded)
+        assertEquals(1L, decoded.followUps[0].eventId)
+        assertEquals(null, decoded.followUps[1].eventId)
+    }
+
+    @Test
+    fun snapshotTanpaBidangTahap22TetapBisaDipulihkan() {
+        val root = JSONObject(SnapshotCodec.encode(sample()))
+        val data = root.getJSONObject("data")
+        data.remove("events")
+        data.remove("eventExceptions")
+        data.remove("holidayCancellations")
+        for (i in 0 until data.getJSONArray("followUps").length()) {
+            data.getJSONArray("followUps").getJSONObject(i).apply {
+                remove("eventId")
+                remove("eventDate")
+                remove("eventTitle")
+            }
+        }
+
+        val decoded = SnapshotCodec.decode(root.toString())
+
+        assertEquals(emptyList<EventEntity>(), decoded.events)
+        assertEquals(emptyList<EventExceptionEntity>(), decoded.eventExceptions)
+        assertEquals(emptyList<HolidayCancellation>(), decoded.holidayCancellations)
+        assertTrue(decoded.followUps.all { it.eventId == null && it.eventTitle == null })
+        assertEquals(sample().weightEntries, decoded.weightEntries)
+    }
+
+    @Test
+    fun pengecualianYatimDibuangSupayaKunciAsingTidakMenggagalkanPemulihan() {
+        val events = listOf(EventEntity(1, "A", "WORK", "2026-10-13", 840, 60, "NONE", 1, 0, 1, null, 15, null))
+        val exceptions = listOf(
+            EventExceptionEntity(1, "2026-10-13", true, null, null, null, null),
+            EventExceptionEntity(9, "2026-10-13", true, null, null, null, null), // acara 9 tidak ada
+        )
+        assertEquals(listOf(exceptions[0]), consistentExceptions(exceptions, events))
+        assertEquals(emptyList<EventExceptionEntity>(), consistentExceptions(exceptions, emptyList()))
     }
 
     @Test

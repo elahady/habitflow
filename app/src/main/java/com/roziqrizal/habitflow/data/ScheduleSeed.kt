@@ -234,3 +234,29 @@ val MIGRATION_5_6 = object : Migration(5, 6) {
         )
     }
 }
+
+/**
+ * Database versi 6 ke 7 (tahap 22): tabel acara, pengecualian kejadian, dan pembatalan libur nasional, serta tiga kolom tautan
+ * acara di follow-up. Data lama tidak disentuh.
+ */
+val MIGRATION_6_7 = object : Migration(6, 7) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `events` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `title` TEXT NOT NULL, " +
+                "`label` TEXT NOT NULL, `startDate` TEXT NOT NULL, `startMinute` INTEGER, `durationMinutes` INTEGER NOT NULL, " +
+                "`recurrence` TEXT NOT NULL, `intervalWeeks` INTEGER NOT NULL, `weekDays` INTEGER NOT NULL, " +
+                "`weekOfMonth` INTEGER NOT NULL, `untilDate` TEXT, `reminderMinutes` INTEGER, `note` TEXT)",
+        )
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `event_exceptions` (`eventId` INTEGER NOT NULL, `originalDate` TEXT NOT NULL, " +
+                "`skipped` INTEGER NOT NULL, `newDate` TEXT, `newStartMinute` INTEGER, `newDurationMinutes` INTEGER, " +
+                "`newTitle` TEXT, PRIMARY KEY(`eventId`, `originalDate`), " +
+                "FOREIGN KEY(`eventId`) REFERENCES `events`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_event_exceptions_eventId` ON `event_exceptions` (`eventId`)")
+        db.execSQL("CREATE TABLE IF NOT EXISTS `holiday_cancellations` (`date` TEXT NOT NULL, PRIMARY KEY(`date`))")
+        db.execSQL("ALTER TABLE `follow_ups` ADD COLUMN `eventId` INTEGER")
+        db.execSQL("ALTER TABLE `follow_ups` ADD COLUMN `eventDate` TEXT")
+        db.execSQL("ALTER TABLE `follow_ups` ADD COLUMN `eventTitle` TEXT")
+    }
+}

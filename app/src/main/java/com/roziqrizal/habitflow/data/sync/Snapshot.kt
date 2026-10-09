@@ -3,9 +3,12 @@ package com.roziqrizal.habitflow.data.sync
 import com.roziqrizal.habitflow.data.BloodPressureEntry
 import com.roziqrizal.habitflow.data.DayOff
 import com.roziqrizal.habitflow.data.DrinkCount
+import com.roziqrizal.habitflow.data.EventEntity
+import com.roziqrizal.habitflow.data.EventExceptionEntity
 import com.roziqrizal.habitflow.data.FollowUpEntity
 import com.roziqrizal.habitflow.data.Habit
 import com.roziqrizal.habitflow.data.HabitEntry
+import com.roziqrizal.habitflow.data.HolidayCancellation
 import com.roziqrizal.habitflow.data.ScheduleBlockEntity
 import com.roziqrizal.habitflow.data.ScheduleBlockHabit
 import com.roziqrizal.habitflow.data.Todo
@@ -54,6 +57,10 @@ data class Snapshot(
     /** Catatan berat dan tensi (tahap 21). Snapshot lama tanpa bidang ini dibaca sebagai kosong. */
     val weightEntries: List<WeightEntry> = emptyList(),
     val bloodPressureEntries: List<BloodPressureEntry> = emptyList(),
+    /** Acara, pengecualian kejadian, dan libur nasional yang dibatalkan (tahap 22). Snapshot lama dibaca sebagai kosong. */
+    val events: List<EventEntity> = emptyList(),
+    val eventExceptions: List<EventExceptionEntity> = emptyList(),
+    val holidayCancellations: List<HolidayCancellation> = emptyList(),
     val settings: SnapshotSettings,
 )
 
@@ -100,7 +107,8 @@ object SnapshotCodec {
                 obj(
                     "id" to it.id, "title" to it.title, "status" to it.status, "date" to it.date, "time" to it.time,
                     "person" to it.person, "note" to it.note, "createdAt" to it.createdAt, "doneAt" to it.doneAt,
-                    "pickedDate" to it.pickedDate,
+                    "pickedDate" to it.pickedDate, "eventId" to it.eventId, "eventDate" to it.eventDate,
+                    "eventTitle" to it.eventTitle,
                 )
             })
             put("workDays", array(s.workDays) {
@@ -114,6 +122,22 @@ object SnapshotCodec {
                     "pulse" to it.pulse, "note" to it.note,
                 )
             })
+            put("events", array(s.events) {
+                obj(
+                    "id" to it.id, "title" to it.title, "label" to it.label, "startDate" to it.startDate,
+                    "startMinute" to it.startMinute, "durationMinutes" to it.durationMinutes, "recurrence" to it.recurrence,
+                    "intervalWeeks" to it.intervalWeeks, "weekDays" to it.weekDays, "weekOfMonth" to it.weekOfMonth,
+                    "untilDate" to it.untilDate, "reminderMinutes" to it.reminderMinutes, "note" to it.note,
+                )
+            })
+            put("eventExceptions", array(s.eventExceptions) {
+                obj(
+                    "eventId" to it.eventId, "originalDate" to it.originalDate, "skipped" to it.skipped,
+                    "newDate" to it.newDate, "newStartMinute" to it.newStartMinute,
+                    "newDurationMinutes" to it.newDurationMinutes, "newTitle" to it.newTitle,
+                )
+            })
+            put("holidayCancellations", JSONArray(s.holidayCancellations.map { it.date }))
             put("settings", JSONObject().apply {
                 put("location", obj("name" to s.settings.locationName, "latitude" to s.settings.latitude, "longitude" to s.settings.longitude))
                 put("persistentNotification", s.settings.persistentNotification)
@@ -180,6 +204,7 @@ object SnapshotCodec {
                         id = it.getLong("id"), title = it.getString("title"), status = it.getString("status"),
                         date = it.str("date"), time = it.str("time"), person = it.str("person"), note = it.str("note"),
                         createdAt = it.getLong("createdAt"), doneAt = it.long("doneAt"), pickedDate = it.str("pickedDate"),
+                        eventId = it.long("eventId"), eventDate = it.str("eventDate"), eventTitle = it.str("eventTitle"),
                     )
                 },
                 workDays = data.getJSONArray("workDays").map {
@@ -197,6 +222,26 @@ object SnapshotCodec {
                         diastolic = it.getInt("diastolic"), pulse = it.int("pulse"), note = it.str("note"),
                     )
                 }.orEmpty(),
+                events = data.optJSONArray("events")?.map {
+                    EventEntity(
+                        id = it.getLong("id"), title = it.getString("title"), label = it.getString("label"),
+                        startDate = it.getString("startDate"), startMinute = it.int("startMinute"),
+                        durationMinutes = it.getInt("durationMinutes"), recurrence = it.getString("recurrence"),
+                        intervalWeeks = it.getInt("intervalWeeks"), weekDays = it.getInt("weekDays"),
+                        weekOfMonth = it.getInt("weekOfMonth"), untilDate = it.str("untilDate"),
+                        reminderMinutes = it.int("reminderMinutes"), note = it.str("note"),
+                    )
+                }.orEmpty(),
+                eventExceptions = data.optJSONArray("eventExceptions")?.map {
+                    EventExceptionEntity(
+                        eventId = it.getLong("eventId"), originalDate = it.getString("originalDate"),
+                        skipped = it.getBoolean("skipped"), newDate = it.str("newDate"),
+                        newStartMinute = it.int("newStartMinute"), newDurationMinutes = it.int("newDurationMinutes"),
+                        newTitle = it.str("newTitle"),
+                    )
+                }.orEmpty(),
+                holidayCancellations = data.optJSONArray("holidayCancellations")
+                    ?.let { arr -> (0 until arr.length()).map { HolidayCancellation(arr.getString(it)) } }.orEmpty(),
                 settings = SnapshotSettings(
                     locationName = location.getString("name"),
                     latitude = location.getDouble("latitude"),
@@ -248,4 +293,10 @@ fun consistentLinks(
     val habitIds = habits.mapTo(HashSet()) { it.id }
     val blockIds = blocks.mapTo(HashSet()) { it.id }
     return links.filter { it.habitId in habitIds && it.blockId in blockIds }
+}
+
+/** Pengecualian kejadian yang acaranya ada. Yang yatim dibuang saat ekspor dan pulihkan supaya kunci asing tidak menggagalkan pemulihan. */
+fun consistentExceptions(exceptions: List<EventExceptionEntity>, events: List<EventEntity>): List<EventExceptionEntity> {
+    val eventIds = events.mapTo(HashSet()) { it.id }
+    return exceptions.filter { it.eventId in eventIds }
 }

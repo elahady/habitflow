@@ -104,6 +104,18 @@ interface ScheduleDao {
     @Query("SELECT date FROM days_off")
     fun observeDaysOff(): Flow<List<String>>
 
+    @Query("SELECT date FROM holiday_cancellations")
+    fun observeHolidayCancellations(): Flow<List<String>>
+
+    @Query("SELECT COUNT(*) FROM holiday_cancellations WHERE date = :date")
+    suspend fun countHolidayCancellation(date: String): Int
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertHolidayCancellation(cancellation: HolidayCancellation)
+
+    @Query("DELETE FROM holiday_cancellations WHERE date = :date")
+    suspend fun deleteHolidayCancellation(date: String)
+
     @Query("SELECT * FROM schedule_blocks ORDER BY sortOrder ASC, id ASC")
     suspend fun getBlocks(): List<ScheduleBlockEntity>
 
@@ -210,6 +222,14 @@ interface SyncDao {
     @Query("SELECT * FROM drink_counts") suspend fun drinkCounts(): List<DrinkCount>
     @Query("SELECT * FROM weight_entries") suspend fun weightEntries(): List<WeightEntry>
     @Query("SELECT * FROM blood_pressure_entries") suspend fun bloodPressureEntries(): List<BloodPressureEntry>
+    @Query("SELECT * FROM events") suspend fun events(): List<EventEntity>
+    @Query("SELECT * FROM event_exceptions") suspend fun eventExceptions(): List<EventExceptionEntity>
+    @Query("SELECT * FROM holiday_cancellations") suspend fun holidayCancellations(): List<HolidayCancellation>
+
+    // Pengecualian dihapus sebelum acaranya (kunci asing).
+    @Query("DELETE FROM event_exceptions") suspend fun clearEventExceptions()
+    @Query("DELETE FROM events") suspend fun clearEvents()
+    @Query("DELETE FROM holiday_cancellations") suspend fun clearHolidayCancellations()
 
     @Query("DELETE FROM drink_counts") suspend fun clearDrinkCounts()
     @Query("DELETE FROM weight_entries") suspend fun clearWeightEntries()
@@ -234,4 +254,40 @@ interface SyncDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertDrinkCounts(items: List<DrinkCount>)
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertWeightEntries(items: List<WeightEntry>)
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertBloodPressureEntries(items: List<BloodPressureEntry>)
+    @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertEvents(items: List<EventEntity>)
+    @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertEventExceptions(items: List<EventExceptionEntity>)
+    @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertHolidayCancellations(items: List<HolidayCancellation>)
+}
+
+/** Acara HabitFlow dan pengecualian kejadiannya (tahap 22). */
+@Dao
+interface EventDao {
+
+    @Query("SELECT * FROM events ORDER BY startDate ASC, id ASC")
+    fun observeEvents(): Flow<List<EventEntity>>
+
+    @Query("SELECT * FROM event_exceptions")
+    fun observeExceptions(): Flow<List<EventExceptionEntity>>
+
+    @Query("SELECT * FROM events")
+    suspend fun getEvents(): List<EventEntity>
+
+    @Query("SELECT * FROM event_exceptions")
+    suspend fun getExceptions(): List<EventExceptionEntity>
+
+    @Insert
+    suspend fun insert(event: EventEntity): Long
+
+    // @Update, bukan REPLACE: REPLACE menghapus baris lama dulu sehingga pengecualiannya ikut terhapus lewat cascade.
+    @Update
+    suspend fun update(event: EventEntity)
+
+    @Query("DELETE FROM events WHERE id = :id")
+    suspend fun delete(id: Long): Int
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertException(exception: EventExceptionEntity)
+
+    @Query("DELETE FROM event_exceptions WHERE eventId = :eventId AND originalDate = :originalDate")
+    suspend fun deleteException(eventId: Long, originalDate: String): Int
 }

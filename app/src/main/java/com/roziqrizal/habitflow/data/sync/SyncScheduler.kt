@@ -77,6 +77,7 @@ class SyncScheduler(context: Context, private val settings: SyncSettings) {
         private val TABLES = arrayOf(
             "habits", "habit_entries", "todos", "schedule_blocks", "schedule_block_habits",
             "days_off", "follow_ups", "work_days", "drink_counts", "weight_entries", "blood_pressure_entries",
+            "events", "event_exceptions", "holiday_cancellations",
         )
 
         fun newScope(): CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)

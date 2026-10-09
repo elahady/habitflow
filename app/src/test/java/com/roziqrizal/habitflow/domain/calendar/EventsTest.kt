@@ -260,7 +260,7 @@ class EventsTest {
     @Test
     fun kejadianBerjamMenjadiBlokTimelineDenganPenandaAcara() {
         val occ = occurrencesOn(listOf(biweekly), emptyList(), d(2026, 10, 13)).single()
-        val block = occ.toResolvedBlock(source = "Kalender kantor")!!
+        val block = occ.copy(calendarName = "Kalender kantor").toResolvedBlock()!!
         assertEquals(min(14), block.startMinute)
         assertEquals(min(15), block.endMinute)
         assertEquals(EventLabel.WORK, block.event?.label)

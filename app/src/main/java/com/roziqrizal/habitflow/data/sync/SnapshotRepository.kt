@@ -13,6 +13,7 @@ class SnapshotRepository(private val db: HabitDatabase) {
         db.withTransaction {
             val habitRows = dao.habits()
             val blockRows = dao.scheduleBlocks()
+            val eventRows = dao.events()
             Snapshot(
                 createdAt = nowMillis,
                 deviceId = deviceId,
@@ -28,6 +29,9 @@ class SnapshotRepository(private val db: HabitDatabase) {
                 drinkCounts = dao.drinkCounts(),
                 weightEntries = dao.weightEntries(),
                 bloodPressureEntries = dao.bloodPressureEntries(),
+                events = eventRows,
+                eventExceptions = consistentExceptions(dao.eventExceptions(), eventRows),
+                holidayCancellations = dao.holidayCancellations(),
                 settings = settings,
             )
         }
@@ -46,6 +50,9 @@ class SnapshotRepository(private val db: HabitDatabase) {
         dao.clearDrinkCounts()
         dao.clearWeightEntries()
         dao.clearBloodPressureEntries()
+        dao.clearEventExceptions()
+        dao.clearEvents()
+        dao.clearHolidayCancellations()
         dao.clearHabitEntries()
         dao.clearTodos()
         dao.clearHabits()
@@ -61,5 +68,8 @@ class SnapshotRepository(private val db: HabitDatabase) {
         dao.insertDrinkCounts(snapshot.drinkCounts)
         dao.insertWeightEntries(snapshot.weightEntries)
         dao.insertBloodPressureEntries(snapshot.bloodPressureEntries)
+        dao.insertEvents(snapshot.events)
+        dao.insertEventExceptions(consistentExceptions(snapshot.eventExceptions, snapshot.events))
+        dao.insertHolidayCancellations(snapshot.holidayCancellations)
     }
 }

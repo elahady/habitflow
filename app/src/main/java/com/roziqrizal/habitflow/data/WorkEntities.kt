@@ -25,6 +25,10 @@ data class FollowUpEntity(
     val createdAt: Long,
     val doneAt: Long?,
     val pickedDate: String?,
+    /** Tautan ke acara tempat follow-up dicatat (tahap 22). */
+    val eventId: Long? = null,
+    val eventDate: String? = null,
+    val eventTitle: String? = null,
 )
 
 /** Catatan harian kerja: catatan EOD dan kapan daily scrum dan EOD diselesaikan. Satu baris per tanggal. */
@@ -47,6 +51,9 @@ fun FollowUpEntity.toDomain(): FollowUp = FollowUp(
     createdAt = createdAt,
     doneAt = doneAt,
     pickedDate = pickedDate?.let { runCatching { LocalDate.parse(it) }.getOrNull() },
+    eventId = eventId,
+    eventDate = eventDate?.let { runCatching { LocalDate.parse(it) }.getOrNull() },
+    eventTitle = eventTitle,
 )
 
 fun FollowUp.toEntity(): FollowUpEntity = FollowUpEntity(
@@ -60,6 +67,9 @@ fun FollowUp.toEntity(): FollowUpEntity = FollowUpEntity(
     createdAt = createdAt,
     doneAt = doneAt,
     pickedDate = pickedDate?.toString(),
+    eventId = eventId,
+    eventDate = eventDate?.toString(),
+    eventTitle = eventTitle?.trim()?.takeIf(String::isNotEmpty),
 )
 
 fun WorkDayEntity.toDomain(): WorkDay? = runCatching {

@@ -89,8 +89,12 @@ data class EventOccurrence(
     val changed: Boolean,
     val reminderMinutes: Int?,
     val note: String?,
+    /** Terisi untuk acara dari kalender HP (hanya baca, tanpa pengingat): nama kalendernya. [eventId] lalu id acara di HP. */
+    val calendarName: String? = null,
 ) {
     val allDay: Boolean get() = startMinute == null
+
+    val fromPhone: Boolean get() = calendarName != null
 
     /** Menit selesai, dipotong di 24.00. Null untuk acara sepanjang hari. */
     val endMinute: Int? get() = startMinute?.let { minOf(it + durationMinutes, MINUTES_PER_DAY) }
@@ -199,19 +203,22 @@ fun eventReminders(occurrences: List<EventOccurrence>): List<EventReminder> =
     }.sortedWith(compareBy({ it.minute }, { it.occurrence.title }))
 
 /** Kejadian berjam sebagai blok timeline (untuk Sekarang/Berikutnya). Sepanjang hari tidak menjadi blok. */
-fun EventOccurrence.toResolvedBlock(source: String? = null): ResolvedBlock? {
+fun EventOccurrence.toResolvedBlock(): ResolvedBlock? {
     val start = startMinute ?: return null
     val end = endMinute ?: return null
     val block = ScheduleBlock(
-        id = -eventId,
+        // Id negatif supaya tidak bertabrakan dengan blok jadwal; acara HP diberi rentang sendiri.
+        id = if (fromPhone) -(PHONE_BLOCK_ID_BASE + eventId) else -eventId,
         name = title,
         start = BlockStart.Fixed(LocalTime.of(start / 60 % 24, start % 60)),
         durationMinutes = durationMinutes,
         level = NotificationLevel.INFO,
         sortOrder = EVENT_SORT_ORDER,
     )
-    return ResolvedBlock(block, start, end.coerceAtLeast(start), EventMarker(label, source))
+    return ResolvedBlock(block, start, end.coerceAtLeast(start), EventMarker(label, calendarName))
 }
+
+private const val PHONE_BLOCK_ID_BASE = 1_000_000_000L
 
 /** Acara diurutkan sesudah blok jadwal yang mulai di menit yang sama. */
 const val EVENT_SORT_ORDER = 1000
