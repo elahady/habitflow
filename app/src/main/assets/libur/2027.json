@@ -1,0 +1,33 @@
+{
+  "year": 2027,
+  "source": "https://setneg.go.id/baca/index/inilah_skb_3_menteri_libur_nasional_dan_cuti_bersama_2027",
+  "retrieved": "2026-10-09",
+  "holidays": [
+    {"date": "2027-01-01", "name": "Tahun Baru 2027 Masehi", "cutiBersama": false},
+    {"date": "2027-01-05", "name": "Isra Mikraj Nabi Muhammad saw.", "cutiBersama": false},
+    {"date": "2027-02-05", "name": "Tahun Baru Imlek 2578 Kongzili", "cutiBersama": true},
+    {"date": "2027-02-06", "name": "Tahun Baru Imlek 2578 Kongzili", "cutiBersama": false},
+    {"date": "2027-03-08", "name": "Hari Suci Nyepi (Tahun Baru Saka 1949)", "cutiBersama": false},
+    {"date": "2027-03-09", "name": "Idulfitri 1448 H", "cutiBersama": true},
+    {"date": "2027-03-10", "name": "Idulfitri 1448 H", "cutiBersama": false},
+    {"date": "2027-03-11", "name": "Idulfitri 1448 H", "cutiBersama": false},
+    {"date": "2027-03-12", "name": "Idulfitri 1448 H", "cutiBersama": true},
+    {"date": "2027-03-15", "name": "Idulfitri 1448 H", "cutiBersama": true},
+    {"date": "2027-03-25", "name": "Wafat Yesus Kristus", "cutiBersama": true},
+    {"date": "2027-03-26", "name": "Wafat Yesus Kristus", "cutiBersama": false},
+    {"date": "2027-03-28", "name": "Kebangkitan Yesus Kristus (Paskah)", "cutiBersama": false},
+    {"date": "2027-05-01", "name": "Hari Buruh Internasional", "cutiBersama": false},
+    {"date": "2027-05-06", "name": "Kenaikan Yesus Kristus", "cutiBersama": false},
+    {"date": "2027-05-17", "name": "Iduladha 1448 H", "cutiBersama": false},
+    {"date": "2027-05-18", "name": "Iduladha 1448 H", "cutiBersama": true},
+    {"date": "2027-05-19", "name": "Hari Raya Waisak 2571 BE", "cutiBersama": true},
+    {"date": "2027-05-20", "name": "Hari Raya Waisak 2571 BE", "cutiBersama": false},
+    {"date": "2027-06-01", "name": "Hari Lahir Pancasila", "cutiBersama": false},
+    {"date": "2027-06-06", "name": "1 Muharam Tahun Baru Islam 1449 H", "cutiBersama": false},
+    {"date": "2027-08-15", "name": "Maulid Nabi Muhammad saw.", "cutiBersama": false},
+    {"date": "2027-08-17", "name": "Proklamasi Kemerdekaan", "cutiBersama": false},
+    {"date": "2027-12-24", "name": "Kelahiran Yesus Kristus", "cutiBersama": true},
+    {"date": "2027-12-25", "name": "Kelahiran Yesus Kristus", "cutiBersama": false},
+    {"date": "2027-12-26", "name": "Isra Mikraj Nabi Muhammad saw.", "cutiBersama": false}
+  ]
+}
