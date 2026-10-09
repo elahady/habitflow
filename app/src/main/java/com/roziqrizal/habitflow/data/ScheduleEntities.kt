@@ -1,5 +1,6 @@
 package com.roziqrizal.habitflow.data
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -30,6 +31,8 @@ data class ScheduleBlockEntity(
     val sortOrder: Int,
     /** Nama [WorkAction] kalau notifikasi blok ini membuka daily scrum atau EOD di tab Kerja. */
     val workAction: String? = null,
+    /** Blok ini jam kerja: pengingat air dan break dihitung dari jam mulainya (tahap 20). */
+    @ColumnInfo(defaultValue = "0") val workReminders: Boolean = false,
 ) {
     companion object {
         const val START_FIXED = 0
@@ -83,6 +86,7 @@ fun ScheduleBlockEntity.toDomain(habitIds: Set<Long>): ScheduleBlock = ScheduleB
     sortOrder = sortOrder,
     workAction = workAction?.let { name -> WorkAction.entries.firstOrNull { it.name == name } },
     habitIds = habitIds,
+    workReminders = workReminders,
 )
 
 fun ScheduleBlock.toEntity(): ScheduleBlockEntity {
@@ -102,5 +106,6 @@ fun ScheduleBlock.toEntity(): ScheduleBlockEntity {
         level = level.name,
         sortOrder = sortOrder,
         workAction = workAction?.name,
+        workReminders = workReminders,
     )
 }

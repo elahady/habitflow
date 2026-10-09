@@ -8,6 +8,7 @@ import com.roziqrizal.habitflow.data.NotificationSettings
 import com.roziqrizal.habitflow.data.PlaceLocation
 import com.roziqrizal.habitflow.data.ThemeMode
 import com.roziqrizal.habitflow.data.ThemeSettings
+import com.roziqrizal.habitflow.data.WorkReminderSettings
 import com.roziqrizal.habitflow.data.sync.AppSettingsGateway
 import com.roziqrizal.habitflow.data.sync.SnapshotRepository
 import com.roziqrizal.habitflow.data.sync.SnapshotSettings
@@ -38,6 +39,7 @@ class AppGraph(app: Application) {
     val locationSettings = LocationSettings(app)
     val notificationSettings = NotificationSettings(app)
     val alarmSettings = AlarmSettings(app)
+    val workReminderSettings = WorkReminderSettings(app)
     val syncSettings = SyncSettings(app)
     val syncScheduler = SyncScheduler(app, syncSettings)
 
@@ -65,6 +67,8 @@ class AppGraph(app: Application) {
                 persistentNotification = notificationSettings.persistent.value,
                 adzan = PrayerName.entries.associate { it.name to alarmSettings.isAdzanEnabled(it) },
                 themeMode = themeSettings.mode.value.name,
+                waterReminders = workReminderSettings.water.value,
+                breakReminders = workReminderSettings.breaks.value,
             )
         }
 
@@ -75,6 +79,8 @@ class AppGraph(app: Application) {
             notificationSettings.setPersistent(settings.persistentNotification)
             PrayerName.entries.forEach { alarmSettings.setAdzanEnabled(it, settings.adzan[it.name] ?: true) }
             ThemeMode.entries.firstOrNull { it.name == settings.themeMode }?.let(themeSettings::setMode)
+            workReminderSettings.setWater(settings.waterReminders)
+            workReminderSettings.setBreaks(settings.breakReminders)
         }
     }
 }

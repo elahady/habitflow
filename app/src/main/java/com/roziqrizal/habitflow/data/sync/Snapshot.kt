@@ -1,6 +1,7 @@
 package com.roziqrizal.habitflow.data.sync
 
 import com.roziqrizal.habitflow.data.DayOff
+import com.roziqrizal.habitflow.data.DrinkCount
 import com.roziqrizal.habitflow.data.FollowUpEntity
 import com.roziqrizal.habitflow.data.Habit
 import com.roziqrizal.habitflow.data.HabitEntry
@@ -22,6 +23,9 @@ data class SnapshotSettings(
     val adzan: Map<String, Boolean>,
     /** Nama `ThemeMode`. */
     val themeMode: String,
+    /** Pengingat kerja tahap 20. Snapshot lama tanpa bidang ini dibaca sebagai nyala. */
+    val waterReminders: Boolean = true,
+    val breakReminders: Boolean = true,
 )
 
 /** Seluruh data HabitFlow pada satu waktu. Format JSON-nya ada di docs/concept.md tahap 19B. */
@@ -37,13 +41,19 @@ data class Snapshot(
     val daysOff: List<DayOff>,
     val followUps: List<FollowUpEntity>,
     val workDays: List<WorkDayEntity>,
+    /** Penghitung minuman (tahap 20). Snapshot lama tanpa bidang ini dibaca sebagai kosong. */
+    val drinkCounts: List<DrinkCount> = emptyList(),
     val settings: SnapshotSettings,
 )
 
 /** Snapshot rusak, bukan JSON, atau dibuat oleh versi app yang lebih baru. [message] aman ditampilkan ke pengguna. */
 class SnapshotFormatException(message: String) : Exception(message)
 
-/** Mengubah [Snapshot] dari dan ke JSON (`schemaVersion` 1). Nilai null ditulis sebagai JSON null. */
+/**
+ * Mengubah [Snapshot] dari dan ke JSON (`schemaVersion` 1). Nilai null ditulis sebagai JSON null. Bidang yang
+ * ditambah sesudah tahap 19B (tahap 20: `drinkCounts`, `autoSource`, `workReminders`) opsional saat dibaca, jadi
+ * snapshot lama tetap bisa dipulihkan tanpa menaikkan `schemaVersion`.
+ */
 object SnapshotCodec {
 
     const val SCHEMA_VERSION = 1
@@ -55,7 +65,10 @@ object SnapshotCodec {
         put("appVersion", s.appVersion)
         put("data", JSONObject().apply {
             put("habits", array(s.habits) {
-                obj("id" to it.id, "name" to it.name, "createdAt" to it.createdAt, "sortOrder" to it.sortOrder, "isMandatory" to it.isMandatory)
+                obj(
+                    "id" to it.id, "name" to it.name, "createdAt" to it.createdAt, "sortOrder" to it.sortOrder,
+                    "isMandatory" to it.isMandatory, "autoSource" to it.autoSource,
+                )
             })
             put("habitEntries", array(s.habitEntries) { obj("habitId" to it.habitId, "date" to it.date) })
             put("todos", array(s.todos) {
@@ -66,6 +79,7 @@ object SnapshotCodec {
                     "id" to it.id, "name" to it.name, "startType" to it.startType, "startValue" to it.startValue,
                     "prayer" to it.prayer, "durationMinutes" to it.durationMinutes, "endMinuteOfDay" to it.endMinuteOfDay,
                     "activeDays" to it.activeDays, "level" to it.level, "sortOrder" to it.sortOrder, "workAction" to it.workAction,
+                    "workReminders" to it.workReminders,
                 )
             })
             put("scheduleBlockHabits", array(s.scheduleBlockHabits) { obj("blockId" to it.blockId, "habitId" to it.habitId) })
@@ -80,11 +94,13 @@ object SnapshotCodec {
             put("workDays", array(s.workDays) {
                 obj("date" to it.date, "eodNote" to it.eodNote, "scrumDoneAt" to it.scrumDoneAt, "eodDoneAt" to it.eodDoneAt)
             })
+            put("drinkCounts", array(s.drinkCounts) { obj("date" to it.date, "kind" to it.kind, "count" to it.count) })
             put("settings", JSONObject().apply {
                 put("location", obj("name" to s.settings.locationName, "latitude" to s.settings.latitude, "longitude" to s.settings.longitude))
                 put("persistentNotification", s.settings.persistentNotification)
                 put("adzan", JSONObject().apply { s.settings.adzan.forEach { (name, on) -> put(name, on) } })
                 put("themeMode", s.settings.themeMode)
+                put("workReminders", obj("water" to s.settings.waterReminders, "break" to s.settings.breakReminders))
             })
         })
     }.toString()
@@ -102,13 +118,17 @@ object SnapshotCodec {
             val settings = data.getJSONObject("settings")
             val location = settings.getJSONObject("location")
             val adzan = settings.getJSONObject("adzan")
+            val reminders = settings.optJSONObject("workReminders")
 
             return Snapshot(
                 createdAt = root.optLong("createdAt", 0),
                 deviceId = root.optString("deviceId", ""),
                 appVersion = root.optString("appVersion", ""),
                 habits = data.getJSONArray("habits").map {
-                    Habit(it.getLong("id"), it.getString("name"), it.getString("createdAt"), it.getInt("sortOrder"), it.getBoolean("isMandatory"))
+                    Habit(
+                        it.getLong("id"), it.getString("name"), it.getString("createdAt"), it.getInt("sortOrder"),
+                        it.getBoolean("isMandatory"), it.str("autoSource"),
+                    )
                 },
                 habitEntries = data.getJSONArray("habitEntries").map { HabitEntry(it.getLong("habitId"), it.getString("date")) },
                 todos = data.getJSONArray("todos").map {
@@ -121,6 +141,7 @@ object SnapshotCodec {
                         durationMinutes = it.getInt("durationMinutes"), endMinuteOfDay = it.int("endMinuteOfDay"),
                         activeDays = it.getInt("activeDays"), level = it.getString("level"),
                         sortOrder = it.getInt("sortOrder"), workAction = it.str("workAction"),
+                        workReminders = it.optBoolean("workReminders", false),
                     )
                 },
                 scheduleBlockHabits = data.getJSONArray("scheduleBlockHabits").map {
@@ -137,6 +158,9 @@ object SnapshotCodec {
                 workDays = data.getJSONArray("workDays").map {
                     WorkDayEntity(it.getString("date"), it.str("eodNote"), it.long("scrumDoneAt"), it.long("eodDoneAt"))
                 },
+                drinkCounts = data.optJSONArray("drinkCounts")?.map {
+                    DrinkCount(it.getString("date"), it.getString("kind"), it.getInt("count"))
+                }.orEmpty(),
                 settings = SnapshotSettings(
                     locationName = location.getString("name"),
                     latitude = location.getDouble("latitude"),
@@ -144,6 +168,8 @@ object SnapshotCodec {
                     persistentNotification = settings.getBoolean("persistentNotification"),
                     adzan = adzan.keys().asSequence().associateWith { adzan.getBoolean(it) },
                     themeMode = settings.getString("themeMode"),
+                    waterReminders = reminders?.optBoolean("water", true) ?: true,
+                    breakReminders = reminders?.optBoolean("break", true) ?: true,
                 ),
             )
         } catch (e: SnapshotFormatException) {

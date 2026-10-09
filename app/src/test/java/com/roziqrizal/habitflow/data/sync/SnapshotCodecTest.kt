@@ -1,6 +1,7 @@
 package com.roziqrizal.habitflow.data.sync
 
 import com.roziqrizal.habitflow.data.DayOff
+import com.roziqrizal.habitflow.data.DrinkCount
 import com.roziqrizal.habitflow.data.FollowUpEntity
 import com.roziqrizal.habitflow.data.Habit
 import com.roziqrizal.habitflow.data.HabitEntry
@@ -22,14 +23,14 @@ class SnapshotCodecTest {
         appVersion = "1.0",
         habits = listOf(
             Habit(1, "Sholat 5 waktu", "2026-10-07", 0, true),
-            Habit(2, "Air putih \"2 liter\"", "2026-10-07", 1, false),
+            Habit(2, "Air putih \"2 liter\"", "2026-10-07", 1, false, "WATER"),
         ),
         habitEntries = listOf(HabitEntry(1, "2026-10-07"), HabitEntry(2, "2026-10-06")),
         todos = listOf(Todo(1, "Tulis laporan\nbaris kedua", "2026-10-07", true, 1791350000000)),
         scheduleBlocks = listOf(
             ScheduleBlockEntity(1, "Bangun", 1, -15, "SUBUH", 15, null, 127, "ALARM", 0, null),
             ScheduleBlockEntity(2, "Aktivitas fisik", 1, 60, "SUBUH", 0, 360, 127, "INFO", 1, "EOD"),
-            ScheduleBlockEntity(3, "Kerja pagi", 0, 480, null, 240, null, 31, "REMINDER", 2, "SCRUM"),
+            ScheduleBlockEntity(3, "Kerja pagi", 0, 480, null, 240, null, 31, "REMINDER", 2, "SCRUM", true),
         ),
         scheduleBlockHabits = listOf(ScheduleBlockHabit(1, 1)),
         daysOff = listOf(DayOff("2026-10-07")),
@@ -42,6 +43,7 @@ class SnapshotCodecTest {
             WorkDayEntity("2026-10-07", "Besok fokus demo", 100L, 200L),
             WorkDayEntity("2026-10-06", null, null, null),
         ),
+        drinkCounts = listOf(DrinkCount("2026-10-07", "WATER", 5), DrinkCount("2026-10-06", "WATER", 8)),
         settings = SnapshotSettings(
             locationName = "Surabaya",
             latitude = -7.2575,
@@ -49,6 +51,8 @@ class SnapshotCodecTest {
             persistentNotification = true,
             adzan = mapOf("SUBUH" to true, "DZUHUR" to false, "ASHAR" to true, "MAGHRIB" to true, "ISYA" to true),
             themeMode = "DARK",
+            waterReminders = true,
+            breakReminders = false,
         ),
     )
 
@@ -63,9 +67,42 @@ class SnapshotCodecTest {
         val root = JSONObject(SnapshotCodec.encode(sample()))
         assertEquals(1, root.getInt("schemaVersion"))
         val data = root.getJSONObject("data")
-        listOf("habits", "habitEntries", "todos", "scheduleBlocks", "scheduleBlockHabits", "daysOff", "followUps", "workDays", "settings")
-            .forEach { assertTrue("$it hilang", data.has(it)) }
+        listOf(
+            "habits", "habitEntries", "todos", "scheduleBlocks", "scheduleBlockHabits", "daysOff", "followUps",
+            "workDays", "drinkCounts", "settings",
+        ).forEach { assertTrue("$it hilang", data.has(it)) }
         assertEquals(2, data.getJSONArray("habits").length())
+    }
+
+    @Test
+    fun bidangTahap20DitulisDenganNamaYangDiHarapkanServerDanApp() {
+        val data = JSONObject(SnapshotCodec.encode(sample())).getJSONObject("data")
+        assertEquals("WATER", data.getJSONArray("habits").getJSONObject(1).getString("autoSource"))
+        assertTrue(data.getJSONArray("habits").getJSONObject(0).isNull("autoSource"))
+        assertTrue(data.getJSONArray("scheduleBlocks").getJSONObject(2).getBoolean("workReminders"))
+        assertEquals(5, data.getJSONArray("drinkCounts").getJSONObject(0).getInt("count"))
+        val reminders = data.getJSONObject("settings").getJSONObject("workReminders")
+        assertTrue(reminders.getBoolean("water"))
+        assertEquals(false, reminders.getBoolean("break"))
+    }
+
+    @Test
+    fun snapshotLamaTanpaBidangTahap20TetapBisaDipulihkan() {
+        val root = JSONObject(SnapshotCodec.encode(sample()))
+        val data = root.getJSONObject("data")
+        data.remove("drinkCounts")
+        data.getJSONObject("settings").remove("workReminders")
+        for (i in 0 until data.getJSONArray("habits").length()) data.getJSONArray("habits").getJSONObject(i).remove("autoSource")
+        for (i in 0 until data.getJSONArray("scheduleBlocks").length()) data.getJSONArray("scheduleBlocks").getJSONObject(i).remove("workReminders")
+
+        val decoded = SnapshotCodec.decode(root.toString())
+
+        assertEquals(emptyList<DrinkCount>(), decoded.drinkCounts)
+        assertTrue(decoded.settings.waterReminders)
+        assertTrue(decoded.settings.breakReminders)
+        assertTrue(decoded.habits.all { it.autoSource == null })
+        assertTrue(decoded.scheduleBlocks.none { it.workReminders })
+        assertEquals(sample().habits.map { it.name }, decoded.habits.map { it.name })
     }
 
     @Test

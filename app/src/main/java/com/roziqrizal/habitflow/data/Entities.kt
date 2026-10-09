@@ -15,7 +15,14 @@ data class Habit(
     val createdAt: String,
     val sortOrder: Int,
     val isMandatory: Boolean = false,
+    /** Sumber centang otomatis ([HabitAutoSource]), atau null kalau habit hanya dicentang manual. */
+    val autoSource: String? = null,
 )
+
+/** Sumber centang otomatis habit. Tahap 21 menambah langkah dari Health Connect. */
+object HabitAutoSource {
+    const val WATER = "WATER"
+}
 
 /** Satu baris = habit selesai pada tanggal itu. */
 @Entity(

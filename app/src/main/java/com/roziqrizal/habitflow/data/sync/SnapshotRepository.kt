@@ -25,6 +25,7 @@ class SnapshotRepository(private val db: HabitDatabase) {
                 daysOff = dao.daysOff(),
                 followUps = dao.followUps(),
                 workDays = dao.workDays(),
+                drinkCounts = dao.drinkCounts(),
                 settings = settings,
             )
         }
@@ -40,6 +41,7 @@ class SnapshotRepository(private val db: HabitDatabase) {
         dao.clearDaysOff()
         dao.clearFollowUps()
         dao.clearWorkDays()
+        dao.clearDrinkCounts()
         dao.clearHabitEntries()
         dao.clearTodos()
         dao.clearHabits()
@@ -52,5 +54,6 @@ class SnapshotRepository(private val db: HabitDatabase) {
         dao.insertDaysOff(snapshot.daysOff)
         dao.insertFollowUps(snapshot.followUps)
         dao.insertWorkDays(snapshot.workDays)
+        dao.insertDrinkCounts(snapshot.drinkCounts)
     }
 }

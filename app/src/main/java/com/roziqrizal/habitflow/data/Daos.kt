@@ -30,6 +30,22 @@ interface HabitDao {
 
     @Query("DELETE FROM habits WHERE id = :id AND isMandatory = 0")
     suspend fun deleteIfNotMandatory(id: Long): Int
+
+    @Query("SELECT id FROM habits WHERE autoSource = :source ORDER BY id ASC LIMIT 1")
+    suspend fun idByAutoSource(source: String): Long?
+}
+
+@Dao
+interface DrinkDao {
+
+    @Query("SELECT * FROM drink_counts WHERE date = :date AND kind = :kind")
+    fun observe(date: String, kind: String): Flow<DrinkCount?>
+
+    @Query("SELECT * FROM drink_counts WHERE date = :date AND kind = :kind")
+    suspend fun get(date: String, kind: String): DrinkCount?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsert(row: DrinkCount)
 }
 
 @Dao
@@ -169,7 +185,9 @@ interface SyncDao {
     @Query("SELECT * FROM days_off") suspend fun daysOff(): List<DayOff>
     @Query("SELECT * FROM follow_ups") suspend fun followUps(): List<FollowUpEntity>
     @Query("SELECT * FROM work_days") suspend fun workDays(): List<WorkDayEntity>
+    @Query("SELECT * FROM drink_counts") suspend fun drinkCounts(): List<DrinkCount>
 
+    @Query("DELETE FROM drink_counts") suspend fun clearDrinkCounts()
     @Query("DELETE FROM schedule_block_habits") suspend fun clearScheduleBlockHabits()
     @Query("DELETE FROM schedule_blocks") suspend fun clearScheduleBlocks()
     @Query("DELETE FROM days_off") suspend fun clearDaysOff()
@@ -187,4 +205,5 @@ interface SyncDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertDaysOff(items: List<DayOff>)
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertFollowUps(items: List<FollowUpEntity>)
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertWorkDays(items: List<WorkDayEntity>)
+    @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertDrinkCounts(items: List<DrinkCount>)
 }

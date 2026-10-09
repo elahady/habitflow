@@ -46,6 +46,7 @@ private class SeedBlock(
     val level: NotificationLevel,
     val habitName: String? = null,
     val workAction: WorkAction? = null,
+    val workReminders: Boolean = false,
 )
 
 private fun fixed(hour: Int, minute: Int) = hour * 60 + minute
@@ -72,6 +73,7 @@ private val SEED_BLOCKS = listOf(
     SeedBlock(
         "Kerja pagi", ScheduleBlockEntity.START_FIXED, fixed(8, 0), durationMinutes = 240,
         activeDays = Days.WEEKDAYS, level = NotificationLevel.REMINDER, workAction = WorkAction.SCRUM,
+        workReminders = true,
     ),
     SeedBlock("Sholat Dzuhur", ScheduleBlockEntity.START_PRAYER, 0, PrayerName.DZUHUR, 15, level = NotificationLevel.REMINDER),
     SeedBlock(
@@ -80,7 +82,7 @@ private val SEED_BLOCKS = listOf(
     ),
     SeedBlock(
         "Kerja sore", ScheduleBlockEntity.START_FIXED, fixed(13, 0), durationMinutes = 180,
-        activeDays = Days.WEEKDAYS, level = NotificationLevel.REMINDER,
+        activeDays = Days.WEEKDAYS, level = NotificationLevel.REMINDER, workReminders = true,
     ),
     SeedBlock("Sholat Ashar", ScheduleBlockEntity.START_PRAYER, 0, PrayerName.ASHAR, 15, level = NotificationLevel.REMINDER),
     SeedBlock(
@@ -115,16 +117,17 @@ fun seedSchedule(db: SupportSQLiteDatabase, withWorkAction: Boolean = true) {
         db.execSQL(
             if (withWorkAction) {
                 "INSERT INTO schedule_blocks (name, startType, startValue, prayer, durationMinutes, " +
-                    "endMinuteOfDay, activeDays, level, sortOrder, workAction) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                    "endMinuteOfDay, activeDays, level, sortOrder, workAction, workReminders) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
             } else {
-                // Skema versi 2 belum punya kolom workAction; diisi migrasi 3 ke 4.
+                // Skema versi 2 belum punya kolom workAction dan workReminders; diisi migrasi 3 ke 4 dan 4 ke 5.
                 "INSERT INTO schedule_blocks (name, startType, startValue, prayer, durationMinutes, " +
                     "endMinuteOfDay, activeDays, level, sortOrder) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
             },
             arrayOf<Any?>(
                 block.name, block.startType, block.startValue, block.prayer?.name, block.durationMinutes,
                 block.endMinuteOfDay, block.activeDays, block.level.name, index,
-                *(if (withWorkAction) arrayOf<Any?>(block.workAction?.name) else emptyArray()),
+                *(if (withWorkAction) arrayOf<Any?>(block.workAction?.name, if (block.workReminders) 1 else 0) else emptyArray()),
             ),
         )
         if (block.habitName != null) {
@@ -176,6 +179,27 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
         db.execSQL(
             "CREATE TABLE IF NOT EXISTS `work_days` (`date` TEXT NOT NULL, `eodNote` TEXT, " +
                 "`scrumDoneAt` INTEGER, `eodDoneAt` INTEGER, PRIMARY KEY(`date`))",
+        )
+    }
+}
+
+/**
+ * Database versi 4 ke 5 (tahap 20): kolom `autoSource` pada habit (diisi WATER untuk "Air putih 2 liter"),
+ * kolom `workReminders` pada blok jadwal (menyala untuk Kerja pagi 08.00 dan Kerja sore 13.00 bawaan yang belum
+ * diubah), dan tabel penghitung minuman. Riwayat dan data lain tidak disentuh.
+ */
+val MIGRATION_4_5 = object : Migration(4, 5) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `habits` ADD COLUMN `autoSource` TEXT")
+        db.execSQL("UPDATE habits SET autoSource = '${HabitAutoSource.WATER}' WHERE name = 'Air putih 2 liter'")
+        db.execSQL("ALTER TABLE `schedule_blocks` ADD COLUMN `workReminders` INTEGER NOT NULL DEFAULT 0")
+        db.execSQL(
+            "UPDATE schedule_blocks SET workReminders = 1 WHERE startType = ${ScheduleBlockEntity.START_FIXED} AND " +
+                "((name = 'Kerja pagi' AND startValue = 480) OR (name = 'Kerja sore' AND startValue = 780))",
+        )
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `drink_counts` (`date` TEXT NOT NULL, `kind` TEXT NOT NULL, " +
+                "`count` INTEGER NOT NULL, PRIMARY KEY(`date`, `kind`))",
         )
     }
 }
