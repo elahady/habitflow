@@ -47,6 +47,8 @@ data class ScheduleBlock(
     val sortOrder: Int = 0,
     val habitIds: Set<Long> = emptySet(),
     val workAction: WorkAction? = null,
+    /** Blok ini jam kerja: pengingat air dan break dihitung dari jam mulainya (tahap 20). */
+    val workReminders: Boolean = false,
 )
 
 /** Blok dengan waktu yang sudah dihitung untuk satu tanggal, dalam menit sejak 00.00. */
