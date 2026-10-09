@@ -59,6 +59,7 @@ import com.roziqrizal.habitflow.ui.formatMinute
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
+import java.time.Clock
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -111,14 +112,18 @@ object ScheduleNotifier {
      * baru mulai ikut dinotifikasikan (dipakai saat alarm berbunyi). Tidak bisa dibatalkan: keluar dari
      * app di tengah proses tidak boleh membuat alarm batal terjadwal.
      */
-    suspend fun refresh(context: Context, announce: Boolean) = withContext(NonCancellable + Dispatchers.Default) {
+    suspend fun refresh(
+        context: Context,
+        announce: Boolean,
+        clock: Clock = Clock.systemDefaultZone(),
+    ) = withContext(NonCancellable + Dispatchers.Default) {
         val app = context.applicationContext
         ensureChannels(app)
 
         val repo = ScheduleRepository(HabitDatabase.get(app))
         val place = LocationSettings(app).location.value
         val zone = ZoneId.systemDefault()
-        val now = ZonedDateTime.now(zone)
+        val now = ZonedDateTime.now(clock.withZone(zone))
         val today = now.toLocalDate()
         val nowMinute = now.hour * 60 + now.minute
         val blocks = repo.getBlocks()

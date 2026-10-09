@@ -8,6 +8,9 @@
         <receiver
             android:name=".debug.DebugStepsReceiver"
             android:exported="true" />
+        <receiver
+            android:name=".debug.DebugClockReceiver"
+            android:exported="true" />
     </application>
 
 </manifest>

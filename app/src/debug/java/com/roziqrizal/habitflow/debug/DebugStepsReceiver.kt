@@ -19,6 +19,7 @@ import java.time.ZoneOffset
  *
  *     adb shell pm grant com.roziqrizal.habitflow android.permission.health.WRITE_STEPS
  *     adb shell am broadcast -n com.roziqrizal.habitflow/.debug.DebugStepsReceiver --ei steps 8200
+ *     adb shell am broadcast -n com.roziqrizal.habitflow/.debug.DebugStepsReceiver --ez clear true   (hapus catatan uji)
  *
  * Langkah ditulis sebagai satu rentang dari sejam lalu (atau tengah malam kalau belum sejam) sampai sekarang, dan
  * mengganti catatan uji sebelumnya dengan id klien yang sama.
@@ -27,13 +28,21 @@ class DebugStepsReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         val steps = intent.getIntExtra("steps", -1).toLong()
-        if (steps < 0) {
-            Log.w(TAG, "Pakai --ei steps <jumlah>")
+        val clear = intent.getBooleanExtra("clear", false)
+        if (steps < 0 && !clear) {
+            Log.w(TAG, "Pakai --ei steps <jumlah> atau --ez clear true")
             return
         }
         val pending = goAsync()
         CoroutineScope(Dispatchers.Default).launch {
             try {
+                if (clear) {
+                    HealthConnectClient.getOrCreate(context).deleteRecords(
+                        StepsRecord::class, recordIdsList = emptyList(), clientRecordIdsList = listOf(CLIENT_RECORD_ID),
+                    )
+                    Log.i(TAG, "Catatan langkah uji dihapus")
+                    return@launch
+                }
                 val now = Instant.now()
                 val midnight = java.time.LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant()
                 val start = maxOf(midnight, now.minusSeconds(3600))
@@ -44,7 +53,7 @@ class DebugStepsReceiver : BroadcastReceiver() {
                     startZoneOffset = offset,
                     endTime = now,
                     endZoneOffset = offset,
-                    metadata = Metadata(clientRecordId = "habitflow-debug-steps", recordingMethod = Metadata.RECORDING_METHOD_MANUAL_ENTRY),
+                    metadata = Metadata(clientRecordId = CLIENT_RECORD_ID, recordingMethod = Metadata.RECORDING_METHOD_MANUAL_ENTRY),
                 )
                 HealthConnectClient.getOrCreate(context).insertRecords(listOf(record))
                 Log.i(TAG, "Menulis $steps langkah ke Health Connect")
@@ -58,5 +67,6 @@ class DebugStepsReceiver : BroadcastReceiver() {
 
     private companion object {
         const val TAG = "DebugSteps"
+        const val CLIENT_RECORD_ID = "habitflow-debug-steps"
     }
 }
