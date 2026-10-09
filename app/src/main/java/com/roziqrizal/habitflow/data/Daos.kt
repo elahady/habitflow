@@ -173,6 +173,28 @@ interface WorkDayDao {
     suspend fun upsert(day: WorkDayEntity)
 }
 
+@Dao
+interface HealthDao {
+
+    @Query("SELECT * FROM weight_entries ORDER BY timeMillis ASC, id ASC")
+    fun observeWeights(): Flow<List<WeightEntry>>
+
+    @Query("SELECT * FROM blood_pressure_entries ORDER BY timeMillis ASC, id ASC")
+    fun observeBloodPressures(): Flow<List<BloodPressureEntry>>
+
+    @Query("SELECT COUNT(*) FROM weight_entries WHERE timeMillis >= :from AND timeMillis < :until")
+    suspend fun weightCountBetween(from: Long, until: Long): Int
+
+    @Query("SELECT COUNT(*) FROM blood_pressure_entries WHERE timeMillis >= :from AND timeMillis < :until")
+    suspend fun bloodPressureCountBetween(from: Long, until: Long): Int
+
+    @Insert
+    suspend fun insertWeight(entry: WeightEntry): Long
+
+    @Insert
+    suspend fun insertBloodPressure(entry: BloodPressureEntry): Long
+}
+
 /** Baca dan tulis massal seluruh tabel untuk snapshot cadangan (tahap 19B). */
 @Dao
 interface SyncDao {
@@ -186,8 +208,12 @@ interface SyncDao {
     @Query("SELECT * FROM follow_ups") suspend fun followUps(): List<FollowUpEntity>
     @Query("SELECT * FROM work_days") suspend fun workDays(): List<WorkDayEntity>
     @Query("SELECT * FROM drink_counts") suspend fun drinkCounts(): List<DrinkCount>
+    @Query("SELECT * FROM weight_entries") suspend fun weightEntries(): List<WeightEntry>
+    @Query("SELECT * FROM blood_pressure_entries") suspend fun bloodPressureEntries(): List<BloodPressureEntry>
 
     @Query("DELETE FROM drink_counts") suspend fun clearDrinkCounts()
+    @Query("DELETE FROM weight_entries") suspend fun clearWeightEntries()
+    @Query("DELETE FROM blood_pressure_entries") suspend fun clearBloodPressureEntries()
     @Query("DELETE FROM schedule_block_habits") suspend fun clearScheduleBlockHabits()
     @Query("DELETE FROM schedule_blocks") suspend fun clearScheduleBlocks()
     @Query("DELETE FROM days_off") suspend fun clearDaysOff()
@@ -206,4 +232,6 @@ interface SyncDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertFollowUps(items: List<FollowUpEntity>)
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertWorkDays(items: List<WorkDayEntity>)
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertDrinkCounts(items: List<DrinkCount>)
+    @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertWeightEntries(items: List<WeightEntry>)
+    @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertBloodPressureEntries(items: List<BloodPressureEntry>)
 }

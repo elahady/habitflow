@@ -1,5 +1,6 @@
 package com.roziqrizal.habitflow.data.sync
 
+import com.roziqrizal.habitflow.data.BloodPressureEntry
 import com.roziqrizal.habitflow.data.DayOff
 import com.roziqrizal.habitflow.data.DrinkCount
 import com.roziqrizal.habitflow.data.FollowUpEntity
@@ -8,6 +9,7 @@ import com.roziqrizal.habitflow.data.HabitEntry
 import com.roziqrizal.habitflow.data.ScheduleBlockEntity
 import com.roziqrizal.habitflow.data.ScheduleBlockHabit
 import com.roziqrizal.habitflow.data.Todo
+import com.roziqrizal.habitflow.data.WeightEntry
 import com.roziqrizal.habitflow.data.WorkDayEntity
 import org.json.JSONArray
 import org.json.JSONException
@@ -26,6 +28,12 @@ data class SnapshotSettings(
     /** Pengingat kerja tahap 20. Snapshot lama tanpa bidang ini dibaca sebagai nyala. */
     val waterReminders: Boolean = true,
     val breakReminders: Boolean = true,
+    /** Pengaturan kesehatan tahap 21. Tinggi dan target kosong (null) kalau belum diisi. */
+    val heightCm: Double? = null,
+    val targetKg: Double? = null,
+    val weightReminder: Boolean = true,
+    /** Nama `BpFrequency`. */
+    val bpFrequency: String = "WEEKLY",
 )
 
 /** Seluruh data HabitFlow pada satu waktu. Format JSON-nya ada di docs/concept.md tahap 19B. */
@@ -43,6 +51,9 @@ data class Snapshot(
     val workDays: List<WorkDayEntity>,
     /** Penghitung minuman (tahap 20). Snapshot lama tanpa bidang ini dibaca sebagai kosong. */
     val drinkCounts: List<DrinkCount> = emptyList(),
+    /** Catatan berat dan tensi (tahap 21). Snapshot lama tanpa bidang ini dibaca sebagai kosong. */
+    val weightEntries: List<WeightEntry> = emptyList(),
+    val bloodPressureEntries: List<BloodPressureEntry> = emptyList(),
     val settings: SnapshotSettings,
 )
 
@@ -51,7 +62,8 @@ class SnapshotFormatException(message: String) : Exception(message)
 
 /**
  * Mengubah [Snapshot] dari dan ke JSON (`schemaVersion` 1). Nilai null ditulis sebagai JSON null. Bidang yang
- * ditambah sesudah tahap 19B (tahap 20: `drinkCounts`, `autoSource`, `workReminders`) opsional saat dibaca, jadi
+ * ditambah sesudah tahap 19B (tahap 20: `drinkCounts`, `autoSource`, `workReminders`; tahap 21: `weightEntries`,
+ * `bloodPressureEntries`, `settings.health`) opsional saat dibaca, jadi
  * snapshot lama tetap bisa dipulihkan tanpa menaikkan `schemaVersion`.
  */
 object SnapshotCodec {
@@ -95,12 +107,26 @@ object SnapshotCodec {
                 obj("date" to it.date, "eodNote" to it.eodNote, "scrumDoneAt" to it.scrumDoneAt, "eodDoneAt" to it.eodDoneAt)
             })
             put("drinkCounts", array(s.drinkCounts) { obj("date" to it.date, "kind" to it.kind, "count" to it.count) })
+            put("weightEntries", array(s.weightEntries) { obj("id" to it.id, "timeMillis" to it.timeMillis, "kg" to it.kg) })
+            put("bloodPressureEntries", array(s.bloodPressureEntries) {
+                obj(
+                    "id" to it.id, "timeMillis" to it.timeMillis, "systolic" to it.systolic, "diastolic" to it.diastolic,
+                    "pulse" to it.pulse, "note" to it.note,
+                )
+            })
             put("settings", JSONObject().apply {
                 put("location", obj("name" to s.settings.locationName, "latitude" to s.settings.latitude, "longitude" to s.settings.longitude))
                 put("persistentNotification", s.settings.persistentNotification)
                 put("adzan", JSONObject().apply { s.settings.adzan.forEach { (name, on) -> put(name, on) } })
                 put("themeMode", s.settings.themeMode)
                 put("workReminders", obj("water" to s.settings.waterReminders, "break" to s.settings.breakReminders))
+                put(
+                    "health",
+                    obj(
+                        "heightCm" to s.settings.heightCm, "targetKg" to s.settings.targetKg,
+                        "weightReminder" to s.settings.weightReminder, "bpFrequency" to s.settings.bpFrequency,
+                    ),
+                )
             })
         })
     }.toString()
@@ -119,6 +145,7 @@ object SnapshotCodec {
             val location = settings.getJSONObject("location")
             val adzan = settings.getJSONObject("adzan")
             val reminders = settings.optJSONObject("workReminders")
+            val health = settings.optJSONObject("health")
 
             return Snapshot(
                 createdAt = root.optLong("createdAt", 0),
@@ -161,6 +188,15 @@ object SnapshotCodec {
                 drinkCounts = data.optJSONArray("drinkCounts")?.map {
                     DrinkCount(it.getString("date"), it.getString("kind"), it.getInt("count"))
                 }.orEmpty(),
+                weightEntries = data.optJSONArray("weightEntries")?.map {
+                    WeightEntry(it.getLong("id"), it.getLong("timeMillis"), it.getDouble("kg"))
+                }.orEmpty(),
+                bloodPressureEntries = data.optJSONArray("bloodPressureEntries")?.map {
+                    BloodPressureEntry(
+                        id = it.getLong("id"), timeMillis = it.getLong("timeMillis"), systolic = it.getInt("systolic"),
+                        diastolic = it.getInt("diastolic"), pulse = it.int("pulse"), note = it.str("note"),
+                    )
+                }.orEmpty(),
                 settings = SnapshotSettings(
                     locationName = location.getString("name"),
                     latitude = location.getDouble("latitude"),
@@ -170,6 +206,10 @@ object SnapshotCodec {
                     themeMode = settings.getString("themeMode"),
                     waterReminders = reminders?.optBoolean("water", true) ?: true,
                     breakReminders = reminders?.optBoolean("break", true) ?: true,
+                    heightCm = health?.double("heightCm"),
+                    targetKg = health?.double("targetKg"),
+                    weightReminder = health?.optBoolean("weightReminder", true) ?: true,
+                    bpFrequency = health?.optString("bpFrequency", "WEEKLY") ?: "WEEKLY",
                 ),
             )
         } catch (e: SnapshotFormatException) {
@@ -188,6 +228,8 @@ object SnapshotCodec {
     private fun <T> JSONArray.map(transform: (JSONObject) -> T): List<T> = (0 until length()).map { transform(getJSONObject(it)) }
 
     private fun JSONObject.str(key: String): String? = if (isNull(key)) null else getString(key)
+
+    private fun JSONObject.double(key: String): Double? = if (isNull(key)) null else getDouble(key)
 
     private fun JSONObject.int(key: String): Int? = if (isNull(key)) null else getInt(key)
 

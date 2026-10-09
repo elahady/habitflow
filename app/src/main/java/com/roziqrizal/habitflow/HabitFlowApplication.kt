@@ -3,6 +3,7 @@ package com.roziqrizal.habitflow
 import android.app.Application
 import com.roziqrizal.habitflow.data.AlarmSettings
 import com.roziqrizal.habitflow.data.HabitDatabase
+import com.roziqrizal.habitflow.data.HealthSettings
 import com.roziqrizal.habitflow.data.LocationSettings
 import com.roziqrizal.habitflow.data.NotificationSettings
 import com.roziqrizal.habitflow.data.PlaceLocation
@@ -15,6 +16,7 @@ import com.roziqrizal.habitflow.data.sync.SnapshotSettings
 import com.roziqrizal.habitflow.data.sync.SyncManager
 import com.roziqrizal.habitflow.data.sync.SyncScheduler
 import com.roziqrizal.habitflow.data.sync.SyncSettings
+import com.roziqrizal.habitflow.domain.health.BpFrequency
 import com.roziqrizal.habitflow.domain.prayer.PrayerName
 
 class HabitFlowApplication : Application() {
@@ -40,6 +42,7 @@ class AppGraph(app: Application) {
     val notificationSettings = NotificationSettings(app)
     val alarmSettings = AlarmSettings(app)
     val workReminderSettings = WorkReminderSettings(app)
+    val healthSettings = HealthSettings(app)
     val syncSettings = SyncSettings(app)
     val syncScheduler = SyncScheduler(app, syncSettings)
 
@@ -69,6 +72,10 @@ class AppGraph(app: Application) {
                 themeMode = themeSettings.mode.value.name,
                 waterReminders = workReminderSettings.water.value,
                 breakReminders = workReminderSettings.breaks.value,
+                heightCm = healthSettings.heightCm.value,
+                targetKg = healthSettings.targetKg.value,
+                weightReminder = healthSettings.weightReminder.value,
+                bpFrequency = healthSettings.bpFrequency.value.name,
             )
         }
 
@@ -81,6 +88,10 @@ class AppGraph(app: Application) {
             ThemeMode.entries.firstOrNull { it.name == settings.themeMode }?.let(themeSettings::setMode)
             workReminderSettings.setWater(settings.waterReminders)
             workReminderSettings.setBreaks(settings.breakReminders)
+            healthSettings.setHeightCm(settings.heightCm)
+            healthSettings.setTargetKg(settings.targetKg)
+            healthSettings.setWeightReminder(settings.weightReminder)
+            healthSettings.setBpFrequency(BpFrequency.entries.firstOrNull { it.name == settings.bpFrequency } ?: BpFrequency.WEEKLY)
         }
     }
 }

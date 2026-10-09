@@ -1,5 +1,6 @@
 package com.roziqrizal.habitflow.data.sync
 
+import com.roziqrizal.habitflow.data.BloodPressureEntry
 import com.roziqrizal.habitflow.data.DayOff
 import com.roziqrizal.habitflow.data.DrinkCount
 import com.roziqrizal.habitflow.data.FollowUpEntity
@@ -8,6 +9,7 @@ import com.roziqrizal.habitflow.data.HabitEntry
 import com.roziqrizal.habitflow.data.ScheduleBlockEntity
 import com.roziqrizal.habitflow.data.ScheduleBlockHabit
 import com.roziqrizal.habitflow.data.Todo
+import com.roziqrizal.habitflow.data.WeightEntry
 import com.roziqrizal.habitflow.data.WorkDayEntity
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
@@ -44,6 +46,11 @@ class SnapshotCodecTest {
             WorkDayEntity("2026-10-06", null, null, null),
         ),
         drinkCounts = listOf(DrinkCount("2026-10-07", "WATER", 5), DrinkCount("2026-10-06", "WATER", 8)),
+        weightEntries = listOf(WeightEntry(1, 1791350000000, 72.4), WeightEntry(2, 1791436400000, 71.9)),
+        bloodPressureEntries = listOf(
+            BloodPressureEntry(1, 1791350000000, 128, 82, 70, "Setelah ngaji"),
+            BloodPressureEntry(2, 1791436400000, 118, 76, null, null),
+        ),
         settings = SnapshotSettings(
             locationName = "Surabaya",
             latitude = -7.2575,
@@ -53,6 +60,10 @@ class SnapshotCodecTest {
             themeMode = "DARK",
             waterReminders = true,
             breakReminders = false,
+            heightCm = 170.0,
+            targetKg = 70.5,
+            weightReminder = false,
+            bpFrequency = "DAILY",
         ),
     )
 
@@ -84,6 +95,51 @@ class SnapshotCodecTest {
         val reminders = data.getJSONObject("settings").getJSONObject("workReminders")
         assertTrue(reminders.getBoolean("water"))
         assertEquals(false, reminders.getBoolean("break"))
+    }
+
+    @Test
+    fun bidangTahap21DitulisDenganNamaYangDiHarapkan() {
+        val data = JSONObject(SnapshotCodec.encode(sample())).getJSONObject("data")
+        assertEquals(72.4, data.getJSONArray("weightEntries").getJSONObject(0).getDouble("kg"), 0.0)
+        val bp = data.getJSONArray("bloodPressureEntries")
+        assertEquals(128, bp.getJSONObject(0).getInt("systolic"))
+        assertEquals("Setelah ngaji", bp.getJSONObject(0).getString("note"))
+        assertTrue(bp.getJSONObject(1).isNull("pulse"))
+        assertTrue(bp.getJSONObject(1).isNull("note"))
+        val health = data.getJSONObject("settings").getJSONObject("health")
+        assertEquals(170.0, health.getDouble("heightCm"), 0.0)
+        assertEquals(70.5, health.getDouble("targetKg"), 0.0)
+        assertEquals(false, health.getBoolean("weightReminder"))
+        assertEquals("DAILY", health.getString("bpFrequency"))
+    }
+
+    @Test
+    fun tinggiDanTargetKosongTetapKosongSetelahRoundTrip() {
+        val kosong = sample().copy(settings = sample().settings.copy(heightCm = null, targetKg = null))
+        val decoded = SnapshotCodec.decode(SnapshotCodec.encode(kosong))
+        assertEquals(null, decoded.settings.heightCm)
+        assertEquals(null, decoded.settings.targetKg)
+        assertEquals(kosong, decoded)
+    }
+
+    @Test
+    fun snapshotTahap19BDanTahap20TanpaBidangTahap21TetapBisaDipulihkan() {
+        val root = JSONObject(SnapshotCodec.encode(sample()))
+        val data = root.getJSONObject("data")
+        data.remove("weightEntries")
+        data.remove("bloodPressureEntries")
+        data.getJSONObject("settings").remove("health")
+
+        val decoded = SnapshotCodec.decode(root.toString())
+
+        assertEquals(emptyList<WeightEntry>(), decoded.weightEntries)
+        assertEquals(emptyList<BloodPressureEntry>(), decoded.bloodPressureEntries)
+        assertEquals(null, decoded.settings.heightCm)
+        assertEquals(null, decoded.settings.targetKg)
+        assertTrue(decoded.settings.weightReminder)
+        assertEquals("WEEKLY", decoded.settings.bpFrequency)
+        // Bidang tahap 20 yang masih ada tetap terbaca.
+        assertEquals(sample().drinkCounts, decoded.drinkCounts)
     }
 
     @Test

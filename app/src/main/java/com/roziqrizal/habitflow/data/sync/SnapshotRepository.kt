@@ -26,6 +26,8 @@ class SnapshotRepository(private val db: HabitDatabase) {
                 followUps = dao.followUps(),
                 workDays = dao.workDays(),
                 drinkCounts = dao.drinkCounts(),
+                weightEntries = dao.weightEntries(),
+                bloodPressureEntries = dao.bloodPressureEntries(),
                 settings = settings,
             )
         }
@@ -42,6 +44,8 @@ class SnapshotRepository(private val db: HabitDatabase) {
         dao.clearFollowUps()
         dao.clearWorkDays()
         dao.clearDrinkCounts()
+        dao.clearWeightEntries()
+        dao.clearBloodPressureEntries()
         dao.clearHabitEntries()
         dao.clearTodos()
         dao.clearHabits()
@@ -55,5 +59,7 @@ class SnapshotRepository(private val db: HabitDatabase) {
         dao.insertFollowUps(snapshot.followUps)
         dao.insertWorkDays(snapshot.workDays)
         dao.insertDrinkCounts(snapshot.drinkCounts)
+        dao.insertWeightEntries(snapshot.weightEntries)
+        dao.insertBloodPressureEntries(snapshot.bloodPressureEntries)
     }
 }

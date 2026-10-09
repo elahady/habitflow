@@ -11,8 +11,9 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         Habit::class, HabitEntry::class, Todo::class,
         ScheduleBlockEntity::class, ScheduleBlockHabit::class, DayOff::class,
         FollowUpEntity::class, WorkDayEntity::class, DrinkCount::class,
+        WeightEntry::class, BloodPressureEntry::class,
     ],
-    version = 5,
+    version = 6,
     exportSchema = false,
 )
 abstract class HabitDatabase : RoomDatabase() {
@@ -25,6 +26,7 @@ abstract class HabitDatabase : RoomDatabase() {
     abstract fun workDayDao(): WorkDayDao
     abstract fun syncDao(): SyncDao
     abstract fun drinkDao(): DrinkDao
+    abstract fun healthDao(): HealthDao
 
     companion object {
         private const val NAME = "habitflow.db"
@@ -39,7 +41,7 @@ abstract class HabitDatabase : RoomDatabase() {
                     HabitDatabase::class.java,
                     NAME,
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
                     .addCallback(SeedCallback)
                     .build()
                     .also { instance = it }
@@ -52,7 +54,7 @@ abstract class HabitDatabase : RoomDatabase() {
         private val SEED_HABITS = listOf(
             "Sholat 5 waktu" to true,
             "Baca Al-Quran" to true,
-            "Jalan kaki 20 menit" to false,
+            "8.000 langkah" to false,
             "Air putih 2 liter" to false,
             "Tanpa minuman manis" to false,
             "Ngopi maksimal 2 gelas (sepulang kerja)" to false,
@@ -61,8 +63,11 @@ abstract class HabitDatabase : RoomDatabase() {
             "Tanpa gorengan atau camilan manis" to false,
         )
 
-        /** Habit awal yang dicentang otomatis dari sumber tertentu (tahap 20). */
-        private val SEED_AUTO_SOURCES = mapOf("Air putih 2 liter" to HabitAutoSource.WATER)
+        /** Habit awal yang dicentang otomatis dari sumber tertentu (tahap 20 dan 21). */
+        private val SEED_AUTO_SOURCES = mapOf(
+            "Air putih 2 liter" to HabitAutoSource.WATER,
+            "8.000 langkah" to HabitAutoSource.STEPS,
+        )
 
         private object SeedCallback : RoomDatabase.Callback() {
             override fun onCreate(db: SupportSQLiteDatabase) {

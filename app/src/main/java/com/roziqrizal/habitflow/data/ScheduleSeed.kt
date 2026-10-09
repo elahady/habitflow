@@ -60,7 +60,7 @@ private val SEED_BLOCKS = listOf(
     ),
     SeedBlock(
         "Aktivitas fisik", ScheduleBlockEntity.START_PRAYER, 60, PrayerName.SUBUH, 0, endMinuteOfDay = fixed(6, 0),
-        level = NotificationLevel.INFO, habitName = "Jalan kaki 20 menit",
+        level = NotificationLevel.INFO, habitName = "8.000 langkah",
     ),
     SeedBlock(
         "Mandi dan prepare", ScheduleBlockEntity.START_FIXED, fixed(6, 15), durationMinutes = 20,
@@ -108,6 +108,9 @@ private val SEED_BLOCKS = listOf(
     ),
 )
 
+/** Nama habit sebelum diganti di tahap 21, untuk mengisi tautan blok pada database yang masih lama. */
+private val LEGACY_HABIT_NAMES = mapOf("8.000 langkah" to "Jalan kaki 20 menit")
+
 /**
  * Mengisi jadwal awal. Tautan ke habit dicari lewat nama habit; kalau habitnya sudah diganti
  * namanya atau dihapus (pada pembaruan dari versi 1), blok dibuat tanpa tautan.
@@ -131,10 +134,11 @@ fun seedSchedule(db: SupportSQLiteDatabase, withWorkAction: Boolean = true) {
             ),
         )
         if (block.habitName != null) {
+            // Database versi 1 masih memakai nama habit lama saat jadwal ini diisi lewat migrasi 1 ke 2.
             db.execSQL(
                 "INSERT OR IGNORE INTO schedule_block_habits (blockId, habitId) " +
-                    "SELECT (SELECT MAX(id) FROM schedule_blocks), id FROM habits WHERE name = ?",
-                arrayOf<Any?>(block.habitName),
+                    "SELECT (SELECT MAX(id) FROM schedule_blocks), id FROM habits WHERE name = ? OR name = ?",
+                arrayOf<Any?>(block.habitName, LEGACY_HABIT_NAMES[block.habitName]),
             )
         }
     }
@@ -200,6 +204,33 @@ val MIGRATION_4_5 = object : Migration(4, 5) {
         db.execSQL(
             "CREATE TABLE IF NOT EXISTS `drink_counts` (`date` TEXT NOT NULL, `kind` TEXT NOT NULL, " +
                 "`count` INTEGER NOT NULL, PRIMARY KEY(`date`, `kind`))",
+        )
+    }
+}
+
+/**
+ * Database versi 5 ke 6 (tahap 21): tabel catatan berat dan tensi, dan habit "Jalan kaki 20 menit" menjadi
+ * "8.000 langkah" bersumber langkah. Riwayat centang tidak berubah karena habit dikenali lewat id. Habit yang sudah
+ * diganti namanya oleh pengguna tidak disentuh.
+ */
+val MIGRATION_5_6 = object : Migration(5, 6) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `weight_entries` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`timeMillis` INTEGER NOT NULL, `kg` REAL NOT NULL)",
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_weight_entries_timeMillis` ON `weight_entries` (`timeMillis`)")
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `blood_pressure_entries` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`timeMillis` INTEGER NOT NULL, `systolic` INTEGER NOT NULL, `diastolic` INTEGER NOT NULL, " +
+                "`pulse` INTEGER, `note` TEXT)",
+        )
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_blood_pressure_entries_timeMillis` ON `blood_pressure_entries` (`timeMillis`)",
+        )
+        db.execSQL(
+            "UPDATE habits SET name = '8.000 langkah', autoSource = '${HabitAutoSource.STEPS}' " +
+                "WHERE name = 'Jalan kaki 20 menit'",
         )
     }
 }
