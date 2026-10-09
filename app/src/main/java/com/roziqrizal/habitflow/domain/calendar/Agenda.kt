@@ -10,6 +10,8 @@ data class AgendaDay(
     val date: LocalDate,
     val holiday: Holiday? = null,
     val holidayCancelled: Boolean = false,
+    /** Libur manual ("Hari ini libur"). */
+    val manual: Boolean = false,
     val dayOff: Boolean = false,
     val items: List<EventOccurrence> = emptyList(),
 )
@@ -42,6 +44,7 @@ fun buildAgenda(
             date = date,
             holiday = info.holiday,
             holidayCancelled = info.holidayCancelled,
+            manual = info.manual,
             dayOff = info.isOff,
             items = items,
         )

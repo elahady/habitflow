@@ -180,6 +180,7 @@ fun HabitFlowApp(
                             history.add(Tab.WORK)
                         },
                         onSetDayOff = schedule::setDayOff,
+                        onSetHolidayCancelled = schedule::setHolidayCancelled,
                         onOpenSchedule = { showSchedule = true },
                         onToggleHabit = today::toggleHabit,
                         onAddGlass = today::addGlass,

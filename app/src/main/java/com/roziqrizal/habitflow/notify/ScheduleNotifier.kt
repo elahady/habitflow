@@ -18,6 +18,16 @@ import com.roziqrizal.habitflow.MainActivity
 import com.roziqrizal.habitflow.R
 import com.roziqrizal.habitflow.data.AlarmSettings
 import com.roziqrizal.habitflow.data.DrinkRepository
+import com.roziqrizal.habitflow.data.EventRepository
+import com.roziqrizal.habitflow.data.HolidayAssets
+import com.roziqrizal.habitflow.data.calendar.CalendarSettings
+import com.roziqrizal.habitflow.data.calendar.PhoneCalendarSource
+import com.roziqrizal.habitflow.domain.calendar.EventReminder
+import com.roziqrizal.habitflow.domain.calendar.buildAgenda
+import com.roziqrizal.habitflow.domain.calendar.eventReminders
+import com.roziqrizal.habitflow.domain.calendar.mergeBlocks
+import com.roziqrizal.habitflow.domain.calendar.toResolvedBlock
+import com.roziqrizal.habitflow.ui.title
 import com.roziqrizal.habitflow.data.HabitDatabase
 import com.roziqrizal.habitflow.data.HealthRepository
 import com.roziqrizal.habitflow.data.HealthSettings
@@ -91,6 +101,8 @@ object ScheduleNotifier {
     private const val REQUEST_WATER = 2000
     private const val BLOCK_ID_BASE = 1000
     private const val FOLLOW_UP_ID_BASE = 100_000
+    private const val EVENT_ID_BASE = 200_000
+    private const val EVENT_ID_RANGE = 50_000L
 
     /**
      * Jendela mundur untuk blok dan pengingat yang baru jatuh tempo, kalau alarm terlambat atau HP baru menyala.
@@ -120,11 +132,12 @@ object ScheduleNotifier {
         val app = context.applicationContext
         ensureChannels(app)
 
-        val repo = ScheduleRepository(HabitDatabase.get(app))
+        val repo = ScheduleRepository(HabitDatabase.get(app), HolidayAssets.get(app))
         val place = LocationSettings(app).location.value
         val zone = ZoneId.systemDefault()
         val now = ZonedDateTime.now(clock.withZone(zone))
         val today = now.toLocalDate()
+        val tomorrow = today.plusDays(1)
         val nowMinute = now.hour * 60 + now.minute
         val blocks = repo.getBlocks()
         val followUps = WorkRepository(HabitDatabase.get(app)).getFollowUps()
@@ -133,7 +146,20 @@ object ScheduleNotifier {
             blocks, EphemerisPrayerCalculator.calculate(date, place.latitude, place.longitude, zone), date, off,
         )
 
-        val resolved = resolveFor(today, repo.isDayOff(today))
+        // Acara (HabitFlow dan kalender HP) hari ini dan besok, sudah memperhitungkan libur (tahap 22).
+        val eventRepo = EventRepository(HabitDatabase.get(app))
+        val phoneSelection = CalendarSettings(app).selection.value
+        val agenda = buildAgenda(
+            today, tomorrow, eventRepo.getEvents(), eventRepo.getExceptions(),
+            PhoneCalendarSource(app).occurrencesBetween(today, tomorrow, phoneSelection, zone),
+            repo.holidays, repo.getManualDaysOff(), repo.getHolidayCancellations(),
+        )
+        val todayAgenda = agenda.first { it.date == today }
+        val tomorrowAgenda = agenda.first { it.date == tomorrow }
+
+        val blockItems = resolveFor(today, todayAgenda.dayOff)
+        val resolved = mergeBlocks(blockItems, todayAgenda.items.mapNotNull { it.toResolvedBlock() })
+        val todayEventReminders = eventReminders(todayAgenda.items)
         val reminderSettings = WorkReminderSettings(app)
         val reminders = workReminders(resolved, reminderSettings.water.value, reminderSettings.breaks.value)
 
@@ -143,16 +169,21 @@ object ScheduleNotifier {
                 ?.let { healthReminderMinute(it.hour * 60 + it.minute) }
 
         if (announce) {
-            announceStarted(app, resolved, reminders, followUps, today, nowMinute, healthMinuteFor(today), health, zone)
+            announceStarted(
+                app, resolved, reminders, todayEventReminders, followUps, today, nowMinute, healthMinuteFor(today), health, zone,
+            )
         }
-        updateOngoing(app, resolved, nowMinute)
+        // Rentang notifikasi tetap hanya dari blok jadwal: acara larut malam tidak boleh memperpanjangnya.
+        updateOngoing(app, resolved, notificationWindow(blockItems), nowMinute)
 
         val nextToday = nextBoundaryMinute(resolved, nowMinute)
         val trigger = if (nextToday != null) {
             today.atStartOfDay(zone).plusMinutes(nextToday.toLong())
         } else {
-            val tomorrow = today.plusDays(1)
-            val first = boundaryMinutes(resolveFor(tomorrow, repo.isDayOff(tomorrow))).firstOrNull() ?: 5
+            val tomorrowBlocks = mergeBlocks(
+                resolveFor(tomorrow, tomorrowAgenda.dayOff), tomorrowAgenda.items.mapNotNull { it.toResolvedBlock() },
+            )
+            val first = boundaryMinutes(tomorrowBlocks).firstOrNull() ?: 5
             tomorrow.atStartOfDay(zone).plusMinutes(first.toLong())
         }
         // Pengingat follow-up berjam khusus dan pengingat air dan break ikut menentukan alarm berikutnya.
@@ -162,6 +193,12 @@ object ScheduleNotifier {
         var windowTrigger = trigger
         if (reminder != null && reminder.isBefore(windowTrigger)) windowTrigger = reminder
         if (workReminder != null && workReminder.isBefore(windowTrigger)) windowTrigger = workReminder
+        // Pengingat acara: yang berikutnya hari ini, atau yang paling awal besok.
+        val nextEvent = todayEventReminders.firstOrNull { it.minute > nowMinute }
+            ?.let { today.atStartOfDay(zone).plusMinutes(it.minute.toLong()) }
+            ?: eventReminders(tomorrowAgenda.items).firstOrNull()
+                ?.let { tomorrow.atStartOfDay(zone).plusMinutes(it.minute.toLong()) }
+        if (nextEvent != null && nextEvent.isBefore(windowTrigger)) windowTrigger = nextEvent
         val healthReminder = nextHealthReminder(
             today, nowMinute, zone, health.weightReminder.value, health.bpFrequency.value, ::healthMinuteFor,
         )
@@ -182,6 +219,7 @@ object ScheduleNotifier {
         context: Context,
         resolved: List<ResolvedBlock>,
         reminders: List<WorkReminder>,
+        eventReminders: List<EventReminder>,
         followUps: List<FollowUp>,
         today: LocalDate,
         nowMinute: Int,
@@ -199,16 +237,38 @@ object ScheduleNotifier {
 
         val alarmSettings = AlarmSettings(context)
         blocksStartedBetween(resolved, since, nowMinute)
+            // Acara tidak diumumkan sebagai blok: ia punya pengingat sendiri (tahap 22).
+            .filter { it.event == null }
             // Alarm dibunyikan AlarmService, bukan notifikasi biasa. Adzan yang dimatikan tidak dinotifikasikan.
             .filter { it.block.level != NotificationLevel.ALARM }
             .filter { item -> item.block.adzanPrayer()?.let(alarmSettings::isAdzanEnabled) ?: true }
             .forEach { notifyBlock(context, it, today) }
         remindersBetween(followUps, today, since, nowMinute).forEach { notifyFollowUp(context, it) }
+        eventReminders.filter { it.minute > since && it.minute <= nowMinute }.forEach { notifyEventReminder(context, it) }
         // Notifikasi Info bersifat menggantikan: kalau lebih dari satu terlewat, hanya yang terakhir yang tampil.
         workRemindersBetween(reminders, since, nowMinute).lastOrNull()?.let { notifyWorkReminder(context, it, today) }
         if (healthMinute != null && healthMinute > since && healthMinute <= nowMinute) {
             notifyHealthReminder(context, today, health, zone)
         }
+    }
+
+    /**
+     * Pengingat acara HabitFlow (tingkat Pengingat), misalnya 15 menit sebelum meeting. Satu notifikasi per acara; kejadian
+     * berikutnya dari acara yang sama menggantikannya.
+     */
+    @SuppressLint("MissingPermission")
+    private fun notifyEventReminder(context: Context, reminder: EventReminder) {
+        if (!canNotify(context)) return
+        val occurrence = reminder.occurrence
+        val start = occurrence.startMinute ?: return
+        val notification = NotificationCompat.Builder(context, CHANNEL_REMINDER)
+            .setSmallIcon(R.drawable.ic_launcher_monochrome)
+            .setContentTitle(occurrence.title)
+            .setContentText("Mulai ${formatMinute(start)} · ${occurrence.label.title}")
+            .setContentIntent(openAppIntent(context))
+            .setAutoCancel(true)
+            .build()
+        NotificationManagerCompat.from(context).notify(EVENT_ID_BASE + (occurrence.eventId % EVENT_ID_RANGE).toInt(), notification)
     }
 
     /**
@@ -352,9 +412,8 @@ object ScheduleNotifier {
     }
 
     @SuppressLint("MissingPermission")
-    private fun updateOngoing(context: Context, resolved: List<ResolvedBlock>, nowMinute: Int) {
+    private fun updateOngoing(context: Context, resolved: List<ResolvedBlock>, window: IntRange?, nowMinute: Int) {
         val manager = NotificationManagerCompat.from(context)
-        val window = notificationWindow(resolved)
         val enabled = NotificationSettings(context).persistent.value
         if (!enabled || window == null || nowMinute !in window || !canNotify(context)) {
             manager.cancel(ONGOING_ID)

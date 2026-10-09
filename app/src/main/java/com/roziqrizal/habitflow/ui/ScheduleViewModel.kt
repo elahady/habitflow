@@ -2,10 +2,20 @@ package com.roziqrizal.habitflow.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.roziqrizal.habitflow.data.EventRepository
 import com.roziqrizal.habitflow.data.Habit
 import com.roziqrizal.habitflow.data.HabitRepository
 import com.roziqrizal.habitflow.data.LocationSettings
 import com.roziqrizal.habitflow.data.PlaceLocation
+import com.roziqrizal.habitflow.data.calendar.CalendarSettings
+import com.roziqrizal.habitflow.data.calendar.PhoneCalendarSource
+import com.roziqrizal.habitflow.domain.calendar.AgendaDay
+import com.roziqrizal.habitflow.domain.calendar.DayOffInfo
+import com.roziqrizal.habitflow.domain.calendar.EventLabel
+import com.roziqrizal.habitflow.domain.calendar.EventOccurrence
+import com.roziqrizal.habitflow.domain.calendar.buildAgenda
+import com.roziqrizal.habitflow.domain.calendar.mergeBlocks
+import com.roziqrizal.habitflow.domain.calendar.toResolvedBlock
 import com.roziqrizal.habitflow.data.ScheduleRepository
 import com.roziqrizal.habitflow.domain.prayer.EphemerisPrayerCalculator
 import com.roziqrizal.habitflow.domain.prayer.PrayerTimes
@@ -36,12 +46,19 @@ data class TimelineItem(val resolved: ResolvedBlock, val status: BlockStatus)
 
 data class ScheduleUiState(
     val date: LocalDate,
-    val isDayOff: Boolean = false,
+    /** Keadaan libur hari ini: manual, libur nasional, dan apakah libur nasional itu dibatalkan (tahap 22). */
+    val dayOff: DayOffInfo = DayOffInfo(),
     val timeline: List<TimelineItem> = emptyList(),
     val now: ResolvedBlock? = null,
     val next: ResolvedBlock? = null,
     val nowMinute: Int = 0,
-)
+    /** Acara sepanjang hari hari ini (tidak punya jam, jadi tidak masuk timeline berjam). */
+    val allDayEvents: List<EventOccurrence> = emptyList(),
+    /** Acara Kerja berjam yang sedang berlangsung, untuk menautkan catatan cepat (tahap 22). */
+    val ongoingWorkEvent: EventOccurrence? = null,
+) {
+    val isDayOff: Boolean get() = dayOff.isOff
+}
 
 /** Semua blok (tanpa memandang hari) untuk layar Atur jadwal, dengan waktu sholat hari ini untuk contoh. */
 data class ScheduleEditorState(
@@ -64,6 +81,9 @@ class ScheduleViewModel(
     private val repo: ScheduleRepository,
     habitRepo: HabitRepository,
     private val locationSettings: LocationSettings,
+    private val eventRepo: EventRepository,
+    private val phoneCalendar: PhoneCalendarSource,
+    private val calendarSettings: CalendarSettings,
     private val clock: DayClock,
     private val zone: () -> ZoneId = { ZoneId.systemDefault() },
 ) : ViewModel() {
@@ -72,18 +92,41 @@ class ScheduleViewModel(
         EphemerisPrayerCalculator.calculate(date, place.latitude, place.longitude, zone())
     }.flowOn(Dispatchers.Default)
 
+    /** Acara kalender HP hari ini, dibaca ulang saat tanggal, pilihan kalender, atau isi kalender HP berubah. */
+    private val phoneToday: Flow<List<EventOccurrence>> =
+        combine(calendarSettings.selection, phoneCalendar.changes(), clock.date) { selection, _, date ->
+            phoneCalendar.occurrencesBetween(date, date, selection, zone())
+        }.flowOn(Dispatchers.IO)
+
+    /** Isi hari ini: acara HabitFlow dan HP, libur, dan acara Kerja yang mati karena libur. */
+    private val today: Flow<AgendaDay> = combine(
+        eventRepo.observeEvents(),
+        eventRepo.observeExceptions(),
+        phoneToday,
+        combine(repo.observeManualDaysOff(), repo.observeHolidayCancellations()) { manual, cancelled -> manual to cancelled },
+        clock.date,
+    ) { events, exceptions, phone, (manual, cancelled), date ->
+        buildAgenda(date, date, events, exceptions, phone, repo.holidays, manual, cancelled).single()
+    }
+
     val state: StateFlow<ScheduleUiState> = combine(
         repo.observeBlocks(),
-        repo.observeDaysOff(),
+        today,
         prayerTimes,
         clock.date,
         minuteTicker(),
-    ) { blocks, daysOff, prayers, date, nowMinute ->
-        val resolved = resolveBlocks(blocks, prayers, date, isDayOff = date in daysOff)
+    ) { blocks, day, prayers, date, nowMinute ->
+        val blockItems = resolveBlocks(blocks, prayers, date, isDayOff = day.dayOff)
+        val timed = day.items.filter { !it.allDay }
+        val resolved = mergeBlocks(blockItems, timed.mapNotNull { it.toResolvedBlock() })
         val current = nowAndNext(resolved, nowMinute)
         ScheduleUiState(
             date = date,
-            isDayOff = date in daysOff,
+            dayOff = DayOffInfo(day.manual, day.holiday, day.holidayCancelled),
+            allDayEvents = day.items.filter { it.allDay },
+            ongoingWorkEvent = timed.lastOrNull {
+                it.label == EventLabel.WORK && it.startMinute!! <= nowMinute && nowMinute < (it.endMinute ?: 0)
+            },
             timeline = resolved.map { item ->
                 // Blok yang sedang ditimpa blok lain (misalnya kerja saat sholat) tetap dianggap belum selesai.
                 val status = when {
@@ -132,8 +175,14 @@ class ScheduleViewModel(
         initialValue = ScheduleEditorState(),
     )
 
+    /** Libur manual ("Hari ini libur") untuk hari ini. */
     fun setDayOff(off: Boolean) {
         viewModelScope.launch { repo.setDayOff(clock.date.value, off) }
+    }
+
+    /** Membatalkan libur nasional hari ini (kantor tetap masuk), atau mengaktifkannya lagi. */
+    fun setHolidayCancelled(cancelled: Boolean) {
+        viewModelScope.launch { repo.setHolidayCancelled(clock.date.value, cancelled) }
     }
 
     fun saveBlock(block: ScheduleBlock) {

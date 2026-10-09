@@ -4,6 +4,8 @@ import android.app.Application
 import com.roziqrizal.habitflow.data.AlarmSettings
 import com.roziqrizal.habitflow.data.HabitDatabase
 import com.roziqrizal.habitflow.data.HealthSettings
+import com.roziqrizal.habitflow.data.calendar.CalendarSettings
+import com.roziqrizal.habitflow.data.calendar.PhoneCalendarSource
 import com.roziqrizal.habitflow.data.LocationSettings
 import com.roziqrizal.habitflow.data.NotificationSettings
 import com.roziqrizal.habitflow.data.PlaceLocation
@@ -48,6 +50,8 @@ class AppGraph(app: Application) {
     val alarmSettings = AlarmSettings(app)
     val workReminderSettings = WorkReminderSettings(app)
     val healthSettings = HealthSettings(app)
+    val calendarSettings = CalendarSettings(app)
+    val phoneCalendar = PhoneCalendarSource(app)
     val syncSettings = SyncSettings(app)
     val syncScheduler = SyncScheduler(app, syncSettings)
     val stepsTracker: StepsTracker by lazy { StepsTracker(HealthConnectStepsSource(app), db, healthSettings) }

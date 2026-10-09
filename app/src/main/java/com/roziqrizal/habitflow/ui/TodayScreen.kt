@@ -52,6 +52,7 @@ fun TodayScreen(
     work: WorkUiState,
     onOpenWork: () -> Unit,
     onSetDayOff: (Boolean) -> Unit,
+    onSetHolidayCancelled: (Boolean) -> Unit,
     onOpenSchedule: () -> Unit,
     onToggleHabit: (Long) -> Unit,
     onAddGlass: () -> Unit,
@@ -72,7 +73,12 @@ fun TodayScreen(
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 96.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { ScheduleCard(state = schedule, onSetDayOff = onSetDayOff, onOpenEditor = onOpenSchedule) }
+        item { ScheduleCard(
+                state = schedule,
+                onSetDayOff = onSetDayOff,
+                onSetHolidayCancelled = onSetHolidayCancelled,
+                onOpenEditor = onOpenSchedule,
+            ) }
 
         if (work.inboxCount > 0 || work.overdueCount > 0) {
             item { WorkSummaryCard(work, onOpenWork) }

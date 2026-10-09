@@ -46,6 +46,13 @@ class ScheduleRepository(
         return schedule.getBlocks().map { it.toDomain(byBlock[it.id].orEmpty().toSet()) }
     }
 
+    /** Untuk penerima alarm dan notifikasi, yang tidak memakai Flow. */
+    suspend fun getManualDaysOff(): Set<LocalDate> =
+        schedule.getDaysOff().mapNotNull { runCatching { LocalDate.parse(it) }.getOrNull() }.toSet()
+
+    suspend fun getHolidayCancellations(): Set<LocalDate> =
+        schedule.getHolidayCancellations().mapNotNull { runCatching { LocalDate.parse(it) }.getOrNull() }.toSet()
+
     /** Libur efektif: manual, atau libur nasional yang tidak dibatalkan. */
     suspend fun isDayOff(date: LocalDate): Boolean =
         schedule.countDayOff(date.toString()) > 0 ||

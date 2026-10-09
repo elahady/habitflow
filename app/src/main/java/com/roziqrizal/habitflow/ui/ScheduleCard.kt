@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.roziqrizal.habitflow.domain.calendar.EventOccurrence
 import com.roziqrizal.habitflow.domain.schedule.ResolvedBlock
 import com.roziqrizal.habitflow.ui.theme.tokens
 
@@ -53,6 +54,7 @@ private fun remaining(minutes: Int): String {
 fun ScheduleCard(
     state: ScheduleUiState,
     onSetDayOff: (Boolean) -> Unit,
+    onSetHolidayCancelled: (Boolean) -> Unit,
     onOpenEditor: () -> Unit,
 ) {
     var showTimeline by rememberSaveable { mutableStateOf(false) }
@@ -70,6 +72,7 @@ fun ScheduleCard(
         val now = state.now
         if (now != null) {
             Text(now.block.name, style = MaterialTheme.typography.titleLarge)
+            now.eventCaption()?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
             Text(
                 "${now.range()} · ${remaining(now.endMinute - state.nowMinute)}",
                 style = MaterialTheme.typography.bodyMedium,
@@ -84,6 +87,7 @@ fun ScheduleCard(
         val next = state.next
         if (next != null) {
             Text(next.block.name, style = MaterialTheme.typography.titleMedium)
+            next.eventCaption()?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
             Text("Mulai ${formatMinute(next.startMinute)}", style = MaterialTheme.typography.bodyMedium)
         } else {
             Text(
@@ -106,28 +110,54 @@ fun ScheduleCard(
 
         if (showTimeline) {
             Column(modifier = Modifier.padding(top = 4.dp)) {
+                state.allDayEvents.forEach { AllDayRow(it) }
                 state.timeline.forEach { item -> TimelineRow(item) }
             }
         }
 
-        if (state.isDayOff) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    "Hari libur, blok kantor dimatikan",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.weight(1f),
-                )
-                TextButton(onClick = { onSetDayOff(false) }) { Text("Batalkan") }
-            }
-        } else {
-            TextButton(onClick = { onSetDayOff(true) }) { Text("Hari ini libur") }
+        val dayOff = state.dayOff
+        val holiday = dayOff.holiday
+        when {
+            holiday != null && dayOff.holidayActive -> DayOffRow(
+                text = (if (holiday.cutiBersama) holiday.label else "Libur nasional: ${holiday.name}") + ", blok kantor dimatikan",
+                action = "Batalkan",
+                onAction = { onSetHolidayCancelled(true) },
+            )
+            dayOff.manual -> DayOffRow(
+                text = "Hari libur, blok kantor dimatikan",
+                action = "Batalkan",
+                onAction = { onSetDayOff(false) },
+            )
+            holiday != null && dayOff.holidayCancelled -> DayOffRow(
+                text = "Libur nasional dibatalkan, blok kantor jalan",
+                action = "Libur lagi",
+                onAction = { onSetHolidayCancelled(false) },
+            )
+            else -> TextButton(onClick = { onSetDayOff(true) }) { Text("Hari ini libur") }
         }
     }
+}
+
+@Composable
+private fun DayOffRow(text: String, action: String, onAction: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f),
+        )
+        TextButton(onClick = onAction) { Text(action) }
+    }
+}
+
+/** "Acara · Kerja" atau "Acara · Pribadi · Kalender kantor" untuk blok yang berasal dari acara, atau null untuk blok jadwal. */
+fun ResolvedBlock.eventCaption(): String? = event?.let { marker ->
+    listOfNotNull("Acara", marker.label.title, marker.source).joinToString(" · ")
 }
 
 @Composable
@@ -151,11 +181,40 @@ private fun TimelineRow(item: TimelineItem) {
             color = color,
             modifier = Modifier.width(96.dp),
         )
+        Column {
+            Text(
+                item.resolved.block.name,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = if (current) FontWeight.SemiBold else FontWeight.Normal,
+                color = color,
+            )
+            item.resolved.eventCaption()?.let {
+                Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+    }
+}
+
+/** Acara sepanjang hari: di awal timeline, tanpa jam. */
+@Composable
+private fun AllDayRow(event: EventOccurrence) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
         Text(
-            item.resolved.block.name,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = if (current) FontWeight.SemiBold else FontWeight.Normal,
-            color = color,
+            "Sepanjang hari",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.width(96.dp),
         )
+        Column {
+            Text(event.title, style = MaterialTheme.typography.bodyMedium)
+            Text(
+                listOfNotNull("Acara", event.label.title, event.calendarName).joinToString(" · "),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }

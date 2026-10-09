@@ -30,9 +30,12 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.roziqrizal.habitflow.data.AlarmSettings
 import com.roziqrizal.habitflow.data.DrinkRepository
+import com.roziqrizal.habitflow.data.EventRepository
 import com.roziqrizal.habitflow.data.HabitDatabase
 import com.roziqrizal.habitflow.data.HabitRepository
 import com.roziqrizal.habitflow.data.HealthRepository
+import com.roziqrizal.habitflow.data.HolidayAssets
+import com.roziqrizal.habitflow.data.calendar.CalendarSettings
 import com.roziqrizal.habitflow.data.health.HealthConnectStepsSource
 import com.roziqrizal.habitflow.data.health.StepsWorker
 import com.roziqrizal.habitflow.data.HealthSettings
@@ -78,7 +81,9 @@ class MainActivity : ComponentActivity() {
         val alarmSettings = graph.alarmSettings
         val workReminderSettings = graph.workReminderSettings
         requestNotificationPermission()
-        keepNotificationsInSync(locationSettings, notificationSettings, alarmSettings, workReminderSettings, graph.healthSettings)
+        keepNotificationsInSync(
+            locationSettings, notificationSettings, alarmSettings, workReminderSettings, graph.healthSettings, graph.calendarSettings,
+        )
         themeSettings.syncWithSystem()
         setContent {
             val themeMode by themeSettings.mode.collectAsState()
@@ -107,10 +112,15 @@ class MainActivity : ComponentActivity() {
                 val contribution: ContributionViewModel = viewModel(
                     factory = viewModelFactory { initializer { ContributionViewModel(repo, WorkRepository(HabitDatabase.get(applicationContext)), clock) } },
                 )
-                val scheduleRepo = remember { ScheduleRepository(HabitDatabase.get(applicationContext)) }
+                val scheduleRepo = remember { ScheduleRepository(HabitDatabase.get(applicationContext), HolidayAssets.get(applicationContext)) }
+                val eventRepo = remember { EventRepository(HabitDatabase.get(applicationContext)) }
                 val schedule: ScheduleViewModel = viewModel(
                     factory = viewModelFactory {
-                        initializer { ScheduleViewModel(scheduleRepo, repo, locationSettings, clock) }
+                        initializer {
+                            ScheduleViewModel(
+                                scheduleRepo, repo, locationSettings, eventRepo, graph.phoneCalendar, graph.calendarSettings, clock,
+                            )
+                        }
                     },
                 )
                 val workRepo = remember { WorkRepository(HabitDatabase.get(applicationContext)) }
@@ -227,13 +237,18 @@ class MainActivity : ComponentActivity() {
         alarmSettings: AlarmSettings,
         workReminderSettings: WorkReminderSettings,
         healthSettings: HealthSettings,
+        calendarSettings: CalendarSettings,
     ) {
-        val repo = ScheduleRepository(HabitDatabase.get(applicationContext))
+        val repo = ScheduleRepository(HabitDatabase.get(applicationContext), HolidayAssets.get(applicationContext))
+        val eventRepo = EventRepository(HabitDatabase.get(applicationContext))
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 combine(
                     repo.observeBlocks(),
                     repo.observeDaysOff(),
+                    eventRepo.observeEvents(),
+                    eventRepo.observeExceptions(),
+                    calendarSettings.selection,
                     locationSettings.location,
                     notificationSettings.persistent,
                     alarmSettings.skipped,

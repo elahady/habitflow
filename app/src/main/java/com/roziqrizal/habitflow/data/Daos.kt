@@ -107,6 +107,12 @@ interface ScheduleDao {
     @Query("SELECT date FROM holiday_cancellations")
     fun observeHolidayCancellations(): Flow<List<String>>
 
+    @Query("SELECT date FROM days_off")
+    suspend fun getDaysOff(): List<String>
+
+    @Query("SELECT date FROM holiday_cancellations")
+    suspend fun getHolidayCancellations(): List<String>
+
     @Query("SELECT COUNT(*) FROM holiday_cancellations WHERE date = :date")
     suspend fun countHolidayCancellation(date: String): Int
 
