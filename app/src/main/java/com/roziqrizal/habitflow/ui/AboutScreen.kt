@@ -43,6 +43,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.roziqrizal.habitflow.data.AlarmSettings
 import com.roziqrizal.habitflow.data.DeviceLocation
+import com.roziqrizal.habitflow.data.HealthSettings
 import com.roziqrizal.habitflow.data.LocationSettings
 import com.roziqrizal.habitflow.data.PlaceLocation
 import com.roziqrizal.habitflow.data.ThemeMode
@@ -73,6 +74,7 @@ fun AboutScreen(
     onWaterRemindersChange: (Boolean) -> Unit,
     breakReminders: Boolean,
     onBreakRemindersChange: (Boolean) -> Unit,
+    healthSettings: HealthSettings,
     nextAlarm: AlarmTime?,
     alarmSettings: AlarmSettings,
     sync: SyncUiState,
@@ -132,6 +134,12 @@ fun AboutScreen(
             onCheckedChange = onBreakRemindersChange,
         )
 
+        SettingLabel("Kesehatan")
+        HealthSettingsSection(settings = healthSettings)
+
+        SettingLabel("Pengingat kesehatan")
+        HealthReminderSection(settings = healthSettings)
+
         SettingLabel("Alarm")
         AlarmSection(nextAlarm = nextAlarm, settings = alarmSettings)
 
@@ -145,7 +153,7 @@ fun AboutScreen(
 
 /** Satu baris pengaturan: judul dan keterangan di kiri, `Switch` di kanan. */
 @Composable
-private fun SettingSwitchRow(title: String, description: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+internal fun SettingSwitchRow(title: String, description: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.weight(1f)) {
             Text(title, style = MaterialTheme.typography.bodyLarge)

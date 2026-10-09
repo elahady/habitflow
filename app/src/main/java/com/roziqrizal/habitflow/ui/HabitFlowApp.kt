@@ -22,6 +22,7 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Modifier
 import com.roziqrizal.habitflow.data.AlarmSettings
+import com.roziqrizal.habitflow.data.HealthSettings
 import com.roziqrizal.habitflow.data.PlaceLocation
 import com.roziqrizal.habitflow.data.ThemeMode
 import com.roziqrizal.habitflow.domain.schedule.WorkAction
@@ -30,7 +31,7 @@ import com.roziqrizal.habitflow.ui.theme.tokens
 enum class Tab(val label: String) {
     TODAY("Hari ini"),
     WORK("Kerja"),
-    CONTRIBUTION("Kontribusi"),
+    CONTRIBUTION("Progres"),
     HABITS("Habit"),
     ABOUT("Tentang"),
 }
@@ -60,6 +61,10 @@ fun HabitFlowApp(
     onWaterRemindersChange: (Boolean) -> Unit,
     breakReminders: Boolean,
     onBreakRemindersChange: (Boolean) -> Unit,
+    health: HealthViewModel,
+    healthSettings: HealthSettings,
+    onRequestStepsAccess: () -> Unit,
+    onOpenHealthConnectStore: () -> Unit,
     onThemeModeChange: (ThemeMode) -> Unit,
 ) {
     // Riwayat tab, dari yang paling lama sampai tab aktif. Tombol kembali membuka tab sebelumnya.
@@ -73,6 +78,8 @@ fun HabitFlowApp(
     var showSchedule by rememberSaveable { mutableStateOf(false) }
     var sessionName by rememberSaveable { mutableStateOf<String?>(null) }
     var showCapture by rememberSaveable { mutableStateOf(false) }
+    // Sheet catat berat atau tensi (tahap 21). Null = tertutup.
+    var recordModeName by rememberSaveable { mutableStateOf<String?>(null) }
     val session = sessionName?.let { WorkSession.valueOf(it) }
 
     // Notifikasi daily scrum atau EOD membuka tab Kerja langsung di layar yang sesuai.
@@ -96,6 +103,7 @@ fun HabitFlowApp(
     }
 
     val workState by work.state.collectAsState()
+    val healthState by health.state.collectAsState()
     val fullScreen = showSchedule || session != null
 
     Scaffold(
@@ -176,6 +184,11 @@ fun HabitFlowApp(
                         onToggleHabit = today::toggleHabit,
                         onAddGlass = today::addGlass,
                         onRemoveGlass = today::removeGlass,
+                        health = healthState,
+                        onRequestStepsAccess = onRequestStepsAccess,
+                        onOpenHealthConnectStore = onOpenHealthConnectStore,
+                        onRecordBp = { recordModeName = HealthRecordMode.BLOOD_PRESSURE.name },
+                        onRecordWeight = { recordModeName = HealthRecordMode.WEIGHT.name },
                         onAddTodo = today::addTodo,
                         onToggleTodo = today::toggleTodo,
                         onDeleteTodo = today::deleteTodo,
@@ -192,7 +205,7 @@ fun HabitFlowApp(
                 )
                 Tab.CONTRIBUTION -> {
                     val state by contribution.state.collectAsState()
-                    ContributionScreen(state = state)
+                    ProgressScreen(contribution = state, health = healthState)
                 }
                 Tab.HABITS -> {
                     val habits by manage.habits.collectAsState()
@@ -230,6 +243,7 @@ fun HabitFlowApp(
                         onWaterRemindersChange = onWaterRemindersChange,
                         breakReminders = breakReminders,
                         onBreakRemindersChange = onBreakRemindersChange,
+                        healthSettings = healthSettings,
                         onThemeModeChange = onThemeModeChange,
                     )
                 }
@@ -239,5 +253,20 @@ fun HabitFlowApp(
 
     if (showCapture) {
         QuickCaptureSheet(onAdd = work::quickAdd, onDismiss = { showCapture = false })
+    }
+
+    recordModeName?.let { name ->
+        val saved by health.saved.collectAsState()
+        HealthRecordSheet(
+            mode = HealthRecordMode.valueOf(name),
+            heightCm = healthState.heightCm,
+            saved = saved,
+            onSaveWeight = health::saveWeight,
+            onSaveBloodPressure = health::saveBloodPressure,
+            onDismiss = {
+                health.clearSaved()
+                recordModeName = null
+            },
+        )
     }
 }

@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Color
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -16,6 +17,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -30,6 +32,9 @@ import com.roziqrizal.habitflow.data.AlarmSettings
 import com.roziqrizal.habitflow.data.DrinkRepository
 import com.roziqrizal.habitflow.data.HabitDatabase
 import com.roziqrizal.habitflow.data.HabitRepository
+import com.roziqrizal.habitflow.data.HealthRepository
+import com.roziqrizal.habitflow.data.health.HealthConnectStepsSource
+import com.roziqrizal.habitflow.data.health.StepsWorker
 import com.roziqrizal.habitflow.data.HealthSettings
 import com.roziqrizal.habitflow.data.LocationSettings
 import com.roziqrizal.habitflow.data.NotificationSettings
@@ -41,6 +46,7 @@ import com.roziqrizal.habitflow.notify.ScheduleNotifier
 import com.roziqrizal.habitflow.ui.ContributionViewModel
 import com.roziqrizal.habitflow.ui.DayClock
 import com.roziqrizal.habitflow.ui.HabitFlowApp
+import com.roziqrizal.habitflow.ui.HealthViewModel
 import com.roziqrizal.habitflow.ui.ManageHabitsViewModel
 import com.roziqrizal.habitflow.ui.ScheduleViewModel
 import com.roziqrizal.habitflow.ui.SyncViewModel
@@ -49,6 +55,7 @@ import com.roziqrizal.habitflow.ui.WorkViewModel
 import com.roziqrizal.habitflow.domain.schedule.WorkAction
 import com.roziqrizal.habitflow.ui.theme.HabitFlowTheme
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
@@ -110,6 +117,22 @@ class MainActivity : ComponentActivity() {
                 val work: WorkViewModel = viewModel(
                     factory = viewModelFactory { initializer { WorkViewModel(workRepo, clock) } },
                 )
+                val healthRepo = remember { HealthRepository(HabitDatabase.get(applicationContext)) }
+                val health: HealthViewModel = viewModel(
+                    factory = viewModelFactory {
+                        initializer { HealthViewModel(healthRepo, graph.healthSettings, graph.stepsTracker, clock) }
+                    },
+                )
+                healthViewModel = health
+                // Langkah dibaca saat app dibuka dan tiap 5 menit selama app tampil (dan mencentang habit kalau tercapai).
+                LaunchedEffect(health) {
+                    this@MainActivity.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                        while (true) {
+                            health.refreshSteps()
+                            delay(STEPS_REFRESH_MILLIS)
+                        }
+                    }
+                }
                 val workRequest by pendingWork.collectAsState()
                 val syncViewModel: SyncViewModel = viewModel(
                     factory = viewModelFactory {
@@ -143,7 +166,37 @@ class MainActivity : ComponentActivity() {
                     onWaterRemindersChange = workReminderSettings::setWater,
                     breakReminders = workReminderSettings.breaks.collectAsState().value,
                     onBreakRemindersChange = workReminderSettings::setBreaks,
+                    health = health,
+                    healthSettings = graph.healthSettings,
+                    onRequestStepsAccess = {
+                        lifecycleScope.launch { stepsPermission.launch(health.stepsPermissions()) }
+                    },
+                    onOpenHealthConnectStore = ::openHealthConnectStore,
                     onThemeModeChange = themeSettings::setMode,
+                )
+            }
+        }
+    }
+
+    private var healthViewModel: HealthViewModel? = null
+
+    /** Layar izin Health Connect untuk langkah. Setelah dijawab, langkah dibaca ulang dan cek berkala dipasang. */
+    private val stepsPermission =
+        registerForActivityResult(HealthConnectStepsSource.requestContract()) {
+            StepsWorker.ensureScheduled(applicationContext)
+            healthViewModel?.refreshSteps()
+        }
+
+    /** Membuka Play Store ke Health Connect (pasang atau perbarui), dengan cadangan ke browser. */
+    private fun openHealthConnectStore() {
+        val store = Intent(
+            Intent.ACTION_VIEW,
+            Uri.parse("market://details?id=$HEALTH_CONNECT_PACKAGE&url=healthconnect%3A%2F%2Fonboarding"),
+        ).setPackage("com.android.vending").putExtra("overlay", true).putExtra("callerId", packageName)
+        runCatching { startActivity(store) }.onFailure {
+            runCatching {
+                startActivity(
+                    Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=$HEALTH_CONNECT_PACKAGE")),
                 )
             }
         }
@@ -238,5 +291,8 @@ class MainActivity : ComponentActivity() {
         private val pendingWork = MutableStateFlow<WorkAction?>(null)
 
         const val EXTRA_WORK_ACTION = "workAction"
+
+        private const val STEPS_REFRESH_MILLIS = 5 * 60 * 1000L
+        private const val HEALTH_CONNECT_PACKAGE = "com.google.android.apps.healthdata"
     }
 }

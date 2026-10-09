@@ -33,7 +33,7 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ContributionScreen(state: ContributionUiState) {
+fun ContributionScreen(state: ContributionUiState, showTitle: Boolean = true) {
     // Tanggal yang dipilih disimpan sebagai teks ISO karena LocalDate tidak otomatis bisa disimpan.
     var selectedIso by rememberSaveable { mutableStateOf<String?>(null) }
     val onDayClick: (LocalDate) -> Unit = { selectedIso = it.toString() }
@@ -44,12 +44,14 @@ fun ContributionScreen(state: ContributionUiState) {
         contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 16.dp, bottom = 32.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item {
-            Text(
-                text = "Kontribusi",
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
+        if (showTitle) {
+            item {
+                Text(
+                    text = "Kontribusi",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+            }
         }
         item { StreakCard(state.currentStreak, state.longestStreak) }
 

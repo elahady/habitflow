@@ -349,7 +349,8 @@ Kerja atau dari notifikasi blok Kerja pagi dan EOD.
    Kesehatan: kartu ringkasan berat (angka terakhir displayMedium kecil, baris BMI dan kategori, baris target dan sisa,
    baris tren 4 minggu), kartu grafik berat (garis `primary`, titik di tiap catatan, garis putus-putus `outline`
    untuk target), lalu kartu ringkasan tensi (angka terakhir dan kategori) dan kartu grafik tensi (sistolik garis
-   `primary`, diastolik garis `onSurfaceVariant`). Sumbu: tiga label tanggal dan dua label nilai (labelSmall).
+   `primary` setebal 3dp, diastolik garis `onSurfaceVariant` setebal 1,5dp, dibedakan juga lewat ketebalan karena
+   kedua warna sama-sama gelap, dengan keterangan "Garis atas sistolik (tebal), garis bawah diastolik (tipis)."). Sumbu: tiga label tanggal dan dua label nilai (labelSmall).
    Rentang 90 hari terakhir. Tanpa catatan: teks "Belum ada catatan berat. Catat dari Hari ini." (bodyMedium).
 7. **Tentang.** Bagian baru "Kesehatan" (dua baris: "Tinggi badan" dengan nilainya dan "Target berat" dengan nilainya
    atau "Otomatis (25,0 BMI)", tap membuka `AlertDialog` satu kolom angka) dan "Pengingat kesehatan" (switch "Timbang

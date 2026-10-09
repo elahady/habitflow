@@ -56,6 +56,11 @@ fun TodayScreen(
     onToggleHabit: (Long) -> Unit,
     onAddGlass: () -> Unit,
     onRemoveGlass: () -> Unit,
+    health: HealthUiState,
+    onRequestStepsAccess: () -> Unit,
+    onOpenHealthConnectStore: () -> Unit,
+    onRecordBp: () -> Unit,
+    onRecordWeight: () -> Unit,
     onAddTodo: (String) -> Unit,
     onToggleTodo: (Todo) -> Unit,
     onDeleteTodo: (Todo) -> Unit,
@@ -75,7 +80,11 @@ fun TodayScreen(
 
         item { DayHeader(state) }
 
+        item { StepsCard(health.steps, onRequestAccess = onRequestStepsAccess, onOpenHealthConnectStore = onOpenHealthConnectStore) }
+
         item { WaterCard(glasses = state.glasses, onAdd = onAddGlass, onRemove = onRemoveGlass) }
+
+        item { HealthSummaryCards(health, onRecordBp = onRecordBp, onRecordWeight = onRecordWeight) }
 
         item { SectionTitle("Habit") }
         items(state.habits, key = { "habit-${it.habit.id}" }) { item ->

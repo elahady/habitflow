@@ -16,8 +16,11 @@ import java.time.ZoneId
 
 /** Hasil membaca langkah hari ini dari Health Connect (tahap 21). */
 sealed interface StepsReading {
-    /** [background] benar kalau izin membaca di latar belakang sudah diberikan, jadi pembacaan berkala bisa jalan. */
-    data class Available(val steps: Long, val background: Boolean) : StepsReading
+    /**
+     * [background] benar kalau izin membaca di latar belakang sudah diberikan, jadi pembacaan berkala bisa jalan.
+     * [backgroundAvailable] salah kalau Health Connect di HP ini belum mendukung izin itu, jadi tidak ada yang bisa diminta.
+     */
+    data class Available(val steps: Long, val background: Boolean, val backgroundAvailable: Boolean) : StepsReading
 
     /** Health Connect ada, tapi izin langkah belum diberikan. */
     data object NeedsPermission : StepsReading
@@ -67,18 +70,24 @@ class HealthConnectStepsSource(private val context: Context) : StepsSource {
                 timeRangeFilter = TimeRangeFilter.between(start, end),
             ),
         )
-        return StepsReading.Available(result[StepsRecord.COUNT_TOTAL] ?: 0L, background)
+        return StepsReading.Available(
+            steps = result[StepsRecord.COUNT_TOTAL] ?: 0L,
+            background = background,
+            backgroundAvailable = background || isBackgroundReadAvailable(client),
+        )
     }
 
-    @OptIn(ExperimentalFeatureAvailabilityApi::class)
     override suspend fun permissionsToRequest(): Set<String> {
         if (status() != HealthConnectClient.SDK_AVAILABLE) return setOf(READ_STEPS)
         val client = HealthConnectClient.getOrCreate(appContext)
-        val backgroundAvailable = client.features.getFeatureStatus(
-            HealthConnectFeatures.FEATURE_HEALTH_DATA_BACKGROUND_READ,
-        ) == HealthConnectFeatures.FEATURE_STATUS_AVAILABLE
-        return if (backgroundAvailable) setOf(READ_STEPS, READ_IN_BACKGROUND) else setOf(READ_STEPS)
+        return if (isBackgroundReadAvailable(client)) setOf(READ_STEPS, READ_IN_BACKGROUND) else setOf(READ_STEPS)
     }
+
+    /** Apakah Health Connect di HP ini mendukung izin baca di latar belakang. Belum ada di semua versi. */
+    @OptIn(ExperimentalFeatureAvailabilityApi::class)
+    private fun isBackgroundReadAvailable(client: HealthConnectClient): Boolean =
+        client.features.getFeatureStatus(HealthConnectFeatures.FEATURE_HEALTH_DATA_BACKGROUND_READ) ==
+            HealthConnectFeatures.FEATURE_STATUS_AVAILABLE
 
     companion object {
         val READ_STEPS: String = HealthPermission.getReadPermission(StepsRecord::class)
