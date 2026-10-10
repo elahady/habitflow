@@ -141,7 +141,12 @@ class MainActivity : ComponentActivity() {
                 val healthRepo = remember { HealthRepository(HabitDatabase.get(applicationContext)) }
                 val health: HealthViewModel = viewModel(
                     factory = viewModelFactory {
-                        initializer { HealthViewModel(healthRepo, graph.healthSettings, graph.stepsTracker, clock) }
+                        initializer {
+                            HealthViewModel(
+                                healthRepo, graph.healthSettings, graph.stepsTracker,
+                                MealRepository(HabitDatabase.get(applicationContext)), drinkRepo, clock,
+                            )
+                        }
                     },
                 )
                 healthViewModel = health

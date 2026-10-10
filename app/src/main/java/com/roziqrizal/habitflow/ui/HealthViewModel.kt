@@ -3,8 +3,11 @@ package com.roziqrizal.habitflow.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.roziqrizal.habitflow.data.BloodPressureEntry
+import com.roziqrizal.habitflow.data.DrinkKind
+import com.roziqrizal.habitflow.data.DrinkRepository
 import com.roziqrizal.habitflow.data.HealthRepository
 import com.roziqrizal.habitflow.data.HealthSettings
+import com.roziqrizal.habitflow.data.MealRepository
 import com.roziqrizal.habitflow.data.WeightEntry
 import com.roziqrizal.habitflow.data.health.StepsReading
 import com.roziqrizal.habitflow.data.health.StepsTracker
@@ -22,11 +25,15 @@ import com.roziqrizal.habitflow.domain.health.isValidHeight
 import com.roziqrizal.habitflow.domain.health.isValidWeight
 import com.roziqrizal.habitflow.domain.health.remainingToTarget
 import com.roziqrizal.habitflow.domain.health.weightTrend
+import com.roziqrizal.habitflow.domain.meals.WeeklyMealSummary
+import com.roziqrizal.habitflow.domain.meals.weeklyMealSummary
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -72,6 +79,8 @@ data class HealthUiState(
     /** Catatan 90 hari terakhir, urut dari yang paling lama, untuk grafik. */
     val weights: List<WeightEntry> = emptyList(),
     val bps: List<BloodPressureEntry> = emptyList(),
+    /** Ringkasan makan tujuh hari terakhir (tahap 23). */
+    val mealWeek: WeeklyMealSummary? = null,
 )
 
 /** Hasil yang ditampilkan di sheet setelah menyimpan. */
@@ -92,10 +101,22 @@ class HealthViewModel(
     private val repo: HealthRepository,
     private val settings: HealthSettings,
     private val steps: StepsTracker,
+    private val meals: MealRepository,
+    private val drinks: DrinkRepository,
     private val clock: DayClock,
 ) : ViewModel() {
 
     private val zone: ZoneId get() = ZoneId.systemDefault()
+
+    /** Ringkasan makan tujuh hari terakhir termasuk hari ini (tahap 23). */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val mealWeek = clock.date.flatMapLatest { today ->
+        val days = (0..6).map { today.minusDays(it.toLong()) }
+        val from = days.last()
+        combine(meals.observeMealsBetween(from, today), drinks.observeCounts(DrinkKind.COFFEE, from, today)) { logged, coffee ->
+            weeklyMealSummary(days, logged, coffee)
+        }
+    }
 
     private val stepsState = MutableStateFlow<StepsUiState>(StepsUiState.Loading)
 
@@ -107,8 +128,8 @@ class HealthViewModel(
         repo.observeBloodPressures(),
         settings.heightCm,
         settings.targetKg,
-        combine(stepsState, clock.date) { s, d -> s to d },
-    ) { weights, bps, height, target, (stepsUi, today) ->
+        combine(stepsState, clock.date, mealWeek) { s, d, m -> Triple(s, d, m) },
+    ) { weights, bps, height, target, (stepsUi, today, mealSummary) ->
         val from = today.minusDays(HEALTH_CHART_DAYS)
         val points = weights.map { WeightPoint(dateOf(it.timeMillis), it.timeMillis, it.kg) }
         val latestWeight = weights.lastOrNull()
@@ -120,6 +141,7 @@ class HealthViewModel(
             heightCm = height,
             weights = weights.filter { !dateOf(it.timeMillis).isBefore(from) },
             bps = bps.filter { !dateOf(it.timeMillis).isBefore(from) },
+            mealWeek = mealSummary,
         )
     }.stateIn(
         scope = viewModelScope,

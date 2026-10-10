@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import com.roziqrizal.habitflow.data.BloodPressureEntry
 import com.roziqrizal.habitflow.data.WeightEntry
 import com.roziqrizal.habitflow.domain.health.bpCategory
+import com.roziqrizal.habitflow.domain.meals.WeeklyMealSummary
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -133,6 +134,33 @@ private fun HealthProgress(state: HealthUiState) {
                 )
             }
         }
+
+        item { SectionTitle("Makan, 7 hari terakhir") }
+        item { MealWeekCard(state.mealWeek) }
+    }
+}
+
+/** Ringkasan makan seminggu (tahap 23): hari piring lengkap, catatan bergorengan dan bermanis, dan total kopi. */
+@Composable
+private fun MealWeekCard(summary: WeeklyMealSummary?) {
+    AppCard(modifier = Modifier.fillMaxWidth()) {
+        if (summary == null || (summary.daysLogged == 0 && summary.coffeeCups == 0)) {
+            Text(
+                "Belum ada catatan makan minggu ini. Catat dari Hari ini.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            return@AppCard
+        }
+        Text(
+            "Piring lengkap",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text("${summary.fullPlateDays} dari 7 hari", style = MaterialTheme.typography.displayMedium)
+        Muted("Karbo, lauk, sayur, dan buah ada di makan siang atau malam.")
+        Muted("Gorengan ${summary.friedMeals} · Manis ${summary.sweetMeals} · Kopi ${summary.coffeeCups} gelas")
+        Muted("Dicatat di ${summary.daysLogged} dari 7 hari.")
     }
 }
 
