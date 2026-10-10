@@ -1300,6 +1300,55 @@ dikerjakan sebelum atau sesudah tahap 26 — tidak saling bergantung.
 - Data personal lain (habit, jadwal, dll di luar follow-up kerja) tidak terpengaruh sama
   sekali — masih snapshot seperti sebelumnya.
 
+## Arah baru: Web jadi versi lengkap, bukan cuma tambahan (diputuskan 10 Oktober 2026)
+
+Setelah tahap 26-27 jalan, diputuskan arah yang lebih besar: **web bukan cuma tambahan
+kecil (follow-up kerja, to-do tim), tapi harus jadi versi lengkap** dari semua yang ada
+di app Android. Konsekuensinya dua hal mendasar berubah dari rencana awal:
+
+1. **Semua fitur**, bukan cuma sebagian, akhirnya dapat tabel database + endpoint CRUD +
+   halaman Livewire — dikerjakan bertahap, satu fitur jadi satu tahap, bukan sekaligus.
+2. **Model snapshot (tahap 19B) ditinggalkan** untuk data yang sudah dimigrasi. HP dan
+   web jadi **setara** — sama-sama baca/tulis langsung ke server, bukan lagi "HP
+   mencadangkan ke server". Server/database jadi sumber kebenaran bersama, pola yang
+   sama dengan follow-up kerja (tahap 27: deteksi konflik lewat `updated_at` + 409, bukan
+   timpa diam-diam) dipakai lagi untuk tiap fitur yang dimigrasi.
+
+Token per-HP tanpa akun (tahap 19B) tetap ada selama masih ada fitur yang belum
+dimigrasi, dan endpoint `PUT /snapshot` tetap jalan untuk itu — begitu semua fitur sudah
+pindah, baru dipertimbangkan apakah 19B dipensiunkan total.
+
+### Peta migrasi (fitur → tabel yang dibutuhkan)
+
+| Fitur | Tabel | Sumber tahap | Status |
+|---|---|---|---|
+| Follow-up kerja | `follow_ups` | 19 | **Direncanakan — tahap 27** |
+| To-do tim | `team_todos`, `teams`, `team_invites` | baru | **Selesai (web+API) — tahap 26** |
+| Habit + to-do harian | `habits`, `habit_entries`, `todos` | 1-9 | Belum dimulai |
+| Jadwal harian & libur | `schedule_blocks`, `schedule_block_habits`, `days_off`, `holiday_cancellations` | 17, 22 | Belum dimulai |
+| Daily scrum/EOD | `work_days` | 19 | Belum dimulai |
+| Kesehatan (berat, tensi) | `weight_entries`, `blood_pressure_entries` | 21 | Belum dimulai |
+| Asupan makan | `meals`, `drink_counts`, `habit_manual_marks` | 20, 23 | Belum dimulai |
+| Kalender & acara | `events`, `event_exceptions` | 22 | Belum dimulai |
+| Pengaturan (lokasi, adzan, tema, pengingat) | `settings` per user | berbagai | Belum dimulai |
+| Langkah (steps) | **Tidak dimigrasi** — sumbernya sensor Health Connect di HP, web tidak punya akses. Tetap device-only; habit yang ke-centang otomatis dari langkah tetap ikut sinkron lewat `habit_entries` | 21 | N/A |
+| Asisten AI | Belum diputuskan skemanya — ini fitur interaktif (chat), beda sifat dari data yang disinkron biasa. Didiskusikan terpisah saat gilirannya tiba | 24 | Belum diputuskan |
+
+**Setiap tahap migrasi mengikuti pola yang sama** (sudah terbukti di tahap 26-27):
+1. Tabel MySQL + model Eloquent.
+2. Endpoint API (`/api/v1/...`) dengan `user-token` middleware, termasuk deteksi konflik
+   (`updated_at` + 409) untuk data yang bisa diedit dari 2 tempat.
+3. Halaman/komponen Livewire di web.
+4. App Android: pindah dari baca/tulis field snapshot ke panggil endpoint baru, keluarkan
+   field itu dari payload `PUT /snapshot` supaya tidak dobel sumber kebenaran.
+5. Field terkait di snapshot 19B ditandai "sudah dimigrasi, bukan ikut snapshot lagi" di
+   dokumen tahap 19B (atau dicatat di tahap migrasinya).
+
+**Urutan disarankan** (belum final, bisa diubah sesuai kebutuhan sebenarnya): follow-up
+kerja (27) dan to-do tim (26) dulu (sudah jalan) → **Habit + to-do harian** (paling sering
+dipakai, fondasi fitur lain) → Jadwal harian → Kesehatan & Asupan makan → Kalender →
+Pengaturan. Asisten AI didiskusikan kapan saja setelah ada waktu, tidak harus urut.
+
 ## Daftar pertanyaan terbuka
 
 - Urutan habit bisa diubah atau tidak (tahap 9, opsional).
