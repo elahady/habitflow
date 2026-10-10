@@ -1207,7 +1207,8 @@ infrastrukturnya).
 | Login | **Google Sign-In saja** (lewat Socialite untuk web, Credential Manager untuk Android). Tidak ada password sendiri — tidak ada tabel password, reset password, atau verifikasi email untuk dibangun |
 | Framework web | **Livewire**, di dalam Laravel app yang sama dengan API (`server/`). Bukan SPA terpisah |
 | Repo | **Repo yang sama** (`habitflow`), bukan repo baru. Web tinggal tambahan `routes/web.php`, `app/Livewire/`, `resources/views/` di folder `server/` yang sudah ada — satu codebase, satu migrasi, satu deploy |
-| Deploy | Container Docker sendiri di VM (pola sama seperti roziqrizalcom): `serversideup/php:8.3-fpm-nginx`, connect ke `shared-mysql` (network `shared-db`), subdomain lewat Cloudflare Tunnel (misal `habitflow.roziqrizal.com`). Satu container melayani web Livewire **dan** API `/api/v1/...` sekaligus |
+| Deploy | Container Docker sendiri di VM (pola sama seperti roziqrizalcom): `serversideup/php:8.3-fpm-nginx`, connect ke `shared-mysql` (network `shared-db`). Satu container melayani web Livewire **dan** API `/api/v1/...` sekaligus |
+| Domain | **`habitflow.roziqrizal.com`** — subdomain dari domain yang sudah ada, bukan beli domain baru (app pribadi/keluarga, tidak butuh branding domain sendiri). Dipasang lewat tunnel `home-server` yang sudah ada: `cloudflared tunnel route dns home-server habitflow.roziqrizal.com` + 1 baris ingress rule di `/etc/cloudflared/config.yml` |
 
 #### Langkah bangun (urut, tiap langkah idealnya 1 commit/PR)
 
