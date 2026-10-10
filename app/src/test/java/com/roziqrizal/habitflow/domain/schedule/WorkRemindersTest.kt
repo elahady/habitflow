@@ -165,6 +165,14 @@ class WorkRemindersTest {
     }
 
     @Test
+    fun hitunganTurunDiBawahTargetHanyaSaatTurunMelewatinya() {
+        assertTrue(dropsBelowWaterTarget(8, 7))
+        assertFalse(dropsBelowWaterTarget(9, 8))
+        assertFalse(dropsBelowWaterTarget(7, 6))
+        assertFalse(dropsBelowWaterTarget(7, 8))
+    }
+
+    @Test
     fun tigaPengingatAirTakTerjawabMenghentikanPengingatDiBlokItu() {
         var state = WaterReminderState()
         val sent = mutableListOf<Boolean>()

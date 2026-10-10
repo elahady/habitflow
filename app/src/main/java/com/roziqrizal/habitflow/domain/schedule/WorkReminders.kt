@@ -99,6 +99,9 @@ fun workRemindersBetween(reminders: List<WorkReminder>, sinceMinute: Int, nowMin
 /** Hitungan gelas melewati target pada perubahan ini. Hanya saat naik melewatinya, supaya centang manual menang. */
 fun crossesWaterTarget(before: Int, after: Int): Boolean = before < GLASSES_TARGET && after >= GLASSES_TARGET
 
+/** Hitungan gelas turun melewati target pada perubahan ini, misalnya dari 8 ke 7. Dipakai membatalkan centang otomatis. */
+fun dropsBelowWaterTarget(before: Int, after: Int): Boolean = before >= GLASSES_TARGET && after < GLASSES_TARGET
+
 /**
  * Ingatan pengingat air terakhir. [segment] mengenali blok dan tanggalnya, [ignored] jumlah pengingat sebelumnya
  * yang tidak dijawab, [glassesAtLast] hitungan gelas saat pengingat terakhir dikirim.

@@ -2,14 +2,15 @@ package com.roziqrizal.habitflow.data
 
 import androidx.room.withTransaction
 import com.roziqrizal.habitflow.domain.schedule.crossesWaterTarget
+import com.roziqrizal.habitflow.domain.schedule.dropsBelowWaterTarget
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.time.LocalDate
 
 /**
  * Penghitung minuman per hari: gelas air (tahap 20), kopi dan minuman manis (tahap 23). Hitungan air yang naik melewati
- * target mencentang habit bersumber otomatis air. Mengurangi gelas tidak pernah membatalkan centang, dan centang manual tidak
- * dicentang ulang. Habit kopi dan minuman manis tidak dicentang di sini, tetapi oleh [MealRepository.applyAutoChecks].
+ * target mencentang habit bersumber otomatis air. Hitungan yang turun di bawah target membatalkan centang itu, kecuali
+ * pengguna pernah mengubah centangnya sendiri hari itu ([HabitManualMark]). Centang manual tidak dicentang ulang. Habit kopi dan minuman manis tidak dicentang di sini, tetapi oleh [MealRepository.applyAutoChecks].
  */
 class DrinkRepository(private val db: HabitDatabase) {
 
@@ -49,8 +50,15 @@ class DrinkRepository(private val db: HabitDatabase) {
         val after = (before + delta).coerceAtLeast(0)
         if (after != before) {
             drinks.upsert(DrinkCount(key, kind, after))
-            if (kind == DrinkKind.WATER && crossesWaterTarget(before, after)) {
-                habits.idByAutoSource(HabitAutoSource.WATER)?.let { entries.insert(HabitEntry(it, key)) }
+            if (kind == DrinkKind.WATER) {
+                val habitId = habits.idByAutoSource(HabitAutoSource.WATER)
+                if (habitId != null) {
+                    if (crossesWaterTarget(before, after)) {
+                        entries.insert(HabitEntry(habitId, key))
+                    } else if (dropsBelowWaterTarget(before, after) && entries.markCount(habitId, key) == 0) {
+                        entries.delete(habitId, key)
+                    }
+                }
             }
         }
         after

@@ -109,7 +109,8 @@ divisualisasikan seperti kontribusi GitHub.
 - **Penghitung gelas** per hari, target 8 gelas. Tombol "Sudah minum" di notifikasi dan tombol "+ Segelas" di
   kartu air dashboard menambah satu. Tombol "−" mengurangi satu (tidak di bawah 0). Gelas boleh lebih dari 8.
 - **Habit "Air putih 2 liter"** tercentang otomatis saat hitungan naik sampai 8. Centang manual tetap menang:
-  membatalkan centang tidak dicentang ulang oleh gelas ke-9, dan mengurangi gelas tidak membatalkan centang.
+  membatalkan centang tidak dicentang ulang oleh gelas ke-9. Mengurangi gelas dari 8 ke 7 membatalkan centang yang
+  dibuat otomatis (salah ketuk bisa dibatalkan), tetapi tidak menyentuh centang yang pernah diubah sendiri hari itu.
 - **Diabaikan.** Pengingat air yang tidak dijawab (tidak ada gelas bertambah sampai pengingat air berikutnya)
   tiga kali berturut-turut di satu blok menghentikan pengingat air sampai blok berikutnya. Break tetap jalan.
 - Pengingat air dan break masing-masing bisa dimatikan di Tentang. Awalnya nyala.
