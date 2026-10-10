@@ -1445,11 +1445,10 @@ panggil API" seperti follow-up kerja.
      push/pull, resolusi konflik 409 di UI, dan terima undangan tim dari Android (tahap 26
      langkah 2) yang kini bisa dibangun di atas lapisan akun yang sama.
 
-**Belum dijalankan ke VM** per 10 Oktober 2026 — migrasi `habits`/`habit_entries`/`todos`
-baru ada di repo, belum `php artisan migrate --force` di server produksi (lihat
-[server/DEPLOY.md](../server/DEPLOY.md) untuk prosedurnya). PHP/Composer tidak terinstall
-di PC Windows ini jadi tidak bisa diverifikasi lokal; verifikasi nyata baru bisa dilakukan
-setelah deploy ke VM.
+✅ **Sudah dijalankan ke VM (10 Oktober 2026)** — deploy penuh lewat `server/DEPLOY.md`
+(tar+scp, `docker compose build`, `--force-recreate`), lalu `php artisan migrate --force`:
+migrasi `habits`/`habit_entries` dan `todos` jalan tanpa error. Container sehat
+(`docker ps` healthy), `https://habitflow.roziqrizal.com/login` membalas 200.
 
 **Belum diputuskan:**
 - Seberapa sering Android pull dari server (detik? menit? cuma saat app dibuka?) -
