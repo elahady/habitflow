@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\FollowUpController;
 use App\Http\Controllers\Api\GoogleAuthController;
 use App\Http\Controllers\Api\HabitController;
 use App\Http\Controllers\Api\TeamController;
@@ -46,4 +47,12 @@ Route::prefix('v1')->middleware(['user-token', 'throttle:habitflow'])->group(fun
     Route::post('todos', [TodoController::class, 'store']);
     Route::put('todos/{todo}', [TodoController::class, 'update']);
     Route::delete('todos/{todo}', [TodoController::class, 'destroy']);
+});
+
+// Follow-up kerja (tahap 27) - per user, sumber kebenaran di server, PUT dicek konfliknya (409).
+Route::prefix('v1')->middleware(['user-token', 'throttle:habitflow'])->group(function () {
+    Route::get('follow-ups', [FollowUpController::class, 'index']);
+    Route::post('follow-ups', [FollowUpController::class, 'store']);
+    Route::put('follow-ups/{followUp}', [FollowUpController::class, 'update']);
+    Route::delete('follow-ups/{followUp}', [FollowUpController::class, 'destroy']);
 });

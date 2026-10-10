@@ -1310,7 +1310,7 @@ Dibahas 10 Oktober 2026. Butuh tahap 25 (akun, MySQL, Livewire) selesai lebih du
 + di-deploy ke VM. Yang belum: uji end-to-end join dua akun Google sungguhan (lihat catatan
 verifikasi di atas).**
 
-### Tahap 27: Web untuk Follow-up Kerja (diputuskan, belum dikoding)
+### Tahap 27: Web untuk Follow-up Kerja (langkah 1 sisi server selesai 11 Oktober 2026, langkah 2-3 belum)
 
 Dibahas 10 Oktober 2026. Butuh tahap 25 (akun, MySQL, Livewire) selesai lebih dulu. Bisa
 dikerjakan sebelum atau sesudah tahap 26 — tidak saling bergantung.
@@ -1343,6 +1343,20 @@ dikerjakan sebelum atau sesudah tahap 26 — tidak saling bergantung.
 1. **Follow-up kerja ke MySQL**: migrasi `follow_ups` (pindah dari field snapshot jadi
    tabel sungguhan). Endpoint CRUD dengan deteksi konflik (`updated_at` + balas 409).
    Keluarkan `followUps` dari payload snapshot 19B supaya tidak dobel sumber kebenaran.
+
+   ✅ **Sisi server selesai (11 Oktober 2026), belum di-deploy ke VM:** migrasi
+   `2026_10_11_090000_create_follow_ups_table`, model `FollowUp`, `FollowUpController`, dan
+   `/api/v1/follow-ups` (GET dengan filter `?status=`, POST, PUT, DELETE) di balik
+   `user-token`. Kolom: `title`, `status` (`INBOX`/`ACTIVE`/`WAITING`/`DONE`, bawaan `INBOX`),
+   `date`, `time` (`HH:mm`), `person`, `note`, `done_at`, `picked_date`, `event_id`,
+   `event_date`, `event_title`. Waktu dibuat memakai `created_at` Laravel (bukan `createdAt`
+   milidetik Android), `doneAt` jadi `done_at` bertipe timestamp. PUT **selalu** wajib
+   menyertakan `updated_at` (beda dari habit/to-do yang hanya mewajibkannya saat ubah teks),
+   tidak cocok dengan server → 409 berisi `follow_up` versi server. 10 feature test di
+   `tests/Feature/FollowUpApiTest.php`, seluruh suite 28 test lulus.
+   **Belum:** mengeluarkan `followUps` dari payload snapshot. Server menyimpan snapshot apa
+   adanya tanpa menafsirkan isinya, jadi itu perubahan di Android dan dikerjakan bersama
+   langkah 3 (selama Android masih mengirim `followUps` di snapshot, tidak ada yang rusak).
 2. **Halaman web follow-up kerja**: Livewire CRUD + dialog resolusi konflik saat 409.
 3. **Android ikut pindah**: follow-up kerja di app fetch/push langsung ke endpoint baru
    (bukan ikut snapshot lagi), tangani respons 409 dengan dialog yang sama seperti web.
@@ -1377,7 +1391,7 @@ pindah, baru dipertimbangkan apakah 19B dipensiunkan total.
 
 | Fitur | Tabel | Sumber tahap | Status |
 |---|---|---|---|
-| Follow-up kerja | `follow_ups` | 19 | **Direncanakan — tahap 27** |
+| Follow-up kerja | `follow_ups` | 19 | **Tahap 27: tabel + API selesai, web dan Android belum** |
 | To-do tim | `team_todos`, `teams`, `team_invites` | baru | **Selesai (web+API+Android) — tahap 26** |
 | Habit + to-do harian | `habits`, `habit_entries`, `todos` | 1-9 | **Selesai (web+API+Android)** — tahap 28 |
 | Jadwal harian & libur | `schedule_blocks`, `schedule_block_habits`, `days_off`, `holiday_cancellations` | 17, 22 | Belum dimulai |
