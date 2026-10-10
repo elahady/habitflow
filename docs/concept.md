@@ -1349,7 +1349,7 @@ kerja (27) dan to-do tim (26) dulu (sudah jalan) → **Habit + to-do harian** (p
 dipakai, fondasi fitur lain) → Jadwal harian → Kesehatan & Asupan makan → Kalender →
 Pengaturan. Asisten AI didiskusikan kapan saja setelah ada waktu, tidak harus urut.
 
-### Tahap 28: Habit + To-do Harian (diputuskan arahnya, belum dikoding)
+### Tahap 28: Habit + To-do Harian (web selesai, sync Android menyusul — 10 Oktober 2026)
 
 Dibahas 10 Oktober 2026. Fitur paling sering diakses di seluruh app — dicentang berkali-kali
 sehari, **harus tetap jalan offline** di Android. Ini beda dari follow-up kerja (tahap 27)
@@ -1392,14 +1392,32 @@ panggil API" seperti follow-up kerja.
 
 **Langkah bangun:**
 
-1. **Skema + migrasi**: tabel `habits`, `habit_entries`, `todos` di MySQL.
-2. **Endpoint API**: CRUD habits, toggle entries, CRUD todos, dengan deteksi konflik untuk
-   field yang diedit (bukan untuk aksi centang/selesai yang idempotent).
-3. **Halaman web**: kelola habit + halaman harian (centang habit, kelola to-do).
-4. **Keluarkan dari snapshot 19B**: `habits`, `habitEntries`, `todos` tidak lagi ikut
-   payload snapshot setelah migrasi ini aktif.
-5. **Android - lapisan sync baru** (sesi kerja terpisah, lebih besar dari langkah 1-4
-   digabung): outbox lokal, WorkManager push/pull berkala, UI penanganan konflik.
+1. ✅ **Skema + migrasi**: tabel `habits` (`user_id`, `name`, `sort_order`,
+   `is_mandatory`, `auto_source`), `habit_entries` (unique `habit_id`+`date`), `todos`
+   (`user_id`, `title`, `date`, `done`) di MySQL.
+2. ✅ **Endpoint API**: `GET/POST/PUT/DELETE /api/v1/habits`, `POST
+   /api/v1/habits/{habit}/entries` (toggle centang, idempotent), `GET/POST/PUT/DELETE
+   /api/v1/todos` (maks 5/tanggal, carry-over saat `GET ?date=hari-ini`). Deteksi konflik
+   (`updated_at` + 409) hanya untuk field `name`/`title`; toggle wajib/selesai/centang
+   idempotent tanpa cek konflik.
+3. ✅ **Halaman web** (`/habit`, `App\Livewire\HabitToday`): checklist habit hari ini +
+   to-do (maks 5) di atas, Kelola Habit (tambah, ubah nama, toggle wajib dengan konfirmasi
+   saat dimatikan, hapus - disembunyikan untuk habit wajib) di bawah. Versi sederhana,
+   tanpa heatmap/level seperti direncanakan.
+4. **Keluarkan dari snapshot 19B**: **tidak perlu kode tambahan** - `SnapshotController`
+   sudah agnostik terhadap isi `data` (cuma menyimpan blob terenkripsi apa adanya), jadi
+   begitu Android berhenti mengisi field `habits`/`habitEntries`/`todos` ke payload
+   snapshot (langkah 5), field itu otomatis tidak ikut lagi. Tidak ada migrasi server yang
+   dibutuhkan untuk langkah ini.
+5. **Android - lapisan sync baru** (sesi kerja terpisah, lebih besar dari langkah 1-3
+   digabung): outbox lokal, WorkManager push/pull berkala, UI penanganan konflik. **Belum
+   dikerjakan.**
+
+**Belum dijalankan ke VM** per 10 Oktober 2026 — migrasi `habits`/`habit_entries`/`todos`
+baru ada di repo, belum `php artisan migrate --force` di server produksi (lihat
+[server/DEPLOY.md](../server/DEPLOY.md) untuk prosedurnya). PHP/Composer tidak terinstall
+di PC Windows ini jadi tidak bisa diverifikasi lokal; verifikasi nyata baru bisa dilakukan
+setelah deploy ke VM.
 
 **Belum diputuskan:**
 - Seberapa sering Android pull dari server (detik? menit? cuma saat app dibuka?) -
