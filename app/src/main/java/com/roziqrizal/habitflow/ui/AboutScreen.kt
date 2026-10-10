@@ -47,6 +47,8 @@ import com.roziqrizal.habitflow.data.HealthSettings
 import com.roziqrizal.habitflow.data.LocationSettings
 import com.roziqrizal.habitflow.data.PlaceLocation
 import com.roziqrizal.habitflow.data.ThemeMode
+import com.roziqrizal.habitflow.data.calendar.CalendarSettings
+import com.roziqrizal.habitflow.data.calendar.PhoneCalendarSource
 import com.roziqrizal.habitflow.domain.prayer.PrayerName
 import com.roziqrizal.habitflow.domain.schedule.AlarmTime
 import com.roziqrizal.habitflow.ui.theme.tokens
@@ -75,6 +77,8 @@ fun AboutScreen(
     breakReminders: Boolean,
     onBreakRemindersChange: (Boolean) -> Unit,
     healthSettings: HealthSettings,
+    phoneCalendar: PhoneCalendarSource,
+    calendarSettings: CalendarSettings,
     nextAlarm: AlarmTime?,
     alarmSettings: AlarmSettings,
     sync: SyncUiState,
@@ -139,6 +143,9 @@ fun AboutScreen(
 
         SettingLabel("Pengingat kesehatan")
         HealthReminderSection(settings = healthSettings)
+
+        SettingLabel("Kalender HP")
+        CalendarSettingsSection(phone = phoneCalendar, settings = calendarSettings)
 
         SettingLabel("Alarm")
         AlarmSection(nextAlarm = nextAlarm, settings = alarmSettings)

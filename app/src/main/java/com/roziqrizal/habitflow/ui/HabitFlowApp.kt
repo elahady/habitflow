@@ -25,6 +25,8 @@ import com.roziqrizal.habitflow.data.AlarmSettings
 import com.roziqrizal.habitflow.data.HealthSettings
 import com.roziqrizal.habitflow.data.PlaceLocation
 import com.roziqrizal.habitflow.data.ThemeMode
+import com.roziqrizal.habitflow.data.calendar.CalendarSettings
+import com.roziqrizal.habitflow.data.calendar.PhoneCalendarSource
 import com.roziqrizal.habitflow.domain.schedule.WorkAction
 import com.roziqrizal.habitflow.ui.theme.tokens
 
@@ -64,6 +66,8 @@ fun HabitFlowApp(
     onBreakRemindersChange: (Boolean) -> Unit,
     health: HealthViewModel,
     healthSettings: HealthSettings,
+    phoneCalendar: PhoneCalendarSource,
+    calendarSettings: CalendarSettings,
     onRequestStepsAccess: () -> Unit,
     onOpenHealthConnectStore: () -> Unit,
     onThemeModeChange: (ThemeMode) -> Unit,
@@ -262,6 +266,8 @@ fun HabitFlowApp(
                         breakReminders = breakReminders,
                         onBreakRemindersChange = onBreakRemindersChange,
                         healthSettings = healthSettings,
+                        phoneCalendar = phoneCalendar,
+                        calendarSettings = calendarSettings,
                         onThemeModeChange = onThemeModeChange,
                     )
                 }

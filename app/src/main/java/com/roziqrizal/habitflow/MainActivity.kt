@@ -187,6 +187,8 @@ class MainActivity : ComponentActivity() {
                     onBreakRemindersChange = workReminderSettings::setBreaks,
                     health = health,
                     healthSettings = graph.healthSettings,
+                    phoneCalendar = graph.phoneCalendar,
+                    calendarSettings = graph.calendarSettings,
                     onRequestStepsAccess = {
                         lifecycleScope.launch { stepsPermission.launch(health.stepsPermissions()) }
                     },
