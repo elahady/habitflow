@@ -19,6 +19,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'token' => AuthenticateToken::class,
             'user-token' => AuthenticateUserToken::class,
         ]);
+
+        // Traffic masuk lewat Cloudflare Tunnel (cloudflared di VM yang sama) - tanpa ini,
+        // Laravel kira semua request HTTP biasa dan generate URL http:// bukan https://.
+        $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Semua jalur API selalu dijawab dengan JSON, termasuk saat galat.
