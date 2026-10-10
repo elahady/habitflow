@@ -15,5 +15,7 @@
         @enderror
         <button type="submit" class="primary">Masuk</button>
     </form>
+    <div class="divider">atau</div>
+    <x-google-button>Masuk dengan Google</x-google-button>
     <p class="switch">Belum punya akun? <a href="{{ route('register') }}">Daftar</a></p>
 </x-auth-card>

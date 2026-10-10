@@ -115,6 +115,24 @@
             transition: opacity 0.15s ease;
         }
         button.primary:hover { opacity: 0.9; }
+        a.google {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            background: var(--surface-container-low);
+            border: 1px solid var(--outline-variant);
+            color: var(--on-surface);
+            text-decoration: none;
+            padding: 12px 24px;
+            border-radius: 999px;
+            font-family: 'Manrope', sans-serif;
+            font-weight: 600;
+            font-size: 15px;
+            transition: opacity 0.15s ease;
+        }
+        a.google:hover { opacity: 0.85; }
         .divider {
             display: flex;
             align-items: center;

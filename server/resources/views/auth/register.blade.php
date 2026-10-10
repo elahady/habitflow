@@ -26,5 +26,7 @@
         </div>
         <button type="submit" class="primary">Daftar</button>
     </form>
+    <div class="divider">atau</div>
+    <x-google-button>Daftar dengan Google</x-google-button>
     <p class="switch">Sudah punya akun? <a href="{{ route('login') }}">Masuk</a></p>
 </x-auth-card>
