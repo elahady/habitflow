@@ -1179,7 +1179,7 @@ connect Google semua dicoba langsung oleh pemilik akun dan berhasil.
 email/password) — kalau nanti ada fitur yang butuh identitas Google tertentu, perlu
 dicek `auth()->user()->google_sub` tidak null dulu.
 
-### Tahap 26: To-Do Tim — kolaborasi dengan pasangan (diputuskan, belum dikoding)
+### Tahap 26: To-Do Tim — kolaborasi dengan pasangan (selesai total - web, API, Android, 10 Oktober 2026)
 
 Dibahas 10 Oktober 2026. Butuh tahap 25 (akun, MySQL, Livewire) selesai lebih dulu.
 
@@ -1562,9 +1562,9 @@ khusus, dicatat sebagai keterbatasan platform, bukan bug kode.
 - 284 unit test lulus (termasuk `HabitSyncClientTest` dengan server soket mini, pola sama
   dengan `SyncClientTest`, dan `HabitSyncMergeTest` untuk `entryMergeAction`).
 
-**Belum dikerjakan**: terima undangan tim dari Android (tahap 26 langkah 2) yang kini bisa
-dibangun di atas lapisan akun yang sama; resolusi konflik interaktif (kalau nanti keputusan
-"server menang" dirasa kurang; follow-up kerja tahap 27 kemungkinan butuh ini lebih dulu).
+**Belum dikerjakan**: resolusi konflik interaktif (kalau nanti keputusan "server menang"
+dirasa kurang; follow-up kerja tahap 27 kemungkinan butuh ini lebih dulu). Terima undangan
+tim dari Android yang disebut di sini sebelumnya sudah dikerjakan - lihat tahap 26 langkah 2.
 
 ✅ **Sudah dijalankan ke VM (10 Oktober 2026)** — deploy penuh lewat `server/DEPLOY.md`
 (tar+scp, `docker compose build`, `--force-recreate`), lalu `php artisan migrate --force`:
