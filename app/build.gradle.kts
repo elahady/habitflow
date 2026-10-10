@@ -17,6 +17,19 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
+
+        // Client ID Google (tipe Web, dibuat di tahap 25) dipakai sebagai serverClientId saat
+        // minta ID token lewat Credential Manager - harus SAMA dengan GOOGLE_ANDROID_CLIENT_ID
+        // di .env.production server, supaya aud token cocok saat diverifikasi (lihat
+        // GoogleAuthController di server/). Diisi lewat local.properties, tidak di-commit.
+        val localProps = Properties().apply {
+            val f = rootProject.file("local.properties")
+            if (f.exists()) f.inputStream().use { load(it) }
+        }
+        buildConfigField(
+            "String", "GOOGLE_SERVER_CLIENT_ID",
+            "\"${localProps.getProperty("GOOGLE_SERVER_CLIENT_ID", "")}\"",
+        )
     }
 
     // Keystore release disimpan di luar repo. Lokasinya bisa diganti lewat properti
@@ -70,6 +83,11 @@ dependencies {
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
     ksp("androidx.room:room-compiler:2.6.1")
+
+    // Login Google lewat Credential Manager (tahap 25/26/28 - prasyarat akun di Android).
+    implementation("androidx.credentials:credentials:1.3.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
 
     testImplementation("junit:junit:4.13.2")
     // org.json bawaan Android tidak ada di JVM unit test; versi ini setara dan hanya dipakai untuk tes.
