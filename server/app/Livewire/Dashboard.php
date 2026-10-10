@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use Illuminate\Contracts\View\View;
 use Livewire\Component;
 
 /**
@@ -10,8 +11,8 @@ use Livewire\Component;
  */
 class Dashboard extends Component
 {
-    public function render()
+    public function render(): View
     {
-        return view('livewire.dashboard');
+        return view('livewire.dashboard')->layout('components.layout', ['title' => 'Beranda']);
     }
 }
