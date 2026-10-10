@@ -25,4 +25,9 @@ class Team extends Model
     {
         return $this->hasMany(TeamInvite::class);
     }
+
+    public function todos(): HasMany
+    {
+        return $this->hasMany(TeamTodo::class);
+    }
 }
