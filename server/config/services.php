@@ -39,8 +39,11 @@ return [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
         'redirect' => env('GOOGLE_REDIRECT_URI'),
-        // Client ID Android dipakai untuk verifikasi ID token dari app (tahap 25 langkah 4),
-        // bukan oleh Socialite (yang cuma pakai client_id/client_secret web di atas).
+        // Dipakai untuk verifikasi ID token dari app Android (tahap 25 langkah 4), bukan
+        // oleh Socialite (yang cuma pakai client_id/client_secret web di atas). Walau nama
+        // env-nya "ANDROID", isinya tetap Client ID tipe Web (sama dengan client_id di atas)
+        // - itu yang jadi "aud" di ID token Google, sesuai GOOGLE_SERVER_CLIENT_ID yang
+        // dikirim Android lewat Credential Manager. Lihat .env.example untuk detail.
         'android_client_id' => env('GOOGLE_ANDROID_CLIENT_ID'),
     ],
 
