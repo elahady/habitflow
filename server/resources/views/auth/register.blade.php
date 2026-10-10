@@ -1,4 +1,5 @@
 <x-auth-card title="Daftar">
+    <x-slot:tagline>Catat habit, to-do, dan jadwal harianmu dalam 2 detik — tanpa pikir panjang soal kategori atau tanggal dulu.</x-slot:tagline>
     <form method="POST" action="{{ route('register') }}">
         @csrf
         <div class="field">

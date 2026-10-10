@@ -1,4 +1,5 @@
 <x-auth-card title="Masuk">
+    <x-slot:tagline>Asisten harian yang tahu sedang di blok apa sekarang dan apa berikutnya — dari bangun tidur sampai tidur lagi.</x-slot:tagline>
     <form method="POST" action="{{ route('login') }}">
         @csrf
         <div class="field">

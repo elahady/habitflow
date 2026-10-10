@@ -68,8 +68,14 @@
             font-family: 'Libre Caslon Text', serif;
             font-weight: 400;
             font-size: 22px;
-            margin: 0;
+            margin: 0 0 6px;
             color: var(--on-surface);
+        }
+        .brand p {
+            font-size: 13.5px;
+            line-height: 1.5;
+            color: var(--on-surface-variant);
+            margin: 0;
         }
         label {
             display: block;
@@ -138,6 +144,9 @@
         <div class="brand">
             <img src="{{ asset('images/logo.png') }}" alt="{{ config('app.name') }}">
             <h1>{{ $title }}</h1>
+            @isset($tagline)
+                <p>{{ $tagline }}</p>
+            @endisset
         </div>
         {{ $slot }}
     </div>
