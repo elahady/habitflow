@@ -1410,8 +1410,26 @@ panggil API" seperti follow-up kerja.
    snapshot (langkah 5), field itu otomatis tidak ikut lagi. Tidak ada migrasi server yang
    dibutuhkan untuk langkah ini.
 5. **Android - lapisan sync baru** (sesi kerja terpisah, lebih besar dari langkah 1-3
-   digabung): outbox lokal, WorkManager push/pull berkala, UI penanganan konflik. **Belum
-   dikerjakan.**
+   digabung): outbox lokal, WorkManager push/pull berkala, UI penanganan konflik.
+   **Prasyarat selesai (10 Oktober 2026), outbox belum dikerjakan:**
+   - ✅ **Lapisan akun Google di Android** - belum ada sama sekali sebelumnya, padahal
+     dibutuhkan bersama oleh tahap 26 langkah 2 (terima undangan tim) dan tahap ini.
+     `AccountSettings` (token API di `account.xml`, dikeluarkan dari Auto Backup seperti
+     `sync.xml`), `GoogleSignIn` (Credential Manager, minta ID token), `AccountClient`
+     (tukar ID token ke token API lewat `POST /api/v1/auth/google`, alamat tetap
+     `habitflow.roziqrizal.com`), `AccountManager` (gabungkan ketiganya). Bagian "Akun" di
+     Tentang: tombol Masuk dengan Google / Keluar. `assembleDebug` dan unit test lulus.
+   - **Pull: hanya saat app dibuka** (diputuskan 10 Oktober 2026) - bukan polling
+     WorkManager berkala seperti to-do tim (tahap 26). Habit/to-do personal kurang butuh
+     realtime dibanding tugas tim, jadi cukup tarik ulang saat layar Habit dibuka/di-resume;
+     push tetap lewat outbox + WorkManager saat online (menyusul).
+   - **Belum diverifikasi end-to-end** - butuh nilai asli `GOOGLE_SERVER_CLIENT_ID` (Client
+     ID tipe Web dari Google Cloud Console tahap 25, harus sama dengan
+     `GOOGLE_ANDROID_CLIENT_ID` di `.env.production` server) diisi ke `local.properties`
+     (tidak di-commit), lalu dicoba login nyata di emulator/HP dengan Google Play Services.
+   - **Belum dikerjakan**: outbox lokal untuk perubahan habit/entry/todo, WorkManager
+     push/pull, resolusi konflik 409 di UI, dan terima undangan tim dari Android (tahap 26
+     langkah 2) yang kini bisa dibangun di atas lapisan akun yang sama.
 
 **Belum dijalankan ke VM** per 10 Oktober 2026 — migrasi `habits`/`habit_entries`/`todos`
 baru ada di repo, belum `php artisan migrate --force` di server produksi (lihat
