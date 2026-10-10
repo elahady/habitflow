@@ -223,6 +223,26 @@ Rincian (9 Oktober 2026):
   Centang manual selalu menang. Kopi ke-3 memunculkan pesan tenang.
 - Satu pengingat Info sebelum batas tidur kalau ada waktu makan yang belum dicatat.
 
+Rincian (10 Oktober 2026):
+
+- **Satu catatan per tanggal dan jenis** (sarapan, siang, malam, camilan). Menekan chip yang sudah dicatat membuka catatan itu
+  untuk diubah atau dihapus. Jam catatan bawaannya sekarang dan bisa diubah; jam inilah yang dipakai aturan makan malam.
+- **Batas tidur** adalah akhir rentang notifikasi tetap (jam blok "Batas tidur", 22.00 bawaan). Makan malam tepat waktu kalau
+  jamnya paling lambat 2 jam sebelumnya (20.00), tepat 20.00 masih sah. Jam batas tidur kemarin disamakan dengan hari ini.
+- **Hari tanpa catatan makan:** "Tanpa gorengan atau camilan manis" dan "Makan malam" tidak dicentang karena tidak ada data. Kopi
+  dan minuman manis memakai penghitung, jadi hitungan 0 berarti dicentang.
+- **Kapan dihitung:** saat batas tidur (alarm blok Batas tidur) dan saat app dibuka untuk kemarin serta hari ini yang sudah
+  lewat batas tidur. Perhitungan hanya menambah centang, tidak pernah menghapus, dan bisa diulang aman.
+- **Centang manual menang:** setiap centang atau batal-centang sendiri menandai pasangan habit dan tanggalnya, dan perhitungan
+  otomatis melewatinya. Habit yang dibuat sesudah tanggal itu juga dilewati.
+- **Kopi ke-3** menampilkan "Kopi hari ini sudah 3 gelas, di atas batas 2." di bawah kartu air, tanpa warna status.
+- **Pengingat catatan makan** muncul 60 menit sebelum batas tidur (21.00), senyap, berisi "Belum dicatat: ..." untuk sarapan,
+  makan siang, dan makan malam yang kosong (camilan tidak wajib). Tidak muncul kalau ketiganya sudah dicatat. Bisa dimatikan
+  di Tentang, bagian Catatan makan.
+- **Ringkasan mingguan** (Progres, Kesehatan): tujuh hari terakhir termasuk hari ini. Satu hari piring lengkap kalau makan siang
+  atau malamnya memuat karbo, lauk, sayur, dan buah (dihitung sekali per hari). Gorengan dan manis dihitung per catatan makan,
+  kopi per gelas.
+
 ## Asisten AI (tahap 24)
 
 - Empat fitur: **ringkasan mingguan** (Minggu malam), **tanya jawab** atas data sendiri,

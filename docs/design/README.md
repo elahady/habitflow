@@ -302,14 +302,26 @@ Kerja atau dari notifikasi blok Kerja pagi dan EOD.
    keterangan bodySmall "Dihitung dari jam mulai blok ini." Kartu blok di daftar menambah teks "Air dan break"
    (bodySmall) bila menyala.
 
-### Asupan makan (tahap 23, belum diterapkan)
-1. Kartu "Makan" di dashboard: empat chip kecil Sarapan, Siang, Malam, Camilan. Chip yang
-   sudah dicatat memakai latar `primaryFixed` dan tanda centang, yang belum memakai garis
-   `outlineVariant`. Tap chip membuka bottom sheet catat.
-2. Bottom sheet catat: judul waktu makan dan jam (bisa diubah), baris `FilterChip` Karbo,
-   Lauk, Sayur, Buah, baris kedua Gorengan dan Manis, kolom catatan opsional, tombol Simpan.
-3. Kartu air (tahap 20) mendapat dua tombol teks kecil "+ Kopi" dan "+ Manis" dengan
-   jumlahnya. Kopi ke-3 menampilkan teks tenang di bawah kartu, bukan dialog.
+### Asupan makan (tahap 23)
+1. Kartu "Makan" di dashboard, di bawah kartu air: label "Makan" (labelMedium, `onSurfaceVariant`) lalu `FlowRow` empat chip
+   Sarapan, Siang, Malam, Camilan (jarak 8dp, membungkus ke baris kedua kalau lebar tidak cukup). Chip yang sudah dicatat memakai
+   latar `primaryFixed` dan label "✓ Siang 09.08" (tanda centang dan jam catatan), yang belum memakai garis `outlineVariant`.
+   Tap chip membuka bottom sheet catat.
+2. Bottom sheet catat (`ModalBottomSheet`): judul waktu makan (titleLarge) dengan tombol teks jam di kanan (membuka
+   `AppTimePickerDialog`), label "Isi piring" (labelMedium), baris `FilterChip` Karbo, Lauk, Sayur, Buah, baris kedua Gorengan dan
+   Manis, kolom catatan opsional, `TonalButton` "Simpan" selebar layar, dan untuk catatan yang sudah ada `TextButton` "Hapus
+   catatan".
+3. Kartu air (tahap 20) mendapat satu baris di bawah bar kemajuan: dua penghitung berdampingan "− + Kopi (n)" dan "− + Manis (n)"
+   (tombol teks, area sentuh minimal 48dp, "−" nonaktif di 0). Kopi di atas batas menampilkan teks tenang (bodySmall,
+   `onSurfaceVariant`) "Kopi hari ini sudah 3 gelas, di atas batas 2." di bawah baris itu, bukan dialog dan tanpa warna status.
+4. **Tentang**: bagian "Catatan makan" setelah Pengingat kesehatan dan sebelum Kalender HP, berisi satu baris `Switch` "Pengingat
+   catatan makan" (keterangan "Satu jam sebelum batas tidur, kalau ada waktu makan yang belum dicatat.").
+5. **Notifikasi pengingat** (channel Info jadwal, senyap, id tetap): judul "Catat makan hari ini", isi "Belum dicatat: sarapan,
+   makan malam."
+6. **Progres, Kesehatan**: bagian baru "Makan, 7 hari terakhir" di bawah Tensi, berisi satu `AppCard`: label "Piring lengkap"
+   (labelMedium), angka "1 dari 7 hari" (displayMedium), keterangan Karbo-lauk-sayur-buah di makan siang atau malam, baris
+   "Gorengan 0 · Manis 0 · Kopi 3 gelas", dan "Dicatat di 1 dari 7 hari." (bodySmall). Tanpa catatan sama sekali: teks "Belum ada
+   catatan makan minggu ini. Catat dari Hari ini."
 
 ### Kalender (tahap 22)
 1. Tab Kerja mendapat tombol ketiga "Agenda" di samping "Daily scrum" dan "EOD" (tiga `TonalButton` berdampingan, setiap

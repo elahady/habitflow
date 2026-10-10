@@ -996,7 +996,7 @@ liburnya (dan Batalkan/Libur lagi di kartu Sekarang) karena tidak ada libur di s
 HP di Agenda dan timeline (kalender akun di emulator tidak punya acara yang dinyalakan); acara Kerja mati saat hari libur.
 Semua itu sudah dicakup unit test untuk logikanya, tapi belum dilihat di layar.
 
-### Tahap 23: Asupan makan (diputuskan 5 Oktober 2026, dirinci 10 Oktober 2026, sedang dikoding)
+### Tahap 23: Asupan makan (diputuskan 5 Oktober 2026, dirinci 10 Oktober 2026, selesai dikoding dan diuji sebagian di emulator, 10 Oktober 2026)
 
 **Keputusan (5 Oktober 2026).** Aturan fitur di `docs/rancangan.md` bagian Asupan makan.
 
@@ -1051,6 +1051,26 @@ Semua itu sudah dicakup unit test untuk logikanya, tapi belum dilihat di layar.
 - Ringkasan malam hanya muncul kalau ada waktu makan yang belum dicatat.
 - Tab Progres bagian Kesehatan menampilkan ringkasan mingguan: berapa hari Isi Piringku
   lengkap (keempat komponen di makan siang atau malam), jumlah gorengan, manis, dan kopi.
+
+**Hasil verifikasi (10 Oktober 2026, emulator Pixel 6 API 34, database v7 berisi data lama, jam palsu lewat `DebugClockReceiver`):**
+- Migrasi 7 ke 8 pada data yang sudah ada berhasil: app terbuka tanpa crash, habit, tensi, dan acara lama utuh, kartu Makan dan
+  penghitung Kopi dan Manis muncul.
+- Dashboard: "+ Kopi" tiga kali menampilkan "Kopi hari ini sudah 3 gelas, di atas batas 2." tanpa dialog. Sheet Siang dengan keempat
+  komponen disimpan dalam beberapa tap dan chip berubah jadi "✓ Siang 09.08".
+- Pengingat: dengan jam palsu 21.00 muncul notifikasi "Catat makan hari ini · Belum dicatat: sarapan, makan malam." (siang sudah
+  dicatat).
+- Centang otomatis: dengan jam palsu 22.00 "Tanpa minuman manis" dan "Tanpa gorengan atau camilan manis" tercentang; "Ngopi maksimal
+  2 gelas" (kopi 3) dan "Makan malam" (belum dicatat) tidak. Setelah "Tanpa minuman manis" dibatalkan sendiri, evaluasi jam palsu
+  22.30 tidak mencentangnya lagi (centang manual menang).
+- Progres, Kesehatan: "Piring lengkap 1 dari 7 hari", "Gorengan 0 · Manis 0 · Kopi 3 gelas", "Dicatat di 1 dari 7 hari".
+- Tentang: bagian "Catatan makan" dengan switch pengingat tampil.
+- Unit test seluruh modul lulus (267 tes, 0 gagal): 18 tes aturan makan baru termasuk batas 20.00 dan 20.01, kopi tepat 2 dan 3,
+  hari tanpa catatan, dan ringkasan mingguan; dua tes snapshot baru untuk bidang tahap 23.
+
+**Belum diverifikasi:** alarm batas tidur sungguhan pukul 22.00 (hanya lewat jam palsu); pengingat 21.00 lewat alarm sungguhan;
+"Hapus catatan" dan mengubah catatan yang sudah ada di sheet; pemulihan snapshot yang berisi catatan makan ke HP lain (hanya
+dites di tingkat kode JSON); tampilan empat chip Makan yang semuanya tercatat di layar 360dp; centang otomatis untuk "kemarin"
+saat app baru dibuka pagi hari; switch pengingat dimatikan lalu notifikasi tidak muncul.
 
 ### Tahap 24: Asisten AI (diputuskan, belum dikoding)
 
