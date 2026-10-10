@@ -110,9 +110,11 @@ fun WorkScreen(
         item { Text("Kerja", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(start = 4.dp)) }
         item {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
-                TonalButton(text = "Daily scrum", onClick = onOpenScrum, modifier = Modifier.weight(1f))
-                TonalButton(text = "EOD", onClick = onOpenEod, modifier = Modifier.weight(1f))
-                TonalButton(text = "Agenda", onClick = onOpenAgenda, modifier = Modifier.weight(1f))
+                // Tiga tombol berbagi lebar, jadi padding dalamnya dipersempit supaya "Daily scrum" tetap satu baris.
+                val narrow = PaddingValues(horizontal = 8.dp)
+                TonalButton(text = "Daily scrum", onClick = onOpenScrum, modifier = Modifier.weight(1f), contentPadding = narrow)
+                TonalButton(text = "EOD", onClick = onOpenEod, modifier = Modifier.weight(1f), contentPadding = narrow)
+                TonalButton(text = "Agenda", onClick = onOpenAgenda, modifier = Modifier.weight(1f), contentPadding = narrow)
             }
         }
         if (state.people.isNotEmpty()) {

@@ -84,16 +84,18 @@ fun TonalButton(
     enabled: Boolean = true,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = ButtonDefaults.ContentPadding,
 ) {
     FilledTonalButton(
         onClick = onClick,
         enabled = enabled,
         modifier = modifier,
+        contentPadding = contentPadding,
         colors = ButtonDefaults.filledTonalButtonColors(
             containerColor = MaterialTheme.tokens.primaryFixed,
             contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
         ),
-    ) { Text(text) }
+    ) { Text(text, maxLines = 1) }
 }
 
 /** Warna `FilterChip` mengikuti palet sage: chip terpilih memakai latar `primaryFixed`, bukan biru bawaan Material. */

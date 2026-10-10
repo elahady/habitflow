@@ -292,7 +292,7 @@ private fun OccurrenceRow(occurrence: EventOccurrence, recurrence: String?, onCl
     Row(modifier = rowModifier.padding(horizontal = 4.dp, vertical = 4.dp)) {
         Text(
             occurrenceTime(occurrence),
-            style = MaterialTheme.typography.bodyMedium.copy(fontFeatureSettings = "tnum"),
+            style = MaterialTheme.typography.bodyLarge.copy(fontFeatureSettings = "tnum"),
             modifier = Modifier.width(TIME_COLUMN_WIDTH),
         )
         Column(modifier = Modifier.weight(1f)) {

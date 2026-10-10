@@ -313,11 +313,11 @@ Kerja atau dari notifikasi blok Kerja pagi dan EOD.
 
 ### Kalender (tahap 22)
 1. Tab Kerja mendapat tombol ketiga "Agenda" di samping "Daily scrum" dan "EOD" (tiga `TonalButton` berdampingan, setiap
-   tombol mengisi sepertiga lebar).
+   tombol mengisi sepertiga lebar, padding horizontal dalam tombol 8dp dan teks satu baris supaya "Daily scrum" tidak membungkus).
 2. **Agenda** (layar penuh di atas tab, seperti Daily scrum dan EOD): tombol "‹ Kembali", judul "Agenda" (headlineMedium),
    `SingleChoiceSegmentedButtonRow` "7 hari" dan "Bulan", lalu `TonalButton` "+ Acara". **7 hari**: hari ini sampai enam hari
    lagi, tiap hari satu judul (labelMedium, misalnya "Jumat, 9 Oktober"; "Hari ini" untuk hari ini) lalu satu baris per acara:
-   jam dengan angka tabular selebar 96dp ("14.00–15.00" atau "Sepanjang hari"), judul (bodyLarge), dan keterangan (bodySmall,
+   jam dengan angka tabular (bodyLarge, sejajar dengan judul) selebar 96dp ("14.00–15.00" atau "Sepanjang hari"), judul (bodyLarge), dan keterangan (bodySmall,
    `onSurfaceVariant`) berisi label, pengulangan ("Setiap 2 minggu") atau nama kalender HP. Hari tanpa acara menampilkan
    "Tidak ada acara." (bodySmall). Libur nasional tampil sebagai baris "Libur: <nama>" (bodyMedium) di awal hari, dan acara
    Kerja pada hari itu tidak tampil. Baris acara HabitFlow bisa ditekan, baris kalender HP tidak.
