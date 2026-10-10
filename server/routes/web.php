@@ -23,6 +23,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/', \App\Livewire\Dashboard::class)->name('dashboard');
     Route::get('/tugas-rumah', \App\Livewire\Teams::class)->name('teams');
+    Route::get('/habit', \App\Livewire\HabitToday::class)->name('habit');
 
     Route::get('/invite/{token}', [\App\Http\Controllers\InviteController::class, 'show'])->name('invites.show');
     Route::post('/invite/{token}/accept', [\App\Http\Controllers\InviteController::class, 'accept'])->name('invites.accept');
