@@ -915,7 +915,7 @@ versi ini `FEATURE_HEALTH_DATA_BACKGROUND_READ`; pindah ke 1.1.0 stabil menunggu
 build debug: `DebugStepsReceiver` (tulis dan hapus langkah uji) dan `DebugClockReceiver` (jalankan notifikasi dengan jam
 palsu), keduanya hanya ada di `app/src/debug`.
 
-### Tahap 22: Kalender dan acara rutin (diputuskan 5 Oktober 2026, dirinci 9 Oktober 2026, sedang dikoding)
+### Tahap 22: Kalender dan acara rutin (diputuskan 5 Oktober 2026, dirinci 9 Oktober 2026, selesai dikoding 10 Oktober 2026, belum diuji di emulator)
 
 **Keputusan (5 Oktober 2026).** Aturan fitur di `docs/rancangan.md` bagian Kalender.
 

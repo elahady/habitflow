@@ -322,8 +322,8 @@ Kerja atau dari notifikasi blok Kerja pagi dan EOD.
    "Tidak ada acara." (bodySmall). Libur nasional tampil sebagai baris "Libur: <nama>" (bodyMedium) di awal hari, dan acara
    Kerja pada hari itu tidak tampil. Baris acara HabitFlow bisa ditekan, baris kalender HP tidak.
 3. **Menu kejadian** (`AlertDialog` berisi `TextButton` bertumpuk) saat baris acara HabitFlow ditekan: "Ubah acara", "Ubah
-   kejadian ini" dan "Lewati kejadian ini" (hanya untuk acara berulang), "Hapus acara", dan "Batal". Lewati langsung berlaku;
-   Hapus meminta konfirmasi satu dialog.
+   kejadian ini", "Kembalikan kejadian ini" (hanya kalau kejadian itu sudah diubah) dan "Lewati kejadian ini" (hanya untuk acara
+   berulang), "Hapus acara", dan "Batal". Lewati langsung berlaku; Hapus meminta konfirmasi satu dialog.
 4. **Tampilan bulan**: judul bulan dan tahun (titleLarge) dengan tombol teks "‹" dan "›" di kedua sisi, baris nama hari (Sen
    sampai Min, labelSmall), lalu grid 7 kolom. Tiap sel setinggi 48dp berisi angka tanggal (bodyMedium, angka tabular) dan titik
    `primary` 6dp di bawahnya kalau ada acara. Hari ini memakai latar `primaryFixed`, hari libur memakai teks `onSurfaceVariant`
@@ -345,7 +345,9 @@ Kerja atau dari notifikasi blok Kerja pagi dan EOD.
    `Switch`, dan kalau menyala dua `FilterChip` Kerja dan Pribadi di bawahnya.
 9. **Notifikasi pengingat acara** (tingkat Pengingat): judul = judul acara, isi "Mulai 14.00 · Kerja".
 10. **Catat cepat tertaut**: sheet Catat menampilkan baris bodySmall "Tertaut ke acara: <judul>" saat ada acara Kerja berlangsung.
-    Di EOD, Inbox diberi judul kelompok (labelMedium) "Dari acara: <judul>, <jam>" di atas item-item dari acara itu.
+    Di EOD, Inbox diberi judul kelompok (labelMedium) "Dari acara: <judul>" di atas item-item dari acara itu, ditambah tanggal
+    pendek kalau bukan hari ini (jam tidak disimpan di follow-up). Item di luar acara tampil lebih dulu tanpa judul kelompok.
+    Kartu follow-up di tab Kerja dan EOD menambahkan keterangan yang sama ("Dari acara: <judul>") di akhir baris keterangan.
 
 ### Kesehatan (tahap 21)
 1. **Kartu di Hari ini**, di bawah kartu skor: kartu Langkah selebar layar (angka "3.240 /
