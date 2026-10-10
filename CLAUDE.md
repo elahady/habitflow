@@ -14,6 +14,21 @@ kontribusi ala GitHub. Detail rancangan ada di [docs/rancangan.md](docs/rancanga
   streak, layar). Kalau ada konflik dengan `concept.md`, `rancangan.md` yang menang
   dan `concept.md` diperbarui.
 
+## Catat progres di docs/concept.md
+
+- **Setiap menyelesaikan satu langkah kerja** (kode, keputusan, atau hasil
+  verifikasi) - sekecil apa pun - update status langkah/tahap terkait di
+  `docs/concept.md` (ganti jadi ✅, tambah catatan "belum dikerjakan"/"belum
+  diverifikasi", atau catat keputusan baru) **sebelum lanjut ke langkah
+  berikutnya**, bukan ditumpuk di akhir sesi.
+- Tujuannya: sesi mana pun (termasuk setelah `/clear`, atau Claude/mesin lain)
+  bisa baca `docs/concept.md` saja dan tahu persis apa yang sudah selesai, apa
+  yang masih jalan, dan apa langkah berikutnya - tanpa re-derive dari git log
+  atau tanya ulang ke user.
+- Update docs ini **masuk ke commit yang sama** dengan kode yang diselesaikan
+  (atau commit terpisah kecil tepat setelahnya), ikut aturan Git di bawah -
+  jangan nunggu "nanti didokumentasikan belakangan".
+
 ## Aturan Git
 
 - **Setiap perubahan langsung di-commit lalu di-push** ke `origin main`, tanpa
