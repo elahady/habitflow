@@ -1,9 +1,14 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
-use App\Http\Controllers\Auth\GoogleConnectController;
+use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use Illuminate\Support\Facades\Route;
+
+// Dipakai guest (tombol Google di Login/Register) maupun user yang sudah login
+// (tombol "Hubungkan Google" di Dashboard) - lihat GoogleAuthController.
+Route::get('/auth/google', [GoogleAuthController::class, 'redirect'])->name('auth.google');
+Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback']);
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
@@ -14,10 +19,7 @@ Route::middleware('guest')->group(function () {
 
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
-
-    Route::get('/connect/google', [GoogleConnectController::class, 'redirect'])->name('connect.google');
-    Route::get('/connect/google/callback', [GoogleConnectController::class, 'callback']);
-    Route::delete('/connect/google', [GoogleConnectController::class, 'destroy'])->name('connect.google.destroy');
+    Route::delete('/auth/google', [GoogleAuthController::class, 'destroy'])->name('auth.google.destroy');
 
     Route::get('/', \App\Livewire\Dashboard::class)->name('dashboard');
 });
