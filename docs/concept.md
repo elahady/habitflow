@@ -915,7 +915,7 @@ versi ini `FEATURE_HEALTH_DATA_BACKGROUND_READ`; pindah ke 1.1.0 stabil menunggu
 build debug: `DebugStepsReceiver` (tulis dan hapus langkah uji) dan `DebugClockReceiver` (jalankan notifikasi dengan jam
 palsu), keduanya hanya ada di `app/src/debug`.
 
-### Tahap 22: Kalender dan acara rutin (diputuskan 5 Oktober 2026, dirinci 9 Oktober 2026, selesai dikoding 10 Oktober 2026, belum diuji di emulator)
+### Tahap 22: Kalender dan acara rutin (diputuskan 5 Oktober 2026, dirinci 9 Oktober 2026, selesai dikoding 10 Oktober 2026, diuji sebagian di emulator)
 
 **Keputusan (5 Oktober 2026).** Aturan fitur di `docs/rancangan.md` bagian Kalender.
 
@@ -973,6 +973,25 @@ palsu), keduanya hanya ada di `app/src/debug`.
   Membatalkan libur untuk satu tanggal mengembalikan blok Kerja hari itu.
 - Catatan cepat saat acara Kerja berlangsung tertaut ke acara itu, dan saat EOD terkumpul per
   acara.
+
+**Hasil verifikasi (10 Oktober 2026, emulator Pixel 6 API 34, akun Google nyata di emulator):**
+- Tab Kerja punya tombol ketiga "Agenda". Agenda 7 hari dan tampilan Bulan tampil sesuai desain. Acara "M" (Kerja, mingguan,
+  Sabtu 08.00, 60 menit) yang dibuat lewat editor tampil di Agenda dengan keterangan "Kerja · Setiap minggu (Sab)", dan di
+  tampilan Bulan titiknya jatuh di 10, 17, 24, dan 31 Oktober.
+- Acara yang sama muncul di kartu Sekarang/Berikutnya dengan penanda "Acara · Kerja" dan "Mulai 08.00".
+- Tentang, Kalender HP: izin sudah diberikan, kelima kalender akun tampil dengan switch, menyalakannya memunculkan chip Kerja
+  dan Pribadi (bawaan Pribadi).
+- Catat cepat: pukul 08.01, saat acara berlangsung, sheet Catat menampilkan "Tertaut ke acara: M". Catatan "Notulen" masuk
+  Inbox dengan keterangan "Dari acara: M", dan di EOD diberi judul kelompok "Dari acara: M".
+- Unit test seluruh modul lulus (termasuk empat tes baru pengelompokan per acara).
+- Temuan: tiga tombol di tab Kerja awalnya membuat "Daily scrum" membungkus jadi dua baris; diperbaiki dengan padding
+  dalam 8dp dan teks satu baris. Jam di baris Agenda diperbesar ke bodyLarge supaya sejajar dengan judul.
+
+**Belum diverifikasi:** notifikasi pengingat 15 menit sebelum acara (acara uji dibuat setelah waktu pengingatnya lewat);
+menu kejadian (Ubah kejadian ini, Lewati, Kembalikan, Hapus) dan pengulangan setiap 2 minggu; libur nasional pada tanggal
+liburnya (dan Batalkan/Libur lagi di kartu Sekarang) karena tidak ada libur di sekitar tanggal uji; tampilnya acara kalender
+HP di Agenda dan timeline (kalender akun di emulator tidak punya acara yang dinyalakan); acara Kerja mati saat hari libur.
+Semua itu sudah dicakup unit test untuk logikanya, tapi belum dilihat di layar.
 
 ### Tahap 23: Asupan makan (diputuskan, belum dikoding)
 
