@@ -8,7 +8,9 @@ import com.roziqrizal.habitflow.data.EventExceptionEntity
 import com.roziqrizal.habitflow.data.FollowUpEntity
 import com.roziqrizal.habitflow.data.Habit
 import com.roziqrizal.habitflow.data.HabitEntry
+import com.roziqrizal.habitflow.data.HabitManualMark
 import com.roziqrizal.habitflow.data.HolidayCancellation
+import com.roziqrizal.habitflow.data.MealEntity
 import com.roziqrizal.habitflow.data.ScheduleBlockEntity
 import com.roziqrizal.habitflow.data.ScheduleBlockHabit
 import com.roziqrizal.habitflow.data.Todo
@@ -37,6 +39,8 @@ data class SnapshotSettings(
     val weightReminder: Boolean = true,
     /** Nama `BpFrequency`. */
     val bpFrequency: String = "WEEKLY",
+    /** Pengingat catatan makan tahap 23. Snapshot lama tanpa bidang ini dibaca sebagai nyala. */
+    val mealReminder: Boolean = true,
 )
 
 /** Seluruh data HabitFlow pada satu waktu. Format JSON-nya ada di docs/concept.md tahap 19B. */
@@ -61,6 +65,9 @@ data class Snapshot(
     val events: List<EventEntity> = emptyList(),
     val eventExceptions: List<EventExceptionEntity> = emptyList(),
     val holidayCancellations: List<HolidayCancellation> = emptyList(),
+    /** Catatan makan dan penanda centang manual (tahap 23). Snapshot lama dibaca sebagai kosong. */
+    val meals: List<MealEntity> = emptyList(),
+    val habitManualMarks: List<HabitManualMark> = emptyList(),
     val settings: SnapshotSettings,
 )
 
@@ -138,12 +145,20 @@ object SnapshotCodec {
                 )
             })
             put("holidayCancellations", JSONArray(s.holidayCancellations.map { it.date }))
+            put("meals", array(s.meals) {
+                obj(
+                    "date" to it.date, "kind" to it.kind, "minute" to it.minute, "carb" to it.carb, "protein" to it.protein,
+                    "vegetable" to it.vegetable, "fruit" to it.fruit, "fried" to it.fried, "sweet" to it.sweet, "note" to it.note,
+                )
+            })
+            put("habitManualMarks", array(s.habitManualMarks) { obj("habitId" to it.habitId, "date" to it.date) })
             put("settings", JSONObject().apply {
                 put("location", obj("name" to s.settings.locationName, "latitude" to s.settings.latitude, "longitude" to s.settings.longitude))
                 put("persistentNotification", s.settings.persistentNotification)
                 put("adzan", JSONObject().apply { s.settings.adzan.forEach { (name, on) -> put(name, on) } })
                 put("themeMode", s.settings.themeMode)
                 put("workReminders", obj("water" to s.settings.waterReminders, "break" to s.settings.breakReminders))
+                put("meals", obj("reminder" to s.settings.mealReminder))
                 put(
                     "health",
                     obj(
@@ -170,6 +185,7 @@ object SnapshotCodec {
             val adzan = settings.getJSONObject("adzan")
             val reminders = settings.optJSONObject("workReminders")
             val health = settings.optJSONObject("health")
+            val mealSettings = settings.optJSONObject("meals")
 
             return Snapshot(
                 createdAt = root.optLong("createdAt", 0),
@@ -242,6 +258,17 @@ object SnapshotCodec {
                 }.orEmpty(),
                 holidayCancellations = data.optJSONArray("holidayCancellations")
                     ?.let { arr -> (0 until arr.length()).map { HolidayCancellation(arr.getString(it)) } }.orEmpty(),
+                meals = data.optJSONArray("meals")?.map {
+                    MealEntity(
+                        date = it.getString("date"), kind = it.getString("kind"), minute = it.getInt("minute"),
+                        carb = it.getBoolean("carb"), protein = it.getBoolean("protein"),
+                        vegetable = it.getBoolean("vegetable"), fruit = it.getBoolean("fruit"),
+                        fried = it.getBoolean("fried"), sweet = it.getBoolean("sweet"), note = it.str("note"),
+                    )
+                }.orEmpty(),
+                habitManualMarks = data.optJSONArray("habitManualMarks")?.map {
+                    HabitManualMark(it.getLong("habitId"), it.getString("date"))
+                }.orEmpty(),
                 settings = SnapshotSettings(
                     locationName = location.getString("name"),
                     latitude = location.getDouble("latitude"),
@@ -255,6 +282,7 @@ object SnapshotCodec {
                     targetKg = health?.double("targetKg"),
                     weightReminder = health?.optBoolean("weightReminder", true) ?: true,
                     bpFrequency = health?.optString("bpFrequency", "WEEKLY") ?: "WEEKLY",
+                    mealReminder = mealSettings?.optBoolean("reminder", true) ?: true,
                 ),
             )
         } catch (e: SnapshotFormatException) {

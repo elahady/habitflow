@@ -32,6 +32,8 @@ class SnapshotRepository(private val db: HabitDatabase) {
                 events = eventRows,
                 eventExceptions = consistentExceptions(dao.eventExceptions(), eventRows),
                 holidayCancellations = dao.holidayCancellations(),
+                meals = dao.meals(),
+                habitManualMarks = dao.habitManualMarks(),
                 settings = settings,
             )
         }
@@ -53,6 +55,8 @@ class SnapshotRepository(private val db: HabitDatabase) {
         dao.clearEventExceptions()
         dao.clearEvents()
         dao.clearHolidayCancellations()
+        dao.clearMeals()
+        dao.clearHabitManualMarks()
         dao.clearHabitEntries()
         dao.clearTodos()
         dao.clearHabits()
@@ -71,5 +75,7 @@ class SnapshotRepository(private val db: HabitDatabase) {
         dao.insertEvents(snapshot.events)
         dao.insertEventExceptions(consistentExceptions(snapshot.eventExceptions, snapshot.events))
         dao.insertHolidayCancellations(snapshot.holidayCancellations)
+        dao.insertMeals(snapshot.meals)
+        dao.insertHabitManualMarks(snapshot.habitManualMarks)
     }
 }

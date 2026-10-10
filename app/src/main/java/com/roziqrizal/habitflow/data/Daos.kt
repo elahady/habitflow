@@ -243,11 +243,15 @@ interface SyncDao {
     @Query("SELECT * FROM events") suspend fun events(): List<EventEntity>
     @Query("SELECT * FROM event_exceptions") suspend fun eventExceptions(): List<EventExceptionEntity>
     @Query("SELECT * FROM holiday_cancellations") suspend fun holidayCancellations(): List<HolidayCancellation>
+    @Query("SELECT * FROM meals") suspend fun meals(): List<MealEntity>
+    @Query("SELECT * FROM habit_manual_marks") suspend fun habitManualMarks(): List<HabitManualMark>
 
     // Pengecualian dihapus sebelum acaranya (kunci asing).
     @Query("DELETE FROM event_exceptions") suspend fun clearEventExceptions()
     @Query("DELETE FROM events") suspend fun clearEvents()
     @Query("DELETE FROM holiday_cancellations") suspend fun clearHolidayCancellations()
+    @Query("DELETE FROM meals") suspend fun clearMeals()
+    @Query("DELETE FROM habit_manual_marks") suspend fun clearHabitManualMarks()
 
     @Query("DELETE FROM drink_counts") suspend fun clearDrinkCounts()
     @Query("DELETE FROM weight_entries") suspend fun clearWeightEntries()
@@ -275,6 +279,8 @@ interface SyncDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertEvents(items: List<EventEntity>)
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertEventExceptions(items: List<EventExceptionEntity>)
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertHolidayCancellations(items: List<HolidayCancellation>)
+    @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertMeals(items: List<MealEntity>)
+    @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertHabitManualMarks(items: List<HabitManualMark>)
 }
 
 /** Acara HabitFlow dan pengecualian kejadiannya (tahap 22). */

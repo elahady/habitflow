@@ -88,6 +88,7 @@ class AppGraph(app: Application) {
                 targetKg = healthSettings.targetKg.value,
                 weightReminder = healthSettings.weightReminder.value,
                 bpFrequency = healthSettings.bpFrequency.value.name,
+                mealReminder = mealSettings.reminder.value,
             )
         }
 
@@ -104,6 +105,7 @@ class AppGraph(app: Application) {
             healthSettings.setTargetKg(settings.targetKg)
             healthSettings.setWeightReminder(settings.weightReminder)
             healthSettings.setBpFrequency(BpFrequency.entries.firstOrNull { it.name == settings.bpFrequency } ?: BpFrequency.WEEKLY)
+            mealSettings.setReminder(settings.mealReminder)
         }
     }
 }

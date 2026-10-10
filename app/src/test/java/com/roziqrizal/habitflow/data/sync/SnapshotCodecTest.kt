@@ -8,7 +8,9 @@ import com.roziqrizal.habitflow.data.EventExceptionEntity
 import com.roziqrizal.habitflow.data.FollowUpEntity
 import com.roziqrizal.habitflow.data.Habit
 import com.roziqrizal.habitflow.data.HabitEntry
+import com.roziqrizal.habitflow.data.HabitManualMark
 import com.roziqrizal.habitflow.data.HolidayCancellation
+import com.roziqrizal.habitflow.data.MealEntity
 import com.roziqrizal.habitflow.data.ScheduleBlockEntity
 import com.roziqrizal.habitflow.data.ScheduleBlockHabit
 import com.roziqrizal.habitflow.data.Todo
@@ -67,6 +69,11 @@ class SnapshotCodecTest {
             EventExceptionEntity(1, "2026-11-10", false, "2026-11-11", 900, 30, "Rapat khusus"),
         ),
         holidayCancellations = listOf(HolidayCancellation("2026-12-24")),
+        meals = listOf(
+            MealEntity("2026-10-10", "LUNCH", 740, true, true, true, false, false, false, null),
+            MealEntity("2026-10-10", "SNACK", 975, false, false, false, true, true, true, "Pisang goreng"),
+        ),
+        habitManualMarks = listOf(HabitManualMark(5, "2026-10-10")),
         settings = SnapshotSettings(
             locationName = "Surabaya",
             latitude = -7.2575,
@@ -80,6 +87,7 @@ class SnapshotCodecTest {
             targetKg = 70.5,
             weightReminder = false,
             bpFrequency = "DAILY",
+            mealReminder = false,
         ),
     )
 
@@ -194,6 +202,36 @@ class SnapshotCodecTest {
         assertEquals(emptyList<HolidayCancellation>(), decoded.holidayCancellations)
         assertTrue(decoded.followUps.all { it.eventId == null && it.eventTitle == null })
         assertEquals(sample().weightEntries, decoded.weightEntries)
+    }
+
+    @Test
+    fun bidangTahap23DitulisDenganNamaYangDiharapkan() {
+        val root = JSONObject(SnapshotCodec.encode(sample()))
+        val data = root.getJSONObject("data")
+        val snack = data.getJSONArray("meals").getJSONObject(1)
+        assertEquals("SNACK", snack.getString("kind"))
+        assertEquals(975, snack.getInt("minute"))
+        assertTrue(snack.getBoolean("fried"))
+        assertEquals("Pisang goreng", snack.getString("note"))
+        assertTrue(data.getJSONArray("meals").getJSONObject(0).isNull("note"))
+        assertEquals(5L, data.getJSONArray("habitManualMarks").getJSONObject(0).getLong("habitId"))
+        assertEquals(false, data.getJSONObject("settings").getJSONObject("meals").getBoolean("reminder"))
+    }
+
+    @Test
+    fun snapshotTanpaBidangTahap23TetapBisaDipulihkanDenganPengingatNyala() {
+        val root = JSONObject(SnapshotCodec.encode(sample()))
+        val data = root.getJSONObject("data")
+        data.remove("meals")
+        data.remove("habitManualMarks")
+        data.getJSONObject("settings").remove("meals")
+
+        val decoded = SnapshotCodec.decode(root.toString())
+
+        assertEquals(emptyList<MealEntity>(), decoded.meals)
+        assertEquals(emptyList<HabitManualMark>(), decoded.habitManualMarks)
+        assertTrue(decoded.settings.mealReminder)
+        assertEquals(sample().events, decoded.events)
     }
 
     @Test
