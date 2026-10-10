@@ -1,0 +1,21 @@
+services:
+  app:
+    build: .
+    container_name: habitflow
+    ports:
+      - "8081:8080"
+    volumes:
+      - storage:/var/www/html/storage
+    env_file:
+      - .env.production
+    networks:
+      - default
+      - shared-db
+    restart: unless-stopped
+
+networks:
+  shared-db:
+    external: true
+
+volumes:
+  storage:
