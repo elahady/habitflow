@@ -13,8 +13,9 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         FollowUpEntity::class, WorkDayEntity::class, DrinkCount::class,
         WeightEntry::class, BloodPressureEntry::class,
         EventEntity::class, EventExceptionEntity::class, HolidayCancellation::class,
+        MealEntity::class, HabitManualMark::class,
     ],
-    version = 7,
+    version = 8,
     exportSchema = false,
 )
 abstract class HabitDatabase : RoomDatabase() {
@@ -29,6 +30,7 @@ abstract class HabitDatabase : RoomDatabase() {
     abstract fun drinkDao(): DrinkDao
     abstract fun healthDao(): HealthDao
     abstract fun eventDao(): EventDao
+    abstract fun mealDao(): MealDao
 
     companion object {
         private const val NAME = "habitflow.db"
@@ -43,7 +45,7 @@ abstract class HabitDatabase : RoomDatabase() {
                     HabitDatabase::class.java,
                     NAME,
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
                     .addCallback(SeedCallback)
                     .build()
                     .also { instance = it }
@@ -65,10 +67,14 @@ abstract class HabitDatabase : RoomDatabase() {
             "Tanpa gorengan atau camilan manis" to false,
         )
 
-        /** Habit awal yang dicentang otomatis dari sumber tertentu (tahap 20 dan 21). */
+        /** Habit awal yang dicentang otomatis dari sumber tertentu (tahap 20, 21, dan 23). */
         private val SEED_AUTO_SOURCES = mapOf(
             "Air putih 2 liter" to HabitAutoSource.WATER,
             "8.000 langkah" to HabitAutoSource.STEPS,
+            "Tanpa minuman manis" to HabitAutoSource.NO_SWEET_DRINK,
+            "Ngopi maksimal 2 gelas (sepulang kerja)" to HabitAutoSource.COFFEE,
+            "Makan malam selesai 2-3 jam sebelum tidur" to HabitAutoSource.DINNER,
+            "Tanpa gorengan atau camilan manis" to HabitAutoSource.NO_FRIED_SWEET,
         )
 
         private object SeedCallback : RoomDatabase.Callback() {

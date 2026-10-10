@@ -10,7 +10,9 @@ data class DrinkCount(
     val count: Int,
 )
 
-/** Jenis minuman. Tahap 23 menambah kopi dan minuman manis di tabel yang sama. */
+/** Jenis minuman: air (tahap 20), kopi dan minuman manis (tahap 23) di tabel yang sama. */
 object DrinkKind {
     const val WATER = "WATER"
+    const val COFFEE = "COFFEE"
+    const val SWEET = "SWEET"
 }

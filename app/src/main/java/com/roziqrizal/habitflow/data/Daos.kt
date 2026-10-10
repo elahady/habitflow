@@ -46,6 +46,9 @@ interface DrinkDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(row: DrinkCount)
+
+    @Query("SELECT * FROM drink_counts WHERE kind = :kind AND date BETWEEN :from AND :to")
+    fun observeBetween(kind: String, from: String, to: String): Flow<List<DrinkCount>>
 }
 
 @Dao
@@ -65,6 +68,15 @@ interface HabitEntryDao {
 
     @Query("SELECT COUNT(*) FROM habit_entries WHERE habitId = :habitId AND date = :date")
     suspend fun count(habitId: Long, date: String): Int
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertMark(mark: HabitManualMark): Long
+
+    @Query("SELECT COUNT(*) FROM habit_manual_marks WHERE habitId = :habitId AND date = :date")
+    suspend fun markCount(habitId: Long, date: String): Int
+
+    @Query("DELETE FROM habit_manual_marks WHERE habitId = :habitId")
+    suspend fun deleteMarksForHabit(habitId: Long): Int
 }
 
 @Dao
@@ -296,4 +308,26 @@ interface EventDao {
 
     @Query("DELETE FROM event_exceptions WHERE eventId = :eventId AND originalDate = :originalDate")
     suspend fun deleteException(eventId: Long, originalDate: String): Int
+}
+
+@Dao
+interface MealDao {
+
+    @Query("SELECT * FROM meals WHERE date = :date")
+    fun observeByDate(date: String): Flow<List<MealEntity>>
+
+    @Query("SELECT * FROM meals WHERE date BETWEEN :from AND :to")
+    fun observeBetween(from: String, to: String): Flow<List<MealEntity>>
+
+    @Query("SELECT * FROM meals WHERE date = :date")
+    suspend fun getByDate(date: String): List<MealEntity>
+
+    @Query("SELECT * FROM meals")
+    suspend fun getAll(): List<MealEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsert(meal: MealEntity)
+
+    @Query("DELETE FROM meals WHERE date = :date AND kind = :kind")
+    suspend fun delete(date: String, kind: String): Int
 }

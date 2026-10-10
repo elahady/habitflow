@@ -260,3 +260,30 @@ val MIGRATION_6_7 = object : Migration(6, 7) {
         db.execSQL("ALTER TABLE `follow_ups` ADD COLUMN `eventTitle` TEXT")
     }
 }
+
+/**
+ * Database versi 7 ke 8 (tahap 23): tabel catatan makan dan penanda centang manual, serta sumber centang otomatis untuk empat
+ * habit makan (dicari lewat nama habit seed, seperti tahap 20 dan 21). Data lama tidak disentuh.
+ */
+val MIGRATION_7_8 = object : Migration(7, 8) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `meals` (`date` TEXT NOT NULL, `kind` TEXT NOT NULL, `minute` INTEGER NOT NULL, " +
+                "`carb` INTEGER NOT NULL, `protein` INTEGER NOT NULL, `vegetable` INTEGER NOT NULL, `fruit` INTEGER NOT NULL, " +
+                "`fried` INTEGER NOT NULL, `sweet` INTEGER NOT NULL, `note` TEXT, PRIMARY KEY(`date`, `kind`))",
+        )
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `habit_manual_marks` (`habitId` INTEGER NOT NULL, `date` TEXT NOT NULL, " +
+                "PRIMARY KEY(`habitId`, `date`))",
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_habit_manual_marks_date` ON `habit_manual_marks` (`date`)")
+        mapOf(
+            "Tanpa minuman manis" to HabitAutoSource.NO_SWEET_DRINK,
+            "Ngopi maksimal 2 gelas (sepulang kerja)" to HabitAutoSource.COFFEE,
+            "Makan malam selesai 2-3 jam sebelum tidur" to HabitAutoSource.DINNER,
+            "Tanpa gorengan atau camilan manis" to HabitAutoSource.NO_FRIED_SWEET,
+        ).forEach { (name, source) ->
+            db.execSQL("UPDATE habits SET autoSource = ? WHERE name = ? AND autoSource IS NULL", arrayOf(source, name))
+        }
+    }
+}

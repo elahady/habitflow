@@ -19,10 +19,17 @@ data class Habit(
     val autoSource: String? = null,
 )
 
-/** Sumber centang otomatis habit: gelas air (tahap 20) dan langkah dari Health Connect (tahap 21). */
+/**
+ * Sumber centang otomatis habit: gelas air (tahap 20), langkah dari Health Connect (tahap 21), dan habit makan dari catatan
+ * makan serta penghitung kopi dan minuman manis (tahap 23).
+ */
 object HabitAutoSource {
     const val WATER = "WATER"
     const val STEPS = "STEPS"
+    const val DINNER = "DINNER"
+    const val NO_FRIED_SWEET = "NO_FRIED_SWEET"
+    const val NO_SWEET_DRINK = "NO_SWEET_DRINK"
+    const val COFFEE = "COFFEE"
 }
 
 /** Satu baris = habit selesai pada tanggal itu. */

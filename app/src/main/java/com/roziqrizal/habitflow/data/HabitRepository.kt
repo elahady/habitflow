@@ -23,9 +23,13 @@ class HabitRepository(private val db: HabitDatabase) {
 
     fun observeAllTodos(): Flow<List<Todo>> = todos.observeAll()
 
-    /** Centang atau batalkan habit pada tanggal tertentu. */
-    suspend fun toggleHabit(habitId: Long, date: LocalDate) {
+    /**
+     * Centang atau batalkan habit pada tanggal tertentu. Pasangan habit dan tanggal ini ditandai sebagai diubah sendiri
+     * (tahap 23), supaya centang otomatis habit makan tidak menimpanya.
+     */
+    suspend fun toggleHabit(habitId: Long, date: LocalDate) = db.withTransaction {
         val key = date.toString()
+        entries.insertMark(HabitManualMark(habitId, key))
         if (entries.count(habitId, key) > 0) {
             entries.delete(habitId, key)
         } else {
@@ -52,7 +56,10 @@ class HabitRepository(private val db: HabitDatabase) {
         // Riwayat baru dihapus setelah habitnya benar-benar terhapus, supaya riwayat habit wajib
         // tidak ikut hilang saat penghapusannya ditolak.
         val deleted = habits.deleteIfNotMandatory(habitId) > 0
-        if (deleted) entries.deleteAllForHabit(habitId)
+        if (deleted) {
+            entries.deleteAllForHabit(habitId)
+            entries.deleteMarksForHabit(habitId)
+        }
         deleted
     }
 
