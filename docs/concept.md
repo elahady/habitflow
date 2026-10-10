@@ -1127,90 +1127,22 @@ Angka ini perkiraan kasar dan diperiksa ulang dari `usage` setelah sebulan dipak
   jawab saat cadangan tercapai.
 - Tanpa internet, layar AI menampilkan pesan dan bagian lain app tidak terganggu.
 
-### Tahap 25: Web Habitflow dan To-Do Tim (diputuskan arahnya, belum dikoding)
+### Tahap 25: Infrastruktur MySQL dan Akun Google (diputuskan, belum dikoding)
 
-Dibahas 10 Oktober 2026. Dua fitur berbeda fondasi, dibahas bareng karena sama-sama butuh
-web app dan sama-sama jadi alasan pindah dari SQLite ke **MySQL** di server (deploy di
-VM rumah, lihat [repo `server`](https://github.com/elahady/build-server) untuk
-infrastrukturnya).
-
-#### 25A: Web untuk Task Kerja (follow-up kerja)
+Dibahas 10 Oktober 2026. Fondasi untuk tahap 26 dan 27 — dikerjakan lebih dulu karena
+keduanya butuh ini. Awalnya didiskusikan bareng 26-27 sebagai "tahap 25" tunggal, dipecah
+jadi 3 tahap terpisah supaya progress tiap bagian bisa dilacak sendiri-sendiri.
 
 | Pertanyaan | Keputusan |
 |---|---|
-| Lingkup | **Hanya follow-up kerja** (tahap 19) yang dapat CRUD penuh dari web. Habit, jadwal, kesehatan, EOD, dll **tetap** model snapshot lama (HP sumber data, server cuma backup) |
-| Alasan dipisah | Follow-up kerja paling masuk akal dikerjakan dari desktop (kerja di depan laptop, bukan pegang HP). Fitur lain tidak butuh ini, jadi tidak perlu ubah model sync-nya |
-| Model data | Follow-up kerja pindah dari "field di dalam snapshot JSON" jadi **tabel sungguhan** di MySQL (`follow_ups`), API CRUD biasa (bukan snapshot) |
-| Siapa yang akses | Satu-satunya pemilik data (login dengan akun yang sama seperti 25B) |
-| Sinkron ke HP | HP tetap simpan salinan lokal (offline-first tidak berubah), tapi follow-up kerja sekarang **sumber kebenarannya di server**, bukan snapshot HP. HP fetch/push lewat API langsung, bukan ikut snapshot 19B lagi |
-| Konflik | **Deteksi, bukan timpa diam-diam.** Client kirim `updated_at` yang terakhir dilihat saat PUT; kalau beda dari yang di server (ada perubahan lain masuk duluan), server tolak (409) dan client tanya user: "Berubah di tempat lain (jam segini) — timpa, atau pakai yang terbaru?" |
-
-**Rencana teknis:**
-- Tabel `follow_ups` (MySQL) menggantikan `data.followUps` di snapshot untuk user yang sudah
-  pakai 25A. Kolom sama dengan struktur snapshot sekarang (`id`, `title`, `status`, `date`,
-  `time`, `person`, `note`, `createdAt`, `doneAt`, `pickedDate`) ditambah `user_id`,
-  `updated_at`.
-- Endpoint baru `/api/v1/follow-ups` (GET list, POST, PUT `:id`, DELETE `:id`) — CRUD biasa,
-  beda dari pola snapshot 19B yang cuma `PUT /snapshot`. `PUT` wajib sertakan `updated_at`
-  yang terakhir dilihat client (dipakai server untuk cek konflik, lihat baris Konflik di
-  atas); tidak cocok → balas `409 Conflict` berisi versi terbaru server, bukan menerima
-  begitu saja.
-- Snapshot 19B **tetap jalan** untuk data lain (habit, jadwal, dll) — follow-up kerja
-  dikeluarkan dari payload snapshot begitu 25A aktif, supaya tidak dobel sumber kebenaran.
-- Web app: perlu pilih framework. Kandidat paling ringan: **Laravel + Inertia/Livewire**
-  (satu codebase dengan server, tanpa build frontend terpisah) atau **SPA terpisah** (React/
-  Vue) yang panggil API yang sama dengan HP. Rekomendasi: **Livewire** dulu — paling cepat
-  dibangun untuk CRUD sederhana, bisa diganti SPA nanti kalau butuh lebih interaktif.
-- Autentikasi web pakai sesi (Laravel biasa) dengan user yang sama dari 25B.
-
-#### 25B: To-Do Tim (kolaborasi dengan pasangan)
-
-| Pertanyaan | Keputusan |
-|---|---|
-| Lingkup | **Hanya to-do rumah tangga** yang dibagi tim. Habit, follow-up kerja (kecuali 25A), jadwal tetap personal, tidak ikut tim |
-| Letak di app | **Tab terpisah** ("Tugas Rumah" atau nama lain), bukan menyatu dengan Hari ini/habit yang sudah ada. Desain yang sudah jalan tidak disentuh |
-| Akun | User perlu **login** (baru — sebelumnya cuma token per-HP tanpa akun). Email + password atau cukup username, perlu diputuskan saat desain layar login |
-| Kolaborasi | User A buat tim, dapat **link undangan** (token panjang & acak, misal 32 karakter hex — bukan kode pendek yang gampang ditebak). Dikirim manual lewat WhatsApp/apa saja (app tidak punya sistem pesan sendiri). **Sekali pakai** dan **kedaluwarsa 48 jam**. User B buka link, login/daftar kalau belum, klik "Gabung tim" |
-| Jumlah anggota | Tidak dibatasi ketat di desain (bisa 2 untuk pasangan, tapi skema tidak perlu hardcode "cuma 2") |
-| Data tim | To-do: judul, **ditugaskan ke siapa** (`assigned_to`, boleh kosong = belum ditugaskan), selesai/belum, siapa yang buat, siapa yang selesaikan, tanggal. Semua anggota tim bisa tambah/edit/hapus/centang/menugaskan item manapun |
-| Sinkron | **Bukan** snapshot — realtime-ish lewat polling (misal tiap buka tab/tarik refresh), bukan WebSocket (kompleksitas tidak sepadan untuk kebutuhan to-do rumah tangga) |
-| Akses | Dari app Android (tab baru) **dan** web (karena sekalian ada web dari 25A) |
-| Notifikasi | Saat ditugaskan tugas baru: notifikasi senyap (pola sama seperti pengingat kerja tahap 20), bukan push instan. Diperiksa lewat **perluasan job WorkManager yang sudah ada** (polling ±5 menit untuk sinkron 19B), bukan infrastruktur push baru (Firebase dkk) |
-
-**Rencana teknis:**
-- Tabel baru: `users` (email/username, password, dibuat lewat Laravel biasa — **bukan**
-  Sanctum/Breeze dulu kalau mau tetap ringan, cukup auth bawaan Laravel untuk web +
-  personal access token untuk API HP), `teams` (nama), `team_members` (user_id, team_id),
-  `team_invites` (team_id, token panjang-acak, dibuat_oleh, kedaluwarsa_pada, dipakai_pada —
-  null kalau belum dipakai), `team_todos` (team_id, title, assigned_to nullable, done,
-  created_by, done_by, created_at).
-- Endpoint: `/api/v1/teams` (buat tim), `/api/v1/teams/invites` (buat link undangan),
-  `/api/v1/teams/invites/:token/accept` (klik link → gabung, tolak kalau kedaluwarsa/sudah
-  dipakai), `/api/v1/teams/:id/todos` (CRUD to-do tim, termasuk ubah `assigned_to`).
-- Token per-HP (19B) dan akun (25B) **dua hal berbeda**: token lama tetap jalan untuk
-  snapshot personal yang belum pakai akun. User yang mau pakai To-Do Tim wajib bikin akun
-  dulu — bisa jalan berdampingan (app punya 2 jalur: token-only untuk data personal lama,
-  akun untuk fitur tim baru).
-- App Android: layar login baru, tab "Tugas Rumah" baru dengan daftar to-do tim (kelompokkan
-  per assignee atau tampilkan avatar/nama di tiap baris) + tombol tambah, state kosong
-  "Belum gabung tim" dengan tombol "Buat tim" / tempel link undangan. Job WorkManager yang
-  sudah ada diperluas: tiap siklus polling, cek juga to-do tim yang baru ditugaskan ke user
-  dan belum diberitahu, lalu tampilkan notifikasi senyap per item baru.
-- Link undangan dibuka dari luar app (WhatsApp dll) perlu **deep link** Android
-  (`App Links`/intent filter) supaya langsung buka ke layar "Gabung tim" di app kalau
-  terpasang, fallback ke web kalau belum.
-
-#### Keputusan final arsitektur (10 Oktober 2026)
-
-| Pertanyaan | Keputusan |
-|---|---|
+| Database | Pindah dari SQLite ke **MySQL**, di-deploy sebagai container `shared-mysql` di VM rumah (network `shared-db`, lihat [repo `server`](https://github.com/elahady/build-server)) — dipakai bareng dengan project lain di VM yang sama kalau nanti perlu |
 | Login | **Google Sign-In saja** (lewat Socialite untuk web, Credential Manager untuk Android). Tidak ada password sendiri — tidak ada tabel password, reset password, atau verifikasi email untuk dibangun |
 | Framework web | **Livewire**, di dalam Laravel app yang sama dengan API (`server/`). Bukan SPA terpisah |
 | Repo | **Repo yang sama** (`habitflow`), bukan repo baru. Web tinggal tambahan `routes/web.php`, `app/Livewire/`, `resources/views/` di folder `server/` yang sudah ada — satu codebase, satu migrasi, satu deploy |
-| Deploy | Container Docker sendiri di VM (pola sama seperti roziqrizalcom): `serversideup/php:8.3-fpm-nginx`, connect ke `shared-mysql` (network `shared-db`). Satu container melayani web Livewire **dan** API `/api/v1/...` sekaligus |
+| Deploy | Container Docker sendiri di VM (pola sama seperti roziqrizalcom): `serversideup/php:8.3-fpm-nginx`, connect ke `shared-mysql`. Satu container melayani web Livewire **dan** API `/api/v1/...` sekaligus |
 | Domain | **`habitflow.roziqrizal.com`** — subdomain dari domain yang sudah ada, bukan beli domain baru (app pribadi/keluarga, tidak butuh branding domain sendiri). Dipasang lewat tunnel `home-server` yang sudah ada: `cloudflared tunnel route dns home-server habitflow.roziqrizal.com` + 1 baris ingress rule di `/etc/cloudflared/config.yml` |
 
-#### Langkah bangun (urut, tiap langkah idealnya 1 commit/PR)
+**Langkah bangun:**
 
 1. **Infrastruktur**: resume setup `shared-mysql` di VM (network `shared-db`), buat database
    `habitflow` + user dedicated (bukan root).
@@ -1225,41 +1157,125 @@ infrastrukturnya).
    `/login/google/callback`) buat sesi. Endpoint API (`POST /api/v1/auth/google`) terima ID
    token dari Android, verifikasi ke Google, buat/cari `users`, balas personal access token.
 5. **Livewire shell**: install Livewire, layout dasar (navbar, halaman kosong setelah login).
-   **Selesai jika**: bisa login Google di web, lihat halaman kosong "Selamat datang".
-6. **Teams + invite**: migrasi `teams`, `team_members`, `team_invites`. Endpoint buat tim,
-   buat link undangan, terima undangan. Halaman Livewire: buat tim, lihat link undangan.
-7. **Terima undangan dari Android**: deep link (`App Links`) buka layar "Gabung tim" di app;
-   fallback ke halaman web kalau app belum terpasang.
-8. **To-Do Tim**: migrasi `team_todos` (dengan `assigned_to`). Endpoint CRUD. Halaman Livewire
-   daftar to-do tim (tambah/edit/hapus/tugaskan/centang). Tab baru "Tugas Rumah" di Android.
-9. **Notifikasi tugas**: perluas job WorkManager yang sudah ada untuk polling to-do tim baru,
-   notifikasi senyap saat ditugaskan.
-10. **Follow-up kerja ke MySQL**: migrasi `follow_ups` (pindah dari field snapshot jadi tabel
-    sungguhan). Endpoint CRUD dengan deteksi konflik (`updated_at` + balas 409). Keluarkan
-    `followUps` dari payload snapshot 19B supaya tidak dobel sumber kebenaran.
-11. **Halaman web follow-up kerja**: Livewire CRUD + dialog resolusi konflik saat 409.
-12. **Android ikut pindah**: follow-up kerja di app fetch/push langsung ke endpoint baru
-    (bukan ikut snapshot lagi), tangani respons 409 dengan dialog yang sama seperti web.
+6. **Deploy ke VM**: container Docker, connect ke `shared-mysql`, subdomain
+   `habitflow.roziqrizal.com` lewat tunnel yang sudah ada.
 
-**Belum diputuskan** (tidak menghalangi mulai dari langkah 1):
+**Selesai jika:**
+- `shared-mysql` jalan di VM, database `habitflow` bisa diakses dari container app.
+- Bisa login dengan Google di `habitflow.roziqrizal.com`, dan dari app Android (keduanya
+  jadi user yang sama di tabel `users` kalau pakai akun Google yang sama).
+- Halaman web kosong "Selamat datang" muncul setelah login — belum ada fitur apa-apa,
+  tapi fondasinya hidup dan bisa dibangun di atasnya.
+- Data habit/jadwal/snapshot 19B yang sudah ada tetap utuh setelah pindah ke MySQL.
+
+### Tahap 26: To-Do Tim — kolaborasi dengan pasangan (diputuskan, belum dikoding)
+
+Dibahas 10 Oktober 2026. Butuh tahap 25 (akun, MySQL, Livewire) selesai lebih dulu.
+
+| Pertanyaan | Keputusan |
+|---|---|
+| Lingkup | **Hanya to-do rumah tangga** yang dibagi tim. Habit, follow-up kerja (tahap 27), jadwal tetap personal, tidak ikut tim |
+| Letak di app | **Tab terpisah** ("Tugas Rumah" atau nama lain), bukan menyatu dengan Hari ini/habit yang sudah ada. Desain yang sudah jalan tidak disentuh |
+| Kolaborasi | User A buat tim, dapat **link undangan** (token panjang & acak, misal 32 karakter hex — bukan kode pendek yang gampang ditebak). Dikirim manual lewat WhatsApp/apa saja (app tidak punya sistem pesan sendiri). **Sekali pakai** dan **kedaluwarsa 48 jam**. User B buka link, login dengan Google kalau belum, klik "Gabung tim" |
+| Jumlah anggota | Tidak dibatasi ketat di desain (bisa 2 untuk pasangan, tapi skema tidak perlu hardcode "cuma 2") |
+| Data tim | To-do: judul, **ditugaskan ke siapa** (`assigned_to`, boleh kosong = belum ditugaskan), selesai/belum, siapa yang buat, siapa yang selesaikan, tanggal. Semua anggota tim bisa tambah/edit/hapus/centang/menugaskan item manapun |
+| Sinkron | **Bukan** snapshot — realtime-ish lewat polling (misal tiap buka tab/tarik refresh), bukan WebSocket (kompleksitas tidak sepadan untuk kebutuhan to-do rumah tangga) |
+| Akses | Dari app Android (tab baru) **dan** web |
+| Notifikasi | Saat ditugaskan tugas baru: notifikasi senyap (pola sama seperti pengingat kerja tahap 20), bukan push instan. Diperiksa lewat **perluasan job WorkManager yang sudah ada** (polling ±5 menit untuk sinkron 19B), bukan infrastruktur push baru (Firebase dkk) |
+
+**Rencana teknis:**
+- Tabel baru: `teams` (nama), `team_members` (user_id, team_id), `team_invites` (team_id,
+  token panjang-acak, dibuat_oleh, kedaluwarsa_pada, dipakai_pada — null kalau belum
+  dipakai), `team_todos` (team_id, title, assigned_to nullable, done, created_by, done_by,
+  created_at).
+- Endpoint: `/api/v1/teams` (buat tim), `/api/v1/teams/invites` (buat link undangan),
+  `/api/v1/teams/invites/:token/accept` (klik link → gabung, tolak kalau kedaluwarsa/sudah
+  dipakai), `/api/v1/teams/:id/todos` (CRUD to-do tim, termasuk ubah `assigned_to`).
+- Token per-HP (19B) dan akun Google (tahap 25) **dua hal berbeda**: token lama tetap jalan
+  untuk snapshot personal yang belum pakai akun. User yang mau pakai To-Do Tim wajib login
+  Google dulu — bisa jalan berdampingan (app punya 2 jalur: token-only untuk data personal
+  lama, akun untuk fitur tim baru).
+- App Android: tab "Tugas Rumah" baru dengan daftar to-do tim (kelompokkan per assignee atau
+  tampilkan avatar/nama di tiap baris) + tombol tambah, state kosong "Belum gabung tim"
+  dengan tombol "Buat tim" / tempel link undangan. Job WorkManager yang sudah ada diperluas:
+  tiap siklus polling, cek juga to-do tim yang baru ditugaskan ke user dan belum
+  diberitahu, lalu tampilkan notifikasi senyap per item baru.
+- Link undangan dibuka dari luar app (WhatsApp dll) perlu **deep link** Android
+  (`App Links`/intent filter) supaya langsung buka ke layar "Gabung tim" di app kalau
+  terpasang, fallback ke web kalau belum.
+
+**Langkah bangun:**
+
+1. **Teams + invite**: migrasi `teams`, `team_members`, `team_invites`. Endpoint buat tim,
+   buat link undangan, terima undangan. Halaman Livewire: buat tim, lihat link undangan.
+2. **Terima undangan dari Android**: deep link (`App Links`) buka layar "Gabung tim" di app;
+   fallback ke halaman web kalau app belum terpasang.
+3. **To-Do Tim**: migrasi `team_todos` (dengan `assigned_to`). Endpoint CRUD. Halaman
+   Livewire daftar to-do tim (tambah/edit/hapus/tugaskan/centang). Tab baru "Tugas Rumah"
+   di Android.
+4. **Notifikasi tugas**: perluas job WorkManager yang sudah ada untuk polling to-do tim
+   baru, notifikasi senyap saat ditugaskan.
+
+**Belum diputuskan** (tidak menghalangi mulai):
 - Apakah to-do tim butuh kategori/label, atau cukup daftar datar dulu.
 - Apakah anggota tim bisa di-remove, dan siapa yang berhak (pembuat tim saja, atau semua
   anggota).
 - Apakah assignee bisa lebih dari satu orang per tugas, atau selalu satu orang/kosong.
 
 **Selesai jika:**
-- User bisa daftar akun, login di web dan app dengan akun yang sama.
 - User A buat tim, buat link undangan; User B buka link dan gabung, keduanya lihat to-do tim
   yang sama. Link kedaluwarsa atau sudah dipakai ditolak dengan pesan jelas.
 - Tambah/centang/hapus/tugaskan to-do tim dari app langsung kelihatan di web (dan sebaliknya)
   setelah refresh/buka ulang.
 - Tugas baru yang ditugaskan ke user memicu notifikasi senyap dalam satu siklus polling
   (±5 menit), tidak menumpuk untuk tugas yang sama.
-- Follow-up kerja bisa di-CRUD penuh dari web, dan HP yang fetch ulang melihat perubahan itu.
-  Edit bentrok (server sudah berubah sejak client terakhir lihat) ditolak dengan 409 dan
+- Data personal (habit, jadwal, dll) tidak terpengaruh sama sekali — masih snapshot seperti
+  sebelumnya.
+
+### Tahap 27: Web untuk Follow-up Kerja (diputuskan, belum dikoding)
+
+Dibahas 10 Oktober 2026. Butuh tahap 25 (akun, MySQL, Livewire) selesai lebih dulu. Bisa
+dikerjakan sebelum atau sesudah tahap 26 — tidak saling bergantung.
+
+| Pertanyaan | Keputusan |
+|---|---|
+| Lingkup | **Hanya follow-up kerja** (tahap 19) yang dapat CRUD penuh dari web. Habit, jadwal, kesehatan, EOD, dll **tetap** model snapshot lama (HP sumber data, server cuma backup) |
+| Alasan dipisah | Follow-up kerja paling masuk akal dikerjakan dari desktop (kerja di depan laptop, bukan pegang HP). Fitur lain tidak butuh ini, jadi tidak perlu ubah model sync-nya |
+| Model data | Follow-up kerja pindah dari "field di dalam snapshot JSON" jadi **tabel sungguhan** di MySQL (`follow_ups`), API CRUD biasa (bukan snapshot) |
+| Siapa yang akses | Satu-satunya pemilik data (login dengan akun Google yang sama dari tahap 25) |
+| Sinkron ke HP | HP tetap simpan salinan lokal (offline-first tidak berubah), tapi follow-up kerja sekarang **sumber kebenarannya di server**, bukan snapshot HP. HP fetch/push lewat API langsung, bukan ikut snapshot 19B lagi |
+| Konflik | **Deteksi, bukan timpa diam-diam.** Client kirim `updated_at` yang terakhir dilihat saat PUT; kalau beda dari yang di server (ada perubahan lain masuk duluan), server tolak (409) dan client tanya user: "Berubah di tempat lain (jam segini) — timpa, atau pakai yang terbaru?" |
+
+**Rencana teknis:**
+- Tabel `follow_ups` (MySQL) menggantikan `data.followUps` di snapshot untuk user yang
+  sudah pakai tahap ini. Kolom sama dengan struktur snapshot sekarang (`id`, `title`,
+  `status`, `date`, `time`, `person`, `note`, `createdAt`, `doneAt`, `pickedDate`) ditambah
+  `user_id`, `updated_at`.
+- Endpoint baru `/api/v1/follow-ups` (GET list, POST, PUT `:id`, DELETE `:id`) — CRUD biasa,
+  beda dari pola snapshot 19B yang cuma `PUT /snapshot`. `PUT` wajib sertakan `updated_at`
+  yang terakhir dilihat client (dipakai server untuk cek konflik, lihat baris Konflik di
+  atas); tidak cocok → balas `409 Conflict` berisi versi terbaru server, bukan menerima
+  begitu saja.
+- Snapshot 19B **tetap jalan** untuk data lain (habit, jadwal, dll) — follow-up kerja
+  dikeluarkan dari payload snapshot begitu tahap ini aktif, supaya tidak dobel sumber
+  kebenaran.
+
+**Langkah bangun:**
+
+1. **Follow-up kerja ke MySQL**: migrasi `follow_ups` (pindah dari field snapshot jadi
+   tabel sungguhan). Endpoint CRUD dengan deteksi konflik (`updated_at` + balas 409).
+   Keluarkan `followUps` dari payload snapshot 19B supaya tidak dobel sumber kebenaran.
+2. **Halaman web follow-up kerja**: Livewire CRUD + dialog resolusi konflik saat 409.
+3. **Android ikut pindah**: follow-up kerja di app fetch/push langsung ke endpoint baru
+   (bukan ikut snapshot lagi), tangani respons 409 dengan dialog yang sama seperti web.
+
+**Selesai jika:**
+- Follow-up kerja bisa di-CRUD penuh dari web, dan HP yang fetch ulang melihat perubahan
+  itu.
+- Edit bentrok (server sudah berubah sejak client terakhir lihat) ditolak dengan 409 dan
   user diberi pilihan, bukan ditimpa diam-diam.
-- Data personal (habit, jadwal, dll di luar follow-up kerja) tidak terpengaruh sama sekali —
-  masih snapshot seperti sebelumnya.
+- Data personal lain (habit, jadwal, dll di luar follow-up kerja) tidak terpengaruh sama
+  sekali — masih snapshot seperti sebelumnya.
 
 ## Daftar pertanyaan terbuka
 
