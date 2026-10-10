@@ -12,5 +12,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "HabitFlow"
+rootProject.name = "Habitflow"
 include(":app")

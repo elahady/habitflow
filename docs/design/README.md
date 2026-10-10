@@ -1,4 +1,4 @@
-# Desain HabitFlow
+# Desain Habitflow
 
 Written for: Roziq dan Claude, sebagai acuan setiap kali menambah atau mengubah tampilan.
 Dokumen ini berdiri sendiri: semua nilai warna, font, jarak, dan bentuk ada di sini, dan
@@ -332,8 +332,8 @@ Kerja atau dari notifikasi blok Kerja pagi dan EOD.
    jam dengan angka tabular (bodyLarge, sejajar dengan judul) selebar 96dp ("14.00–15.00" atau "Sepanjang hari"), judul (bodyLarge), dan keterangan (bodySmall,
    `onSurfaceVariant`) berisi label, pengulangan ("Setiap 2 minggu") atau nama kalender HP. Hari tanpa acara menampilkan
    "Tidak ada acara." (bodySmall). Libur nasional tampil sebagai baris "Libur: <nama>" (bodyMedium) di awal hari, dan acara
-   Kerja pada hari itu tidak tampil. Baris acara HabitFlow bisa ditekan, baris kalender HP tidak.
-3. **Menu kejadian** (`AlertDialog` berisi `TextButton` bertumpuk) saat baris acara HabitFlow ditekan: "Ubah acara", "Ubah
+   Kerja pada hari itu tidak tampil. Baris acara Habitflow bisa ditekan, baris kalender HP tidak.
+3. **Menu kejadian** (`AlertDialog` berisi `TextButton` bertumpuk) saat baris acara Habitflow ditekan: "Ubah acara", "Ubah
    kejadian ini", "Kembalikan kejadian ini" (hanya kalau kejadian itu sudah diubah) dan "Lewati kejadian ini" (hanya untuk acara
    berulang), "Hapus acara", dan "Batal". Lewati langsung berlaku; Hapus meminta konfirmasi satu dialog.
 4. **Tampilan bulan**: judul bulan dan tahun (titleLarge) dengan tombol teks "‹" dan "›" di kedua sisi, baris nama hari (Sen

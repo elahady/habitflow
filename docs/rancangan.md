@@ -1,4 +1,4 @@
-# Rancangan HabitFlow
+# Rancangan Habitflow
 
 Written for: Roziq (pemilik project), sebagai acuan sebelum dan selama coding.
 
@@ -89,7 +89,7 @@ divisualisasikan seperti kontribusi GitHub.
   share sheet.
 - Tidak ada notifikasi per follow-up, kecuali item yang diberi jam khusus.
 - Orang terkait diketik bebas dengan saran nama yang pernah dipakai, dan bisa difilter.
-- HabitFlow menggantikan task harian di Notion. Task lama tidak dimigrasi.
+- Habitflow menggantikan task harian di Notion. Task lama tidak dimigrasi.
 
 ## Pengingat kerja (tahap 20)
 
@@ -165,12 +165,12 @@ Rincian (9 Oktober 2026):
 
 - Acara berbeda dari blok jadwal: blok adalah rutinitas harian, acara adalah kejadian di
   tanggal tertentu atau berulang (misalnya meeting reguler setiap 2 minggu).
-- Acara dibuat di HabitFlow dengan label **Kerja** atau **Pribadi**, dan bisa berulang: harian,
+- Acara dibuat di Habitflow dengan label **Kerja** atau **Pribadi**, dan bisa berulang: harian,
   setiap N minggu di hari tertentu, bulanan per tanggal atau per urutan hari, tahunan, dengan
   tanggal berakhir opsional. Satu kejadian bisa dilewati atau diubah sendiri.
 - Acara dari kalender HP ikut tampil (hanya baca), dari kalender yang dipilih di pengaturan.
-- Pengingat −15 menit (bisa diubah per acara) hanya untuk acara HabitFlow. Acara kalender HP
-  tidak diberi notifikasi oleh HabitFlow.
+- Pengingat −15 menit (bisa diubah per acara) hanya untuk acara Habitflow. Acara kalender HP
+  tidak diberi notifikasi oleh Habitflow.
 - Acara hari ini masuk timeline dan Sekarang/Berikutnya. Acara Kerja tampil di Agenda tab
   Kerja, acara Pribadi di dashboard Hari ini.
 - **Libur nasional** dan cuti bersama Indonesia otomatis mengaktifkan "Hari ini libur": blok
@@ -192,20 +192,20 @@ Rincian (9 Oktober 2026):
   Mengubah acara berarti mengubah seluruh seri; kejadian yang sudah diubah satu per satu tetap memakai ubahannya. Menghapus
   acara menghapus semua kejadian dan pengecualiannya.
 - **Kalender HP** dipilih per kalender di Tentang, masing-masing berlabel Kerja atau Pribadi (bawaan Pribadi). Hanya baca, tanpa
-  notifikasi dari HabitFlow, dan tidak ikut cadangan karena nomor kalender khusus perangkat. Acara yang dibatalkan di kalender
+  notifikasi dari Habitflow, dan tidak ikut cadangan karena nomor kalender khusus perangkat. Acara yang dibatalkan di kalender
   HP tidak tampil. Acara sepanjang hari memakai tanggal lokal.
-- **Tampilan:** timeline dan Sekarang/Berikutnya di Hari ini memuat semua acara berjam (HabitFlow dan HP, kedua label) dengan
+- **Tampilan:** timeline dan Sekarang/Berikutnya di Hari ini memuat semua acara berjam (Habitflow dan HP, kedua label) dengan
   penanda "Acara". Acara sepanjang hari tampil sebagai baris di awal timeline. Agenda di tab Kerja memuat 7 hari ke depan dan
   tampilan bulan.
 - **Libur nasional** memakai daftar SKB 3 Menteri per tahun yang disimpan di app (2026 dan 2027, bersumber setneg.go.id).
   Tahun tanpa daftar berarti tidak ada libur otomatis. **Cuti bersama diperlakukan sama dengan libur nasional**, dan keduanya
   bisa dibatalkan per tanggal (misalnya kantor tetap masuk saat cuti bersama). "Hari ini libur" manual tetap ada. Pada hari
-  libur (manual atau nasional): blok yang hanya aktif hari kerja dan semua acara berlabel Kerja (HabitFlow maupun kalender HP)
+  libur (manual atau nasional): blok yang hanya aktif hari kerja dan semua acara berlabel Kerja (Habitflow maupun kalender HP)
   mati, termasuk pengingatnya. Sholat, alarm Subuh, dan acara Pribadi tetap.
-- **Pengingat acara:** hanya untuk acara HabitFlow berjam. Pilihan Tanpa, 5, 10, 15 (bawaan), 30, atau 60 menit sebelum mulai.
+- **Pengingat acara:** hanya untuk acara Habitflow berjam. Pilihan Tanpa, 5, 10, 15 (bawaan), 30, atau 60 menit sebelum mulai.
   Tingkat Pengingat (heads-up) dengan judul acara dan jam mulainya. Kejadian yang dilewati tidak diingatkan, dan kejadian yang
   diubah diingatkan menurut jam barunya.
-- **Catat cepat tertaut** ke acara Kerja berjam yang sedang berlangsung (dari jam mulai sampai selesai, HabitFlow atau kalender
+- **Catat cepat tertaut** ke acara Kerja berjam yang sedang berlangsung (dari jam mulai sampai selesai, Habitflow atau kalender
   HP). Follow-up menyimpan judul dan tanggal acara, jadi keterangannya tetap ada walau acaranya dihapus. Di EOD, Inbox
   dikelompokkan per acara, dan di daftar Kerja kartunya diberi keterangan "Dari acara: ...".
 
@@ -351,7 +351,7 @@ gradasi sage dengan level 0 abu-abu netral. UI memakai Jetpack Compose (Material
 
 ## Identitas
 
-- Nama app: HabitFlow.
+- Nama app: Habitflow.
 - Application ID: `com.roziqrizal.habitflow`.
 
 ## Data

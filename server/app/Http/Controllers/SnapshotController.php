@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 /**
- * Menyimpan dan mengembalikan snapshot data HabitFlow. Server tidak menafsirkan isinya; yang diperiksa
+ * Menyimpan dan mengembalikan snapshot data Habitflow. Server tidak menafsirkan isinya; yang diperiksa
  * hanya bahwa isinya JSON dengan `schemaVersion` bilangan bulat dan `data` objek. Isi disimpan terenkripsi
  * (kunci APP_KEY) dan hanya [KEEP] snapshot terakhir per token yang disimpan.
  */

@@ -1,4 +1,4 @@
-# HabitFlow
+# Habitflow
 
 Aplikasi Android untuk memantau habit harian dan to-do kecil, dengan tampilan
 kontribusi ala GitHub. Detail rancangan ada di [docs/rancangan.md](docs/rancangan.md).
@@ -7,7 +7,7 @@ kontribusi ala GitHub. Detail rancangan ada di [docs/rancangan.md](docs/rancanga
 
 - [docs/concept.md](docs/concept.md): tahapan pembangunan, kriteria selesai per
   tahap, dan edge case. Ikuti urutan tahapnya, jangan melompat.
-- [docs/visi-super-app.md](docs/visi-super-app.md): arah besar HabitFlow sebagai asisten
+- [docs/visi-super-app.md](docs/visi-super-app.md): arah besar Habitflow sebagai asisten
   harian pribadi (jadwal, waktu sholat, follow-up kerja, kesehatan). Dibaca sebelum
   membahas tahap 17 ke atas.
 - [docs/rancangan.md](docs/rancangan.md): aturan fitur (habit, to-do, level,

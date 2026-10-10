@@ -1,4 +1,4 @@
-# Visi: HabitFlow sebagai asisten harian pribadi
+# Visi: Habitflow sebagai asisten harian pribadi
 
 Ditulis 5 Oktober 2026 dari diskusi dengan Roziq. Dokumen ini arah besar. Aturan fitur
 yang sudah diputuskan tetap ditulis di `docs/rancangan.md`, dan tahapan pembangunan di
@@ -11,7 +11,7 @@ dan apa yang berikutnya**, dari bangun tidur sampai tidur lagi. App ini menginga
 waktu yang tepat, mencatat target kerja supaya tidak ada follow-up yang terlupa, dan
 memantau target hidup sehat.
 
-HabitFlow yang sudah ada **dikembangkan**, bukan diganti app baru. Habit, to-do, heatmap,
+Habitflow yang sudah ada **dikembangkan**, bukan diganti app baru. Habit, to-do, heatmap,
 desain, dan datanya tetap dipakai. Nama app bisa ditinjau nanti.
 
 ## Prinsip
@@ -63,7 +63,7 @@ waktu sholat masuk jadwal, bukan hanya Subuh. Template akhir pekan belum dibahas
 - Dihitung **offline** di HP. Posisi matahari dari Astronomy Engine (MIT), dipasang
   sebagai dependency, bukan disalin.
 - Catatan: app Al-Kaukaba sendiri saat ini menampilkan jam dari Aladhan API metode 20
-  (Kemenag) sebagai pengganti sementara. Hasil HabitFlow divalidasi terhadap jadwal itu
+  (Kemenag) sebagai pengganti sementara. Hasil Habitflow divalidasi terhadap jadwal itu
   untuk beberapa tanggal, dan selisihnya dicatat.
 - **Lokasi**: GPS secara default (izin lokasi kasar), bisa diganti kota atau koordinat
   manual. Lokasi terakhir disimpan supaya tetap jalan tanpa GPS.
@@ -91,7 +91,7 @@ Tiga tingkat, ditambah satu notifikasi tetap.
 ## Kerja: catat cepat, follow-up, daily scrum
 
 Kebutuhan inti: mencatat semua target kerja supaya tidak lupa follow-up, dan mencatat
-topik baru seketika tanpa menunda. **HabitFlow menggantikan jurnal task harian di Notion.**
+topik baru seketika tanpa menunda. **Habitflow menggantikan jurnal task harian di Notion.**
 Rinciannya di tahap 19 dan 19B.
 
 - **Inbox catat cepat.** Satu kolom teks, simpan dengan Enter. Versi pertama: **tombol +

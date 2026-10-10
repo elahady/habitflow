@@ -1,6 +1,6 @@
-# Server cadangan HabitFlow
+# Server cadangan Habitflow
 
-Server Laravel kecil untuk **menyimpan cadangan data HabitFlow dari satu HP** (tahap 19B). Tidak ada
+Server Laravel kecil untuk **menyimpan cadangan data Habitflow dari satu HP** (tahap 19B). Tidak ada
 akun, web, atau akses dari laptop: HP mengirim satu berkas JSON (snapshot) dan bisa mengunduhnya lagi
 saat ganti HP. Kontrak API dan format snapshot ada di [`../docs/concept.md`](../docs/concept.md)
 (tahap 19B).
@@ -21,7 +21,7 @@ menjaga riwayat 14 snapshot saat server dipindah.
 ## Pasang di VPS
 
 Prasyarat: PHP 8.2+ dengan ekstensi `openssl`, `mbstring`, `pdo_sqlite`, `fileinfo`, Composer, dan web
-server (Nginx atau Apache) dengan HTTPS. HabitFlow menolak alamat `http://` (kecuali emulator saat debug).
+server (Nginx atau Apache) dengan HTTPS. Habitflow menolak alamat `http://` (kecuali emulator saat debug).
 
 ```bash
 git clone https://github.com/elahady/habitflow.git

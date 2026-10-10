@@ -1,6 +1,6 @@
-<img src="docs/design/ikon/ikon-512.png" width="96" alt="Ikon HabitFlow" />
+<img src="docs/design/ikon/ikon-512.png" width="96" alt="Ikon Habitflow" />
 
-# HabitFlow
+# Habitflow
 
 Aplikasi Android untuk memantau habit harian dan to-do kecil, dengan heatmap kontribusi
 ala GitHub. Data disimpan lokal di perangkat, tanpa akun dan tanpa internet.

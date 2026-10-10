@@ -1,4 +1,4 @@
-# Konsep dan Tahapan Pembangunan HabitFlow
+# Konsep dan Tahapan Pembangunan Habitflow
 
 Written for: Roziq dan Claude, sebagai peta kerja. Rancangan fitur ada di
 [rancangan.md](rancangan.md). Dokumen ini menjelaskan **urutan membangun**,
@@ -30,11 +30,11 @@ dengan kriteria selesai di tiap tahap.
 ## Tahap 1: Manifest dan activity kosong
 
 - `app/src/main/AndroidManifest.xml` dengan `MainActivity` sebagai launcher.
-- `res/values/strings.xml` berisi nama app "HabitFlow".
+- `res/values/strings.xml` berisi nama app "Habitflow".
 - `res/values/themes.xml` dengan tema dasar tanpa ActionBar.
 - `MainActivity` menampilkan teks sederhana dengan `setContent`.
 
-**Selesai jika:** app terbuka di emulator dan menampilkan teks "HabitFlow".
+**Selesai jika:** app terbuka di emulator dan menampilkan teks "Habitflow".
 
 ## Tahap 2: Model data dan Room
 
@@ -386,7 +386,7 @@ dan memperbesar kotak (mengurangi jumlah minggu atau harus digulir ke samping).
 - Unit test `heatmapCellAt` (kotak, celah, tepi, luar grid) lulus.
 - Getar tidak bisa dirasakan di emulator, jadi perlu dicoba di HP.
 
-## Tahap 17-24: HabitFlow sebagai asisten harian (diskusi dulu, belum dikoding)
+## Tahap 17-24: Habitflow sebagai asisten harian (diskusi dulu, belum dikoding)
 
 Arah besarnya ada di [visi-super-app.md](visi-super-app.md). Setiap tahap dibahas dan
 diputuskan dulu, lalu aturannya ditulis di `rancangan.md`, baru dikoding. Keputusan yang
@@ -561,9 +561,9 @@ tapi kalau terasa lambat, Baseline Profile bisa dipertimbangkan.
 
 ### Tahap 19: Catat cepat, follow-up kerja, daily scrum dan EOD (selesai, 7 Oktober 2026)
 
-Menggantikan tahap 15. **HabitFlow menggantikan jurnal task harian di Notion** ("Ruang Kerja :
+Menggantikan tahap 15. **Habitflow menggantikan jurnal task harian di Notion** ("Ruang Kerja :
 I am a Leader"). Task lama di Notion dihabiskan di sana sampai cut off. Task baru dicatat di
-HabitFlow, tanpa migrasi data dari Notion.
+Habitflow, tanpa migrasi data dari Notion.
 
 **Keputusan (5 Oktober 2026).** Aturan fitur di `docs/rancangan.md` bagian Follow-up kerja.
 
@@ -651,7 +651,7 @@ hanya ada di satu HP. Aturan fitur di `docs/rancangan.md` bagian Sinkron ke serv
 | Arah | Satu arah HP → server, plus pulihkan dari server saat install ulang atau ganti HP |
 | Server | **Laravel baru** (Laravel 12, PHP 8.2) di VPS Al-Kaukaba (`202.155.17.2`), terpisah dari app Al-Kaukaba |
 | Letak kode server | Folder `server/` di repo ini. Pemilik yang men-deploy ke VPS; kode di repo tidak mengakses VPS |
-| Cakupan | Semua data HabitFlow: habit, riwayat, to-do, jadwal, follow-up, EOD, pengaturan. Nanti kesehatan |
+| Cakupan | Semua data Habitflow: habit, riwayat, to-do, jadwal, follow-up, EOD, pengaturan. Nanti kesehatan |
 | Sifat app | Tetap offline-first. HP adalah sumber data. Sinkron berjalan saat ada internet |
 | Login | Token pribadi. Dibuat sekali di server lewat perintah artisan, ditempel di Tentang. Tanpa akun |
 | Cara sinkron | Snapshot lengkap (satu berkas JSON bernomor versi), bukan per baris |
@@ -930,19 +930,19 @@ palsu), keduanya hanya ada di `app/src/debug`.
 | Acara di tampilan | Timeline dan Sekarang/Berikutnya memuat semua acara berjam, kedua label. Agenda memuat semua acara. Tidak ada kartu "Acara hari ini" terpisah (rancangan awal membedakan Kerja ke Agenda dan Pribadi ke dashboard; timeline sudah memenuhinya) |
 | Acara Kerja di hari libur | Mati (timeline, Agenda, pengingat), juga untuk kalender HP berlabel Kerja |
 | Pengecualian satu kejadian | Tabel `event_exceptions` berisi lewati atau nilai pengganti penuh (tanggal, jam, durasi, judul). Mengubah seri tidak mengubah kejadian yang sudah diubah satu per satu |
-| Pengingat | Tingkat Pengingat, −15 menit bawaan, pilihan Tanpa/5/10/15/30/60, hanya acara HabitFlow berjam |
+| Pengingat | Tingkat Pengingat, −15 menit bawaan, pilihan Tanpa/5/10/15/30/60, hanya acara Habitflow berjam |
 | Kalender HP | `CalendarContract.Instances`, izin `READ_CALENDAR`, dipilih dan dilabeli per kalender di Tentang (bawaan tidak ada, label Pribadi). Tidak ikut snapshot (nomor kalender khusus perangkat) |
 | Tautan catat cepat | Kolom `eventId`, `eventDate`, `eventTitle` di `follow_ups`. Acara kalender HP hanya menyimpan judul dan tanggal (tanpa id) |
 | Snapshot | `data.events`, `data.eventExceptions`, `data.holidayCancellations`, dan tiga kolom follow-up. Opsional saat dibaca, `schemaVersion` tetap 1 |
 
 | Pertanyaan | Keputusan |
 |---|---|
-| Sumber acara | Acara dibuat di HabitFlow, ditambah membaca kalender HP (hanya baca) |
+| Sumber acara | Acara dibuat di Habitflow, ditambah membaca kalender HP (hanya baca) |
 | Kalender HP yang dibaca | Dipilih sendiri per kalender di pengaturan. Default tidak ada |
 | Pengulangan | Sekali, harian, setiap N minggu di hari tertentu, bulanan per tanggal atau per urutan hari (Senin kedua), tahunan. Bisa diberi tanggal berakhir |
 | Tampilan | Acara hari ini masuk timeline dan Sekarang/Berikutnya. Tab Kerja punya Agenda 7 hari dan tampilan bulan untuk melompat ke tanggal |
 | Libur nasional | Otomatis dari daftar libur nasional dan cuti bersama. "Hari ini libur" aktif sendiri, bisa dibatalkan per tanggal |
-| Pengingat | −15 menit hanya untuk acara HabitFlow. Acara kalender HP memakai pengingat Google Calendar, supaya tidak dobel |
+| Pengingat | −15 menit hanya untuk acara Habitflow. Acara kalender HP memakai pengingat Google Calendar, supaya tidak dobel |
 | Follow-up | Catatan yang dibuat selama acara berlangsung tertaut ke acara itu |
 | Label | Setiap acara Kerja atau Pribadi. Libur nasional hanya mematikan blok dan acara Kerja |
 
@@ -954,7 +954,7 @@ palsu), keduanya hanya ada di `app/src/debug`.
   pendek, dan 29 Februari.
 - Kalender HP dibaca lewat `CalendarContract.Instances` (pengulangan sudah dijabarkan oleh
   sistem), izin `READ_CALENDAR`. Setiap kalender HP diberi label Kerja atau Pribadi di
-  pengaturan. Tanpa izin, fitur ini mati dan acara HabitFlow tetap jalan.
+  pengaturan. Tanpa izin, fitur ini mati dan acara Habitflow tetap jalan.
 - Daftar libur nasional dan cuti bersama per tahun disimpan sebagai file JSON di app
   (`assets/libur/<tahun>.json`, sumber SKB 3 Menteri), diperbarui lewat update app. Setelah
   tahap 19B, server bisa mengirim daftar terbaru. Libur nasional masuk `days_off` dengan
@@ -967,7 +967,7 @@ palsu), keduanya hanya ada di `app/src/debug`.
   yang benar di Agenda dan timeline, dan pengingat muncul 14.00 − 15 menit.
 - Melewati satu kejadian dan mengubah satu kejadian tidak mengubah kejadian lain.
 - Unit test pengulangan lulus, termasuk kasus tanggal 31 dan 29 Februari.
-- Kalender HP yang dicentang tampil di dashboard dan Agenda tanpa notifikasi dari HabitFlow.
+- Kalender HP yang dicentang tampil di dashboard dan Agenda tanpa notifikasi dari Habitflow.
   Yang tidak dicentang tidak tampil. Tanpa izin kalender, app tetap jalan.
 - Di tanggal libur nasional, blok dan acara Kerja mati otomatis, sholat dan alarm Subuh tetap.
   Membatalkan libur untuk satu tanggal mengembalikan blok Kerja hari itu.
@@ -1088,7 +1088,7 @@ Butuh tahap 19B (server dan sinkron) selesai lebih dulu.
 
 **Rencana teknis:**
 - Backend Laravel memanggil Claude API dengan SDK resmi Anthropic untuk PHP. API key
-  disimpan di environment server. Endpoint HabitFlow di server dilindungi token yang sama
+  disimpan di environment server. Endpoint Habitflow di server dilindungi token yang sama
   dengan sinkron 19B.
 - AI membaca data lewat **tool use**, bukan seluruh data sekaligus. Alat yang direncanakan:
   ambil habit dan riwayat (rentang tanggal), ambil follow-up (status, orang, rentang),
