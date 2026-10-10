@@ -32,6 +32,7 @@ import com.roziqrizal.habitflow.domain.work.EodAction
 import com.roziqrizal.habitflow.domain.work.FollowUp
 import com.roziqrizal.habitflow.domain.work.InboxChoice
 import com.roziqrizal.habitflow.domain.work.buildEodSummary
+import com.roziqrizal.habitflow.domain.work.groupByEvent
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -211,7 +212,18 @@ fun EodScreen(
 
         if (inboxItems.isNotEmpty()) {
             SectionTitle("Inbox (${inboxItems.size})")
-            inboxItems.forEach { item ->
+            // Catatan dari acara dikelompokkan di bawah judul acaranya (tahap 22).
+            val inboxGroups = groupByEvent(inboxItems)
+            val groupHeaders = inboxGroups.mapNotNull { group -> group.source?.let { group.items.first().id to it } }.toMap()
+            inboxGroups.flatMap { it.items }.forEach { item ->
+                groupHeaders[item.id]?.let { source ->
+                    Text(
+                        eventSourceLabel(source, state.today),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(start = 4.dp, top = 8.dp),
+                    )
+                }
                 val kind = inboxKinds[item.id] ?: InboxKind.KEEP
                 AppCard(modifier = Modifier.fillMaxWidth()) {
                     Text(item.title, style = MaterialTheme.typography.bodyLarge)

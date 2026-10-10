@@ -3,7 +3,9 @@ package com.roziqrizal.habitflow.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.roziqrizal.habitflow.data.WorkRepository
+import com.roziqrizal.habitflow.domain.calendar.EventOccurrence
 import com.roziqrizal.habitflow.domain.work.EodAction
+import com.roziqrizal.habitflow.domain.work.EventSource
 import com.roziqrizal.habitflow.domain.work.FollowUp
 import com.roziqrizal.habitflow.domain.work.InboxChoice
 import com.roziqrizal.habitflow.domain.work.WorkDay
@@ -92,9 +94,10 @@ class WorkViewModel(
         selectedPerson.value = person
     }
 
-    /** Catat cepat ke Inbox. Judul kosong diabaikan. */
-    fun quickAdd(title: String) {
-        viewModelScope.launch { repo.quickAdd(title, nowMillis()) }
+    /** Catat cepat ke Inbox, tertaut ke [event] kalau ada acara yang sedang berlangsung. Judul kosong diabaikan. */
+    fun quickAdd(title: String, event: EventOccurrence? = null) {
+        val source = event?.let { EventSource(if (it.fromPhone) null else it.eventId, it.date, it.title) }
+        viewModelScope.launch { repo.quickAdd(title, nowMillis(), source) }
     }
 
     fun save(item: FollowUp) {

@@ -196,3 +196,29 @@ fun nextReminder(items: List<FollowUp>, now: java.time.LocalDateTime, horizonDay
     }
     return null
 }
+
+/** Acara tempat sekelompok follow-up dicatat (tahap 22). [eventId] kosong untuk acara kalender HP. */
+data class EventSource(val eventId: Long?, val date: LocalDate, val title: String)
+
+/** Acara tempat follow-up ini dicatat, atau null kalau dicatat di luar acara. */
+fun FollowUp.eventSource(): EventSource? {
+    val title = eventTitle?.takeIf(String::isNotBlank) ?: return null
+    val date = eventDate ?: return null
+    return EventSource(eventId, date, title)
+}
+
+/** Follow-up dari satu acara, atau yang dicatat di luar acara kalau [source] kosong. */
+data class EventGroup(val source: EventSource?, val items: List<FollowUp>)
+
+/**
+ * Mengelompokkan [items] menurut acara tempat dicatat (EOD, tahap 22). Yang di luar acara ada di kelompok pertama, lalu tiap acara
+ * menurut kemunculan pertamanya. Urutan item di dalam kelompok tidak berubah. Kelompok kosong tidak dibuat.
+ */
+fun groupByEvent(items: List<FollowUp>): List<EventGroup> {
+    val bySource = items.groupBy { it.eventSource() }
+    val plain = bySource[null].orEmpty()
+    return buildList {
+        if (plain.isNotEmpty()) add(EventGroup(null, plain))
+        bySource.forEach { (source, list) -> if (source != null) add(EventGroup(source, list)) }
+    }
+}

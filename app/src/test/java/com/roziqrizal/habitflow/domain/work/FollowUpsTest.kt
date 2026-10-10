@@ -249,4 +249,40 @@ class FollowUpsTest {
         assertEquals(tomorrow.atTime(8, 0), nextReminder(items, today.atTime(9, 0)))
         assertNull(nextReminder(items, tomorrow.atTime(8, 0)))
     }
+
+    private fun fromEvent(id: Long, title: String?, date: LocalDate? = today, eventId: Long? = 1) =
+        FollowUp(id, "Item $id", FollowUpStatus.INBOX, eventId = eventId, eventDate = date, eventTitle = title)
+
+    @Test
+    fun yangDicatatDiLuarAcaraTidakPunyaSumberAcara() {
+        assertNull(fu(1).eventSource())
+        assertNull(fromEvent(2, title = null).eventSource())
+        assertNull(fromEvent(3, title = "Meeting", date = null).eventSource())
+    }
+
+    @Test
+    fun kelompokAcaraMendahulukanYangDiLuarAcaraLaluMengikutiKemunculanPertama() {
+        val items = listOf(
+            fromEvent(1, "Meeting B"),
+            fu(2, FollowUpStatus.INBOX),
+            fromEvent(3, "Meeting A", eventId = null),
+            fromEvent(4, "Meeting B"),
+        )
+        val groups = groupByEvent(items)
+        assertEquals(listOf(null, "Meeting B", "Meeting A"), groups.map { it.source?.title })
+        assertEquals(listOf(2L), groups[0].items.map { it.id })
+        assertEquals(listOf(1L, 4L), groups[1].items.map { it.id })
+        assertEquals(listOf(3L), groups[2].items.map { it.id })
+    }
+
+    @Test
+    fun acaraBerulangDiTanggalBerbedaDipisahkan() {
+        val groups = groupByEvent(listOf(fromEvent(1, "Meeting", today), fromEvent(2, "Meeting", yesterday)))
+        assertEquals(2, groups.size)
+    }
+
+    @Test
+    fun tanpaItemTidakAdaKelompok() {
+        assertEquals(emptyList<EventGroup>(), groupByEvent(emptyList()))
+    }
 }

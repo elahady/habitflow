@@ -45,7 +45,7 @@ fun QuickCaptureButton(onClick: () -> Unit) {
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun QuickCaptureSheet(onAdd: (String) -> Unit, onDismiss: () -> Unit) {
+fun QuickCaptureSheet(onAdd: (String) -> Unit, linkedEventTitle: String?, onDismiss: () -> Unit) {
     var text by remember { mutableStateOf("") }
     var savedCount by remember { mutableIntStateOf(0) }
     var showSaved by remember { mutableStateOf(false) }
@@ -80,6 +80,14 @@ fun QuickCaptureSheet(onAdd: (String) -> Unit, onDismiss: () -> Unit) {
                 ),
                 modifier = Modifier.fillMaxWidth().padding(top = 12.dp).focusRequester(focus),
             )
+            if (linkedEventTitle != null) {
+                Text(
+                    text = "Tertaut ke acara: $linkedEventTitle",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 8.dp, start = 4.dp),
+                )
+            }
             Text(
                 text = if (showSaved) "Tersimpan di Inbox" else "",
                 style = MaterialTheme.typography.bodySmall,

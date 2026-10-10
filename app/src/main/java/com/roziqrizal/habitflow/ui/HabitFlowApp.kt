@@ -276,7 +276,12 @@ fun HabitFlowApp(
     }
 
     if (showCapture) {
-        QuickCaptureSheet(onAdd = work::quickAdd, onDismiss = { showCapture = false })
+        val ongoingEvent = schedule.state.collectAsState().value.ongoingWorkEvent
+        QuickCaptureSheet(
+            onAdd = { work.quickAdd(it, ongoingEvent) },
+            linkedEventTitle = ongoingEvent?.title,
+            onDismiss = { showCapture = false },
+        )
     }
 
     recordModeName?.let { name ->

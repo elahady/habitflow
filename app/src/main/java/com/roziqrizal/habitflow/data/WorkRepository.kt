@@ -1,6 +1,7 @@
 package com.roziqrizal.habitflow.data
 
 import androidx.room.withTransaction
+import com.roziqrizal.habitflow.domain.work.EventSource
 import com.roziqrizal.habitflow.domain.work.FollowUp
 import com.roziqrizal.habitflow.domain.work.FollowUpStatus
 import com.roziqrizal.habitflow.domain.work.WorkDay
@@ -23,11 +24,19 @@ class WorkRepository(private val db: HabitDatabase) {
     /** Untuk penerima alarm dan notifikasi, yang tidak memakai Flow. */
     suspend fun getFollowUps(): List<FollowUp> = followUps.getAll().map { it.toDomain() }
 
-    /** Catat cepat: langsung ke Inbox tanpa memilih apa pun. Judul kosong ditolak (mengembalikan false). */
-    suspend fun quickAdd(title: String, nowMillis: Long): Boolean {
+    /**
+     * Catat cepat: langsung ke Inbox tanpa memilih apa pun. Judul kosong ditolak (mengembalikan false). [source] menautkan catatan
+     * ke acara yang sedang berlangsung (tahap 22).
+     */
+    suspend fun quickAdd(title: String, nowMillis: Long, source: EventSource? = null): Boolean {
         val clean = title.trim()
         if (clean.isEmpty()) return false
-        followUps.insert(FollowUp(0, clean, FollowUpStatus.INBOX, createdAt = nowMillis).toEntity())
+        followUps.insert(
+            FollowUp(
+                0, clean, FollowUpStatus.INBOX, createdAt = nowMillis,
+                eventId = source?.eventId, eventDate = source?.date, eventTitle = source?.title,
+            ).toEntity(),
+        )
         return true
     }
 

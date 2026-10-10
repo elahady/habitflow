@@ -30,10 +30,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.roziqrizal.habitflow.domain.work.EventSource
 import com.roziqrizal.habitflow.domain.work.FollowUp
 import com.roziqrizal.habitflow.domain.work.FollowUpStatus
 import com.roziqrizal.habitflow.domain.work.WorkSection
 import com.roziqrizal.habitflow.domain.work.daysOverdue
+import com.roziqrizal.habitflow.domain.work.eventSource
 import com.roziqrizal.habitflow.domain.work.personSuggestions
 import java.time.LocalDate
 import java.time.LocalTime
@@ -46,8 +48,13 @@ fun followUpCaption(item: FollowUp, today: LocalDate, includePicked: Boolean = t
     item.person?.let { parts += it }
     item.daysOverdue(today)?.let { parts += "Lewat $it hari" }
     if (includePicked && item.pickedDate == today) parts += "Dipilih hari ini"
+    item.eventSource()?.let { parts += eventSourceLabel(it, today) }
     return parts.joinToString(" · ")
 }
+
+/** "Dari acara: Meeting reguler", ditambah tanggalnya kalau bukan hari ini. */
+fun eventSourceLabel(source: EventSource, today: LocalDate): String =
+    "Dari acara: ${source.title}" + if (source.date == today) "" else ", ${formatShortDate(source.date)}"
 
 private fun WorkSection.title(): String = when (this) {
     WorkSection.INBOX -> "Inbox"
