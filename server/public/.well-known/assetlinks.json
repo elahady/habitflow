@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.roziqrizal.habitflow",
+      "sha256_cert_fingerprints": [
+        "DF:3A:EF:1C:9B:9A:6B:80:26:A1:F9:30:95:47:D9:A1:99:8A:81:89:EF:D4:D5:74:D2:F6:8D:97:99:CA:9A:77"
+      ]
+    }
+  }
+]
