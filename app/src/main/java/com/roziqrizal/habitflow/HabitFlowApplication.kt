@@ -7,6 +7,7 @@ import com.roziqrizal.habitflow.data.HealthSettings
 import com.roziqrizal.habitflow.data.calendar.CalendarSettings
 import com.roziqrizal.habitflow.data.calendar.PhoneCalendarSource
 import com.roziqrizal.habitflow.data.LocationSettings
+import com.roziqrizal.habitflow.data.MealSettings
 import com.roziqrizal.habitflow.data.NotificationSettings
 import com.roziqrizal.habitflow.data.PlaceLocation
 import com.roziqrizal.habitflow.data.ThemeMode
@@ -50,6 +51,7 @@ class AppGraph(app: Application) {
     val alarmSettings = AlarmSettings(app)
     val workReminderSettings = WorkReminderSettings(app)
     val healthSettings = HealthSettings(app)
+    val mealSettings = MealSettings(app)
     val calendarSettings = CalendarSettings(app)
     val phoneCalendar = PhoneCalendarSource(app)
     val syncSettings = SyncSettings(app)

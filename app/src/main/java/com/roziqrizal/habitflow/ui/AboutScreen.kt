@@ -76,6 +76,8 @@ fun AboutScreen(
     onWaterRemindersChange: (Boolean) -> Unit,
     breakReminders: Boolean,
     onBreakRemindersChange: (Boolean) -> Unit,
+    mealReminder: Boolean,
+    onMealReminderChange: (Boolean) -> Unit,
     healthSettings: HealthSettings,
     phoneCalendar: PhoneCalendarSource,
     calendarSettings: CalendarSettings,
@@ -143,6 +145,14 @@ fun AboutScreen(
 
         SettingLabel("Pengingat kesehatan")
         HealthReminderSection(settings = healthSettings)
+
+        SettingLabel("Catatan makan")
+        SettingSwitchRow(
+            title = "Pengingat catatan makan",
+            description = "Satu jam sebelum batas tidur, kalau ada waktu makan yang belum dicatat.",
+            checked = mealReminder,
+            onCheckedChange = onMealReminderChange,
+        )
 
         SettingLabel("Kalender HP")
         CalendarSettingsSection(phone = phoneCalendar, settings = calendarSettings)

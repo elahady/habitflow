@@ -41,6 +41,7 @@ import com.roziqrizal.habitflow.data.health.StepsWorker
 import com.roziqrizal.habitflow.data.HealthSettings
 import com.roziqrizal.habitflow.data.LocationSettings
 import com.roziqrizal.habitflow.data.MealRepository
+import com.roziqrizal.habitflow.data.MealSettings
 import com.roziqrizal.habitflow.data.NotificationSettings
 import com.roziqrizal.habitflow.data.ScheduleRepository
 import com.roziqrizal.habitflow.data.WorkReminderSettings
@@ -85,6 +86,7 @@ class MainActivity : ComponentActivity() {
         requestNotificationPermission()
         keepNotificationsInSync(
             locationSettings, notificationSettings, alarmSettings, workReminderSettings, graph.healthSettings, graph.calendarSettings,
+            graph.mealSettings,
         )
         themeSettings.syncWithSystem()
         setContent {
@@ -186,6 +188,8 @@ class MainActivity : ComponentActivity() {
                     onWaterRemindersChange = workReminderSettings::setWater,
                     breakReminders = workReminderSettings.breaks.collectAsState().value,
                     onBreakRemindersChange = workReminderSettings::setBreaks,
+                    mealReminder = graph.mealSettings.reminder.collectAsState().value,
+                    onMealReminderChange = graph.mealSettings::setReminder,
                     health = health,
                     healthSettings = graph.healthSettings,
                     phoneCalendar = graph.phoneCalendar,
@@ -250,6 +254,7 @@ class MainActivity : ComponentActivity() {
         workReminderSettings: WorkReminderSettings,
         healthSettings: HealthSettings,
         calendarSettings: CalendarSettings,
+        mealSettings: MealSettings,
     ) {
         val repo = ScheduleRepository(HabitDatabase.get(applicationContext), HolidayAssets.get(applicationContext))
         val eventRepo = EventRepository(HabitDatabase.get(applicationContext))
@@ -267,6 +272,7 @@ class MainActivity : ComponentActivity() {
                     alarmSettings.adzan,
                     workReminderSettings.water,
                     workReminderSettings.breaks,
+                    mealSettings.reminder,
                     healthSettings.weightReminder,
                     healthSettings.bpFrequency,
                     clock.date,

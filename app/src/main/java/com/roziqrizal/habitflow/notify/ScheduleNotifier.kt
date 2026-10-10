@@ -32,6 +32,8 @@ import com.roziqrizal.habitflow.data.HabitDatabase
 import com.roziqrizal.habitflow.data.HealthRepository
 import com.roziqrizal.habitflow.data.HealthSettings
 import com.roziqrizal.habitflow.data.LocationSettings
+import com.roziqrizal.habitflow.data.MealRepository
+import com.roziqrizal.habitflow.data.MealSettings
 import com.roziqrizal.habitflow.data.NotificationSettings
 import com.roziqrizal.habitflow.data.ScheduleRepository
 import com.roziqrizal.habitflow.data.WorkReminderSettings
@@ -41,6 +43,10 @@ import com.roziqrizal.habitflow.domain.health.HealthReminderKind
 import com.roziqrizal.habitflow.domain.health.healthReminderKind
 import com.roziqrizal.habitflow.domain.health.healthReminderMinute
 import com.roziqrizal.habitflow.domain.health.nextHealthReminderDate
+import com.roziqrizal.habitflow.domain.meals.DEFAULT_BEDTIME_MINUTE
+import com.roziqrizal.habitflow.domain.meals.mealReminderMinute
+import com.roziqrizal.habitflow.domain.meals.missingMeals
+import com.roziqrizal.habitflow.ui.sentenceName
 import com.roziqrizal.habitflow.domain.prayer.EphemerisPrayerCalculator
 import com.roziqrizal.habitflow.domain.schedule.AlarmTime
 import com.roziqrizal.habitflow.domain.work.FollowUp
@@ -97,6 +103,7 @@ object ScheduleNotifier {
     private const val ONGOING_ID = 1
     private const val WORK_REMINDER_ID = 2
     private const val HEALTH_REMINDER_ID = 3
+    private const val MEAL_REMINDER_ID = 4
     private const val REQUEST_ALARM_CLOCK = 1
     private const val REQUEST_WATER = 2000
     private const val BLOCK_ID_BASE = 1000
@@ -168,9 +175,19 @@ object ScheduleNotifier {
             EphemerisPrayerCalculator.calculate(date, place.latitude, place.longitude, zone).subuh
                 ?.let { healthReminderMinute(it.hour * 60 + it.minute) }
 
+        // Batas tidur = akhir rentang notifikasi tetap. Habit makan dicentang otomatis untuk kemarin, dan untuk hari ini
+        // begitu batas tidur lewat (tahap 23). Jam batas tidur kemarin disamakan dengan hari ini.
+        val bedtime = notificationWindow(blockItems)?.last ?: DEFAULT_BEDTIME_MINUTE
+        val mealRepo = MealRepository(HabitDatabase.get(app))
+        mealRepo.applyAutoChecks(today.minusDays(1), bedtime)
+        if (nowMinute >= bedtime) mealRepo.applyAutoChecks(today, bedtime)
+        val mealSettings = MealSettings(app)
+        val mealMinute = mealReminderMinute(bedtime)?.takeIf { mealSettings.reminder.value }
+
         if (announce) {
             announceStarted(
                 app, resolved, reminders, todayEventReminders, followUps, today, nowMinute, healthMinuteFor(today), health, zone,
+                mealMinute,
             )
         }
         // Rentang notifikasi tetap hanya dari blok jadwal: acara larut malam tidak boleh memperpanjangnya.
@@ -203,6 +220,12 @@ object ScheduleNotifier {
             today, nowMinute, zone, health.weightReminder.value, health.bpFrequency.value, ::healthMinuteFor,
         )
         if (healthReminder != null && healthReminder.isBefore(windowTrigger)) windowTrigger = healthReminder
+        // Pengingat catatan makan: malam ini kalau belum lewat, kalau sudah lewat besok pada jam yang sama.
+        if (mealMinute != null) {
+            val mealReminder = today.atStartOfDay(zone).plusMinutes(mealMinute.toLong())
+                .let { if (mealMinute > nowMinute) it else it.plusDays(1) }
+            if (mealReminder.isBefore(windowTrigger)) windowTrigger = mealReminder
+        }
         scheduleAlarm(app, windowTrigger.toInstant().toEpochMilli())
 
         val alarmSettings = AlarmSettings(app)
@@ -226,6 +249,7 @@ object ScheduleNotifier {
         healthMinute: Int?,
         health: HealthSettings,
         zone: ZoneId,
+        mealMinute: Int?,
     ) {
         val state = context.getSharedPreferences(STATE_PREFS, Context.MODE_PRIVATE)
         val since = if (state.getString(KEY_LAST_DATE, null) == today.toString()) {
@@ -250,6 +274,28 @@ object ScheduleNotifier {
         if (healthMinute != null && healthMinute > since && healthMinute <= nowMinute) {
             notifyHealthReminder(context, today, health, zone)
         }
+        if (mealMinute != null && mealMinute > since && mealMinute <= nowMinute) notifyMealReminder(context, today)
+    }
+
+    /**
+     * Pengingat catatan makan (tingkat Info): satu notifikasi senyap dengan id tetap, hanya kalau ada waktu makan utama (sarapan,
+     * siang, malam) yang hari itu belum dicatat. Kalau semuanya sudah dicatat tidak ada notifikasi.
+     */
+    @SuppressLint("MissingPermission")
+    private suspend fun notifyMealReminder(context: Context, today: LocalDate) {
+        if (!canNotify(context)) return
+        val missing = missingMeals(MealRepository(HabitDatabase.get(context)).mealsOn(today))
+        if (missing.isEmpty()) return
+        val notification = NotificationCompat.Builder(context, CHANNEL_INFO)
+            .setSmallIcon(R.drawable.ic_launcher_monochrome)
+            .setContentTitle("Catat makan hari ini")
+            .setContentText("Belum dicatat: ${missing.joinToString(", ") { it.sentenceName }}.")
+            .setContentIntent(openAppIntent(context))
+            .setAutoCancel(true)
+            .setOnlyAlertOnce(true)
+            .setSilent(true)
+            .build()
+        NotificationManagerCompat.from(context).notify(MEAL_REMINDER_ID, notification)
     }
 
     /**
