@@ -1349,6 +1349,71 @@ kerja (27) dan to-do tim (26) dulu (sudah jalan) → **Habit + to-do harian** (p
 dipakai, fondasi fitur lain) → Jadwal harian → Kesehatan & Asupan makan → Kalender →
 Pengaturan. Asisten AI didiskusikan kapan saja setelah ada waktu, tidak harus urut.
 
+### Tahap 28: Habit + To-do Harian (diputuskan arahnya, belum dikoding)
+
+Dibahas 10 Oktober 2026. Fitur paling sering diakses di seluruh app — dicentang berkali-kali
+sehari, **harus tetap jalan offline** di Android. Ini beda dari follow-up kerja (tahap 27)
+dan to-do tim (tahap 26) yang wajar kalau butuh koneksi internet setiap saat dipakai.
+
+**Kerumitan yang perlu ditandai jujur**: follow-up kerja dan to-do tim bisa langsung
+"panggil API, tangani 409 kalau bentrok" karena jarang diedit dan tidak krusial kalau
+gagal sesaat. Habit/to-do harian beda — kalau app Android butuh internet tiap kali
+centang habit, itu mundur dari prinsip app ("catat dalam 2 detik", offline-first). Jadi
+di Android, **database lokal (Room) tetap ada dan tetap sumber data utama untuk
+dipakai sehari-hari** — yang berubah adalah cara sinkronnya: bukan lagi "snapshot
+sekali gabungan semua data" (19B), tapi **sinkron per-perubahan** (push tiap habit/entry/
+todo yang berubah ke server begitu ada internet, tarik perubahan dari server/web secara
+berkala) - mirip pola offline-first app modern umumnya, bukan lagi model backup/restore.
+Ini pekerjaan Android yang jauh lebih besar dari sekadar "ganti field baca snapshot jadi
+panggil API" seperti follow-up kerja.
+
+| Pertanyaan | Keputusan |
+|---|---|
+| Lingkup | `habits`, `habit_entries` (presensi centang per tanggal), `todos` (harian, maks 5, carry-over to-do belum selesai) |
+| Kepemilikan data | Per user (`user_id`), bukan per tim — beda dari `team_todos` |
+| Konflik | Sama seperti follow-up kerja: `updated_at` + `409` kalau bentrok. Tapi di Android, konflik jadi jarang terjadi kalau sinkron per-perubahan berjalan cepat (detik/menit), bukan nunggu sinkron manual |
+| Web | CRUD habit (nama, wajib/tidak, urutan) + halaman "Hari ini" (centang habit, kelola sampai 5 to-do) — versi sederhana dulu, heatmap kontribusi bisa menyusul |
+| Android | **Tidak langsung ganti ke panggil API tiap aksi.** Room tetap utama, ditambah lapisan sinkron baru (queue perubahan lokal → push ke server saat ada internet, tarik perubahan dari server berkala) |
+
+**Rencana teknis:**
+- Tabel `habits` (user_id, name, sort_order, is_mandatory, auto_source nullable,
+  updated_at), `habit_entries` (habit_id, date, unique[habit_id, date]), `todos` (user_id,
+  title, date, done, updated_at).
+- Endpoint API: `/api/v1/habits` (CRUD), `/api/v1/habits/{habit}/entries` (tandai/batal
+  centang per tanggal), `/api/v1/todos` (CRUD, filter per tanggal). Semua pakai deteksi
+  konflik seperti follow-up kerja untuk field yang bisa diedit (nama habit, judul todo);
+  toggle centang/selesai cukup idempotent (tidak butuh deteksi konflik serumit itu, aksi
+  "centang" dari 2 tempat hasilnya sama).
+- Web: Livewire component kelola habit + halaman harian, pola sama seperti `Teams`.
+- **Android (bagian paling besar, sesi kerja terpisah)**: rancang ulang lapisan sync -
+  outbox pattern (perubahan lokal dicatat sebagai pending, dikirim saat online),
+  WorkManager job baru untuk push+pull berkala, resolusi konflik di app kalau 409. Room
+  tetap dipakai untuk baca/tulis sehari-hari supaya tetap instan dan offline.
+
+**Langkah bangun:**
+
+1. **Skema + migrasi**: tabel `habits`, `habit_entries`, `todos` di MySQL.
+2. **Endpoint API**: CRUD habits, toggle entries, CRUD todos, dengan deteksi konflik untuk
+   field yang diedit (bukan untuk aksi centang/selesai yang idempotent).
+3. **Halaman web**: kelola habit + halaman harian (centang habit, kelola to-do).
+4. **Keluarkan dari snapshot 19B**: `habits`, `habitEntries`, `todos` tidak lagi ikut
+   payload snapshot setelah migrasi ini aktif.
+5. **Android - lapisan sync baru** (sesi kerja terpisah, lebih besar dari langkah 1-4
+   digabung): outbox lokal, WorkManager push/pull berkala, UI penanganan konflik.
+
+**Belum diputuskan:**
+- Seberapa sering Android pull dari server (detik? menit? cuma saat app dibuka?) -
+  trade-off baterai vs selalu up-to-date dengan web.
+- Apakah heatmap kontribusi dibangun juga di web di tahap ini, atau menyusul belakangan.
+
+**Selesai jika:**
+- Habit dan to-do harian bisa di-CRUD penuh dari web.
+- Centang/tambah/hapus dari web kelihatan di Android setelah sinkron berikutnya, dan
+  sebaliknya.
+- App Android **tetap bisa dipakai offline** sepenuhnya (centang habit, tambah to-do)
+  tanpa internet, dan perubahan itu terkirim otomatis begitu online lagi.
+- Tidak ada data yang hilang saat transisi dari model snapshot ke model baru ini.
+
 ## Daftar pertanyaan terbuka
 
 - Urutan habit bisa diubah atau tidak (tahap 9, opsional).
