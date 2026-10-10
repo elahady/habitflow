@@ -1217,10 +1217,15 @@ Dibahas 10 Oktober 2026. Butuh tahap 25 (akun, MySQL, Livewire) selesai lebih du
 
 **Langkah bangun:**
 
-1. **Teams + invite**: migrasi `teams`, `team_members`, `team_invites`. Endpoint buat tim,
-   buat link undangan, terima undangan. Halaman Livewire: buat tim, lihat link undangan.
+1. ✅ **Teams + invite (web)** — selesai, 10 Oktober 2026: migrasi `teams`, `team_members`,
+   `team_invites` jalan di MySQL. Halaman `/tugas-rumah` (Livewire `Teams`) buat tim dan
+   buat link undangan; halaman `/invite/{token}` terima undangan (cek kedaluwarsa/sudah
+   dipakai). Nav "Tugas Rumah" ditambah di layout. **Belum ada endpoint API** untuk
+   Android di langkah ini - menyusul bareng langkah 3 (To-Do Tim) supaya app Android tidak
+   perlu update dua kali.
 2. **Terima undangan dari Android**: deep link (`App Links`) buka layar "Gabung tim" di app;
-   fallback ke halaman web kalau app belum terpasang.
+   fallback ke halaman web kalau app belum terpasang. **Belum dikerjakan** - butuh sesi
+   kerja Android terpisah (build + install APK untuk tes).
 3. **To-Do Tim**: migrasi `team_todos` (dengan `assigned_to`). Endpoint CRUD. Halaman
    Livewire daftar to-do tim (tambah/edit/hapus/tugaskan/centang). Tab baru "Tugas Rumah"
    di Android.
