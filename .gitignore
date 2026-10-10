@@ -4,3 +4,6 @@ build/
 *.iml
 local.properties
 .kotlin/
+
+# Kredensial OAuth yang didownload dari Google Cloud Console - jangan pernah di-commit.
+client_secret_*.json
