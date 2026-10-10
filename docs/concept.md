@@ -983,6 +983,9 @@ palsu), keduanya hanya ada di `app/src/debug`.
   dan Pribadi (bawaan Pribadi).
 - Catat cepat: pukul 08.01, saat acara berlangsung, sheet Catat menampilkan "Tertaut ke acara: M". Catatan "Notulen" masuk
   Inbox dengan keterangan "Dari acara: M", dan di EOD diberi judul kelompok "Dari acara: M".
+- Uji ulang setelah emulator di-boot ulang dan app dipasang ulang (08.37 sampai 09.01): tautan "Tertaut ke acara: M" tetap
+  muncul selama acara berlangsung (08.39), catatan baru ("Kirim agenda") tersimpan dengan "Dari acara: M", catatan lama tetap
+  ada, dan pukul 09.01, setelah acara selesai, baris tautan hilang dari sheet Catat.
 - Unit test seluruh modul lulus (termasuk empat tes baru pengelompokan per acara).
 - Temuan: tiga tombol di tab Kerja awalnya membuat "Daily scrum" membungkus jadi dua baris; diperbaiki dengan padding
   dalam 8dp dan teks satu baris. Jam di baris Agenda diperbesar ke bodyLarge supaya sejajar dengan judul.
@@ -993,9 +996,26 @@ liburnya (dan Batalkan/Libur lagi di kartu Sekarang) karena tidak ada libur di s
 HP di Agenda dan timeline (kalender akun di emulator tidak punya acara yang dinyalakan); acara Kerja mati saat hari libur.
 Semua itu sudah dicakup unit test untuk logikanya, tapi belum dilihat di layar.
 
-### Tahap 23: Asupan makan (diputuskan, belum dikoding)
+### Tahap 23: Asupan makan (diputuskan 5 Oktober 2026, dirinci 10 Oktober 2026, sedang dikoding)
 
 **Keputusan (5 Oktober 2026).** Aturan fitur di `docs/rancangan.md` bagian Asupan makan.
+
+**Keputusan tambahan (10 Oktober 2026)**, yang menggantikan rencana awal bila bertentangan:
+
+| Pertanyaan | Keputusan |
+|---|---|
+| Banyaknya catatan makan | Satu catatan per tanggal dan jenis (sarapan, siang, malam, camilan). Menekan chip yang sudah dicatat membuka catatan itu untuk diubah atau dihapus |
+| Jam makan | Jam catatan (bawaan: sekarang) bisa diubah di sheet. Jam inilah yang dipakai aturan "makan malam" |
+| Penghitung kopi dan manis | Tabel `drink_counts` yang sama dengan air, jenis `COFFEE` dan `SWEET`. Tombol "+ Kopi", "+ Manis" dan "−" di kartu air |
+| Kopi ke-3 | Teks tenang di bawah kartu air (bodySmall, `onSurfaceVariant`): "Kopi hari ini sudah 3 gelas, di atas batas 2." Tanpa warna status dan tanpa dialog |
+| Sumber otomatis habit | Empat nilai baru di `HabitAutoSource`: `DINNER`, `NO_FRIED_SWEET`, `NO_SWEET_DRINK`, `COFFEE`. Migrasi 7 ke 8 mengisinya lewat nama habit seed (seperti tahap 20 dan 21) |
+| Kapan dievaluasi | Saat batas tidur (alarm blok Batas tidur memicu `ScheduleNotifier.refresh`), dan saat app dibuka untuk kemarin serta hari ini yang sudah lewat batas tidur. Evaluasi **hanya menambah centang, tidak pernah menghapus**, dan bisa diulang aman |
+| Centang manual menang | Setiap centang atau batal-centang manual mencatat tanda di tabel `habit_manual_marks` (habit, tanggal). Evaluasi melewati pasangan yang bertanda |
+| Hari tanpa catatan makan | "Tanpa gorengan atau camilan manis" **tidak dicentang** kalau hari itu tidak ada catatan makan sama sekali (tidak ada data, bukan bukti). "Makan malam" juga tidak dicentang tanpa catatan malam. Kopi dan minuman manis memakai penghitung, jadi hitungan 0 berarti dicentang |
+| Batas tidur | Jam mulai blok "Batas tidur" yang aktif hari itu (22.00 bawaan). Tanpa blok itu, 22.00 |
+| Pengingat | Satu notifikasi Info senyap pada Batas tidur − 60 menit (21.00), isi "Belum dicatat: makan siang, makan malam." Hanya sarapan, siang, dan malam yang dihitung (camilan tidak wajib). Tidak muncul kalau ketiganya sudah dicatat. Switch "Pengingat catatan makan" di Tentang, bawaan menyala |
+| Ringkasan mingguan | Tab Progres, bagian Kesehatan, tujuh hari terakhir termasuk hari ini: hari Isi Piringku lengkap (karbo, lauk, sayur, buah semua ada di makan siang **atau** malam), jumlah catatan bergorengan, bermanis, dan total kopi |
+| Snapshot | `data.meals`, `data.habitManualMarks`, dan jenis baru di `data.drinkCounts`. Opsional saat dibaca, `schemaVersion` tetap 1 |
 
 | Pertanyaan | Keputusan |
 |---|---|
