@@ -35,4 +35,14 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Team::class, 'team_members')->withTimestamps();
     }
+
+    public function habits(): HasMany
+    {
+        return $this->hasMany(Habit::class);
+    }
+
+    public function todos(): HasMany
+    {
+        return $this->hasMany(Todo::class);
+    }
 }
