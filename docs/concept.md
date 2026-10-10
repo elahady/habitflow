@@ -1269,11 +1269,21 @@ Dibahas 10 Oktober 2026. Butuh tahap 25 (akun, MySQL, Livewire) selesai lebih du
   supaya tidak bergantung ke verifikasi domain - hasil: app terbuka langsung ke
   `JoinTeamDialog`, menampilkan "Masuk dengan Google dulu untuk bisa bergabung ke tim." (akun
   belum login di sesi uji ini), tidak ada crash.
-- **Belum diverifikasi**: App Links terverifikasi otomatis (autoVerify) dari link sungguhan
-  di WhatsApp/dll - butuh `assetlinks.json` sudah ter-deploy dan bisa diakses lewat HTTPS di
-  domain asli lebih dulu (`adb shell pm get-app-links com.roziqrizal.habitflow` untuk cek
-  status setelah deploy). Join sungguhan (dua akun Google, token undangan asli dari web) juga
-  belum diuji end-to-end - hanya path error (belum login) yang diuji di atas.
+- ✅ **App Links terverifikasi otomatis** - diuji 10 Oktober 2026 setelah `assetlinks.json`
+  di-deploy ke VM (`https://habitflow.roziqrizal.com/.well-known/assetlinks.json` membalas
+  200). Catatan deploy: arsip `tar` dari PowerShell Windows (bsdtar) **melewatkan folder
+  `.well-known`** (folder berawalan titik) dua kali berturut-turut - solusinya `scp` file itu
+  langsung (bukan lewat `tar`) ke `~/apps/habitflow/public/.well-known/` baru `docker compose
+  build` + `up -d --force-recreate`. `adb shell pm get-app-links com.roziqrizal.habitflow`
+  awalnya menunjukkan status gagal (`1024`, dari percobaan verifikasi saat app pertama
+  di-install sebelum file ter-deploy) - `adb shell pm verify-app-links --re-verify
+  com.roziqrizal.habitflow` memaksa verifikasi ulang dan statusnya jadi `verified`. Tes akhir:
+  `adb shell am start -a android.intent.action.VIEW -c android.intent.category.BROWSABLE -d
+  "https://habitflow.roziqrizal.com/invite/..."` **tanpa menyebut package** (persis seperti
+  tap link dari WhatsApp) langsung membuka `MainActivity` dan menampilkan `JoinTeamDialog`,
+  tanpa pemilih app dan tanpa membuka browser.
+- **Masih belum diuji**: join sungguhan dengan dua akun Google dan token undangan asli dari
+  web (yang diuji di atas cuma token uji/kedaluwarsa dan path "belum login").
 
 **Belum diputuskan** (tidak menghalangi mulai):
 - Apakah to-do tim butuh kategori/label, atau cukup daftar datar dulu.
@@ -1284,8 +1294,9 @@ Dibahas 10 Oktober 2026. Butuh tahap 25 (akun, MySQL, Livewire) selesai lebih du
 **Selesai jika:**
 - ✅ User A buat tim, buat link undangan; User B buka link dan gabung, keduanya lihat
   to-do tim yang sama. Link kedaluwarsa atau sudah dipakai ditolak dengan pesan jelas.
-  (Diuji di web untuk alur lengkap; di Android baru path "belum login" yang diuji end-to-end
-  - lihat catatan verifikasi App Links di atas.)
+  (Diuji di web untuk alur lengkap. Di Android, App Links terverifikasi dan link sungguhan
+  membuka dialog gabung langsung di app; join dua akun sungguhan belum diuji - lihat catatan
+  verifikasi App Links di atas.)
 - ✅ Tambah/centang/hapus/tugaskan to-do tim langsung kelihatan di web setelah
   refresh/buka ulang, dan di Android lewat tab "Tugas Rumah" (polling manual tiap buka tab,
   tidak otomatis realtime).
@@ -1294,10 +1305,10 @@ Dibahas 10 Oktober 2026. Butuh tahap 25 (akun, MySQL, Livewire) selesai lebih du
 - ✅ Data personal (habit, jadwal, dll) tidak terpengaruh sama sekali — masih snapshot
   seperti sebelumnya.
 
-**Status Tahap 26: web, API, dan Android (langkah 1-4) selesai dikoding dan lulus
-`assembleDebug`/`testDebugUnitTest`/terpasang di HP fisik tanpa crash. Yang belum: App
-Links terverifikasi otomatis dan uji end-to-end join dua akun (lihat catatan verifikasi di
-atas) - butuh deploy `assetlinks.json` ke VM dulu.**
+**Status Tahap 26: web, API, dan Android (langkah 1-4) selesai dikoding, lulus
+`assembleDebug`/`testDebugUnitTest`, terpasang di HP fisik, dan App Links sudah terverifikasi
++ di-deploy ke VM. Yang belum: uji end-to-end join dua akun Google sungguhan (lihat catatan
+verifikasi di atas).**
 
 ### Tahap 27: Web untuk Follow-up Kerja (diputuskan, belum dikoding)
 
