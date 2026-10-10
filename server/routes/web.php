@@ -1,14 +1,23 @@
 <?php
 
-use App\Http\Controllers\Auth\GoogleAuthController;
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Auth\GoogleConnectController;
+use App\Http\Controllers\Auth\RegisteredUserController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/login/google', [GoogleAuthController::class, 'redirect'])->name('login.google');
-Route::get('/login/google/callback', [GoogleAuthController::class, 'callback']);
-Route::post('/logout', [GoogleAuthController::class, 'logout'])->name('logout');
-
-Route::middleware('auth')->group(function () {
-    Route::get('/', \App\Livewire\Dashboard::class)->name('dashboard');
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
+    Route::post('/login', [AuthenticatedSessionController::class, 'store']);
+    Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');
+    Route::post('/register', [RegisteredUserController::class, 'store']);
 });
 
-Route::get('/login', fn () => view('auth.login'))->name('login');
+Route::middleware('auth')->group(function () {
+    Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
+
+    Route::get('/connect/google', [GoogleConnectController::class, 'redirect'])->name('connect.google');
+    Route::get('/connect/google/callback', [GoogleConnectController::class, 'callback']);
+    Route::delete('/connect/google', [GoogleConnectController::class, 'destroy'])->name('connect.google.destroy');
+
+    Route::get('/', \App\Livewire\Dashboard::class)->name('dashboard');
+});
