@@ -1127,7 +1127,7 @@ Angka ini perkiraan kasar dan diperiksa ulang dari `usage` setelah sebulan dipak
   jawab saat cadangan tercapai.
 - Tanpa internet, layar AI menampilkan pesan dan bagian lain app tidak terganggu.
 
-### Tahap 25: Infrastruktur MySQL dan Akun Google (diputuskan, belum dikoding)
+### Tahap 25: Infrastruktur MySQL dan Akun Google (selesai dikoding, verifikasi login manual tertunda)
 
 Dibahas 10 Oktober 2026. Fondasi untuk tahap 26 dan 27 — dikerjakan lebih dulu karena
 keduanya butuh ini. Awalnya didiskusikan bareng 26-27 sebagai "tahap 25" tunggal, dipecah
@@ -1156,12 +1156,19 @@ jadi 3 tahap terpisah supaya progress tiap bagian bisa dilacak sendiri-sendiri.
    **Web** dan **Android** (package `com.roziqrizal.habitflow`, SHA-1 debug) dibuat.
    Kredensial disimpan di `.env.production` (server, gitignored) dan dipetakan lewat
    `config/services.php` (di git, tanpa nilai asli).
-4. **Auth backend** — belum dikerjakan.
-5. **Livewire shell** — belum dikerjakan.
-6. ~~**Deploy ke VM**~~ — **Selesai (sebagian)**: container `habitflow` jalan di VM (port
-   8081, connect ke `shared-mysql`), domain `habitflow.roziqrizal.com` live lewat
-   Cloudflare Tunnel yang sudah ada (terverifikasi: akses dari luar dapat respons yang
-   benar dari API). Container ini akan di-build ulang begitu langkah 3-5 selesai.
+4. ~~**Auth backend**~~ — **Selesai**: Socialite terpasang, `GoogleAuthController` web
+   (`/login/google`, callback buat/cari user dari `google_sub`, sesi) dan API
+   (`POST /api/v1/auth/google`, verifikasi ID token Android lewat endpoint tokeninfo
+   Google, balas `UserToken`). Tabel `user_tokens` (mirip `api_tokens` 19B tapi terikat
+   ke user) ditambahkan.
+5. ~~**Livewire shell**~~ — **Selesai**: Livewire terpasang, `Dashboard` component +
+   layout dasar (header nama/avatar/keluar), halaman login (`/login`) dengan tombol
+   "Masuk dengan Google".
+6. ~~**Deploy ke VM**~~ — **Selesai**: container `habitflow` di-rebuild dengan semua kode
+   final, migrasi `user_tokens` jalan. Diverifikasi dari luar: `/login` HTTP 200,
+   `/login/google` redirect 302 ke Google dengan client_id/redirect_uri/scope yang benar.
+   **Belum diverifikasi**: alur login lengkap sampai consent Google asli (perlu dicoba
+   manual di browser oleh pemilik akun).
 
 **Selesai jika:**
 - `shared-mysql` jalan di VM, database `habitflow` bisa diakses dari container app.
