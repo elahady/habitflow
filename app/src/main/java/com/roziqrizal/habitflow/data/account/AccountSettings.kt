@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-data class Account(val email: String, val name: String, val avatar: String?, val token: String)
+data class Account(val id: Long, val email: String, val name: String, val avatar: String?, val token: String)
 
 /**
  * Akun Google dan token API (tahap 25) - beda dari [com.roziqrizal.habitflow.data.sync.SyncSettings]
@@ -23,11 +23,13 @@ class AccountSettings(context: Context) {
         val token = prefs.getString(KEY_TOKEN, null) ?: return null
         val email = prefs.getString(KEY_EMAIL, null) ?: return null
         val name = prefs.getString(KEY_NAME, null) ?: return null
-        return Account(email, name, prefs.getString(KEY_AVATAR, null), token)
+        val id = prefs.getLong(KEY_ID, -1L).takeIf { it >= 0 } ?: return null
+        return Account(id, email, name, prefs.getString(KEY_AVATAR, null), token)
     }
 
     fun save(account: Account) {
         prefs.edit()
+            .putLong(KEY_ID, account.id)
             .putString(KEY_TOKEN, account.token)
             .putString(KEY_EMAIL, account.email)
             .putString(KEY_NAME, account.name)
@@ -42,6 +44,7 @@ class AccountSettings(context: Context) {
     }
 
     private companion object {
+        const val KEY_ID = "id"
         const val KEY_TOKEN = "token"
         const val KEY_EMAIL = "email"
         const val KEY_NAME = "name"

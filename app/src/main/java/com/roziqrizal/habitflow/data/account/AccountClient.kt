@@ -71,6 +71,7 @@ class AccountClient(
         val user = json.getJSONObject("user")
         LoginResult.Success(
             Account(
+                id = user.getLong("id"),
                 email = user.getString("email"),
                 name = user.getString("name"),
                 avatar = if (user.isNull("avatar")) null else user.getString("avatar"),
