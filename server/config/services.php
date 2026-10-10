@@ -35,4 +35,13 @@ return [
         ],
     ],
 
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URI'),
+        // Client ID Android dipakai untuk verifikasi ID token dari app (tahap 25 langkah 4),
+        // bukan oleh Socialite (yang cuma pakai client_id/client_secret web di atas).
+        'android_client_id' => env('GOOGLE_ANDROID_CLIENT_ID'),
+    ],
+
 ];
