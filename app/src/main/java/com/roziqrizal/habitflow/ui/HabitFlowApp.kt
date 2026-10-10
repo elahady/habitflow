@@ -288,6 +288,7 @@ fun HabitFlowApp(
                         accountActions = AccountActions(
                             onSignIn = accountViewModel::signIn,
                             onSignOut = accountViewModel::signOut,
+                            onSyncHabitsNow = accountViewModel::syncHabitsNow,
                         ),
                     )
                 }

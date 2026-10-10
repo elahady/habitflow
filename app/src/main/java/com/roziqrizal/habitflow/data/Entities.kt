@@ -17,6 +17,12 @@ data class Habit(
     val isMandatory: Boolean = false,
     /** Sumber centang otomatis ([HabitAutoSource]), atau null kalau habit hanya dicentang manual. */
     val autoSource: String? = null,
+    /** Sinkron server (tahap 28 langkah 5) - null berarti belum pernah terkirim. */
+    val remoteId: Long? = null,
+    /** `updated_at` terakhir dari server, dikirim balik saat update untuk deteksi konflik. */
+    val remoteUpdatedAt: String? = null,
+    /** Ada perubahan lokal (nama/wajib/urutan) yang belum terkirim ke server. */
+    val dirty: Boolean = true,
 )
 
 /**
@@ -50,4 +56,10 @@ data class Todo(
     val date: String,
     val done: Boolean = false,
     val createdAt: Long,
+    /** Sinkron server (tahap 28 langkah 5) - null berarti belum pernah terkirim. */
+    val remoteId: Long? = null,
+    /** `updated_at` terakhir dari server, dikirim balik saat update untuk deteksi konflik. */
+    val remoteUpdatedAt: String? = null,
+    /** Ada perubahan lokal (judul/tanggal/selesai) yang belum terkirim ke server. */
+    val dirty: Boolean = true,
 )

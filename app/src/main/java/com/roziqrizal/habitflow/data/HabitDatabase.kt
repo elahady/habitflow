@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
@@ -14,8 +15,9 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         WeightEntry::class, BloodPressureEntry::class,
         EventEntity::class, EventExceptionEntity::class, HolidayCancellation::class,
         MealEntity::class, HabitManualMark::class,
+        HabitEntryOutbox::class, PendingDelete::class,
     ],
-    version = 8,
+    version = 9,
     exportSchema = false,
 )
 abstract class HabitDatabase : RoomDatabase() {
@@ -31,6 +33,7 @@ abstract class HabitDatabase : RoomDatabase() {
     abstract fun healthDao(): HealthDao
     abstract fun eventDao(): EventDao
     abstract fun mealDao(): MealDao
+    abstract fun habitSyncOutboxDao(): HabitSyncOutboxDao
 
     companion object {
         private const val NAME = "habitflow.db"
@@ -45,7 +48,10 @@ abstract class HabitDatabase : RoomDatabase() {
                     HabitDatabase::class.java,
                     NAME,
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
+                    .addMigrations(
+                        MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8,
+                        MIGRATION_8_9,
+                    )
                     .addCallback(SeedCallback)
                     .build()
                     .also { instance = it }
@@ -90,5 +96,30 @@ abstract class HabitDatabase : RoomDatabase() {
                 seedSchedule(db)
             }
         }
+    }
+}
+
+/**
+ * Database versi 8 ke 9 (tahap 28 langkah 5): kolom sinkron server di `habits` dan `todos`
+ * (`remoteId`, `remoteUpdatedAt`, `dirty`), serta tabel antrian `habit_entry_outbox` dan
+ * `pending_deletes`. Baris lama diberi `dirty = 1` supaya ikut terdorong ke server begitu
+ * pengguna login (lihat `HabitSyncManager`). Riwayat habit/todo tidak disentuh.
+ */
+val MIGRATION_8_9 = object : Migration(8, 9) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `habits` ADD COLUMN `remoteId` INTEGER")
+        db.execSQL("ALTER TABLE `habits` ADD COLUMN `remoteUpdatedAt` TEXT")
+        db.execSQL("ALTER TABLE `habits` ADD COLUMN `dirty` INTEGER NOT NULL DEFAULT 1")
+        db.execSQL("ALTER TABLE `todos` ADD COLUMN `remoteId` INTEGER")
+        db.execSQL("ALTER TABLE `todos` ADD COLUMN `remoteUpdatedAt` TEXT")
+        db.execSQL("ALTER TABLE `todos` ADD COLUMN `dirty` INTEGER NOT NULL DEFAULT 1")
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `habit_entry_outbox` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`habitId` INTEGER NOT NULL, `date` TEXT NOT NULL, `createdAt` INTEGER NOT NULL)",
+        )
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `pending_deletes` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`entity` TEXT NOT NULL, `remoteId` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL)",
+        )
     }
 }

@@ -168,12 +168,17 @@ class MainActivity : ComponentActivity() {
                 )
                 val accountViewModel: AccountViewModel = viewModel(
                     factory = viewModelFactory {
-                        initializer { AccountViewModel(graph.accountManager, graph.accountSettings) }
+                        initializer { AccountViewModel(graph.accountManager, graph.accountSettings, graph.habitSyncManager) }
                     },
                 )
                 val manage: ManageHabitsViewModel = viewModel(
-                    factory = viewModelFactory { initializer { ManageHabitsViewModel(repo) } },
+                    factory = viewModelFactory { initializer { ManageHabitsViewModel(repo, graph.habitSyncManager) } },
                 )
+                // Sinkron habit/todo sekali saat app dibuka (tahap 28 langkah 5): push dulu baru
+                // pull, supaya perubahan lokal (termasuk penghapusan) yang belum terkirim tidak
+                // "dihidupkan lagi" oleh pull kalau proses sempat di-restart sebelum sempat push.
+                // Gagal diam-diam (mis. belum login atau offline) - worker latar belakang tetap jalan.
+                LaunchedEffect(Unit) { graph.habitSyncManager.syncNow() }
                 val versionName = remember {
                     packageManager.getPackageInfo(packageName, 0).versionName.orEmpty()
                 }

@@ -33,6 +33,32 @@ interface HabitDao {
 
     @Query("SELECT id FROM habits WHERE autoSource = :source ORDER BY id ASC LIMIT 1")
     suspend fun idByAutoSource(source: String): Long?
+
+    // --- Sinkron server (tahap 28 langkah 5) ---
+
+    @Query("SELECT * FROM habits WHERE remoteId IS NULL")
+    suspend fun newForSync(): List<Habit>
+
+    @Query("SELECT * FROM habits WHERE remoteId IS NOT NULL AND dirty = 1")
+    suspend fun dirtyForSync(): List<Habit>
+
+    @Query("SELECT * FROM habits WHERE id = :id")
+    suspend fun getByIdForSync(id: Long): Habit?
+
+    @Query("SELECT * FROM habits WHERE remoteId = :remoteId LIMIT 1")
+    suspend fun byRemoteId(remoteId: Long): Habit?
+
+    @Query("UPDATE habits SET dirty = 1 WHERE id = :id")
+    suspend fun markDirty(id: Long)
+
+    @Query(
+        "UPDATE habits SET name = :name, isMandatory = :isMandatory, sortOrder = :sortOrder, " +
+            "remoteId = :remoteId, remoteUpdatedAt = :remoteUpdatedAt, dirty = 0 WHERE id = :id",
+    )
+    suspend fun applyRemote(id: Long, name: String, isMandatory: Boolean, sortOrder: Int, remoteId: Long, remoteUpdatedAt: String?)
+
+    @Query("UPDATE habits SET remoteId = :remoteId, remoteUpdatedAt = :remoteUpdatedAt, dirty = 0 WHERE id = :id")
+    suspend fun markSynced(id: Long, remoteId: Long, remoteUpdatedAt: String?)
 }
 
 @Dao
@@ -102,6 +128,59 @@ interface TodoDao {
 
     @Query("DELETE FROM todos WHERE id = :id")
     suspend fun delete(id: Long): Int
+
+    // --- Sinkron server (tahap 28 langkah 5) ---
+
+    @Query("SELECT * FROM todos WHERE id = :id")
+    suspend fun getByIdForSync(id: Long): Todo?
+
+    @Query("SELECT * FROM todos WHERE remoteId IS NULL")
+    suspend fun newForSync(): List<Todo>
+
+    @Query("SELECT * FROM todos WHERE remoteId IS NOT NULL AND dirty = 1")
+    suspend fun dirtyForSync(): List<Todo>
+
+    @Query("SELECT * FROM todos WHERE remoteId = :remoteId LIMIT 1")
+    suspend fun byRemoteId(remoteId: Long): Todo?
+
+    @Query("UPDATE todos SET dirty = 1 WHERE id = :id")
+    suspend fun markDirty(id: Long)
+
+    @Query(
+        "UPDATE todos SET title = :title, date = :date, done = :done, " +
+            "remoteId = :remoteId, remoteUpdatedAt = :remoteUpdatedAt, dirty = 0 WHERE id = :id",
+    )
+    suspend fun applyRemote(id: Long, title: String, date: String, done: Boolean, remoteId: Long, remoteUpdatedAt: String?)
+
+    @Query("UPDATE todos SET remoteId = :remoteId, remoteUpdatedAt = :remoteUpdatedAt, dirty = 0 WHERE id = :id")
+    suspend fun markSynced(id: Long, remoteId: Long, remoteUpdatedAt: String?)
+}
+
+/** Antrian sinkron ke server untuk habit/todo (tahap 28 langkah 5). */
+@Dao
+interface HabitSyncOutboxDao {
+
+    @Insert
+    suspend fun insertEntryOutbox(entry: HabitEntryOutbox): Long
+
+    @Query("SELECT * FROM habit_entry_outbox ORDER BY id ASC")
+    suspend fun entryOutbox(): List<HabitEntryOutbox>
+
+    @Query("DELETE FROM habit_entry_outbox WHERE id = :id")
+    suspend fun deleteEntryOutbox(id: Long)
+
+    /** Baris tertunda untuk pasangan habit/tanggal ini - dipakai pull untuk tidak menimpa toggle yang belum terkirim. */
+    @Query("SELECT COUNT(*) FROM habit_entry_outbox WHERE habitId = :habitId AND date = :date")
+    suspend fun hasPendingEntry(habitId: Long, date: String): Int
+
+    @Insert
+    suspend fun insertPendingDelete(delete: PendingDelete): Long
+
+    @Query("SELECT * FROM pending_deletes WHERE entity = :entity ORDER BY id ASC")
+    suspend fun pendingDeletes(entity: String): List<PendingDelete>
+
+    @Query("DELETE FROM pending_deletes WHERE id = :id")
+    suspend fun deletePendingDelete(id: Long)
 }
 
 @Dao

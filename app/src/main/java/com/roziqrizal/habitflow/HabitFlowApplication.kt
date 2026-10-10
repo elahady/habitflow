@@ -20,6 +20,8 @@ import com.roziqrizal.habitflow.data.health.StepsTracker
 import com.roziqrizal.habitflow.data.health.StepsWorker
 import com.roziqrizal.habitflow.data.WorkReminderSettings
 import com.roziqrizal.habitflow.data.sync.AppSettingsGateway
+import com.roziqrizal.habitflow.data.sync.HabitSyncManager
+import com.roziqrizal.habitflow.data.sync.HabitSyncScheduler
 import com.roziqrizal.habitflow.data.sync.SnapshotRepository
 import com.roziqrizal.habitflow.data.sync.SnapshotSettings
 import com.roziqrizal.habitflow.data.sync.SyncManager
@@ -37,6 +39,9 @@ class HabitFlowApplication : Application() {
         // Sinkron otomatis: pasang jadwal harian kalau aktif, dan pantau perubahan data di proses mana pun.
         graph.syncScheduler.onConfigChanged()
         graph.syncScheduler.observeChanges(graph.db, SyncScheduler.newScope())
+        // Sinkron habit/todo ke server (tahap 28 langkah 5): hanya aktif kalau sudah login.
+        graph.habitSyncScheduler.onAccountChanged()
+        graph.habitSyncScheduler.observeChanges(graph.db, HabitSyncScheduler.newScope())
         // Cek langkah sekitar tiap jam untuk mencentang habit langkah walau app tertutup (tahap 21).
         StepsWorker.ensureScheduled(this)
     }
@@ -61,6 +66,8 @@ class AppGraph(app: Application) {
     val syncScheduler = SyncScheduler(app, syncSettings)
     val accountSettings = AccountSettings(app)
     val accountManager = AccountManager(accountSettings, GoogleSignIn(BuildConfig.GOOGLE_SERVER_CLIENT_ID))
+    val habitSyncManager: HabitSyncManager by lazy { HabitSyncManager(db, accountSettings) }
+    val habitSyncScheduler = HabitSyncScheduler(app, accountSettings)
     val stepsTracker: StepsTracker by lazy { StepsTracker(HealthConnectStepsSource(app), db, healthSettings) }
 
     private val versionName: String =

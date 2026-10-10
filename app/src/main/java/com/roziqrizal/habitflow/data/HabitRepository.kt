@@ -16,6 +16,7 @@ class HabitRepository(private val db: HabitDatabase) {
     private val habits = db.habitDao()
     private val entries = db.habitEntryDao()
     private val todos = db.todoDao()
+    private val outbox = db.habitSyncOutboxDao()
 
     fun observeHabits(): Flow<List<Habit>> = habits.observeAll()
 
@@ -35,6 +36,9 @@ class HabitRepository(private val db: HabitDatabase) {
         } else {
             entries.insert(HabitEntry(habitId, key))
         }
+        // Dicatat di antrian supaya terkirim ke server (tahap 28 langkah 5): endpoint toggle
+        // server juga membalik status, jadi replay urutan ini apa adanya sudah cukup.
+        outbox.insertEntryOutbox(HabitEntryOutbox(habitId = habitId, date = key, createdAt = System.currentTimeMillis()))
     }
 
     suspend fun addHabit(name: String, today: LocalDate) {
@@ -43,22 +47,31 @@ class HabitRepository(private val db: HabitDatabase) {
     }
 
     suspend fun renameHabit(habit: Habit, newName: String) {
-        habits.update(habit.copy(name = newName.trim()))
+        habits.update(habit.copy(name = newName.trim(), dirty = true))
     }
 
     /** Status wajib bisa diatur untuk habit mana pun. Riwayat centang tidak berubah. */
     suspend fun setMandatory(habitId: Long, mandatory: Boolean) {
         habits.setMandatory(habitId, mandatory)
+        habits.markDirty(habitId)
     }
 
     /** Habit wajib tidak bisa dihapus. Mengembalikan false kalau penghapusan ditolak. */
     suspend fun deleteHabit(habitId: Long): Boolean = db.withTransaction {
+        val remoteId = habits.getByIdForSync(habitId)?.remoteId
         // Riwayat baru dihapus setelah habitnya benar-benar terhapus, supaya riwayat habit wajib
         // tidak ikut hilang saat penghapusannya ditolak.
         val deleted = habits.deleteIfNotMandatory(habitId) > 0
         if (deleted) {
             entries.deleteAllForHabit(habitId)
             entries.deleteMarksForHabit(habitId)
+            // Kalau sudah pernah terkirim ke server, catat supaya ikut dihapus di sana juga
+            // (tahap 28 langkah 5). Belum pernah terkirim - tidak ada yang perlu dihapus.
+            if (remoteId != null) {
+                outbox.insertPendingDelete(
+                    PendingDelete(entity = PendingDeleteEntity.HABIT, remoteId = remoteId, createdAt = System.currentTimeMillis()),
+                )
+            }
         }
         deleted
     }
@@ -78,11 +91,18 @@ class HabitRepository(private val db: HabitDatabase) {
     }
 
     suspend fun toggleTodo(todo: Todo) {
-        todos.update(todo.copy(done = !todo.done))
+        todos.update(todo.copy(done = !todo.done, dirty = true))
     }
 
-    suspend fun deleteTodo(todoId: Long) {
+    suspend fun deleteTodo(todoId: Long) = db.withTransaction {
+        val remoteId = todos.getByIdForSync(todoId)?.remoteId
         todos.delete(todoId)
+        // Sama seperti deleteHabit: hanya dicatat kalau sudah pernah terkirim ke server.
+        if (remoteId != null) {
+            outbox.insertPendingDelete(
+                PendingDelete(entity = PendingDeleteEntity.TODO, remoteId = remoteId, createdAt = System.currentTimeMillis()),
+            )
+        }
     }
 
     /**
@@ -97,7 +117,7 @@ class HabitRepository(private val db: HabitDatabase) {
             .filter { shouldCarryOver(LocalDate.parse(it.date), it.done, today) }
             .forEach { todo ->
                 if (room <= 0) return@forEach
-                todos.update(todo.copy(date = key))
+                todos.update(todo.copy(date = key, dirty = true))
                 room--
                 moved++
             }

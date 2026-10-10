@@ -1324,7 +1324,7 @@ pindah, baru dipertimbangkan apakah 19B dipensiunkan total.
 |---|---|---|---|
 | Follow-up kerja | `follow_ups` | 19 | **Direncanakan — tahap 27** |
 | To-do tim | `team_todos`, `teams`, `team_invites` | baru | **Selesai (web+API) — tahap 26** |
-| Habit + to-do harian | `habits`, `habit_entries`, `todos` | 1-9 | Belum dimulai |
+| Habit + to-do harian | `habits`, `habit_entries`, `todos` | 1-9 | **Selesai (web+API+Android)** — tahap 28 |
 | Jadwal harian & libur | `schedule_blocks`, `schedule_block_habits`, `days_off`, `holiday_cancellations` | 17, 22 | Belum dimulai |
 | Daily scrum/EOD | `work_days` | 19 | Belum dimulai |
 | Kesehatan (berat, tensi) | `weight_entries`, `blood_pressure_entries` | 21 | Belum dimulai |
@@ -1349,7 +1349,7 @@ kerja (27) dan to-do tim (26) dulu (sudah jalan) → **Habit + to-do harian** (p
 dipakai, fondasi fitur lain) → Jadwal harian → Kesehatan & Asupan makan → Kalender →
 Pengaturan. Asisten AI didiskusikan kapan saja setelah ada waktu, tidak harus urut.
 
-### Tahap 28: Habit + To-do Harian (web selesai, sync Android menyusul — 10 Oktober 2026)
+### Tahap 28: Habit + To-do Harian (selesai - web, API, dan sinkron Android — 10 Oktober 2026)
 
 Dibahas 10 Oktober 2026. Fitur paling sering diakses di seluruh app — dicentang berkali-kali
 sehari, **harus tetap jalan offline** di Android. Ini beda dari follow-up kerja (tahap 27)
@@ -1441,27 +1441,96 @@ panggil API" seperti follow-up kerja.
      `dc74f89`) supaya tidak terulang. Client ID tipe Android tidak pernah dipakai di kode
      mana pun - cukup terdaftar di Google Cloud Console (dicocokkan otomatis lewat package
      name + SHA-1 oleh Google Play Services).
-   - **Belum dikerjakan**: outbox lokal untuk perubahan habit/entry/todo, WorkManager
-     push/pull, resolusi konflik 409 di UI, dan terima undangan tim dari Android (tahap 26
-     langkah 2) yang kini bisa dibangun di atas lapisan akun yang sama.
+   - ✅ **Outbox lokal, WorkManager push/pull, dan UI status - selesai dan diuji end-to-end
+     di HP fisik (10 Oktober 2026).** Room tetap sumber data utama (baca/tulis sehari-hari
+     instan, offline-first); sinkron berjalan di latar belakang.
+
+**Skema (migrasi Room 8 → 9):**
+- `habits` dan `todos` dapat kolom `remoteId` (null = belum pernah terkirim),
+  `remoteUpdatedAt` (nilai `updated_at` server, dikirim balik untuk deteksi konflik), dan
+  `dirty` (ada perubahan lokal belum terkirim; baris lama otomatis `dirty = 1` supaya ikut
+  terdorong begitu login).
+- Tabel baru `habit_entry_outbox` (`habitId`, `date`, `createdAt`): satu baris per
+  `toggleHabit`, diproses FIFO lewat `POST habits/{id}/entries` yang juga *toggle* di
+  server - replay urutan toggle apa adanya sudah cukup, tidak perlu tahu state absolut.
+- Tabel baru `pending_deletes` (`entity`, `remoteId`, `createdAt`): diisi tepat sebelum
+  baris lokal dihapus, **hanya kalau `remoteId` sudah tidak null**.
+
+**Kode:** `data/sync/HabitSyncClient.kt` (HttpURLConnection, pola sama dengan
+`AccountClient`/`SyncClient`, token akun tahap 25 - bukan token 19B), `HabitSyncManager.kt`
+(push lalu pull, mutex, status `StateFlow<HabitSyncStatus>`), `HabitSyncScheduler.kt`
+(`InvalidationTracker` pada tabel terkait → debounce 1 menit → `HabitPushWorker`, plus
+`HabitPeriodicSyncWorker` tiap 30 menit sebagai jaring pengaman - keduanya hanya aktif
+kalau sudah login, pola sama dengan `SyncScheduler` 19B). `domain/sync/HabitSyncMerge.kt`
+berisi `entryMergeAction` (Kotlin murni, testable tanpa Room) untuk logika "entry hari ini
+perlu disamakan dengan `done` dari server atau dilewati karena ada toggle lokal tertunda".
+
+**Keputusan konflik (409):** server menang - versi server menimpa lokal secara otomatis,
+tanpa dialog interaktif (beda dari rencana follow-up kerja tahap 27). Dipilih karena push
+per-perubahan cepat membuat konflik jarang terjadi, dan jauh lebih sederhana untuk sesi
+ini.
+
+**Batasan yang disadari dan diterima:** riwayat `habit_entries` dari sebelum fitur ini ada
+tidak di-backfill ke server (API tidak punya endpoint impor massal) - hanya toggle baru ke
+depan yang ikut sinkron.
+
+**Bug ditemukan dan diperbaiki saat verifikasi di HP fisik:** `MainActivity` dan
+`ManageHabitsViewModel` awalnya memanggil `pull()` langsung saat layar dibuka (sesuai
+rencana awal). Skenario nyata: HP sempat ter-restart saat masih ada penghapusan lokal yang
+belum sempat ter-push (dipicu penundaan WorkManager yang sangat panjang di MIUI/Xiaomi,
+lihat catatan Doze di bawah) - `pull()` yang berjalan sendirian menemukan item itu masih
+ada di server dan **menghidupkannya kembali secara lokal** sebelum penghapusannya sempat
+terkirim. Diperbaiki: kedua titik itu sekarang memanggil `syncNow()` (push dulu, baru
+pull), supaya perubahan lokal tertunda (termasuk penghapusan) selalu dapat kesempatan
+terkirim lebih dulu.
+
+**Catatan Doze/MIUI (ditemukan 10 Oktober 2026):** `dumpsys jobscheduler` di HP Xiaomi/MIUI
+yang dipakai uji menunjukkan `HabitPushWorker` (diminta debounce 1 menit) tertunda sampai
+`Minimum latency: +59m59s` - jauh lebih agresif dari pembatasan Doze standar Android,
+khas pembatasan baterai MIUI. Tombol manual "Sinkron sekarang" (jalan langsung di
+foreground, tidak lewat JobScheduler) tetap bekerja instan dan dipakai sebagai jalan pintas
+saat verifikasi. Perilaku serupa kemungkinan juga memengaruhi `HabitPeriodicSyncWorker` dan
+worker-worker lain (`StepsWorker`, `SyncWorker` 19B) di HP MIUI - belum ada mitigasi
+khusus, dicatat sebagai keterbatasan platform, bukan bug kode.
+
+**Hasil verifikasi end-to-end (10 Oktober 2026, HP fisik Xiaomi/MIUI, akun login):**
+- Push data lama: 9 habit yang sudah ada sebelum fitur ini (ditandai `dirty` otomatis oleh
+  migrasi) berhasil terkirim ke server, termasuk nama yang sudah diubah pengguna
+  sebelumnya ("Jamaah 5 waktu").
+- Push habit baru: tambah habit dari Android → muncul di server dengan `remoteId` benar.
+- Push entry: toggle habit di Android → `habit_entries` bertambah di server.
+- Pull: ubah nama habit langsung di server (mensimulasikan edit web) → buka layar Kelola
+  Habit di Android → nama baru muncul tanpa edit manual.
+- Push to-do baru: tambah to-do dari Android → muncul di server.
+- Push delete: hapus habit dan to-do di Android → **setelah fix push-before-pull di atas**,
+  keduanya hilang bersih di server juga, tidak ada orphan tersisa.
+- 284 unit test lulus (termasuk `HabitSyncClientTest` dengan server soket mini, pola sama
+  dengan `SyncClientTest`, dan `HabitSyncMergeTest` untuk `entryMergeAction`).
+
+**Belum dikerjakan**: terima undangan tim dari Android (tahap 26 langkah 2) yang kini bisa
+dibangun di atas lapisan akun yang sama; resolusi konflik interaktif (kalau nanti keputusan
+"server menang" dirasa kurang; follow-up kerja tahap 27 kemungkinan butuh ini lebih dulu).
 
 ✅ **Sudah dijalankan ke VM (10 Oktober 2026)** — deploy penuh lewat `server/DEPLOY.md`
 (tar+scp, `docker compose build`, `--force-recreate`), lalu `php artisan migrate --force`:
 migrasi `habits`/`habit_entries` dan `todos` jalan tanpa error. Container sehat
 (`docker ps` healthy), `https://habitflow.roziqrizal.com/login` membalas 200.
 
+**Diputuskan (10 Oktober 2026):** pull Android terjadi saat app dibuka dan saat layar Kelola
+Habit dibuka (bukan polling terus-menerus), plus debounce push 1 menit setelah ada
+perubahan dan push+pull jaring pengaman tiap 30 menit lewat WorkManager - lihat langkah 5.
+
 **Belum diputuskan:**
-- Seberapa sering Android pull dari server (detik? menit? cuma saat app dibuka?) -
-  trade-off baterai vs selalu up-to-date dengan web.
 - Apakah heatmap kontribusi dibangun juga di web di tahap ini, atau menyusul belakangan.
 
 **Selesai jika:**
-- Habit dan to-do harian bisa di-CRUD penuh dari web.
-- Centang/tambah/hapus dari web kelihatan di Android setelah sinkron berikutnya, dan
+- ✅ Habit dan to-do harian bisa di-CRUD penuh dari web.
+- ✅ Centang/tambah/hapus dari web kelihatan di Android setelah sinkron berikutnya, dan
   sebaliknya.
-- App Android **tetap bisa dipakai offline** sepenuhnya (centang habit, tambah to-do)
-  tanpa internet, dan perubahan itu terkirim otomatis begitu online lagi.
-- Tidak ada data yang hilang saat transisi dari model snapshot ke model baru ini.
+- ✅ App Android **tetap bisa dipakai offline** sepenuhnya (centang habit, tambah to-do)
+  tanpa internet, dan perubahan itu terkirim otomatis begitu online lagi (sesuai jadwal
+  WorkManager - di HP MIUI bisa tertunda signifikan, lihat catatan Doze di langkah 5).
+- ✅ Tidak ada data yang hilang saat transisi dari model snapshot ke model baru ini.
 
 ## Daftar pertanyaan terbuka
 
