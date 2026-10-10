@@ -1423,10 +1423,24 @@ panggil API" seperti follow-up kerja.
      WorkManager berkala seperti to-do tim (tahap 26). Habit/to-do personal kurang butuh
      realtime dibanding tugas tim, jadi cukup tarik ulang saat layar Habit dibuka/di-resume;
      push tetap lewat outbox + WorkManager saat online (menyusul).
-   - **Belum diverifikasi end-to-end** - butuh nilai asli `GOOGLE_SERVER_CLIENT_ID` (Client
-     ID tipe Web dari Google Cloud Console tahap 25, harus sama dengan
-     `GOOGLE_ANDROID_CLIENT_ID` di `.env.production` server) diisi ke `local.properties`
-     (tidak di-commit), lalu dicoba login nyata di emulator/HP dengan Google Play Services.
+   - ✅ **Diverifikasi end-to-end (10 Oktober 2026, HP fisik Xiaomi/MIUI, akun Google
+     pemilik)**: `local.properties` diisi `GOOGLE_SERVER_CLIENT_ID` dengan Client ID tipe
+     **Web** (bukan tipe Android - lihat temuan bug di bawah). Emulator `Pixel6_API34`
+     (image `google_apis` non-Play Store, GMS lawas 23.18.18) tidak bisa dipakai untuk
+     Credential Manager ("No credentials available") - verifikasi dilakukan di HP fisik
+     yang Play Services-nya lengkap. Hasil: Credential Manager mengembalikan ID token,
+     server menerima dan membuat sesi, layar Tentang bagian Akun menampilkan nama dan email
+     akun dengan "Masuk sebagai ..." dan tombol Keluar.
+   - **Bug ditemukan dan diperbaiki saat verifikasi**: `server/.env.production` (sudah live
+     di VM) menyimpan `GOOGLE_ANDROID_CLIENT_ID` dengan Client ID **tipe Android**, padahal
+     `aud` di ID token dari Credential Manager selalu berisi Client ID **tipe Web**
+     (`serverClientId` yang dikirim Android). Akibatnya verifikasi `aud` di
+     `GoogleAuthController` pasti gagal. Diperbaiki di `.env.production` lokal **dan** di VM
+     (`ssh` + `docker compose up -d --force-recreate`, dicek ulang lewat `php artisan
+     tinker`), plus komentar diperjelas di `.env.example` dan `config/services.php` (commit
+     `dc74f89`) supaya tidak terulang. Client ID tipe Android tidak pernah dipakai di kode
+     mana pun - cukup terdaftar di Google Cloud Console (dicocokkan otomatis lewat package
+     name + SHA-1 oleh Google Play Services).
    - **Belum dikerjakan**: outbox lokal untuk perubahan habit/entry/todo, WorkManager
      push/pull, resolusi konflik 409 di UI, dan terima undangan tim dari Android (tahap 26
      langkah 2) yang kini bisa dibangun di atas lapisan akun yang sama.
