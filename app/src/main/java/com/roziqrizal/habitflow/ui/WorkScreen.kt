@@ -87,6 +87,7 @@ fun WorkScreen(
     state: WorkUiState,
     onOpenScrum: () -> Unit,
     onOpenEod: () -> Unit,
+    onOpenAgenda: () -> Unit,
     onSelectPerson: (String?) -> Unit,
     onDone: (FollowUp) -> Unit,
     onSave: (FollowUp) -> Unit,
@@ -104,6 +105,7 @@ fun WorkScreen(
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
                 TonalButton(text = "Daily scrum", onClick = onOpenScrum, modifier = Modifier.weight(1f))
                 TonalButton(text = "EOD", onClick = onOpenEod, modifier = Modifier.weight(1f))
+                TonalButton(text = "Agenda", onClick = onOpenAgenda, modifier = Modifier.weight(1f))
             }
         }
         if (state.people.isNotEmpty()) {

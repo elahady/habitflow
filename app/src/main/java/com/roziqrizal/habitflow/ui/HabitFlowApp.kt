@@ -37,7 +37,7 @@ enum class Tab(val label: String) {
 }
 
 /** Layar penuh di atas tab Kerja. */
-private enum class WorkSession { SCRUM, EOD }
+private enum class WorkSession { SCRUM, EOD, AGENDA }
 
 @Composable
 fun HabitFlowApp(
@@ -45,6 +45,7 @@ fun HabitFlowApp(
     contribution: ContributionViewModel,
     manage: ManageHabitsViewModel,
     schedule: ScheduleViewModel,
+    agenda: AgendaViewModel,
     work: WorkViewModel,
     syncViewModel: SyncViewModel,
     /** Permintaan membuka daily scrum atau EOD dari notifikasi. Null kalau tidak ada. */
@@ -165,6 +166,21 @@ fun HabitFlowApp(
                     )
                     return@Box
                 }
+                WorkSession.AGENDA -> {
+                    val agendaState by agenda.state.collectAsState()
+                    AgendaScreen(
+                        state = agendaState,
+                        onShiftMonth = agenda::shiftMonth,
+                        onSelectDay = agenda::selectDay,
+                        onSaveEvent = agenda::saveEvent,
+                        onDeleteEvent = agenda::deleteEvent,
+                        onSkip = agenda::skip,
+                        onChangeOccurrence = agenda::changeOccurrence,
+                        onRestoreOccurrence = agenda::restoreOccurrence,
+                        onClose = { sessionName = null },
+                    )
+                    return@Box
+                }
                 null -> Unit
             }
             when (current) {
@@ -199,6 +215,7 @@ fun HabitFlowApp(
                     state = workState,
                     onOpenScrum = { sessionName = WorkSession.SCRUM.name },
                     onOpenEod = { sessionName = WorkSession.EOD.name },
+                    onOpenAgenda = { sessionName = WorkSession.AGENDA.name },
                     onSelectPerson = work::selectPerson,
                     onDone = work::setDone,
                     onSave = work::save,

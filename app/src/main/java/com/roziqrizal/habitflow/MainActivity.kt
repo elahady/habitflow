@@ -46,6 +46,7 @@ import com.roziqrizal.habitflow.data.WorkReminderSettings
 import com.roziqrizal.habitflow.data.WorkRepository
 import com.roziqrizal.habitflow.data.ThemeMode
 import com.roziqrizal.habitflow.notify.ScheduleNotifier
+import com.roziqrizal.habitflow.ui.AgendaViewModel
 import com.roziqrizal.habitflow.ui.ContributionViewModel
 import com.roziqrizal.habitflow.ui.DayClock
 import com.roziqrizal.habitflow.ui.HabitFlowApp
@@ -123,6 +124,13 @@ class MainActivity : ComponentActivity() {
                         }
                     },
                 )
+                val agenda: AgendaViewModel = viewModel(
+                    factory = viewModelFactory {
+                        initializer {
+                            AgendaViewModel(eventRepo, scheduleRepo, graph.phoneCalendar, graph.calendarSettings, clock)
+                        }
+                    },
+                )
                 val workRepo = remember { WorkRepository(HabitDatabase.get(applicationContext)) }
                 val work: WorkViewModel = viewModel(
                     factory = viewModelFactory { initializer { WorkViewModel(workRepo, clock) } },
@@ -161,6 +169,7 @@ class MainActivity : ComponentActivity() {
                     contribution = contribution,
                     manage = manage,
                     schedule = schedule,
+                    agenda = agenda,
                     work = work,
                     syncViewModel = syncViewModel,
                     workRequest = workRequest,
