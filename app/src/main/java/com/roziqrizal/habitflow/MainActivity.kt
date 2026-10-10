@@ -51,6 +51,7 @@ import com.roziqrizal.habitflow.notify.ScheduleNotifier
 import com.roziqrizal.habitflow.ui.AgendaViewModel
 import com.roziqrizal.habitflow.ui.ContributionViewModel
 import com.roziqrizal.habitflow.ui.DayClock
+import com.roziqrizal.habitflow.ui.AccountViewModel
 import com.roziqrizal.habitflow.ui.HabitFlowApp
 import com.roziqrizal.habitflow.ui.HealthViewModel
 import com.roziqrizal.habitflow.ui.ManageHabitsViewModel
@@ -165,6 +166,11 @@ class MainActivity : ComponentActivity() {
                         initializer { SyncViewModel(graph.syncManager, graph.syncSettings, graph.syncScheduler) }
                     },
                 )
+                val accountViewModel: AccountViewModel = viewModel(
+                    factory = viewModelFactory {
+                        initializer { AccountViewModel(graph.accountManager, graph.accountSettings) }
+                    },
+                )
                 val manage: ManageHabitsViewModel = viewModel(
                     factory = viewModelFactory { initializer { ManageHabitsViewModel(repo) } },
                 )
@@ -180,6 +186,7 @@ class MainActivity : ComponentActivity() {
                     agenda = agenda,
                     work = work,
                     syncViewModel = syncViewModel,
+                    accountViewModel = accountViewModel,
                     workRequest = workRequest,
                     onWorkRequestHandled = { pendingWork.value = null },
                     versionName = versionName,

@@ -2,6 +2,9 @@ package com.roziqrizal.habitflow
 
 import android.app.Application
 import com.roziqrizal.habitflow.data.AlarmSettings
+import com.roziqrizal.habitflow.data.account.AccountManager
+import com.roziqrizal.habitflow.data.account.AccountSettings
+import com.roziqrizal.habitflow.data.account.GoogleSignIn
 import com.roziqrizal.habitflow.data.HabitDatabase
 import com.roziqrizal.habitflow.data.HealthSettings
 import com.roziqrizal.habitflow.data.calendar.CalendarSettings
@@ -56,6 +59,8 @@ class AppGraph(app: Application) {
     val phoneCalendar = PhoneCalendarSource(app)
     val syncSettings = SyncSettings(app)
     val syncScheduler = SyncScheduler(app, syncSettings)
+    val accountSettings = AccountSettings(app)
+    val accountManager = AccountManager(accountSettings, GoogleSignIn(BuildConfig.GOOGLE_SERVER_CLIENT_ID))
     val stepsTracker: StepsTracker by lazy { StepsTracker(HealthConnectStepsSource(app), db, healthSettings) }
 
     private val versionName: String =

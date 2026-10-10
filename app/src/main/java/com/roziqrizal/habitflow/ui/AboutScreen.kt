@@ -85,6 +85,8 @@ fun AboutScreen(
     alarmSettings: AlarmSettings,
     sync: SyncUiState,
     syncActions: SyncActions,
+    account: AccountUiState,
+    accountActions: AccountActions,
 ) {
     Column(
         modifier = Modifier
@@ -165,6 +167,9 @@ fun AboutScreen(
 
         SettingLabel("Sinkron ke server")
         SyncSection(state = sync, actions = syncActions)
+
+        SettingLabel("Akun")
+        AccountSection(state = account, actions = accountActions)
     }
 }
 

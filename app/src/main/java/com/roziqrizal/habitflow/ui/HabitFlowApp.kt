@@ -52,6 +52,7 @@ fun HabitFlowApp(
     agenda: AgendaViewModel,
     work: WorkViewModel,
     syncViewModel: SyncViewModel,
+    accountViewModel: AccountViewModel,
     /** Permintaan membuka daily scrum atau EOD dari notifikasi. Null kalau tidak ada. */
     workRequest: WorkAction?,
     onWorkRequestHandled: () -> Unit,
@@ -253,6 +254,7 @@ fun HabitFlowApp(
                 Tab.ABOUT -> {
                     val nextAlarm by schedule.nextAlarm.collectAsState()
                     val syncState by syncViewModel.state.collectAsState()
+                    val accountState by accountViewModel.state.collectAsState()
                     AboutScreen(
                         versionName = versionName,
                         themeMode = themeMode,
@@ -282,6 +284,11 @@ fun HabitFlowApp(
                         phoneCalendar = phoneCalendar,
                         calendarSettings = calendarSettings,
                         onThemeModeChange = onThemeModeChange,
+                        account = accountState,
+                        accountActions = AccountActions(
+                            onSignIn = accountViewModel::signIn,
+                            onSignOut = accountViewModel::signOut,
+                        ),
                     )
                 }
             }
