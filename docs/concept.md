@@ -1200,15 +1200,47 @@ infrastrukturnya).
   (`App Links`/intent filter) supaya langsung buka ke layar "Gabung tim" di app kalau
   terpasang, fallback ke web kalau belum.
 
-**Urutan bangun yang disarankan**: MySQL dan infrastruktur dulu (sudah mulai) → 25B (akun +
-tim + to-do + assignee + notifikasi, lebih fondasional) → 25A (follow-up kerja ke MySQL +
-web CRUD + deteksi konflik, bisa pakai akun yang sama dari 25B) → web app (satu web untuk
-25A dan 25B sekaligus, tidak perlu dua web terpisah).
+#### Keputusan final arsitektur (10 Oktober 2026)
 
-**Belum diputuskan:**
-- Framework web pasti (Livewire vs SPA terpisah).
-- Model akun: email+password, atau cukup username tanpa email (lebih sederhana, cocok untuk
-  app personal/keluarga kecil).
+| Pertanyaan | Keputusan |
+|---|---|
+| Login | **Google Sign-In saja** (lewat Socialite untuk web, Credential Manager untuk Android). Tidak ada password sendiri — tidak ada tabel password, reset password, atau verifikasi email untuk dibangun |
+| Framework web | **Livewire**, di dalam Laravel app yang sama dengan API (`server/`). Bukan SPA terpisah |
+| Repo | **Repo yang sama** (`habitflow`), bukan repo baru. Web tinggal tambahan `routes/web.php`, `app/Livewire/`, `resources/views/` di folder `server/` yang sudah ada — satu codebase, satu migrasi, satu deploy |
+| Deploy | Container Docker sendiri di VM (pola sama seperti roziqrizalcom): `serversideup/php:8.3-fpm-nginx`, connect ke `shared-mysql` (network `shared-db`), subdomain lewat Cloudflare Tunnel (misal `habitflow.roziqrizal.com`). Satu container melayani web Livewire **dan** API `/api/v1/...` sekaligus |
+
+#### Langkah bangun (urut, tiap langkah idealnya 1 commit/PR)
+
+1. **Infrastruktur**: resume setup `shared-mysql` di VM (network `shared-db`), buat database
+   `habitflow` + user dedicated (bukan root).
+2. **Migrasi dasar + pindah DB**: tabel `users` (Google `sub`, email, nama, avatar — tanpa
+   kolom password). Ubah `server/.env` ke `DB_CONNECTION=mysql`, jalankan `migrate` di VM.
+   Data snapshot/token 19B yang sudah ada **tidak kehilangan apa pun** (tetap tabel terpisah,
+   cuma pindah engine dari SQLite ke MySQL).
+3. **Google OAuth setup**: buat project di Google Cloud Console, OAuth consent screen, Client
+   ID **Web** (untuk Socialite) dan Client ID **Android** (perlu SHA-1 keystore debug & rilis,
+   package name).
+4. **Auth backend**: install Laravel Socialite. Endpoint web (`/login/google`,
+   `/login/google/callback`) buat sesi. Endpoint API (`POST /api/v1/auth/google`) terima ID
+   token dari Android, verifikasi ke Google, buat/cari `users`, balas personal access token.
+5. **Livewire shell**: install Livewire, layout dasar (navbar, halaman kosong setelah login).
+   **Selesai jika**: bisa login Google di web, lihat halaman kosong "Selamat datang".
+6. **Teams + invite**: migrasi `teams`, `team_members`, `team_invites`. Endpoint buat tim,
+   buat link undangan, terima undangan. Halaman Livewire: buat tim, lihat link undangan.
+7. **Terima undangan dari Android**: deep link (`App Links`) buka layar "Gabung tim" di app;
+   fallback ke halaman web kalau app belum terpasang.
+8. **To-Do Tim**: migrasi `team_todos` (dengan `assigned_to`). Endpoint CRUD. Halaman Livewire
+   daftar to-do tim (tambah/edit/hapus/tugaskan/centang). Tab baru "Tugas Rumah" di Android.
+9. **Notifikasi tugas**: perluas job WorkManager yang sudah ada untuk polling to-do tim baru,
+   notifikasi senyap saat ditugaskan.
+10. **Follow-up kerja ke MySQL**: migrasi `follow_ups` (pindah dari field snapshot jadi tabel
+    sungguhan). Endpoint CRUD dengan deteksi konflik (`updated_at` + balas 409). Keluarkan
+    `followUps` dari payload snapshot 19B supaya tidak dobel sumber kebenaran.
+11. **Halaman web follow-up kerja**: Livewire CRUD + dialog resolusi konflik saat 409.
+12. **Android ikut pindah**: follow-up kerja di app fetch/push langsung ke endpoint baru
+    (bukan ikut snapshot lagi), tangani respons 409 dengan dialog yang sama seperti web.
+
+**Belum diputuskan** (tidak menghalangi mulai dari langkah 1):
 - Apakah to-do tim butuh kategori/label, atau cukup daftar datar dulu.
 - Apakah anggota tim bisa di-remove, dan siapa yang berhak (pembuat tim saja, atau semua
   anggota).
