@@ -27,8 +27,10 @@ import com.roziqrizal.habitflow.data.PlaceLocation
 import com.roziqrizal.habitflow.data.ThemeMode
 import com.roziqrizal.habitflow.data.calendar.CalendarSettings
 import com.roziqrizal.habitflow.data.calendar.PhoneCalendarSource
+import com.roziqrizal.habitflow.domain.meals.MealKind
 import com.roziqrizal.habitflow.domain.schedule.WorkAction
 import com.roziqrizal.habitflow.ui.theme.tokens
+import java.time.LocalTime
 
 enum class Tab(val label: String) {
     TODAY("Hari ini"),
@@ -85,6 +87,8 @@ fun HabitFlowApp(
     var showCapture by rememberSaveable { mutableStateOf(false) }
     // Sheet catat berat atau tensi (tahap 21). Null = tertutup.
     var recordModeName by rememberSaveable { mutableStateOf<String?>(null) }
+    // Sheet catat makan (tahap 23). Null = tertutup.
+    var mealKindName by rememberSaveable { mutableStateOf<String?>(null) }
     val session = sessionName?.let { WorkSession.valueOf(it) }
 
     // Notifikasi daily scrum atau EOD membuka tab Kerja langsung di layar yang sesuai.
@@ -205,6 +209,11 @@ fun HabitFlowApp(
                         onToggleHabit = today::toggleHabit,
                         onAddGlass = today::addGlass,
                         onRemoveGlass = today::removeGlass,
+                        onAddCoffee = today::addCoffee,
+                        onRemoveCoffee = today::removeCoffee,
+                        onAddSweetDrink = today::addSweetDrink,
+                        onRemoveSweetDrink = today::removeSweetDrink,
+                        onOpenMeal = { mealKindName = it.name },
                         health = healthState,
                         onRequestStepsAccess = onRequestStepsAccess,
                         onOpenHealthConnectStore = onOpenHealthConnectStore,
@@ -281,6 +290,26 @@ fun HabitFlowApp(
             onAdd = { work.quickAdd(it, ongoingEvent) },
             linkedEventTitle = ongoingEvent?.title,
             onDismiss = { showCapture = false },
+        )
+    }
+
+    mealKindName?.let { name ->
+        val kind = MealKind.valueOf(name)
+        val todayState by today.state.collectAsState()
+        MealSheet(
+            kind = kind,
+            date = todayState.date,
+            initial = todayState.meals[kind],
+            defaultMinute = LocalTime.now().let { it.hour * 60 + it.minute },
+            onSave = {
+                today.saveMeal(it)
+                mealKindName = null
+            },
+            onDelete = {
+                today.deleteMeal(kind)
+                mealKindName = null
+            },
+            onDismiss = { mealKindName = null },
         )
     }
 

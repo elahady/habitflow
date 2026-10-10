@@ -40,6 +40,7 @@ import com.roziqrizal.habitflow.data.health.HealthConnectStepsSource
 import com.roziqrizal.habitflow.data.health.StepsWorker
 import com.roziqrizal.habitflow.data.HealthSettings
 import com.roziqrizal.habitflow.data.LocationSettings
+import com.roziqrizal.habitflow.data.MealRepository
 import com.roziqrizal.habitflow.data.NotificationSettings
 import com.roziqrizal.habitflow.data.ScheduleRepository
 import com.roziqrizal.habitflow.data.WorkReminderSettings
@@ -108,7 +109,7 @@ class MainActivity : ComponentActivity() {
                 val repo = remember { HabitRepository(HabitDatabase.get(applicationContext)) }
                 val drinkRepo = remember { DrinkRepository(HabitDatabase.get(applicationContext)) }
                 val today: TodayViewModel = viewModel(
-                    factory = viewModelFactory { initializer { TodayViewModel(repo, drinkRepo, clock) } },
+                    factory = viewModelFactory { initializer { TodayViewModel(repo, drinkRepo, MealRepository(HabitDatabase.get(applicationContext)), clock) } },
                 )
                 val contribution: ContributionViewModel = viewModel(
                     factory = viewModelFactory { initializer { ContributionViewModel(repo, WorkRepository(HabitDatabase.get(applicationContext)), clock) } },

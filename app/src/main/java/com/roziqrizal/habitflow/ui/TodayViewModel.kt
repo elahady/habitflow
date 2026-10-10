@@ -2,13 +2,17 @@ package com.roziqrizal.habitflow.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.roziqrizal.habitflow.data.DrinkKind
 import com.roziqrizal.habitflow.data.DrinkRepository
 import com.roziqrizal.habitflow.data.Habit
 import com.roziqrizal.habitflow.data.HabitRepository
+import com.roziqrizal.habitflow.data.MealRepository
 import com.roziqrizal.habitflow.data.Todo
 import com.roziqrizal.habitflow.domain.canAddTodo
 import com.roziqrizal.habitflow.domain.completeDays
 import com.roziqrizal.habitflow.domain.currentStreak
+import com.roziqrizal.habitflow.domain.meals.Meal
+import com.roziqrizal.habitflow.domain.meals.MealKind
 import com.roziqrizal.habitflow.domain.scoreDay
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
@@ -36,12 +40,20 @@ data class TodayUiState(
     val canAddTodo: Boolean = true,
     /** Gelas air hari ini (tahap 20). */
     val glasses: Int = 0,
+    /** Catatan makan hari ini menurut jenisnya, dan gelas kopi dan minuman manis (tahap 23). */
+    val meals: Map<MealKind, Meal> = emptyMap(),
+    val coffee: Int = 0,
+    val sweet: Int = 0,
 )
+
+/** Asupan hari ini yang dibaca bersama: air, makan, kopi, dan minuman manis. */
+private data class Intake(val glasses: Int, val meals: List<Meal>, val coffee: Int, val sweet: Int)
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TodayViewModel(
     private val repo: HabitRepository,
     private val drinks: DrinkRepository,
+    private val meals: MealRepository,
     private val clock: DayClock,
 ) : ViewModel() {
 
@@ -50,8 +62,16 @@ class TodayViewModel(
         repo.observeAllEntries(),
         repo.observeAllTodos(),
         clock.date,
-        clock.date.flatMapLatest { drinks.observeGlasses(it) },
-    ) { habits, entries, todos, now, glasses ->
+        clock.date.flatMapLatest { date ->
+            combine(
+                drinks.observeGlasses(date),
+                meals.observeMeals(date),
+                drinks.observeCount(date, DrinkKind.COFFEE),
+                drinks.observeCount(date, DrinkKind.SWEET),
+                ::Intake,
+            )
+        },
+    ) { habits, entries, todos, now, intake ->
         val nowKey = now.toString()
         val createdOn = habits.associate { it.id to LocalDate.parse(it.createdAt) }
 
@@ -75,7 +95,10 @@ class TodayViewModel(
             level = score.level,
             streak = currentStreak(complete, now),
             canAddTodo = canAddTodo(todosToday.size),
-            glasses = glasses,
+            glasses = intake.glasses,
+            meals = intake.meals.associateBy { it.kind },
+            coffee = intake.coffee,
+            sweet = intake.sweet,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -99,6 +122,31 @@ class TodayViewModel(
 
     fun removeGlass() {
         viewModelScope.launch { drinks.removeGlass(clock.date.value) }
+    }
+
+    fun addCoffee() {
+        viewModelScope.launch { drinks.add(clock.date.value, DrinkKind.COFFEE) }
+    }
+
+    fun removeCoffee() {
+        viewModelScope.launch { drinks.remove(clock.date.value, DrinkKind.COFFEE) }
+    }
+
+    fun addSweetDrink() {
+        viewModelScope.launch { drinks.add(clock.date.value, DrinkKind.SWEET) }
+    }
+
+    fun removeSweetDrink() {
+        viewModelScope.launch { drinks.remove(clock.date.value, DrinkKind.SWEET) }
+    }
+
+    /** Simpan catatan makan (tahap 23). Satu catatan per tanggal dan jenis: yang lama diganti. */
+    fun saveMeal(meal: Meal) {
+        viewModelScope.launch { meals.save(meal) }
+    }
+
+    fun deleteMeal(kind: MealKind) {
+        viewModelScope.launch { meals.delete(clock.date.value, kind) }
     }
 
     fun addTodo(title: String) {

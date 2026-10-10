@@ -40,6 +40,9 @@ import androidx.compose.ui.unit.dp
 import com.roziqrizal.habitflow.data.Todo
 import com.roziqrizal.habitflow.domain.MAX_TODOS_PER_DAY
 import com.roziqrizal.habitflow.domain.TODOS_FOR_LEVEL_4
+import com.roziqrizal.habitflow.domain.meals.COFFEE_LIMIT
+import com.roziqrizal.habitflow.domain.meals.MealKind
+import com.roziqrizal.habitflow.domain.meals.coffeeOverLimit
 import com.roziqrizal.habitflow.domain.schedule.GLASSES_TARGET
 import com.roziqrizal.habitflow.ui.theme.LocalHeatColors
 import java.time.format.DateTimeFormatter
@@ -57,6 +60,11 @@ fun TodayScreen(
     onToggleHabit: (Long) -> Unit,
     onAddGlass: () -> Unit,
     onRemoveGlass: () -> Unit,
+    onAddCoffee: () -> Unit,
+    onRemoveCoffee: () -> Unit,
+    onAddSweetDrink: () -> Unit,
+    onRemoveSweetDrink: () -> Unit,
+    onOpenMeal: (MealKind) -> Unit,
     health: HealthUiState,
     onRequestStepsAccess: () -> Unit,
     onOpenHealthConnectStore: () -> Unit,
@@ -88,7 +96,21 @@ fun TodayScreen(
 
         item { StepsCard(health.steps, onRequestAccess = onRequestStepsAccess, onOpenHealthConnectStore = onOpenHealthConnectStore) }
 
-        item { WaterCard(glasses = state.glasses, onAdd = onAddGlass, onRemove = onRemoveGlass) }
+        item {
+            WaterCard(
+                glasses = state.glasses,
+                coffee = state.coffee,
+                sweet = state.sweet,
+                onAdd = onAddGlass,
+                onRemove = onRemoveGlass,
+                onAddCoffee = onAddCoffee,
+                onRemoveCoffee = onRemoveCoffee,
+                onAddSweet = onAddSweetDrink,
+                onRemoveSweet = onRemoveSweetDrink,
+            )
+        }
+
+        item { MealCard(meals = state.meals, onOpen = onOpenMeal) }
 
         item { HealthSummaryCards(health, onRecordBp = onRecordBp, onRecordWeight = onRecordWeight) }
 
@@ -187,9 +209,22 @@ private fun DayHeader(state: TodayUiState) {
     }
 }
 
-/** Penghitung gelas air hari ini (tahap 20). Gelas ke-8 mencentang habit "Air putih 2 liter". */
+/**
+ * Penghitung gelas air hari ini (tahap 20). Gelas ke-8 mencentang habit "Air putih 2 liter". Di bawahnya penghitung kopi dan
+ * minuman manis (tahap 23); kopi di atas batas memunculkan teks tenang, tanpa warna status.
+ */
 @Composable
-private fun WaterCard(glasses: Int, onAdd: () -> Unit, onRemove: () -> Unit) {
+private fun WaterCard(
+    glasses: Int,
+    coffee: Int,
+    sweet: Int,
+    onAdd: () -> Unit,
+    onRemove: () -> Unit,
+    onAddCoffee: () -> Unit,
+    onRemoveCoffee: () -> Unit,
+    onAddSweet: () -> Unit,
+    onRemoveSweet: () -> Unit,
+) {
     AppCard(modifier = Modifier.fillMaxWidth()) {
         Text("Air putih", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Row(
@@ -224,6 +259,31 @@ private fun WaterCard(glasses: Int, onAdd: () -> Unit, onRemove: () -> Unit) {
             gapSize = 0.dp,
             drawStopIndicator = {},
         )
+        Row(modifier = Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            DrinkCounter("Kopi", coffee, onAddCoffee, onRemoveCoffee, Modifier.weight(1f))
+            DrinkCounter("Manis", sweet, onAddSweet, onRemoveSweet, Modifier.weight(1f))
+        }
+        if (coffeeOverLimit(coffee)) {
+            Text(
+                text = "Kopi hari ini sudah $coffee gelas, di atas batas $COFFEE_LIMIT.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 4.dp),
+            )
+        }
+    }
+}
+
+/** "−" dan "+ Kopi (1)": hitungan satu jenis minuman dengan area sentuh minimal 48dp. */
+@Composable
+private fun DrinkCounter(label: String, count: Int, onAdd: () -> Unit, onRemove: () -> Unit, modifier: Modifier = Modifier) {
+    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
+        TextButton(
+            onClick = onRemove,
+            enabled = count > 0,
+            modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp),
+        ) { Text("−") }
+        TextButton(onClick = onAdd, modifier = Modifier.defaultMinSize(minHeight = 48.dp)) { Text("+ $label ($count)") }
     }
 }
 
