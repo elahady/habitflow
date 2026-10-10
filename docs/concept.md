@@ -1127,56 +1127,57 @@ Angka ini perkiraan kasar dan diperiksa ulang dari `usage` setelah sebulan dipak
   jawab saat cadangan tercapai.
 - Tanpa internet, layar AI menampilkan pesan dan bagian lain app tidak terganggu.
 
-### Tahap 25: Infrastruktur MySQL dan Akun Google (selesai dikoding, verifikasi login manual tertunda)
+### Tahap 25: Infrastruktur MySQL dan Akun Web (selesai, 10 Oktober 2026)
 
-Dibahas 10 Oktober 2026. Fondasi untuk tahap 26 dan 27 — dikerjakan lebih dulu karena
-keduanya butuh ini. Awalnya didiskusikan bareng 26-27 sebagai "tahap 25" tunggal, dipecah
-jadi 3 tahap terpisah supaya progress tiap bagian bisa dilacak sendiri-sendiri.
+Dibahas dan selesai 10 Oktober 2026. Fondasi untuk tahap 26 dan 27 — dikerjakan lebih dulu
+karena keduanya butuh ini. Awalnya didiskusikan bareng 26-27 sebagai "tahap 25" tunggal,
+dipecah jadi 3 tahap terpisah supaya progress tiap bagian bisa dilacak sendiri-sendiri.
+
+**Revisi arsitektur login** (dua kali, dalam sesi yang sama): rencana awal "Google Sign-In
+saja" ternyata diubah jadi **email/password sebagai cara utama, Google sebagai tambahan**
+— baik langsung di halaman Login/Register, maupun di-connect belakangan dari Dashboard.
+Keputusan final:
 
 | Pertanyaan | Keputusan |
 |---|---|
 | Database | Pindah dari SQLite ke **MySQL**, di-deploy sebagai container `shared-mysql` di VM rumah (network `shared-db`, lihat [repo `server`](https://github.com/elahady/build-server)) — dipakai bareng dengan project lain di VM yang sama kalau nanti perlu |
-| Login | **Google Sign-In saja** (lewat Socialite untuk web, Credential Manager untuk Android). Tidak ada password sendiri — tidak ada tabel password, reset password, atau verifikasi email untuk dibangun |
+| Login | **Email/password** sebagai cara utama (halaman Login dan Register beneran, dengan validasi dan rate limit). **Google** tersedia di kedua halaman itu juga (tombol "Masuk/Daftar dengan Google") **dan** bisa di-connect/diputus belakangan dari Dashboard untuk user yang sudah daftar pakai password. Satu `GoogleAuthController` menangani keduanya (dibedakan dari `Auth::check()` saat callback) karena Google Cloud Console cuma punya satu redirect URI terdaftar |
+| Pencocokan akun | Kalau login pakai Google dan email-nya sudah terdaftar (lewat password), **ditautkan ke akun yang sama** (dicocokkan `google_sub` dulu, lalu `email`) — tidak membuat akun duplikat |
+| API Android | **Tetap Google-only**, tidak berubah — `POST /api/v1/auth/google` beda jalur dari web, pakai `UserToken` terpisah dari sesi web |
 | Framework web | **Livewire**, di dalam Laravel app yang sama dengan API (`server/`). Bukan SPA terpisah |
-| Repo | **Repo yang sama** (`habitflow`), bukan repo baru. Web tinggal tambahan `routes/web.php`, `app/Livewire/`, `resources/views/` di folder `server/` yang sudah ada — satu codebase, satu migrasi, satu deploy |
+| Repo | **Repo yang sama** (`habitflow`), bukan repo baru — satu codebase, satu migrasi, satu deploy |
 | Deploy | Container Docker sendiri di VM (pola sama seperti roziqrizalcom): `serversideup/php:8.3-fpm-nginx`, connect ke `shared-mysql`. Satu container melayani web Livewire **dan** API `/api/v1/...` sekaligus |
-| Domain | **`habitflow.roziqrizal.com`** — subdomain dari domain yang sudah ada, bukan beli domain baru (app pribadi/keluarga, tidak butuh branding domain sendiri). Dipasang lewat tunnel `home-server` yang sudah ada: `cloudflared tunnel route dns home-server habitflow.roziqrizal.com` + 1 baris ingress rule di `/etc/cloudflared/config.yml` |
+| Domain | **`habitflow.roziqrizal.com`**, lewat tunnel `home-server` yang sudah ada |
+| Desain halaman Login/Register | Ikon app + font Libre Caslon Text/Manrope + palet sage dari `docs/design/README.md` (bukan desain generik), plus narasi diambil dari `docs/visi-super-app.md` ("asisten harian yang tahu sedang di blok apa") |
 
-**Langkah bangun:**
+**Skema `users` final**: `id`, `google_sub` (nullable, unik), `email` (unik), `password`
+(nullable — kosong untuk user yang cuma pernah pakai Google), `name`, `avatar`,
+`remember_token`, timestamps.
 
-1. ~~**Infrastruktur**~~ — **Selesai** (10 Oktober 2026): `shared-mysql` jalan di VM
-   (network `shared-db`), database `habitflow` + user dedicated dibuat otomatis lewat env
-   container.
-2. ~~**Migrasi dasar + pindah DB**~~ — **Selesai**: tabel `users` (Google `sub`, email,
-   nama, avatar — tanpa kolom password) dan migrasi lama (`api_tokens`, `snapshots`)
-   berhasil jalan di MySQL. Diverifikasi: generate token + `GET /api/v1/ping` lewat token
-   itu balas `{"ok":true}` — API 19B tidak rusak setelah pindah database.
-3. ~~**Google OAuth setup**~~ — **Selesai** (10 Oktober 2026): project `Habitflow` di Google
-   Cloud Console, OAuth consent screen (External, test users: Roziq + istri), Client ID
-   **Web** dan **Android** (package `com.roziqrizal.habitflow`, SHA-1 debug) dibuat.
-   Kredensial disimpan di `.env.production` (server, gitignored) dan dipetakan lewat
-   `config/services.php` (di git, tanpa nilai asli).
-4. ~~**Auth backend**~~ — **Selesai**: Socialite terpasang, `GoogleAuthController` web
-   (`/login/google`, callback buat/cari user dari `google_sub`, sesi) dan API
-   (`POST /api/v1/auth/google`, verifikasi ID token Android lewat endpoint tokeninfo
-   Google, balas `UserToken`). Tabel `user_tokens` (mirip `api_tokens` 19B tapi terikat
-   ke user) ditambahkan.
-5. ~~**Livewire shell**~~ — **Selesai**: Livewire terpasang, `Dashboard` component +
-   layout dasar (header nama/avatar/keluar), halaman login (`/login`) dengan tombol
-   "Masuk dengan Google".
-6. ~~**Deploy ke VM**~~ — **Selesai**: container `habitflow` di-rebuild dengan semua kode
-   final, migrasi `user_tokens` jalan. Diverifikasi dari luar: `/login` HTTP 200,
-   `/login/google` redirect 302 ke Google dengan client_id/redirect_uri/scope yang benar.
-   **Belum diverifikasi**: alur login lengkap sampai consent Google asli (perlu dicoba
-   manual di browser oleh pemilik akun).
+**Langkah bangun — semua selesai:**
 
-**Selesai jika:**
-- `shared-mysql` jalan di VM, database `habitflow` bisa diakses dari container app.
-- Bisa login dengan Google di `habitflow.roziqrizal.com`, dan dari app Android (keduanya
-  jadi user yang sama di tabel `users` kalau pakai akun Google yang sama).
-- Halaman web kosong "Selamat datang" muncul setelah login — belum ada fitur apa-apa,
-  tapi fondasinya hidup dan bisa dibangun di atasnya.
-- Data habit/jadwal/snapshot 19B yang sudah ada tetap utuh setelah pindah ke MySQL.
+1. ✅ **Infrastruktur**: `shared-mysql` jalan di VM (network `shared-db`), database
+   `habitflow` + user dedicated.
+2. ✅ **Migrasi dasar + pindah DB**: tabel `users`, `api_tokens`, `snapshots` jalan di
+   MySQL. Data lama (token, snapshot 19B) tetap utuh.
+3. ✅ **Google OAuth setup**: project `Habitflow` di Google Cloud Console, OAuth consent
+   screen (External, test users: Roziq + istri), Client ID **Web** dan **Android**.
+   Kredensial di `.env.production` (gitignored), dipetakan lewat `config/services.php`.
+4. ✅ **Auth backend**: `RegisteredUserController` (register), `AuthenticatedSessionController`
+   (login/logout email-password, rate limit 5x/menit), `GoogleAuthController` (login/
+   connect/disconnect Google, satu jalur untuk keduanya). Tabel `user_tokens` untuk API
+   Android (mirip `api_tokens` 19B tapi terikat ke user).
+5. ✅ **Livewire shell**: `Dashboard` component + layout, halaman Login/Register dengan
+   desain dan narasi final.
+6. ✅ **Deploy ke VM**: container `habitflow` live, migrasi jalan, domain
+   `habitflow.roziqrizal.com` aktif.
+
+**Terverifikasi end-to-end** (10 Oktober 2026): register, login email/password, dan
+connect Google semua dicoba langsung oleh pemilik akun dan berhasil.
+
+**Catatan untuk tahap 26-27**: user bisa login tanpa pernah connect Google (cuma
+email/password) — kalau nanti ada fitur yang butuh identitas Google tertentu, perlu
+dicek `auth()->user()->google_sub` tidak null dulu.
 
 ### Tahap 26: To-Do Tim — kolaborasi dengan pasangan (diputuskan, belum dikoding)
 
