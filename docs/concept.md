@@ -1144,21 +1144,20 @@ jadi 3 tahap terpisah supaya progress tiap bagian bisa dilacak sendiri-sendiri.
 
 **Langkah bangun:**
 
-1. **Infrastruktur**: resume setup `shared-mysql` di VM (network `shared-db`), buat database
-   `habitflow` + user dedicated (bukan root).
-2. **Migrasi dasar + pindah DB**: tabel `users` (Google `sub`, email, nama, avatar — tanpa
-   kolom password). Ubah `server/.env` ke `DB_CONNECTION=mysql`, jalankan `migrate` di VM.
-   Data snapshot/token 19B yang sudah ada **tidak kehilangan apa pun** (tetap tabel terpisah,
-   cuma pindah engine dari SQLite ke MySQL).
-3. **Google OAuth setup**: buat project di Google Cloud Console, OAuth consent screen, Client
-   ID **Web** (untuk Socialite) dan Client ID **Android** (perlu SHA-1 keystore debug & rilis,
-   package name).
-4. **Auth backend**: install Laravel Socialite. Endpoint web (`/login/google`,
-   `/login/google/callback`) buat sesi. Endpoint API (`POST /api/v1/auth/google`) terima ID
-   token dari Android, verifikasi ke Google, buat/cari `users`, balas personal access token.
-5. **Livewire shell**: install Livewire, layout dasar (navbar, halaman kosong setelah login).
-6. **Deploy ke VM**: container Docker, connect ke `shared-mysql`, subdomain
-   `habitflow.roziqrizal.com` lewat tunnel yang sudah ada.
+1. ~~**Infrastruktur**~~ — **Selesai** (10 Oktober 2026): `shared-mysql` jalan di VM
+   (network `shared-db`), database `habitflow` + user dedicated dibuat otomatis lewat env
+   container.
+2. ~~**Migrasi dasar + pindah DB**~~ — **Selesai**: tabel `users` (Google `sub`, email,
+   nama, avatar — tanpa kolom password) dan migrasi lama (`api_tokens`, `snapshots`)
+   berhasil jalan di MySQL. Diverifikasi: generate token + `GET /api/v1/ping` lewat token
+   itu balas `{"ok":true}` — API 19B tidak rusak setelah pindah database.
+3. **Google OAuth setup** — belum dikerjakan (perlu akses Google Cloud Console).
+4. **Auth backend** — belum dikerjakan.
+5. **Livewire shell** — belum dikerjakan.
+6. ~~**Deploy ke VM**~~ — **Selesai (sebagian)**: container `habitflow` jalan di VM (port
+   8081, connect ke `shared-mysql`), domain `habitflow.roziqrizal.com` live lewat
+   Cloudflare Tunnel yang sudah ada (terverifikasi: akses dari luar dapat respons yang
+   benar dari API). Container ini akan di-build ulang begitu langkah 3-5 selesai.
 
 **Selesai jika:**
 - `shared-mysql` jalan di VM, database `habitflow` bisa diakses dari container app.
