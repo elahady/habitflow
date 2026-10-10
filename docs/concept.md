@@ -1151,7 +1151,11 @@ jadi 3 tahap terpisah supaya progress tiap bagian bisa dilacak sendiri-sendiri.
    nama, avatar — tanpa kolom password) dan migrasi lama (`api_tokens`, `snapshots`)
    berhasil jalan di MySQL. Diverifikasi: generate token + `GET /api/v1/ping` lewat token
    itu balas `{"ok":true}` — API 19B tidak rusak setelah pindah database.
-3. **Google OAuth setup** — belum dikerjakan (perlu akses Google Cloud Console).
+3. ~~**Google OAuth setup**~~ — **Selesai** (10 Oktober 2026): project `Habitflow` di Google
+   Cloud Console, OAuth consent screen (External, test users: Roziq + istri), Client ID
+   **Web** dan **Android** (package `com.roziqrizal.habitflow`, SHA-1 debug) dibuat.
+   Kredensial disimpan di `.env.production` (server, gitignored) dan dipetakan lewat
+   `config/services.php` (di git, tanpa nilai asli).
 4. **Auth backend** — belum dikerjakan.
 5. **Livewire shell** — belum dikerjakan.
 6. ~~**Deploy ke VM**~~ — **Selesai (sebagian)**: container `habitflow` jalan di VM (port
