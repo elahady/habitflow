@@ -1127,6 +1127,89 @@ Angka ini perkiraan kasar dan diperiksa ulang dari `usage` setelah sebulan dipak
   jawab saat cadangan tercapai.
 - Tanpa internet, layar AI menampilkan pesan dan bagian lain app tidak terganggu.
 
+### Tahap 25: Web Habitflow dan To-Do Tim (diputuskan arahnya, belum dikoding)
+
+Dibahas 10 Oktober 2026. Dua fitur berbeda fondasi, dibahas bareng karena sama-sama butuh
+web app dan sama-sama jadi alasan pindah dari SQLite ke **MySQL** di server (deploy di
+VM rumah, lihat [repo `server`](https://github.com/elahady/build-server) untuk
+infrastrukturnya).
+
+#### 25A: Web untuk Task Kerja (follow-up kerja)
+
+| Pertanyaan | Keputusan |
+|---|---|
+| Lingkup | **Hanya follow-up kerja** (tahap 19) yang dapat CRUD penuh dari web. Habit, jadwal, kesehatan, EOD, dll **tetap** model snapshot lama (HP sumber data, server cuma backup) |
+| Alasan dipisah | Follow-up kerja paling masuk akal dikerjakan dari desktop (kerja di depan laptop, bukan pegang HP). Fitur lain tidak butuh ini, jadi tidak perlu ubah model sync-nya |
+| Model data | Follow-up kerja pindah dari "field di dalam snapshot JSON" jadi **tabel sungguhan** di MySQL (`follow_ups`), API CRUD biasa (bukan snapshot) |
+| Siapa yang akses | Satu-satunya pemilik data (login dengan akun yang sama seperti 25B) |
+| Sinkron ke HP | HP tetap simpan salinan lokal (offline-first tidak berubah), tapi follow-up kerja sekarang **sumber kebenarannya di server**, bukan snapshot HP. HP fetch/push lewat API langsung, bukan ikut snapshot 19B lagi |
+| Konflik | Edit dari web dan HP hampir bersamaan: **server menang** (last-write-wins berdasar `updated_at`), app HP tampilkan versi terbaru saat fetch berikutnya. Tidak ada merge otomatis di tahap ini |
+
+**Rencana teknis:**
+- Tabel `follow_ups` (MySQL) menggantikan `data.followUps` di snapshot untuk user yang sudah
+  pakai 25A. Kolom sama dengan struktur snapshot sekarang (`id`, `title`, `status`, `date`,
+  `time`, `person`, `note`, `createdAt`, `doneAt`, `pickedDate`) ditambah `user_id`,
+  `updated_at`.
+- Endpoint baru `/api/v1/follow-ups` (GET list, POST, PUT `:id`, DELETE `:id`) — CRUD biasa,
+  beda dari pola snapshot 19B yang cuma `PUT /snapshot`.
+- Snapshot 19B **tetap jalan** untuk data lain (habit, jadwal, dll) — follow-up kerja
+  dikeluarkan dari payload snapshot begitu 25A aktif, supaya tidak dobel sumber kebenaran.
+- Web app: perlu pilih framework. Kandidat paling ringan: **Laravel + Inertia/Livewire**
+  (satu codebase dengan server, tanpa build frontend terpisah) atau **SPA terpisah** (React/
+  Vue) yang panggil API yang sama dengan HP. Rekomendasi: **Livewire** dulu — paling cepat
+  dibangun untuk CRUD sederhana, bisa diganti SPA nanti kalau butuh lebih interaktif.
+- Autentikasi web pakai sesi (Laravel biasa) dengan user yang sama dari 25B.
+
+#### 25B: To-Do Tim (kolaborasi dengan pasangan)
+
+| Pertanyaan | Keputusan |
+|---|---|
+| Lingkup | **Hanya to-do rumah tangga** yang dibagi tim. Habit, follow-up kerja (kecuali 25A), jadwal tetap personal, tidak ikut tim |
+| Letak di app | **Tab terpisah** ("Tugas Rumah" atau nama lain), bukan menyatu dengan Hari ini/habit yang sudah ada. Desain yang sudah jalan tidak disentuh |
+| Akun | User perlu **login** (baru — sebelumnya cuma token per-HP tanpa akun). Email + password atau cukup username, perlu diputuskan saat desain layar login |
+| Kolaborasi | User A buat tim, dapat **kode invite** (misal 6-8 karakter, mirip kode invite Discord/Notion — bukan ID asli demi privasi). User B masukkan kode itu untuk join tim yang sama |
+| Jumlah anggota | Tidak dibatasi ketat di desain (bisa 2 untuk pasangan, tapi skema tidak perlu hardcode "cuma 2") |
+| Data tim | To-do: judul, selesai/belum, siapa yang buat, siapa yang selesaikan, tanggal. Semua anggota tim bisa tambah/edit/hapus/centang item manapun |
+| Sinkron | **Bukan** snapshot — realtime-ish lewat polling (misal tiap buka tab/tarik refresh), bukan WebSocket (kompleksitas tidak sepadan untuk kebutuhan to-do rumah tangga) |
+| Akses | Dari app Android (tab baru) **dan** web (karena sekalian ada web dari 25A) |
+
+**Rencana teknis:**
+- Tabel baru: `users` (email/username, password, dibuat lewat Laravel biasa — **bukan**
+  Sanctum/Breeze dulu kalau mau tetap ringan, cukup auth bawaan Laravel untuk web +
+  personal access token untuk API HP), `teams` (nama, kode invite unik), `team_members`
+  (user_id, team_id), `team_todos` (team_id, title, done, created_by, done_by, created_at).
+- Endpoint: `/api/v1/teams` (buat tim), `/api/v1/teams/join` (pakai kode invite),
+  `/api/v1/teams/:id/todos` (CRUD to-do tim).
+- Token per-HP (19B) dan akun (25B) **dua hal berbeda**: token lama tetap jalan untuk
+  snapshot personal yang belum pakai akun. User yang mau pakai To-Do Tim wajib bikin akun
+  dulu — bisa jalan berdampingan (app punya 2 jalur: token-only untuk data personal lama,
+  akun untuk fitur tim baru).
+- App Android: layar login baru, tab "Tugas Rumah" baru dengan daftar to-do tim + tombol
+  tambah, state kosong "Belum gabung tim" dengan tombol "Buat tim" / "Gabung dengan kode".
+
+**Urutan bangun yang disarankan**: MySQL dan infrastruktur dulu (sudah mulai) → 25B (akun +
+tim + to-do, lebih fondasional) → 25A (follow-up kerja ke MySQL + web CRUD, bisa pakai akun
+yang sama dari 25B) → web app (satu web untuk 25A dan 25B sekaligus, tidak perlu dua web
+terpisah).
+
+**Belum diputuskan:**
+- Framework web pasti (Livewire vs SPA terpisah).
+- Model akun: email+password, atau cukup username tanpa email (lebih sederhana, cocok untuk
+  app personal/keluarga kecil).
+- Apakah to-do tim butuh kategori/label, atau cukup daftar datar dulu.
+- Apakah anggota tim bisa di-remove, dan siapa yang berhak (pembuat tim saja, atau semua
+  anggota).
+
+**Selesai jika:**
+- User bisa daftar akun, login di web dan app dengan akun yang sama.
+- User A buat tim, dapat kode invite; User B masukkan kode, keduanya lihat to-do tim yang
+  sama.
+- Tambah/centang/hapus to-do tim dari app langsung kelihatan di web (dan sebaliknya) setelah
+  refresh/buka ulang.
+- Follow-up kerja bisa di-CRUD penuh dari web, dan HP yang fetch ulang melihat perubahan itu.
+- Data personal (habit, jadwal, dll di luar follow-up kerja) tidak terpengaruh sama sekali —
+  masih snapshot seperti sebelumnya.
+
 ## Daftar pertanyaan terbuka
 
 - Urutan habit bisa diubah atau tidak (tahap 9, opsional).
