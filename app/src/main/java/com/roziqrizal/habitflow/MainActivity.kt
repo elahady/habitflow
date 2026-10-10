@@ -57,6 +57,7 @@ import com.roziqrizal.habitflow.ui.HealthViewModel
 import com.roziqrizal.habitflow.ui.ManageHabitsViewModel
 import com.roziqrizal.habitflow.ui.ScheduleViewModel
 import com.roziqrizal.habitflow.ui.SyncViewModel
+import com.roziqrizal.habitflow.ui.TeamViewModel
 import com.roziqrizal.habitflow.ui.TodayViewModel
 import com.roziqrizal.habitflow.ui.WorkViewModel
 import com.roziqrizal.habitflow.domain.schedule.WorkAction
@@ -78,6 +79,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         readWorkRequest(intent)
+        readTeamIntent(intent)
         val graph = (application as HabitFlowApplication).graph
         val themeSettings = graph.themeSettings
         val locationSettings = graph.locationSettings
@@ -174,6 +176,11 @@ class MainActivity : ComponentActivity() {
                 val manage: ManageHabitsViewModel = viewModel(
                     factory = viewModelFactory { initializer { ManageHabitsViewModel(repo, graph.habitSyncManager) } },
                 )
+                val team: TeamViewModel = viewModel(
+                    factory = viewModelFactory { initializer { TeamViewModel(graph.accountSettings, graph.teamSettings) } },
+                )
+                val inviteToken by pendingInviteToken.collectAsState()
+                val openTeamRequest by pendingOpenTeam.collectAsState()
                 // Sinkron habit/todo sekali saat app dibuka (tahap 28 langkah 5): push dulu baru
                 // pull, supaya perubahan lokal (termasuk penghapusan) yang belum terkirim tidak
                 // "dihidupkan lagi" oleh pull kalau proses sempat di-restart sebelum sempat push.
@@ -192,6 +199,11 @@ class MainActivity : ComponentActivity() {
                     work = work,
                     syncViewModel = syncViewModel,
                     accountViewModel = accountViewModel,
+                    team = team,
+                    pendingInviteToken = inviteToken,
+                    onInviteTokenHandled = { pendingInviteToken.value = null },
+                    openTeamRequest = openTeamRequest,
+                    onOpenTeamRequestHandled = { pendingOpenTeam.value = false },
                     workRequest = workRequest,
                     onWorkRequestHandled = { pendingWork.value = null },
                     versionName = versionName,
@@ -304,12 +316,26 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         readWorkRequest(intent)
+        readTeamIntent(intent)
     }
 
     private fun readWorkRequest(intent: Intent?) {
         val name = intent?.getStringExtra(EXTRA_WORK_ACTION) ?: return
         pendingWork.value = WorkAction.entries.firstOrNull { it.name == name }
         intent.removeExtra(EXTRA_WORK_ACTION)
+    }
+
+    /** Link undangan tim (tahap 26 langkah 2) atau notifikasi tugas baru (langkah 4). */
+    private fun readTeamIntent(intent: Intent?) {
+        if (intent == null) return
+        val path = intent.data?.path
+        if (intent.action == Intent.ACTION_VIEW && path != null && path.startsWith("/invite/")) {
+            pendingInviteToken.value = path.removePrefix("/invite/").trim('/')
+        }
+        if (intent.getBooleanExtra(EXTRA_OPEN_TEAM, false)) {
+            pendingOpenTeam.value = true
+            intent.removeExtra(EXTRA_OPEN_TEAM)
+        }
     }
 
     override fun onStart() {
@@ -340,7 +366,14 @@ class MainActivity : ComponentActivity() {
         /** Permintaan membuka daily scrum atau EOD dari notifikasi, dibaca layar lalu dikosongkan. */
         private val pendingWork = MutableStateFlow<WorkAction?>(null)
 
+        /** Token undangan tim dari deep link (tahap 26 langkah 2), dibaca layar lalu dikosongkan. */
+        private val pendingInviteToken = MutableStateFlow<String?>(null)
+
+        /** Permintaan membuka tab Tugas Rumah dari notifikasi tugas baru (tahap 26 langkah 4). */
+        private val pendingOpenTeam = MutableStateFlow(false)
+
         const val EXTRA_WORK_ACTION = "workAction"
+        const val EXTRA_OPEN_TEAM = "openTeam"
 
         private const val STEPS_REFRESH_MILLIS = 5 * 60 * 1000L
         private const val HEALTH_CONNECT_PACKAGE = "com.google.android.apps.healthdata"

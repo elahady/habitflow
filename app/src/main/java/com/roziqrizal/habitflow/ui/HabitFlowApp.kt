@@ -35,6 +35,7 @@ import java.time.LocalTime
 enum class Tab(val label: String) {
     TODAY("Hari ini"),
     WORK("Kerja"),
+    TEAM("Tugas Rumah"),
     CONTRIBUTION("Progres"),
     HABITS("Habit"),
     ABOUT("Tentang"),
@@ -53,6 +54,13 @@ fun HabitFlowApp(
     work: WorkViewModel,
     syncViewModel: SyncViewModel,
     accountViewModel: AccountViewModel,
+    team: TeamViewModel,
+    /** Token undangan tim dari deep link (tahap 26 langkah 2). Null kalau tidak ada. */
+    pendingInviteToken: String?,
+    onInviteTokenHandled: () -> Unit,
+    /** Permintaan membuka tab Tugas Rumah dari notifikasi tugas baru (tahap 26 langkah 4). */
+    openTeamRequest: Boolean,
+    onOpenTeamRequestHandled: () -> Unit,
     /** Permintaan membuka daily scrum atau EOD dari notifikasi. Null kalau tidak ada. */
     workRequest: WorkAction?,
     onWorkRequestHandled: () -> Unit,
@@ -105,6 +113,25 @@ fun HabitFlowApp(
             sessionName = (if (workRequest == WorkAction.SCRUM) WorkSession.SCRUM else WorkSession.EOD).name
             onWorkRequestHandled()
         }
+    }
+
+    // Notifikasi tugas tim baru membuka tab Tugas Rumah (tahap 26 langkah 4).
+    LaunchedEffect(openTeamRequest) {
+        if (openTeamRequest) {
+            if (current != Tab.TEAM) {
+                history.remove(Tab.TEAM)
+                history.add(Tab.TEAM)
+            }
+            onOpenTeamRequestHandled()
+        }
+    }
+
+    // Link undangan tim dari deep link (tahap 26 langkah 2): coba terima begitu akun sudah ada
+    // (langsung kalau sudah login, atau begitu login selesai dari dalam dialog).
+    val accountStateForInvite by accountViewModel.state.collectAsState()
+    val joinState by team.joinState.collectAsState()
+    LaunchedEffect(pendingInviteToken, accountStateForInvite.account) {
+        if (pendingInviteToken != null) team.acceptInvite(pendingInviteToken)
     }
 
     BackHandler(enabled = showCapture) { showCapture = false }
@@ -237,6 +264,21 @@ fun HabitFlowApp(
                     onSave = work::save,
                     onDelete = work::delete,
                 )
+                Tab.TEAM -> {
+                    val teamState by team.state.collectAsState()
+                    TeamScreen(
+                        state = teamState,
+                        onCreateTeam = team::createTeam,
+                        onCreateInvite = team::createInvite,
+                        onInviteShared = team::clearInviteUrl,
+                        onJoinWithToken = team::acceptInvite,
+                        onAddTodo = team::addTodo,
+                        onSetDone = team::setDone,
+                        onAssign = team::assign,
+                        onDelete = team::deleteTodo,
+                        onSignIn = accountViewModel::signIn,
+                    )
+                }
                 Tab.CONTRIBUTION -> {
                     val state by contribution.state.collectAsState()
                     ProgressScreen(contribution = state, health = healthState)
@@ -302,6 +344,22 @@ fun HabitFlowApp(
             onAdd = { work.quickAdd(it, ongoingEvent) },
             linkedEventTitle = ongoingEvent?.title,
             onDismiss = { showCapture = false },
+        )
+    }
+
+    if (pendingInviteToken != null) {
+        JoinTeamDialog(
+            joinState = joinState,
+            account = accountStateForInvite.account,
+            onSignIn = accountViewModel::signIn,
+            onDismiss = {
+                if (joinState is JoinInviteState.Success) {
+                    history.remove(Tab.TEAM)
+                    history.add(Tab.TEAM)
+                }
+                team.dismissJoin()
+                onInviteTokenHandled()
+            },
         )
     }
 

@@ -1223,17 +1223,57 @@ Dibahas 10 Oktober 2026. Butuh tahap 25 (akun, MySQL, Livewire) selesai lebih du
    dipakai). Nav "Tugas Rumah" ditambah di layout. **Belum ada endpoint API** untuk
    Android di langkah ini - menyusul bareng langkah 3 (To-Do Tim) supaya app Android tidak
    perlu update dua kali.
-2. **Terima undangan dari Android**: deep link (`App Links`) buka layar "Gabung tim" di app;
-   fallback ke halaman web kalau app belum terpasang. **Belum dikerjakan** - butuh sesi
-   kerja Android terpisah (build + install APK untuk tes).
+2. ✅ **Terima undangan dari Android** — selesai, 10 Oktober 2026: deep link (App Links)
+   `https://habitflow.roziqrizal.com/invite/{token}` buka layar "Gabung tim" di app lewat
+   intent-filter `autoVerify="true"` di `MainActivity` + `server/public/.well-known/assetlinks.json`.
+   Tab "Tugas Rumah" juga punya kolom tempel-link manual sebagai cadangan kalau App Links
+   belum/tidak terverifikasi di suatu HP (lihat catatan verifikasi di bawah).
 3. ✅ **To-Do Tim (web + API)** — selesai, 10 Oktober 2026: migrasi `team_todos`
    (`assigned_to` nullable) jalan di MySQL. Halaman `/tugas-rumah` bisa tambah, centang,
    tugaskan (dropdown anggota), dan hapus to-do. Endpoint API
    (`GET/POST /api/v1/teams/{team}/todos`, `PUT/DELETE /api/v1/teams/todos/{todo}`) sudah
    dibangun bareng, siap dipakai Android begitu langkah 2 dikerjakan.
-4. **Notifikasi tugas**: perluas job WorkManager yang sudah ada untuk polling to-do tim
-   baru, notifikasi senyap saat ditugaskan. **Belum dikerjakan** - sisi Android, API-nya
-   sudah siap (`GET /api/v1/teams/{team}/todos`).
+4. ✅ **Notifikasi tugas** — selesai, 10 Oktober 2026: worker periodik baru `TeamPollWorker`
+   (tiap 5 menit, hanya aktif kalau sudah login) memanggil `GET /api/v1/teams` lalu
+   `GET /api/v1/teams/{team}/todos`, dan menotifikasi (channel Info, senyap) to-do yang baru
+   ditugaskan ke pengguna dan belum pernah dinotifikasi.
+
+**Keputusan saat membangun (10 Oktober 2026):**
+- **Tab "Tugas Rumah" penuh dibangun sekaligus** (bukan cuma deep link + notifikasi polos),
+  supaya tap notifikasi dan join dari deep link punya tempat untuk menampilkan hasilnya -
+  lihat `TeamScreen.kt`. Mencakup: state kosong (buat tim / tempel link undangan), header tim
+  + tombol Undang (buka share sheet Android), tambah/centang/tugaskan (dropdown
+  anggota)/hapus to-do. Tidak ada rename judul to-do (tidak diputuskan di rancangan).
+- **Worker periodik terpisah** (`TeamPollWorker`, 5 menit) dipakai, bukan memperluas
+  `SyncWorker` 19B seperti disebut di rencana awal - tanggung jawabnya beda (cadangan
+  snapshot vs tim), jadi dipisah supaya tidak bercampur. Pola penjadwalannya sama dengan
+  `HabitSyncScheduler` (tahap 28): aktif/nonaktif mengikuti status login.
+- **`Account` (tahap 25) ditambah field `id`** (user id numerik dari server) - dibutuhkan
+  untuk mencocokkan `assigned_to` to-do tim dengan pengguna yang sedang login. Akun yang
+  tersimpan dari sebelum perubahan ini (tanpa `id`) dianggap logout sekali setelah update
+  (field hilang → `readAccount()` mengembalikan null) - bukan kehilangan data, cuma perlu
+  masuk Google lagi sekali.
+- **`MainActivity` jadi `launchMode="singleTask"`** supaya tidak membuat instance baru saat
+  dibuka dari deep link ketika app sudah berjalan di latar belakang.
+- Tidak ada deteksi konflik (409) untuk to-do tim, sesuai keputusan awal tahap ini
+  ("realtime-ish lewat polling").
+
+**Catatan verifikasi App Links (butuh deploy untuk tuntas):**
+- Fingerprint SHA-256 di `assetlinks.json` saat ini **hanya debug keystore mesin ini**
+  (`~/.android/debug.keystore`, dapat dari `keytool -list -v`). **Release keystore tidak ada
+  di mesin ini** (`~/.habitflow/keystore.properties` tidak ditemukan) - begitu APK rilis
+  ditandatangani dari mesin yang punya keystore-nya, tambahkan fingerprint SHA-256-nya juga
+  ke `assetlinks.json` (daftar `sha256_cert_fingerprints` boleh lebih dari satu).
+- Diuji di HP fisik Xiaomi/MIUI dengan **intent eksplisit** (`adb shell am start -a
+  android.intent.action.VIEW -d "https://habitflow.roziqrizal.com/invite/test-token" com.roziqrizal.habitflow`)
+  supaya tidak bergantung ke verifikasi domain - hasil: app terbuka langsung ke
+  `JoinTeamDialog`, menampilkan "Masuk dengan Google dulu untuk bisa bergabung ke tim." (akun
+  belum login di sesi uji ini), tidak ada crash.
+- **Belum diverifikasi**: App Links terverifikasi otomatis (autoVerify) dari link sungguhan
+  di WhatsApp/dll - butuh `assetlinks.json` sudah ter-deploy dan bisa diakses lewat HTTPS di
+  domain asli lebih dulu (`adb shell pm get-app-links com.roziqrizal.habitflow` untuk cek
+  status setelah deploy). Join sungguhan (dua akun Google, token undangan asli dari web) juga
+  belum diuji end-to-end - hanya path error (belum login) yang diuji di atas.
 
 **Belum diputuskan** (tidak menghalangi mulai):
 - Apakah to-do tim butuh kategori/label, atau cukup daftar datar dulu.
@@ -1244,16 +1284,20 @@ Dibahas 10 Oktober 2026. Butuh tahap 25 (akun, MySQL, Livewire) selesai lebih du
 **Selesai jika:**
 - ✅ User A buat tim, buat link undangan; User B buka link dan gabung, keduanya lihat
   to-do tim yang sama. Link kedaluwarsa atau sudah dipakai ditolak dengan pesan jelas.
+  (Diuji di web untuk alur lengkap; di Android baru path "belum login" yang diuji end-to-end
+  - lihat catatan verifikasi App Links di atas.)
 - ✅ Tambah/centang/hapus/tugaskan to-do tim langsung kelihatan di web setelah
-  refresh/buka ulang (diverifikasi di web; sinkron ke app Android menyusul tahap 26
-  langkah 2+4).
-- ⏳ Tugas baru yang ditugaskan ke user memicu notifikasi senyap — butuh langkah 4
-  (Android) dulu.
+  refresh/buka ulang, dan di Android lewat tab "Tugas Rumah" (polling manual tiap buka tab,
+  tidak otomatis realtime).
+- ✅ Tugas baru yang ditugaskan ke user memicu notifikasi senyap, lewat `TeamPollWorker`
+  tiap 5 menit (kode selesai; belum diuji end-to-end dengan dua akun sungguhan).
 - ✅ Data personal (habit, jadwal, dll) tidak terpengaruh sama sekali — masih snapshot
   seperti sebelumnya.
 
-**Status Tahap 26: web + API selesai total. Sisi Android (langkah 2 & 4) menyusul di
-sesi kerja Android terpisah.**
+**Status Tahap 26: web, API, dan Android (langkah 1-4) selesai dikoding dan lulus
+`assembleDebug`/`testDebugUnitTest`/terpasang di HP fisik tanpa crash. Yang belum: App
+Links terverifikasi otomatis dan uji end-to-end join dua akun (lihat catatan verifikasi di
+atas) - butuh deploy `assetlinks.json` ke VM dulu.**
 
 ### Tahap 27: Web untuk Follow-up Kerja (diputuskan, belum dikoding)
 
@@ -1323,7 +1367,7 @@ pindah, baru dipertimbangkan apakah 19B dipensiunkan total.
 | Fitur | Tabel | Sumber tahap | Status |
 |---|---|---|---|
 | Follow-up kerja | `follow_ups` | 19 | **Direncanakan — tahap 27** |
-| To-do tim | `team_todos`, `teams`, `team_invites` | baru | **Selesai (web+API) — tahap 26** |
+| To-do tim | `team_todos`, `teams`, `team_invites` | baru | **Selesai (web+API+Android) — tahap 26** |
 | Habit + to-do harian | `habits`, `habit_entries`, `todos` | 1-9 | **Selesai (web+API+Android)** — tahap 28 |
 | Jadwal harian & libur | `schedule_blocks`, `schedule_block_habits`, `days_off`, `holiday_cancellations` | 17, 22 | Belum dimulai |
 | Daily scrum/EOD | `work_days` | 19 | Belum dimulai |
