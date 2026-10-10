@@ -1226,11 +1226,14 @@ Dibahas 10 Oktober 2026. Butuh tahap 25 (akun, MySQL, Livewire) selesai lebih du
 2. **Terima undangan dari Android**: deep link (`App Links`) buka layar "Gabung tim" di app;
    fallback ke halaman web kalau app belum terpasang. **Belum dikerjakan** - butuh sesi
    kerja Android terpisah (build + install APK untuk tes).
-3. **To-Do Tim**: migrasi `team_todos` (dengan `assigned_to`). Endpoint CRUD. Halaman
-   Livewire daftar to-do tim (tambah/edit/hapus/tugaskan/centang). Tab baru "Tugas Rumah"
-   di Android.
+3. ✅ **To-Do Tim (web + API)** — selesai, 10 Oktober 2026: migrasi `team_todos`
+   (`assigned_to` nullable) jalan di MySQL. Halaman `/tugas-rumah` bisa tambah, centang,
+   tugaskan (dropdown anggota), dan hapus to-do. Endpoint API
+   (`GET/POST /api/v1/teams/{team}/todos`, `PUT/DELETE /api/v1/teams/todos/{todo}`) sudah
+   dibangun bareng, siap dipakai Android begitu langkah 2 dikerjakan.
 4. **Notifikasi tugas**: perluas job WorkManager yang sudah ada untuk polling to-do tim
-   baru, notifikasi senyap saat ditugaskan.
+   baru, notifikasi senyap saat ditugaskan. **Belum dikerjakan** - sisi Android, API-nya
+   sudah siap (`GET /api/v1/teams/{team}/todos`).
 
 **Belum diputuskan** (tidak menghalangi mulai):
 - Apakah to-do tim butuh kategori/label, atau cukup daftar datar dulu.
@@ -1239,14 +1242,18 @@ Dibahas 10 Oktober 2026. Butuh tahap 25 (akun, MySQL, Livewire) selesai lebih du
 - Apakah assignee bisa lebih dari satu orang per tugas, atau selalu satu orang/kosong.
 
 **Selesai jika:**
-- User A buat tim, buat link undangan; User B buka link dan gabung, keduanya lihat to-do tim
-  yang sama. Link kedaluwarsa atau sudah dipakai ditolak dengan pesan jelas.
-- Tambah/centang/hapus/tugaskan to-do tim dari app langsung kelihatan di web (dan sebaliknya)
-  setelah refresh/buka ulang.
-- Tugas baru yang ditugaskan ke user memicu notifikasi senyap dalam satu siklus polling
-  (±5 menit), tidak menumpuk untuk tugas yang sama.
-- Data personal (habit, jadwal, dll) tidak terpengaruh sama sekali — masih snapshot seperti
-  sebelumnya.
+- ✅ User A buat tim, buat link undangan; User B buka link dan gabung, keduanya lihat
+  to-do tim yang sama. Link kedaluwarsa atau sudah dipakai ditolak dengan pesan jelas.
+- ✅ Tambah/centang/hapus/tugaskan to-do tim langsung kelihatan di web setelah
+  refresh/buka ulang (diverifikasi di web; sinkron ke app Android menyusul tahap 26
+  langkah 2+4).
+- ⏳ Tugas baru yang ditugaskan ke user memicu notifikasi senyap — butuh langkah 4
+  (Android) dulu.
+- ✅ Data personal (habit, jadwal, dll) tidak terpengaruh sama sekali — masih snapshot
+  seperti sebelumnya.
+
+**Status Tahap 26: web + API selesai total. Sisi Android (langkah 2 & 4) menyusul di
+sesi kerja Android terpisah.**
 
 ### Tahap 27: Web untuk Follow-up Kerja (diputuskan, belum dikoding)
 
