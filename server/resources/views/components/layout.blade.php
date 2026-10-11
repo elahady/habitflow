@@ -54,7 +54,7 @@
         h1 { font-family: 'Libre Caslon Text', serif; font-weight: 400; }
         .field { margin-bottom: 18px; }
         label { display: block; font-size: 13px; font-weight: 600; color: var(--on-surface-variant); margin-bottom: 6px; }
-        input[type="text"], input[type="email"], input[type="password"] {
+        input[type="text"], input[type="email"], input[type="password"], input[type="date"], input[type="time"], select, textarea {
             width: 100%; padding: 11px 14px; border: 1px solid var(--outline-variant); border-radius: 12px;
             background: var(--surface-container-low); color: var(--on-surface); font-family: 'Manrope', sans-serif; font-size: 15px;
         }
@@ -75,6 +75,7 @@
         <nav>
             <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'active' : '' }}">Beranda</a>
             <a href="{{ route('habit') }}" class="{{ request()->routeIs('habit') ? 'active' : '' }}">Habit</a>
+            <a href="{{ route('follow-ups') }}" class="{{ request()->routeIs('follow-ups') ? 'active' : '' }}">Follow-up</a>
             <a href="{{ route('teams') }}" class="{{ request()->routeIs('teams') ? 'active' : '' }}">Tugas Rumah</a>
         </nav>
         <div class="user">
