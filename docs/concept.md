@@ -1833,6 +1833,7 @@ Dicatat lengkap supaya sesi mana pun tahu **apa yang diputuskan, apa yang ditola
 | Layanan email | **Resend gratis** (3.000 per bulan, maksimal 100 per hari), **Brevo gratis** (300 per hari) sebagai cadangan. Tanpa server email sendiri |
 | Subdomain pengirim email | **`mail.roziqrizal.com`**, terpisah dari email pribadi di domain utama |
 | Aturan kata sandi | Minimal 8 karakter, dan ditolak kalau termasuk kata sandi paling umum. Tanpa autentikasi dua langkah di tahap ini |
+| R8 (pengecil kode rilis) | **Mati** untuk rilis pertama. Menyalakannya jadi tahap tersendiri sesudah app tayang dan stabil. Risiko yang diterima: unduhan beberapa MB lebih besar dan kode lebih mudah dibaca, jadi tidak boleh ada rahasia di dalam app |
 | Sesi | **Tidak kedaluwarsa.** Hanya dicabut oleh Keluar, ganti kata sandi, "Keluar dari semua perangkat", hapus akun, atau dari web |
 | Layar baru | Masuk, Daftar, Verifikasi kode, Lupa kata sandi (tombol "Lewati dulu" dihapus) |
 | Tab Tentang | Diganti **Pengaturan** (ikon roda gigi). Versi dan "Dibuat oleh" turun ke bagian Tentang paling bawah |
@@ -1884,7 +1885,7 @@ Dicatat lengkap supaya sesi mana pun tahu **apa yang diputuskan, apa yang ditola
 - `TeamScreen` (`SignInPrompt`, dialog undangan "Masuk dengan Google dulu") dan `TeamViewModel` (`account == null`).
 - `WorkRepository`, `HabitSyncManager`, `HabitSyncScheduler`: jalur "belum login" dan "gagal diam-diam karena belum login".
 - `res/xml/backup_rules.xml` dan `data_extraction_rules.xml`: keluarkan database dan pengaturan.
-- `app/build.gradle.kts`: `targetSdk = 34` (di bawah syarat Play untuk rilis baru), `isMinifyEnabled = false`, belum ada `signingConfigs` rilis.
+- `app/build.gradle.kts`: `targetSdk = 34` (di bawah syarat Play untuk rilis baru). `isMinifyEnabled = false` sudah diputuskan tetap mati untuk rilis pertama. `signingConfigs` rilis sudah ada dan membaca `~/.habitflow/keystore.properties`, tinggal kuncinya dibuat.
 - `AndroidManifest`: `USE_EXACT_ALARM` dan `USE_FULL_SCREEN_INTENT` (dibatasi Google), tipe foreground service, `READ_CALENDAR`,
   `ACCESS_COARSE_LOCATION`, izin Health Connect.
 - Build debug: alur uji lewat adb (receiver debug di `src/debug`) butuh cara masuk tanpa mengetik.
@@ -2108,7 +2109,7 @@ Status: belum dikerjakan. Bergantung pada 31I.
 
 - [ ] **`scripts/cek-rilis.ps1`** (keluar dengan kode bukan nol kalau ada yang gagal) memeriksa manifest rilis hasil gabungan dan konfigurasi build: `debuggable` mati, tidak ada komponen `src/debug` (termasuk
   `DebugSessionReceiver`), `usesCleartextTraffic` mati dan `API_BASE_URL` berawalan `https://`, daftar izin **sama persis** dengan `scripts/izin-disetujui.txt`, `targetSdk` sama atau lebih tinggi dari
-  `scripts/target-sdk-minimum.txt` (diisi pemilik dari syarat Play saat itu), file backup tidak memuat database dan pengaturan, client ID Google bukan nilai uji, tidak ada rahasia di repo, dan `versionCode`
+  `scripts/target-sdk-minimum.txt` (diisi pemilik dari syarat Play saat itu), `isMinifyEnabled` sesuai keputusan (mati untuk rilis pertama), file backup tidak memuat database dan pengaturan, client ID Google bukan nilai uji, tidak ada rahasia di repo, dan `versionCode`
   lebih besar dari `scripts/versi-terakhir.txt`.
 - [ ] Perintah tunggal yang menjalankan seluruh tes unit Android dan skrip ini, dan dicatat di `CLAUDE.md` sebagai langkah wajib sebelum mengunggah AAB.
 - [ ] Mencoba setiap pemeriksaan sekali dengan sengaja melanggarnya (misalnya menambah izin) untuk membuktikan skrip benar-benar gagal.
@@ -2141,7 +2142,7 @@ Status: belum dikerjakan. Bergantung pada 31I.
 - [ ] **Izin yang dibatasi:** siapkan jalan tanpa izin untuk `USE_EXACT_ALARM` (misalnya izin yang diberikan pengguna) dan `USE_FULL_SCREEN_INTENT` (notifikasi heads-up) sebelum rilis, supaya penolakan Google tidak
   mematikan fitur. Isi alasan deklarasi dengan jujur.
 - [ ] **Penandatanganan:** buat kunci unggah, **dua salinan di tempat berbeda** beserta kata sandinya, aktifkan Play App Signing, `signingConfigs` **sudah ada** di `app/build.gradle.kts` dan membaca `~/.habitflow/keystore.properties` (di luar repo, berkas itu belum ada di mesin ini), jadi pekerjaannya membuat kuncinya dan menyimpan salinannya.
-- [ ] **R8 (`isMinifyEnabled`)**: putuskan nyala atau mati *(lihat Belum diputuskan, ada analisis situasinya)* **sebelum uji tertutup dimulai dan jangan diubah sesudahnya**, karena biner yang diuji 14 hari harus sama dengan yang dirilis. Kalau nyala: aturan keep, `shrinkResources`, berkas mapping disimpan, dan **seluruh** alur diuji ulang pada build rilis karena R8 bisa merusak refleksi dan tes unit tidak menangkapnya.
+- [x] **R8 (`isMinifyEnabled`) tetap mati untuk rilis pertama** (diputuskan pemilik 11 Oktober 2026). Tidak ada yang diubah di build. Kunci: nilai ini tidak diubah sebelum atau selama uji tertutup, supaya biner yang diuji 14 hari sama dengan yang dirilis. Menyalakannya menjadi tahap tersendiri sesudah app tayang dan stabil, lewat rilis bertahap, dengan aturan keep, `shrinkResources`, penyimpanan berkas mapping, dan uji penuh pada build rilis. Skrip cek rilis (31J) memastikan nilainya sesuai keputusan.
 - [ ] **Periksa pustaka versi alpha:** `androidx.health.connect:connect-client:1.1.0-alpha08` dipakai di build. Cek apakah ada versi stabil yang setara sebelum rilis publik, dan uji ulang pembacaan langkah setelah pindah versi.
 - [ ] **Google Sign-In produksi:** layar persetujuan OAuth dipindah dari uji ke **produksi** (nama app, logo, tautan kebijakan privasi, domain resmi); client ID Android memakai **SHA-1 dari kunci Play App Signing**
   selain kunci unggah dan debug; `GOOGLE_ANDROID_CLIENT_ID` di server diperbarui. Diuji dari build yang **dipasang lewat jalur uji Play Store**, bukan adb.
@@ -2205,7 +2206,6 @@ Status: belum dikerjakan. Bergantung pada 31C, 31D, 31J, 31K, 31L.
   Kalau diinginkan, dikerjakan sebagai tahap sendiri sesudah tahap ini.
 - **Lokasi backup di luar VM** (penyimpanan awan atau mesin lain) dan siapa pemegang kunci enkripsi backup. **Ditandai oleh pemilik untuk dibahas dan diputuskan pada 12 Oktober 2026.** Harus sudah diputuskan sebelum 31K dimulai.
 - **Web memakai kode atau tautan** untuk verifikasi dan reset kata sandi (usulan: kode, sama dengan app). Subdomain pengirim sudah diputuskan: `mail.roziqrizal.com`.
-- **R8 (`isMinifyEnabled`) nyala atau mati untuk rilis.** Belum dijawab pemilik, sedang dijelaskan situasinya. Analisis 11 Oktober 2026: R8 menyusutkan dan mengacak kode, tidak diwajibkan Play, dan baru bekerja di build rilis, jadi tes unit tidak menangkap kerusakannya. App ini punya banyak pekerjaan latar (alarm, WorkManager, Health Connect versi alpha, Credential Manager) yang paling rawan. Saat ini mati. Rekomendasi: **tetap mati untuk rilis pertama**, dipertimbangkan sebagai tahap tersendiri sesudahnya. Apa pun pilihannya harus ditetapkan sebelum uji tertutup dan tidak diubah sesudahnya.
 - **Tema tampilan setelah Keluar:** usulan dipertahankan karena preferensi perangkat.
 - **Kapan tabel `api_tokens` dihapus:** usulan di 31L, setelah semua berjalan.
 - **Urutan terhadap tahap 29, 30 (langkah 3-6), dan 32.** Tahap 30 langkah 3-6 lebih sederhana kalau dikerjakan setelah 31E. Tahap 32 memakai `user-token` yang sama jadi kemungkinan tidak terpengaruh, tapi dicek ulang
