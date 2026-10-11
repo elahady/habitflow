@@ -51,6 +51,11 @@ class User extends Authenticatable
         return $this->hasMany(FollowUp::class);
     }
 
+    public function prayerDays(): HasMany
+    {
+        return $this->hasMany(PrayerDay::class);
+    }
+
     public function scheduleBlocks(): HasMany
     {
         return $this->hasMany(ScheduleBlock::class);

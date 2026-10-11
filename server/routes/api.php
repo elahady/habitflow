@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\FollowUpController;
 use App\Http\Controllers\Api\GoogleAuthController;
 use App\Http\Controllers\Api\HabitController;
+use App\Http\Controllers\Api\PrayerDayController;
 use App\Http\Controllers\Api\ScheduleBlockController;
 use App\Http\Controllers\Api\TeamController;
 use App\Http\Controllers\Api\TeamTodoController;
@@ -65,4 +66,10 @@ Route::prefix('v1')->middleware(['user-token', 'throttle:habitflow'])->group(fun
     Route::post('schedule-blocks', [ScheduleBlockController::class, 'store']);
     Route::put('schedule-blocks/{scheduleBlock}', [ScheduleBlockController::class, 'update']);
     Route::delete('schedule-blocks/{scheduleBlock}', [ScheduleBlockController::class, 'destroy']);
+});
+
+// Cache waktu sholat harian dari Android (tahap 29, opsi a) - server hanya menyimpan, tidak menghitung.
+Route::prefix('v1')->middleware(['user-token', 'throttle:habitflow'])->group(function () {
+    Route::get('prayer-days', [PrayerDayController::class, 'index']);
+    Route::put('prayer-days', [PrayerDayController::class, 'upsert']);
 });
