@@ -2311,6 +2311,92 @@ berikutnya tanpa disalin ulang. Jadi skill versi Habitflow seharusnya lebih ramp
 - Hubungan dengan tahap 31 (Login Wajib): `user-token` sudah ada sejak tahap 27 jadi kemungkinan tidak
   terpengaruh, tapi perlu dicek ulang setelah tahap 31 selesai.
 
+### Tahap 33: Web disamakan dengan mockup Design canvas (dicatat 11 Oktober 2026, belum dikoding)
+
+**Kenapa tahap ini ada.** Di sesi 11 Oktober 2026, setelah deploy tahap 29 langkah 1-3, pemilik menunjukkan
+bahwa beranda web (`https://habitflow.roziqrizal.com/`) tidak terlihat seperti mockup di
+https://claude.ai/artifact/TWJ8Uus2hKtQQa81wKujG5. Klaim sebelumnya ("sudah sesuai mockup tahap 29") **keliru** —
+dicek ulang, link artifact itu cuma disebut di tahap 30, 31, dan 32, **tidak pernah di tahap 29**. Tahap 29 memang
+sengaja sempit (cuma kartu jadwal), dikerjakan lepas dari mockup. Tahap ini adalah audit menyeluruh: baca ulang tiga
+artboard web di canvas (`Main.dc.html` "Web · Dashboard", `Habit.dc.html` "Web · Habit", `KerjaWeb.dc.html`
+"Web · Kerja (rekap harian)"), bandingkan baris demi baris dengan kode Livewire yang live, dan catat persisnya apa
+yang kurang serta tahap mana yang menanggungnya.
+
+**Canvas tidak punya artboard web untuk Tugas Rumah** (cuma ada Mobile · Kerja, bukan versi web Tugas Rumah) —
+jadi halaman `/tugas-rumah` (`Teams.php`) di luar cakupan audit ini, tetap polos seperti sekarang sampai ada mockup.
+
+**Perbedaan label nav:** mockup pakai "Kerja" untuk tab follow-up (`<a href="KerjaWeb.dc.html">Kerja</a>`), kode
+live pakai "Follow-up" (`routes/web.php` → nama rute `follow-ups`, label di `layout.blade.php` baris 52). Kedua label
+menunjuk hal yang sama; cuma perlu disamakan kalau pemilik mau ikut mockup persis.
+
+#### A. Beranda (`/`, `Dashboard.php` + `dashboard.blade.php` + `schedule-card.blade.php`) vs `Main.dc.html`
+
+| Elemen di mockup | Status live (11 Okt 2026) | Tahap yang menanggung |
+|---|---|---|
+| Header tanggal ("Minggu, 11 Oktober 2026") di atas judul sapaan | Tidak ada — `dashboard.blade.php` langsung `<h1>Selamat datang, {nama}</h1>` tanpa baris tanggal | Baru, bagian tahap ini |
+| Kartu hero "Fokus kesehatan hari ini" (judul, narasi, chip, panel "Dasar rekomendasi") | Tidak ada sama sekali di web | Tahap 30 langkah 5 (belum dikerjakan) |
+| Kartu "Jadwal hari ini" (Sekarang/Berikutnya) | **Sudah ada** lewat `<livewire:schedule-card />`, strukturnya (kartu terisi warna untuk Sekarang, border untuk Berikutnya, teks "sisa N menit") sudah dekat dengan mockup. Bedanya cuma judul ("Jadwal sekarang" vs "Jadwal hari ini") dan belum dibungkus gaya `hf-card` yang konsisten dengan kartu lain | Tahap 29 (sudah jalan), tinggal langkah 4 (Android kirim data) supaya tidak kosong |
+| Strip 4 kartu ringkasan: Habit hari ini (X/9 + bar), To-do hari ini (X/5 + bar), Follow-up kerja (Lewat tanggal/Jatuh tempo/Inbox), Tugas Rumah (jumlah belum selesai) | **Tidak ada sama sekali.** `dashboard.blade.php` cuma punya sapaan, kartu jadwal, dan kotak status akun Google | Baru — tidak tercakup tahap manapun yang ada. Datanya sendiri sudah tersedia dari tahap 28 (habit/to-do web), 27 (follow-up web), 26 (tugas rumah web), tinggal dirangkum jadi kartu di beranda |
+| Section "Kesehatan" penuh: grafik berat SVG 6 minggu + target, grafik batang langkah 7 hari, kartu tensi | Tidak ada di web | Tahap 30 langkah 5 (belum dikerjakan) |
+| Gaya kartu (`hf-card`: border radius 16px, padding konsisten) dan tema terang/gelap dengan token warna sage yang sama | Tema terang/gelap **sudah ada** (`partials/theme-toggle.blade.php`, token warna di `partials/theme-styles.blade.php`) dan tampaknya sudah pakai palet sage yang sama; kartu individual belum konsisten pakai gaya `hf-card` | Baru, bagian tahap ini (perapian visual) |
+
+#### B. Habit (`/habit`, `HabitToday.php` + `habit-today.blade.php`) vs `Habit.dc.html`
+
+| Elemen di mockup | Status live (11 Okt 2026) | Tahap yang menanggung |
+|---|---|---|
+| Baris judul + tanggal, lalu 3 kartu stat (Habit hari ini X/9 + bar, To-do hari ini X/5 + bar, Streak N hari + terpanjang) | Tidak ada. `habit-today.blade.php` langsung `<h1>Habit</h1>` lalu daftar | Baru — streak backend ada di model Android/`domain/` tapi belum tentu diekspos API web; perlu dicek saat dikerjakan |
+| Kartu "Hari ini": checklist habit (wajib di atas) + to-do, dengan caption "Habit wajib selalu tampil di atas..." | **Sudah ada secara fungsional** (checklist habit dan to-do jalan, toggle wajib, tambah to-do), tinggal gaya kartu dan caption yang beda | Tahap 28 (sudah selesai secara fungsi), tahap ini tinggal menyamakan visual |
+| Section "Kontribusi": heatmap gabungan 66 minggu + heatmap per habit (mini, 14 minggu, biner) | **Tidak ada sama sekali di web.** Heatmap cuma ada di Android (`ContributionViewModel`, tahap 4 dan 8) | Baru — perlu endpoint API heatmap web (belum ada di `routes/api.php` setahu audit ini) sebelum bisa digambar |
+| Kartu "Kelola habit": ubah nama, toggle wajib, hapus, tambah habit | **Sudah ada secara fungsional** (`habit-today.blade.php` baris 41-73: ubah nama, toggle wajib dengan konfirmasi, hapus, tambah), tinggal gaya kartu | Tahap 28 (sudah selesai secara fungsi), tahap ini tinggal visual |
+
+#### C. Kerja / Follow-up (`/follow-up`, `FollowUps.php` + `follow-ups.blade.php`) vs `KerjaWeb.dc.html` ("Web · Kerja (rekap harian)")
+
+Ini beda paling besar — **bukan cuma soal gaya, tapi konsep halaman yang beda total**:
+
+- **Live sekarang** (`follow-ups.blade.php`): daftar follow-up datar dikelompokkan per status (Inbox/Aktif/Menunggu/
+  Selesai), form tambah cepat di atas, edit inline per item termasuk deteksi konflik 409. Ini persis cakupan tahap 27
+  ("Web untuk Follow-up Kerja") dan sudah selesai untuk cakupan itu.
+- **Mockup** (`KerjaWeb.dc.html`): halaman **"Rekap hari ini"** — kartu hero ringkasan (judul "7 dari 9 follow-up
+  selesai", narasi, chip status, tingkat selesai %), daftar follow-up dengan filter chip (Semua/Inbox/Aktif/
+  Menunggu/Selesai), lalu panel samping: **Meeting & briefing** (catatan rapat per meeting), **Rencana besok**
+  (checklist, bisa tambah dari Inbox), **Catatan EOD**, dan tombol **Bagikan ringkasan**.
+- Potongan mockup yang **sudah** punya rencana di tahap lain:
+  - Catatan EOD dan rencana besok: data modelnya sudah ada di Android sejak tahap 19 (`daily_scrums` table:
+    `yesterday`/`today`/`blockers`, field `eodNote`), tapi **belum pernah dimigrasi ke web** — tidak ada endpoint
+    atau tabel server untuk daily scrum/EOD di `routes/api.php` setahu audit ini. Ini gap yang belum tercatat di
+    tahap manapun sebelumnya.
+  - "Ringkasan dari Claude" / email digest, Meeting & briefing: ini isi tahap 32 ("Rekap kerja otomatis dari
+    Claude"), yang masih **"belum dikoding"**.
+- **Bagian yang murni baru** (tidak tercakup tahap manapun): filter chip per status di atas daftar, kartu hero rekap
+  harian dengan statistik ringkas, dan tombol Bagikan ringkasan.
+
+#### Rencana langkah (belum dikerjakan, urutan diusulkan)
+
+1. **Beranda**: tambah strip 4 kartu ringkasan (Habit/To-do/Follow-up/Tugas Rumah) — ini yang paling murah karena
+   datanya sudah ada semua lewat model yang sudah dipakai `HabitToday`, `FollowUps`, `Teams`.
+2. **Habit**: bungkus ulang jadi kartu stat + gaya `hf-card`, lalu endpoint heatmap web (baru) dan komponen heatmap.
+3. **Kerja/Follow-up**: migrasi daily scrum/EOD ke web (tabel + endpoint baru, pola sama seperti tahap 27/29), baru
+   susun ulang jadi halaman "Rekap hari ini" dengan filter chip. Bagian Meeting & briefing dan Ringkasan Claude
+   menunggu tahap 32.
+4. **Kesehatan di beranda**: ini tahap 30 langkah 5, dikerjakan di jalurnya sendiri (langkah 3-4 server dan Android
+   kirim data dulu sebelum web bisa menampilkan apa pun).
+
+**Urutan terhadap tahap 31 (Login Wajib):** sama seperti tahap 30 langkah 3-6 dan tahap 32, tahap ini menyentuh
+halaman web secara luas — sebaiknya **menunggu enam butir terbuka tahap 31 diputuskan (12 Oktober 2026)** sebelum
+mulai, supaya tidak mengerjakan ulang kalau ada perubahan nav/struktur halaman dari Login Wajib (tab Pengaturan,
+Profil, dll.).
+
+**Selesai jika:**
+- Beranda menampilkan strip 4 kartu ringkasan sesuai mockup, datanya benar dibanding halaman masing-masing (Habit,
+  Follow-up, Tugas Rumah).
+- Halaman Habit web punya 3 kartu stat dan section Kontribusi (heatmap gabungan + per habit) yang datanya sama
+  dengan Android.
+- Halaman Kerja/Follow-up punya kartu rekap harian, filter chip, dan panel Rencana besok/Catatan EOD terisi dari
+  data yang sama dengan Android (setelah daily scrum/EOD dimigrasi ke web).
+- Tema terang/gelap dan gaya kartu (`hf-card`) konsisten di ketiga halaman.
+- Bagian yang memang menunggu tahap lain (Fokus kesehatan web, Meeting & briefing, Ringkasan dari Claude) ditandai
+  jelas "menyusul" di UI, bukan dibangun setengah jadi.
+
 ## Daftar pertanyaan terbuka
 
 - Urutan habit bisa diubah atau tidak (tahap 9, opsional).
