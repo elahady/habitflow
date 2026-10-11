@@ -1661,6 +1661,45 @@ perubahan dan push+pull jaring pengaman tiap 30 menit lewat WorkManager - lihat 
   WorkManager - di HP MIUI bisa tertunda signifikan, lihat catatan Doze di langkah 5).
 - ✅ Tidak ada data yang hilang saat transisi dari model snapshot ke model baru ini.
 
+### Tahap 29: Migrasi Jadwal Harian ke Web (didiskusikan 11 Oktober 2026, belum dikoding)
+
+Lanjutan arah "Web jadi versi lengkap" (tahap 25-28). Baris "Jadwal harian & libur" di
+tabel migrasi masih "Belum dimulai" — tahap ini menuliskan rencananya. **Koreksi penting**:
+jadwal harian dan waktu sholat **bukan fitur baru** — sudah selesai dan diverifikasi di
+Android sejak tahap 17-18 (7 Oktober 2026): tabel `schedule_blocks` (16 blok awal, termasuk
+yang berpatokan Dzuhur/Ashar/Maghrib/Isya), mesin hisab Ephemeris Kotlin murni di
+`domain/prayer/`, kartu Sekarang/Berikutnya, layar Atur Jadwal, alarm Subuh dan notifikasi
+blok. Yang belum ada cuma versi web/server-nya.
+
+**Keputusan (11 Oktober 2026):**
+
+| Pertanyaan | Keputusan |
+|---|---|
+| Lingkup kerja | Web dan Android sekaligus (pola migrasi penuh 4 langkah seperti tahap 26-28), bukan web dulu lalu Android menyusul |
+| Blok di web | Baca saja (read-only) — tidak ada tombol "selesai", tidak menyentuh level atau streak hari. Sama seperti aturan yang sudah berlaku di Android (blok cuma mencentang habit tertaut lewat notifikasi) |
+| Data awal | Pakai 16 blok yang sudah ada dan sudah final di Android (tabel di tahap 17), bukan draft `visi-super-app.md` yang lama dan belum menghitung waktu sholat |
+| Waktu sholat di web | **Belum diputuskan mekanismenya** — dua opsi dipertimbangkan: (a) Android kirim jadwal hari itu yang sudah dihitung (resolved) sebagai cache harian saat sinkron, tanpa PHP perlu tahu hisab sama sekali; (b) port mesin Ephemeris `EphemerisPrayerCalculator.kt` ke PHP supaya web bisa hitung sendiri. Opsi (a) jauh lebih murah untuk mulai, (b) dibutuhkan kalau nanti ada fitur web yang butuh hisab independen dari Android (misalnya kalau Android lama tidak sinkron) |
+
+**Rencana teknis (ikut pola migrasi 4 langkah, lihat tahap 25-28):**
+1. Tabel MySQL `schedule_blocks` (+ `schedule_block_habits` untuk tautan habit) meniru
+   skema Room Android, model Eloquent.
+2. Endpoint API `/api/v1/schedule-blocks` (CRUD + deteksi konflik `updated_at`/409 seperti
+   follow-up kerja), plus endpoint kecil untuk cache "jadwal hari ini yang sudah dihitung"
+   kalau opsi (a) dipilih.
+3. Komponen Livewire: kartu Sekarang/Berikutnya di `/dashboard`, dihitung dari blok + cache
+   harian (atau dari hisab PHP kalau opsi b).
+4. Android: pindah dari Room lokal murni ke lapisan sync yang sama polanya dengan habit/todo
+   (tahap 28) — Room tetap sumber utama dan offline-first, tambah outbox + push cache
+   jadwal harian.
+
+**Belum diputuskan:**
+- Mekanisme waktu sholat di web (lihat baris di atas).
+- Urutan detail langkah 1-4 vs tahap migrasi lain yang masih "Belum dimulai" (Kesehatan,
+  Kalender, dst.) — tahap 29 ini didiskusikan duluan karena nyambung ke permintaan tampilan
+  dashboard web.
+
+**Belum dikoding.** Menunggu keputusan mekanisme waktu sholat di atas sebelum mulai langkah 1.
+
 ## Daftar pertanyaan terbuka
 
 - Urutan habit bisa diubah atau tidak (tahap 9, opsional).
