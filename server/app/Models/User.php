@@ -50,4 +50,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(FollowUp::class);
     }
+
+    public function scheduleBlocks(): HasMany
+    {
+        return $this->hasMany(ScheduleBlock::class);
+    }
 }
