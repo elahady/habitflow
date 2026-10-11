@@ -1891,6 +1891,65 @@ Mockup (artboard Masuk, Daftar, Lupa kata sandi, Profil, Pengaturan): https://cl
 - **Masa simpan backup server** setelah akun dihapus (usulan 30 hari) dan lokasi backup di luar VM.
 - Urutan terhadap tahap 29 dan 30. Tahap 30 langkah 3-6 (kirim ke server) bisa lebih sederhana kalau dikerjakan setelah tahap ini.
 
+### Tahap 32: Rekap kerja otomatis dari Claude (diputuskan garis besar 11 Oktober 2026, belum dikoding)
+
+Dibahas 11 Oktober 2026, lanjutan tahap 19 dan 27. Sumbernya: skill `morning-routine` yang dipakai pemilik tiap pagi
+di `C:\Project\MasuyaLab\masuya-context` untuk bikin jurnal harian di Notion ("Ruang Kerja : I am a Leader") —
+ringkasan email unread, migrasi task belum selesai, dan rencana besok. Pertanyaannya: bisa dibuat versi yang sama
+tapi nulis ke Habitflow, bukan Notion.
+
+Mockup web dan mobile (artboard "Mobile · Kerja (rekap harian)" dan "Web · Kerja (rekap harian)"):
+https://claude.ai/artifact/TWJ8Uus2hKtQQa81wKujG5
+
+**Perbandingan dengan jurnal Notion** (enam section di halaman "Ruang Kerja : I am a Leader" Category = Daily):
+
+| Section Notion | Status di Habitflow |
+|---|---|
+| Task Hari Ini | Tertutup — follow-up (tahap 19) |
+| Rencana Besok | Tersirat — daily scrum besok menarik follow-up yang belum selesai |
+| Catatan / Log | Tersirat — field `eodNote` bebas teks |
+| Meeting / Briefing | Bolong |
+| Email Belum Dibaca | Bolong — hanya bisa dibuat Claude dari Gmail, bukan dari dalam app |
+| Ringkasan Percakapan Claude | Bolong — sama, kerjaan Claude di sesi desktop |
+
+**Beda mendasar dengan model Notion:** Notion membuat halaman baru tiap hari dan memigrasi task yang belum selesai
+secara manual (bagian paling rumit di `morning-routine`, bagian C). Follow-up Habitflow **tidak butuh migrasi** —
+status (Inbox/Aktif/Menunggu) menempel di item yang sama sampai ditandai Selesai, otomatis terbawa ke hari
+berikutnya tanpa disalin ulang. Jadi skill versi Habitflow seharusnya lebih ramping dari `morning-routine`.
+
+**Keputusan garis besar (11 Oktober 2026):**
+
+| Pertanyaan | Keputusan |
+|---|---|
+| Tempat simpan | Tabel baru `daily_briefs` (`date`, `email_digest`, `meeting_note`), **bukan** field di `work_days`/snapshot 19B — alasan sama seperti follow-up dipisah di tahap 27: field yang ikut snapshot bisa ditimpa Android dengan data lama saat sinkron |
+| Endpoint | `POST`/`GET /api/v1/daily-briefs`, upsert per tanggal, pola sama seperti `FollowUpController` tahap 27 |
+| Autentikasi | `user-token` yang sama dengan `/api/v1/follow-ups`, tidak perlu mekanisme baru |
+| Skill baru | `habitflow-morning-routine`, ditaruh di repo Habitflow sendiri (bukan `masuya-context`). Isinya cuma: cek email unread → ringkas → kirim ke endpoint baru. Tanpa langkah migrasi task (tidak perlu, lihat di atas) dan tanpa dependensi Notion |
+| Tampilan | Kartu baru "Ringkasan dari Claude" di tab Kerja (Android) dan halaman web Kerja — read-only, dipisah jelas dari Catatan EOD (ditulis manual) supaya sumbernya tidak campur |
+
+**Urutan kerja yang disarankan (belum dikerjakan):**
+
+1. Server: migrasi `daily_briefs`, model, controller, route, tes Laravel.
+2. Tes manual endpoint lewat curl/Postman dengan token yang sudah ada.
+3. Tulis `SKILL.md` untuk `habitflow-morning-routine`.
+4. Android + web: kartu "Ringkasan dari Claude" di tab/halaman Kerja, mengikuti mockup di atas.
+5. Opsional: pasangkan ke `/schedule` supaya jalan otomatis tiap pagi, seperti `morning-routine` yang lama.
+
+**Selesai jika:**
+- Endpoint `daily-briefs` menerima dan menyimpan ringkasan per tanggal, aman dipanggil ulang di hari yang sama
+  (upsert, tidak membuat baris dobel).
+- Skill `habitflow-morning-routine` berhasil menulis ringkasan email hari itu ke Habitflow tanpa menyentuh Notion.
+- Kartu "Ringkasan dari Claude" tampil di Android dan web, jelas beda dari Catatan EOD yang ditulis manual.
+- Tidak ada langkah migrasi task yang ditiru dari `morning-routine` — follow-up tetap mengandalkan status, bukan
+  disalin ulang tiap hari.
+
+**Belum diputuskan:**
+- Apakah "Meeting & briefing" (section terpisah di mockup) juga ditulis lewat skill ini, atau tetap manual dari
+  app/web — mockup sudah menyediakan tempatnya, tapi isinya saat ini masih contoh.
+- Nama dan lokasi pasti skill (`habitflow-morning-routine` masih usulan nama).
+- Hubungan dengan tahap 31 (Login Wajib): `user-token` sudah ada sejak tahap 27 jadi kemungkinan tidak
+  terpengaruh, tapi perlu dicek ulang setelah tahap 31 selesai.
+
 ## Daftar pertanyaan terbuka
 
 - Urutan habit bisa diubah atau tidak (tahap 9, opsional).
