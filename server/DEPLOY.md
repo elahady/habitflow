@@ -59,6 +59,27 @@ trial-error (lihat catatan di `docs/concept.md` tiap tahap). Layak dibuatkan
 `scripts/deploy.sh` begitu polanya benar-benar tidak berubah lagi — belum dilakukan per
 10 Oktober 2026.
 
+## Email dan antrean (tahap 31B)
+
+Verifikasi email dan lupa kata sandi mengirim kode 6 angka. Email dikirim lewat **antrean
+database**, jadi ada dua proses: container `habitflow` (web) dan `habitflow-queue` (service
+`queue` di `docker-compose.yml`, menjalankan `queue:work`). Tanpa yang kedua, email tertahan
+di tabel `jobs` dan tidak pernah terkirim.
+
+- Variabel di `.env.production`: `QUEUE_CONNECTION=database`, `MAIL_*` untuk Resend lewat
+  SMTP (contoh lengkap di `.env.example`), `OWNER_EMAIL`, `MAIL_DAILY_LIMIT`. Kunci API
+  Resend hanya ada di `.env.production` (VM dan salinan lokal), tidak di git.
+- Domain pengirim `mail.roziqrizal.com` harus diverifikasi di Resend (SPF, DKIM) dan DMARC
+  dipasang di DNS sebelum email sungguhan dikirim. **Belum dikerjakan per 12 Oktober 2026**,
+  lihat langkah yang belum dicentang di 31B (`docs/concept.md`).
+- Setelah mengubah `.env.production` atau kode, restart juga worker:
+  `docker compose up -d --force-recreate` sudah mengulang keduanya. `queue:work` menyimpan
+  kode di memori, jadi tanpa recreate worker masih memakai kode lama.
+- Email gagal terkirim tiga kali masuk tabel `failed_jobs`. Lihat dengan
+  `docker exec habitflow php artisan queue:failed`.
+- `composer require resend/resend-laravel` **tidak dipakai**: Resend dipanggil lewat SMTP
+  bawaan Laravel sehingga tidak ada paket baru (composer juga tidak ada di PC ini).
+
 ## File kredensial — TIDAK ada di git
 
 - `.env.production` (APP_KEY, kredensial database, kredensial Google OAuth) **sengaja
