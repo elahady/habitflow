@@ -1831,6 +1831,8 @@ Dicatat lengkap supaya sesi mana pun tahu **apa yang diputuskan, apa yang ditola
 | Penautan Google | Hanya ke akun yang emailnya sudah terverifikasi. Akun email yang belum terverifikasi diambil alih oleh login Google (kata sandi dikosongkan, semua token dicabut) |
 | Lupa kata sandi | Kode 6 angka lewat email. Jawaban server sama apakah email terdaftar atau tidak |
 | Layanan email | **Resend gratis** (3.000 per bulan, maksimal 100 per hari), **Brevo gratis** (300 per hari) sebagai cadangan. Tanpa server email sendiri |
+| Subdomain pengirim email | **`mail.roziqrizal.com`**, terpisah dari email pribadi di domain utama |
+| Aturan kata sandi | Minimal 8 karakter, dan ditolak kalau termasuk kata sandi paling umum. Tanpa autentikasi dua langkah di tahap ini |
 | Sesi | **Tidak kedaluwarsa.** Hanya dicabut oleh Keluar, ganti kata sandi, "Keluar dari semua perangkat", hapus akun, atau dari web |
 | Layar baru | Masuk, Daftar, Verifikasi kode, Lupa kata sandi (tombol "Lewati dulu" dihapus) |
 | Tab Tentang | Diganti **Pengaturan** (ikon roda gigi). Versi dan "Dibuat oleh" turun ke bagian Tentang paling bawah |
@@ -1959,7 +1961,7 @@ Status: belum dikerjakan.
 | `DELETE account` | `password`, atau `id_token` Google untuk akun tanpa sandi | 204 | Konfirmasi ulang wajib. Menghapus semua data (31D). Token ikut tercabut |
 | `GET me` | token di header | 200 `{account, has_password, google_linked, email_verified}` | Dipakai Profil dan pemeriksaan sesi |
 
-`account` berisi `id`, `name`, `email`, `avatar`. Aturan kata sandi: minimal 8 karakter (sama dengan web); ditolak kalau ada di daftar kata sandi paling umum *(usulan)*.
+`account` berisi `id`, `name`, `email`, `avatar`. Aturan kata sandi (diputuskan pemilik 11 Oktober 2026): minimal 8 karakter, dan ditolak kalau ada di daftar kata sandi paling umum. Tanpa autentikasi dua langkah di tahap ini.
 Tidak ada endpoint yang membedakan "email tidak terdaftar" dari "terdaftar" selain register yang sudah dijelaskan.
 
 **Selesai jika:** tidak ada dokumen yang masih menyatakan "tanpa akun", kontrak API disetujui pemilik, dan mockup mencerminkan keputusan terbaru.
@@ -1971,7 +1973,7 @@ Status: belum dikerjakan. Bergantung pada 31A.
 - [ ] **Migrasi.** `users.email_verified_at`, `users.privacy_consented_at`, `users.privacy_policy_version`. Tabel `email_codes` (`user_id`, `purpose` verify atau reset,
   `code_hash`, `expires_at`, `attempts`, `consumed_at`). Akun yang **sudah ada** diberi `email_verified_at` oleh migrasi satu kali (pemiliknya dikenal: pemilik dan istri).
 - [ ] **Email.** Pasang Resend (`resend/resend-laravel`), `MAIL_MAILER=resend`, domain pengirim diverifikasi (SPF, DKIM, DMARC) di DNS, alamat pengirim
-  `noreply@` pada subdomain khusus (usulan `mail.roziqrizal.com`, supaya terpisah dari email pribadi). Cadangan Brevo disiapkan di `.env.example` (SMTP) dan diuji sekali.
+  `noreply@` pada subdomain khusus **`mail.roziqrizal.com`** (diputuskan pemilik 11 Oktober 2026, supaya terpisah dari email pribadi). Cadangan Brevo disiapkan di `.env.example` (SMTP) dan diuji sekali.
   Email lewat **antrean** (driver database, ada proses `queue:work` di deployment) supaya pendaftaran tidak macet kalau layanan lambat. Teks email bahasa Indonesia, pendek,
   menyebut kode, masa berlaku, dan "abaikan kalau bukan kamu".
 - [ ] **Layanan.** `EmailCodeService` (terbit, verifikasi, batas percobaan, hanguskan kode lama saat terbit baru), `AuthService`, dan penghitung email terkirim per hari dengan
@@ -2138,8 +2140,9 @@ Status: belum dikerjakan. Bergantung pada 31I.
   dukungan ukuran halaman memori 16 KB kalau berlaku untuk pustaka yang dipakai) dan uji ulang di HP fisik: alarm Subuh, adzan, notifikasi tetap, pembacaan langkah, kalender, Health Connect.
 - [ ] **Izin yang dibatasi:** siapkan jalan tanpa izin untuk `USE_EXACT_ALARM` (misalnya izin yang diberikan pengguna) dan `USE_FULL_SCREEN_INTENT` (notifikasi heads-up) sebelum rilis, supaya penolakan Google tidak
   mematikan fitur. Isi alasan deklarasi dengan jujur.
-- [ ] **Penandatanganan:** buat kunci unggah, **dua salinan di tempat berbeda** beserta kata sandinya, aktifkan Play App Signing, `signingConfigs` membaca `keystore.properties` yang tidak masuk repo.
-- [ ] **R8 (`isMinifyEnabled`)**: putuskan nyala atau mati *(lihat Belum diputuskan)*. Kalau nyala, aturan keep untuk Room dan Health Connect, dan **seluruh** alur diuji ulang pada build rilis karena R8 bisa merusak refleksi.
+- [ ] **Penandatanganan:** buat kunci unggah, **dua salinan di tempat berbeda** beserta kata sandinya, aktifkan Play App Signing, `signingConfigs` **sudah ada** di `app/build.gradle.kts` dan membaca `~/.habitflow/keystore.properties` (di luar repo, berkas itu belum ada di mesin ini), jadi pekerjaannya membuat kuncinya dan menyimpan salinannya.
+- [ ] **R8 (`isMinifyEnabled`)**: putuskan nyala atau mati *(lihat Belum diputuskan, ada analisis situasinya)* **sebelum uji tertutup dimulai dan jangan diubah sesudahnya**, karena biner yang diuji 14 hari harus sama dengan yang dirilis. Kalau nyala: aturan keep, `shrinkResources`, berkas mapping disimpan, dan **seluruh** alur diuji ulang pada build rilis karena R8 bisa merusak refleksi dan tes unit tidak menangkapnya.
+- [ ] **Periksa pustaka versi alpha:** `androidx.health.connect:connect-client:1.1.0-alpha08` dipakai di build. Cek apakah ada versi stabil yang setara sebelum rilis publik, dan uji ulang pembacaan langkah setelah pindah versi.
 - [ ] **Google Sign-In produksi:** layar persetujuan OAuth dipindah dari uji ke **produksi** (nama app, logo, tautan kebijakan privasi, domain resmi); client ID Android memakai **SHA-1 dari kunci Play App Signing**
   selain kunci unggah dan debug; `GOOGLE_ANDROID_CLIENT_ID` di server diperbarui. Diuji dari build yang **dipasang lewat jalur uji Play Store**, bukan adb.
 - [ ] **Akun peninjau:** perintah artisan `habitflow:make-reviewer-account` membuat akun permanen yang sudah terverifikasi dengan data contoh, untuk kolom App access di Play Console.
@@ -2200,10 +2203,9 @@ Status: belum dikerjakan. Bergantung pada 31C, 31D, 31J, 31K, 31L.
 
 - **Kunci app (sidik jari atau PIN)** sebagai perlindungan data lokal yang sebenarnya, seperti yang diusulkan Claude di riwayat nomor 6. Tidak dijawab pemilik. Login wajib tidak melindungi data di HP yang tidak terkunci.
   Kalau diinginkan, dikerjakan sebagai tahap sendiri sesudah tahap ini.
-- **Lokasi backup di luar VM** (penyimpanan awan atau mesin lain) dan siapa pemegang kunci enkripsi backup.
-- **Subdomain pengirim email** (usulan `mail.roziqrizal.com`) dan apakah web memakai kode atau tautan (usulan: kode, sama dengan app).
-- **R8 (`isMinifyEnabled`)** nyala atau mati untuk rilis. Usulan nyala dengan uji penuh, tapi menambah risiko dan pekerjaan.
-- **Aturan kata sandi:** usulan minimal 8 karakter ditambah penolakan kata sandi paling umum. Tanpa autentikasi dua langkah di tahap ini.
+- **Lokasi backup di luar VM** (penyimpanan awan atau mesin lain) dan siapa pemegang kunci enkripsi backup. **Ditandai oleh pemilik untuk dibahas dan diputuskan pada 12 Oktober 2026.** Harus sudah diputuskan sebelum 31K dimulai.
+- **Web memakai kode atau tautan** untuk verifikasi dan reset kata sandi (usulan: kode, sama dengan app). Subdomain pengirim sudah diputuskan: `mail.roziqrizal.com`.
+- **R8 (`isMinifyEnabled`) nyala atau mati untuk rilis.** Belum dijawab pemilik, sedang dijelaskan situasinya. Analisis 11 Oktober 2026: R8 menyusutkan dan mengacak kode, tidak diwajibkan Play, dan baru bekerja di build rilis, jadi tes unit tidak menangkap kerusakannya. App ini punya banyak pekerjaan latar (alarm, WorkManager, Health Connect versi alpha, Credential Manager) yang paling rawan. Saat ini mati. Rekomendasi: **tetap mati untuk rilis pertama**, dipertimbangkan sebagai tahap tersendiri sesudahnya. Apa pun pilihannya harus ditetapkan sebelum uji tertutup dan tidak diubah sesudahnya.
 - **Tema tampilan setelah Keluar:** usulan dipertahankan karena preferensi perangkat.
 - **Kapan tabel `api_tokens` dihapus:** usulan di 31L, setelah semua berjalan.
 - **Urutan terhadap tahap 29, 30 (langkah 3-6), dan 32.** Tahap 30 langkah 3-6 lebih sederhana kalau dikerjakan setelah 31E. Tahap 32 memakai `user-token` yang sama jadi kemungkinan tidak terpengaruh, tapi dicek ulang
