@@ -1780,8 +1780,10 @@ Mockup (artboard Masuk, Daftar, Lupa kata sandi, Profil, Pengaturan): https://cl
 | Tab Tentang | Diganti **Pengaturan** (ikon roda gigi). Versi dan "Dibuat oleh" turun ke bagian Tentang paling bawah |
 | Lingkaran profil di Hari ini | Membuka halaman **Profil** (layar penuh di atas tab, bukan tab ketujuh): data akun, sinkron, Keluar, Hapus akun |
 | Halaman Profil belum masuk | **Tidak ada**, karena tidak ada keadaan "belum masuk" lagi |
+| Verifikasi email | **Wajib** untuk akun email dan kata sandi: kode 6 angka di app, berlaku 10 menit. Penautan Google hanya ke akun yang emailnya sudah terverifikasi (mencegah pengambilalihan akun). Rinciannya di [rilis-play-store.md](rilis-play-store.md) bagian 2 |
+| Kebutuhan rilis | Seluruh syarat Play Store, privasi, dan operasional server ada di [rilis-play-store.md](rilis-play-store.md), dengan tes yang gagal kalau dilanggar |
 
-**Usulan (belum diputuskan, ditandai agar dikoreksi sebelum dikoding):**
+**Usulan (disetujui pemilik 11 Oktober 2026 dengan jawaban "setuju dengan semua usulan"; koreksi kalau ternyata tidak termasuk):**
 
 | Pertanyaan | Usulan | Alasan |
 |---|---|---|
@@ -1791,7 +1793,7 @@ Mockup (artboard Masuk, Daftar, Lupa kata sandi, Profil, Pengaturan): https://cl
 | Data lama di HP (sebelum tahap ini) | **Diambil alih akun pertama yang login** di pemasangan itu, sekali saja. Selanjutnya data milik akun itu | Pemasangan yang punya data lama kemungkinan hanya HP pemilik (dan mungkin HP istri sebagai penguji), belum ada pengguna lain. Jalur gabung yang sudah ada (tahap 28 dan 27) dipakai ulang |
 | Snapshot 19B | **Pindah ke akun**: `PUT /snapshot` dan `GET /snapshot/latest` memakai `user-token`, snapshot terikat ke user. Token per-HP (`api_tokens`) dipensiunkan, dan snapshot lama diklaim ke akun pemilik lewat satu migrasi | Dua sistem login (token per-HP dan akun) tidak boleh hidup bersamaan. Data yang belum dimigrasi (jadwal, kesehatan, makan, kalender, pengaturan, EOD) masih hanya ada di snapshot |
 | "Atur server" dan token di Tentang | **Dihapus.** Alamat server menjadi konfigurasi build | Pengguna Play Store tidak mengisi alamat server dan token. Itu alat pengembang |
-| Sesi (diputuskan pemilik 11 Oktober 2026: tidak kedaluwarsa) | Token API tidak kedaluwarsa sendiri, hanya bisa dicabut (Keluar, ganti kata sandi, atau dari web). Kalau server menjawab 401, app kembali ke layar Masuk setelah data lokal aman (lihat Edge case) | Sekarang `user_tokens` tidak punya masa berlaku |
+| Sesi (diputuskan pemilik 11 Oktober 2026: tidak kedaluwarsa) | Token API tidak kedaluwarsa sendiri, hanya bisa dicabut (Keluar, ganti kata sandi yang mencabut semua sesi lain, "Keluar dari semua perangkat" di Profil, atau dari web). Kalau server menjawab 401, app kembali ke layar Masuk setelah data lokal aman (lihat Edge case) | Sekarang `user_tokens` tidak punya masa berlaku |
 | Auto Backup Android | **Keluarkan `habitflow.db` dan `settings.xml`** dari `backup_rules.xml` dan `data_extraction_rules.xml` | Server sekarang cadangannya. Kalau tidak, database akun lama bisa dipulihkan ke HP baru lalu diambil alih akun lain |
 | Hapus akun | **Wajib ada**, di app (Profil) dan di web (tautan yang bisa dibuka tanpa app) | Syarat Google Play untuk app yang punya pembuatan akun |
 
@@ -1859,8 +1861,10 @@ Mockup (artboard Masuk, Daftar, Lupa kata sandi, Profil, Pengaturan): https://cl
    ganti akun di HP yang sama.
 8. **Android: Pengaturan dan Profil.** Ganti Tentang, halaman Profil, Data tubuh, hapus UI "Atur server" dan token, keluarkan backup
    Android.
-9. **Hapus akun dan rilis.** Hapus akun di app dan web, kebijakan privasi, Data safety.
-10. **Verifikasi di HP fisik** dan catat hasilnya di sini.
+9. **Hapus akun dan rilis.** Hapus akun di app dan web, kebijakan privasi, Data safety (rinciannya di langkah 10 dan 11).
+10. **Penjaga otomatis dan skrip cek rilis.** Semua tes di [rilis-play-store.md](rilis-play-store.md) bagian 3 (inventaris skema, hapus akun menyeluruh, pengambilalihan akun, kode verifikasi, pencabutan sesi, Keluar di Android) dan `scripts/cek-rilis`. Dikerjakan **bersamaan** dengan langkah yang bersangkutan, bukan di akhir.
+11. **Gerbang rilis.** Backup dan latihan pemulihan, Google Sign-In produksi, kebijakan privasi, Play Console, penandatanganan, dan uji tertutup 14 hari: daftar periksa dan buktinya di [rilis-play-store.md](rilis-play-store.md). Uji tertutup dimulai sedini mungkin karena tidak bisa dipercepat.
+12. **Verifikasi di HP fisik** dan catat hasilnya di sini.
 
 **Selesai jika:**
 - Pada pemasangan baru, tidak ada layar app yang bisa dibuka sebelum login, dan tidak ada alarm, notifikasi, atau worker yang jalan.
@@ -1882,9 +1886,9 @@ Mockup (artboard Masuk, Daftar, Lupa kata sandi, Profil, Pengaturan): https://cl
 - Alarm Subuh yang sudah terjadwal saat sesi berakhir: harus dibatalkan, tidak berbunyi sendiri.
 
 **Belum diputuskan:**
-- Apakah usulan di tabel di atas disetujui, terutama "Keluar menghapus data lokal" dan "offline tetap bisa setelah login".
-- Verifikasi email saat daftar (mencegah daftar dengan email orang lain). Butuh layanan email yang sama dengan lupa kata sandi.
-- Layanan pengiriman email (lupa kata sandi dan verifikasi): belum ada di VM.
+- **Layanan pengiriman email** (verifikasi dan lupa kata sandi): belum dipilih. Rekomendasi layanan pengirim terkelola, bukan server email sendiri; alasannya di [rilis-play-store.md](rilis-play-store.md) bagian 6. Email adalah jalur kritis: tanpa email, pengguna baru tidak bisa daftar.
+- **Tim saat pemilik menghapus akun:** usulan di [rilis-play-store.md](rilis-play-store.md) bagian 2 (kepemilikan pindah ke anggota terlama, atau tim dihapus kalau tidak ada anggota lain).
+- **Masa simpan backup server** setelah akun dihapus (usulan 30 hari) dan lokasi backup di luar VM.
 - Urutan terhadap tahap 29 dan 30. Tahap 30 langkah 3-6 (kirim ke server) bisa lebih sederhana kalau dikerjakan setelah tahap ini.
 
 ## Daftar pertanyaan terbuka

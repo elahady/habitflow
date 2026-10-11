@@ -10,6 +10,7 @@ kontribusi ala GitHub. Detail rancangan ada di [docs/rancangan.md](docs/rancanga
 - [docs/visi-super-app.md](docs/visi-super-app.md): arah besar Habitflow sebagai asisten
   harian pribadi (jadwal, waktu sholat, follow-up kerja, kesehatan). Dibaca sebelum
   membahas tahap 17 ke atas.
+- [docs/rilis-play-store.md](docs/rilis-play-store.md): gerbang rilis Play Store, inventaris data, dan tes penjaga. Dibaca sebelum menyentuh login, skema database, izin manifest, atau persiapan rilis. Inventaris data diperbarui di commit yang sama dengan perubahan tabel atau izin.
 - [docs/rancangan.md](docs/rancangan.md): aturan fitur (habit, to-do, level,
   streak, layar). Kalau ada konflik dengan `concept.md`, `rancangan.md` yang menang
   dan `concept.md` diperbarui.
