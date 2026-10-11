@@ -130,6 +130,31 @@
         }
         .switch a { color: var(--primary); font-weight: 600; text-decoration: none; }
         .switch a:hover { text-decoration: underline; }
+        .notice {
+            background: var(--primary-fixed);
+            color: var(--on-primary-container);
+            padding: 12px 14px;
+            border-radius: 12px;
+            font-size: 13.5px;
+            line-height: 1.5;
+            margin-bottom: 18px;
+        }
+        .hint { font-size: 12.5px; color: var(--on-surface-variant); margin-top: 6px; }
+        input.code {
+            text-align: center;
+            letter-spacing: 0.5em;
+            font-size: 22px;
+            font-variant-numeric: tabular-nums;
+        }
+        .check { display: flex; gap: 10px; align-items: flex-start; font-size: 13.5px; line-height: 1.5; margin-bottom: 18px; color: var(--on-surface-variant); }
+        .check input { margin-top: 3px; width: 18px; height: 18px; flex-shrink: 0; }
+        .check a, .link-row a { color: var(--primary); font-weight: 600; }
+        .link-row { text-align: right; margin: -6px 0 16px; font-size: 13.5px; }
+        button.link {
+            background: none; border: none; padding: 0; color: var(--primary); font-weight: 600;
+            font-family: 'Manrope', sans-serif; font-size: 14px; cursor: pointer; text-decoration: underline;
+        }
+        .center { text-align: center; margin-top: 18px; }
     </style>
 </head>
 <body>
@@ -142,6 +167,9 @@
                 <p>{{ $tagline }}</p>
             @endisset
         </div>
+        @if (session('status'))
+            <p class="notice" role="status">{{ session('status') }}</p>
+        @endif
         {{ $slot }}
     </div>
 </body>

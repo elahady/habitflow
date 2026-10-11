@@ -3,18 +3,16 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Services\AccountService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class AuthenticatedSessionController extends Controller
 {
-    private const MAX_FAILURES = 5;
-
-    private const FAILURE_WINDOW_SECONDS = 60;
+    public function __construct(private AccountService $accounts) {}
 
     public function create(): View
     {
@@ -28,23 +26,28 @@ class AuthenticatedSessionController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        $failureKey = 'login-failure:'.$request->ip();
+        [$status, $detail] = $this->accounts->checkLogin($credentials['email'], $credentials['password'], $request->ip());
 
-        if (RateLimiter::tooManyAttempts($failureKey, self::MAX_FAILURES)) {
+        if ($status === AccountService::LOGIN_THROTTLED) {
             throw ValidationException::withMessages([
-                'email' => 'Terlalu banyak percobaan. Coba lagi dalam '.RateLimiter::availableIn($failureKey).' detik.',
+                'email' => 'Terlalu banyak percobaan. Coba lagi dalam '.$detail.' detik.',
             ]);
         }
 
-        if (! Auth::attempt($credentials, remember: true)) {
-            RateLimiter::hit($failureKey, self::FAILURE_WINDOW_SECONDS);
-
-            throw ValidationException::withMessages([
-                'email' => 'Email atau kata sandi salah.',
-            ]);
+        if ($status === AccountService::LOGIN_INVALID) {
+            throw ValidationException::withMessages(['email' => 'Email atau kata sandi salah.']);
         }
 
-        RateLimiter::clear($failureKey);
+        // Kata sandi benar tapi email belum diverifikasi: tidak masuk, kirim kode ke halaman verifikasi.
+        if ($status === AccountService::LOGIN_UNVERIFIED) {
+            $this->accounts->sendVerification($detail);
+
+            return redirect()->route('verification.show')
+                ->with('verification_email', $detail->email)
+                ->with('status', 'Email kamu belum diverifikasi. Masukkan kode 6 angka yang kami kirim ke '.$detail->email.'.');
+        }
+
+        Auth::login($detail, remember: true);
         $request->session()->regenerate();
 
         return redirect()->intended(route('dashboard'));

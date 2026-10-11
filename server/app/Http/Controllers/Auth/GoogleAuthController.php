@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use App\Services\GoogleAccountLinker;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -30,6 +31,11 @@ class GoogleAuthController extends Controller
         $googleUser = Socialite::driver('google')->user();
 
         if (Auth::check()) {
+            $taken = User::where('google_sub', $googleUser->getId())->where('id', '!=', Auth::id())->exists();
+            if ($taken) {
+                return redirect()->route('account')->withErrors(['google' => 'Akun Google itu sudah terhubung ke akun Habitflow lain.']);
+            }
+
             Auth::user()->forceFill([
                 'google_sub' => $googleUser->getId(),
                 'avatar' => $googleUser->getAvatar(),
@@ -51,12 +57,18 @@ class GoogleAuthController extends Controller
         );
 
         Auth::login($user, remember: true);
+        request()->session()->regenerate();
 
         return redirect()->intended(route('dashboard'));
     }
 
     public function destroy(): RedirectResponse
     {
+        // Tanpa kata sandi, memutus Google berarti tidak ada cara masuk lagi.
+        if (Auth::user()->password === null) {
+            return redirect()->route('account')->withErrors(['google' => 'Buat kata sandi dulu sebelum memutus Google, supaya kamu tetap bisa masuk.']);
+        }
+
         Auth::user()->forceFill(['google_sub' => null])->save();
 
         return redirect()->route('dashboard')->with('status', 'Akun Google diputus.');
