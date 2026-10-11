@@ -27,7 +27,9 @@ dihapus. Kalau salah satu dari ketiganya berbeda dari tabel ini, tabel ini yang 
 
 | Tabel | Isi | Sensitif | Dihapus saat hapus akun |
 |---|---|---|---|
-| `users` | nama, email, hash kata sandi, `google_sub`, avatar | Identitas | Ya |
+| `users` | nama, email, hash kata sandi, `google_sub`, avatar, waktu verifikasi email, waktu dan versi persetujuan kebijakan privasi | Identitas | Ya |
+| `email_codes` | hash kode verifikasi dan reset (6 angka, berlaku 10 menit), jumlah percobaan | Kredensial | Ya |
+| `jobs`, `failed_jobs` | antrean email. Berisi kode asli selama email belum terkirim (menit), dan kode asli bisa tertinggal di `failed_jobs` kalau pengiriman gagal | Kredensial, sementara | Dibersihkan otomatis saat terkirim. `failed_jobs` dibersihkan berkala (31K) |
 | `user_tokens` | hash token sesi per perangkat | Kredensial | Ya |
 | `api_tokens` | token per-HP tahap 19B | Kredensial | Dipensiunkan di tahap 31, lalu tabelnya dihapus |
 | `snapshots` | seluruh data yang belum dimigrasi (jadwal, kesehatan, makan, kalender, pengaturan, EOD), terenkripsi dengan kunci app | **Kesehatan, lokasi** | Ya, termasuk 14 salinan terakhir |

@@ -2026,26 +2026,39 @@ acuan layarnya — lihat status di atas).
 
 #### 31B. Server: akun, verifikasi email, reset kata sandi (API)
 
-Status: belum dikerjakan. Bergantung pada 31A.
+Status: **kode dan tes selesai (12 Oktober 2026), belum bisa ditutup**: pengiriman email sungguhan (domain pengirim, DNS, kunci Resend) dan uji `curl` ke server produksi belum dikerjakan. Bergantung pada 31A (✅).
 
-- [ ] **Migrasi.** `users.email_verified_at`, `users.privacy_consented_at`, `users.privacy_policy_version`. Tabel `email_codes` (`user_id`, `purpose` verify atau reset,
-  `code_hash`, `expires_at`, `attempts`, `consumed_at`). Akun yang **sudah ada** diberi `email_verified_at` oleh migrasi satu kali (pemiliknya dikenal: pemilik dan istri).
-- [ ] **Email.** Pasang Resend (`resend/resend-laravel`), `MAIL_MAILER=resend`, domain pengirim diverifikasi (SPF, DKIM, DMARC) di DNS, alamat pengirim
-  `noreply@` pada subdomain khusus **`mail.roziqrizal.com`** (diputuskan pemilik 11 Oktober 2026, supaya terpisah dari email pribadi). Cadangan Brevo disiapkan di `.env.example` (SMTP) dan diuji sekali.
-  Email lewat **antrean** (driver database, ada proses `queue:work` di deployment) supaya pendaftaran tidak macet kalau layanan lambat. Teks email bahasa Indonesia, pendek,
-  menyebut kode, masa berlaku, dan "abaikan kalau bukan kamu".
-- [ ] **Layanan.** `EmailCodeService` (terbit, verifikasi, batas percobaan, hanguskan kode lama saat terbit baru), `AuthService`, dan penghitung email terkirim per hari dengan
-  pemberitahuan ke pemilik di 80% batas paket.
-- [ ] **Endpoint** sesuai kontrak 31A, dengan pembatas laju yang disebut di sana.
-- [ ] **Aturan penautan Google** (API dan web): Google hanya ditautkan ke akun yang `email_verified_at`-nya terisi. Kalau akun dengan email itu ada tapi **belum terverifikasi**,
-  login Google mengambil alih: `password` dikosongkan, semua token dicabut, `google_sub` diisi, `email_verified_at` diisi. Login Google hanya diterima kalau klaim
-  `email_verified` dari Google benar.
-- [ ] Pencabutan token: `logout`, `logout-all`, reset dan ganti kata sandi, sesuai kontrak.
-- [ ] **Tes Laravel** (nama sesuai [rilis-play-store.md](rilis-play-store.md) bagian 3): pengambilalihan akun, kode kedaluwarsa, sekali pakai, lima salah menghanguskan, batas kirim
+- [x] **Migrasi.** `users.email_verified_at`, `users.privacy_consented_at`, `users.privacy_policy_version`. Tabel `email_codes` (`user_id`, `purpose` verify atau reset,
+  `code_hash`, `expires_at`, `attempts`, `consumed_at`). Akun yang **sudah ada** diberi `email_verified_at` oleh migrasi satu kali (diuji: `test_migrasi_menandai_akun_yang_sudah_ada_sebagai_terverifikasi`).
+  Tabel `jobs` dan `failed_jobs` ikut ditambah untuk antrean. Kolom verifikasi dan persetujuan sengaja tidak masuk `$fillable`, hanya lewat `forceFill`.
+- [ ] **Email.** Kode sudah ada (`CodeMail`, teks bahasa Indonesia, lewat antrean database dengan `tries=3`, `config/habitflow.php`, contoh `.env` dan service `queue` di `docker-compose.yml`).
+  **Keputusan teknis yang menyimpang dari rencana awal:** Resend dipanggil lewat **SMTP bawaan Laravel** (`smtp.resend.com`, pengguna `resend`, sandi = API key), bukan paket
+  `resend/resend-laravel`, karena composer tidak ada di PC ini dan SMTP tidak butuh paket baru. Brevo cadangan juga SMTP, cukup ganti `MAIL_*` (contoh di `.env.example`).
+  **Belum dikerjakan (butuh pemilik):** buat akun Resend dan kunci API, verifikasi domain `mail.roziqrizal.com` (SPF, DKIM) dan DMARC di DNS, isi `.env.production`
+  (`MAIL_*`, `QUEUE_CONNECTION=database`, `OWNER_EMAIL`), deploy, uji kirim ke Gmail **kotak masuk** (bukan spam) dan satu penyedia lain, uji Brevo sekali.
+- [x] **Layanan.** `EmailCodeService` (terbit, verifikasi, batas percobaan, hanguskan kode lama saat terbit baru, batas kirim per email), `GoogleAccountLinker`, dan `CountSentMail`
+  (penghitung email terkirim per hari, pemberitahuan ke `OWNER_EMAIL` satu kali per hari pada 80% `MAIL_DAILY_LIMIT`). Logika akun ada di `Api\AuthController` (tidak dipisah jadi `AuthService`).
+  Kode disimpan sebagai HMAC-SHA256 dengan `APP_KEY`, terikat ke user dan tujuan. Kode asli hanya ada di email dan di tabel `jobs` sampai email terkirim.
+- [x] **Endpoint** sesuai kontrak 31A, dengan pembatas laju: `auth/register`, `auth/verify-email`, `auth/resend-verification`, `auth/login`, `auth/forgot-password`, `auth/reset-password`,
+  `auth/logout`, `auth/logout-all`, `PUT account/password`, `GET me`. **`DELETE account` belum ada, dikerjakan di 31D** (butuh penghapusan menyeluruh).
+  Aturan yang dipilih saat menulis (tidak ada di kontrak, tolong koreksi kalau tidak setuju): register menolak `privacy_policy_version` selain versi yang berlaku (`config/habitflow.php`);
+  email dinormalkan huruf kecil; register untuk email yang belum terverifikasi **menimpa nama dan kata sandi** dengan pendaftar terbaru (yang memegang email itu); lupa kata sandi
+  hanya mengirim kode ke akun yang emailnya sudah terverifikasi; kata sandi baru divalidasi **sebelum** kode diperiksa supaya sandi lemah tidak menghanguskan kode; 10 percobaan kode per
+  15 menit per email dan 30 per IP (429); ganti kata sandi salah 5 kali dikunci 15 menit.
+  `POST auth/google` sekarang mengembalikan `account` (kontrak) **dan** `user` (isi sama) supaya app yang sudah terpasang tidak rusak. Android pindah ke `account` di 31F, lalu `user` dihapus.
+- [x] **Aturan penautan Google** (`GoogleAccountLinker`, dipakai API dan web): Google hanya ditautkan ke akun yang `email_verified_at`-nya terisi. Kalau akun dengan email itu ada tapi **belum terverifikasi**,
+  login Google mengambil alih: `password` dikosongkan, semua token dicabut, `remember_token` diganti (sesi web mati), `google_sub` dan `email_verified_at` diisi. Login Google hanya diterima kalau klaim
+  `email_verified` dari Google benar (API: sudah ada, web: ditambah). **Diuji lewat API; jalur web memakai linker yang sama tapi belum punya tes Feature sendiri (masuk 31C).**
+- [x] Pencabutan token: `logout`, `logout-all`, reset dan ganti kata sandi, sesuai kontrak (ganti kata sandi mempertahankan token yang dipakai).
+- [x] **Tes Laravel** (`tests/Feature/AccountAuthApiTest.php`, 47 tes): pengambilalihan akun, kode kedaluwarsa, sekali pakai, lima salah menghanguskan, batas kirim
   ulang, kode disimpan sebagai hash, pencabutan sesi untuk semua jalur, jawaban identik untuk email terdaftar dan tidak, login salah, rate limit, Google dan email pada akun
-  yang sama, akun lama terverifikasi oleh migrasi.
+  yang sama, akun lama terverifikasi oleh migrasi. Seluruh suite 134 tes lulus.
+- [ ] **Celah yang dibiarkan sampai 31C:** pendaftaran **web** (`RegisteredUserController`) masih langsung login tanpa verifikasi dan membuat akun belum terverifikasi. Itu tidak membuka celah baru
+  (akun itu bisa diambil alih Google yang sah) tapi berarti web belum memakai alur kode. Dikerjakan di 31C.
+- [ ] Catatan untuk sub-tahap lain: **31D** — tes inventaris skema harus mengenal `email_codes` (hapus saat hapus akun) dan `jobs`/`failed_jobs` (bukan data akun, tapi berisi kode asli sementara).
+  **31K** — bersihkan `failed_jobs` berkala dan pantau antrean macet.
 
-**Selesai jika:** semua tes lulus, email uji sampai di Gmail **kotak masuk** dan satu penyedia lain, dan alur register, verifikasi, login, lupa dan reset kata sandi jalan dengan `curl`.
+**Selesai jika:** semua tes lulus (✅), email uji sampai di Gmail **kotak masuk** dan satu penyedia lain (belum), dan alur register, verifikasi, login, lupa dan reset kata sandi jalan dengan `curl` (belum, di server produksi).
 
 #### 31C. Server: halaman web
 
