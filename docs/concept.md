@@ -1454,7 +1454,7 @@ pindah, baru dipertimbangkan apakah 19B dipensiunkan total.
 | Follow-up kerja | `follow_ups` | 19 | **Tahap 27: selesai (server, web, Android); Android diuji sebagian di HP fisik** |
 | To-do tim | `team_todos`, `teams`, `team_invites` | baru | **Selesai (web+API+Android) — tahap 26** |
 | Habit + to-do harian | `habits`, `habit_entries`, `todos` | 1-9 | **Selesai (web+API+Android)** — tahap 28 |
-| Jadwal harian & libur | `schedule_blocks`, `schedule_block_habits`, `days_off`, `holiday_cancellations` | 17, 22 | Belum dimulai |
+| Jadwal harian & libur | `schedule_blocks`, `schedule_block_habits`, `days_off`, `holiday_cancellations` | 17, 22 | Sebagian: server `schedule_blocks` dan API selesai (tahap 29 langkah 1-2); `days_off` dan libur belum |
 | Daily scrum/EOD | `work_days` | 19 | Belum dimulai |
 | Kesehatan (berat, tensi) | `weight_entries`, `blood_pressure_entries` | 21 | **Tahap 30 (satu arah, web hanya membaca, belum dikoding)**. Beda dari pola penuh: input hanya di Android, tanpa deteksi konflik |
 | Asupan makan | `meals`, `drink_counts`, `habit_manual_marks` | 20, 23 | Belum dimulai |
@@ -1661,7 +1661,7 @@ perubahan dan push+pull jaring pengaman tiap 30 menit lewat WorkManager - lihat 
   WorkManager - di HP MIUI bisa tertunda signifikan, lihat catatan Doze di langkah 5).
 - ✅ Tidak ada data yang hilang saat transisi dari model snapshot ke model baru ini.
 
-### Tahap 29: Migrasi Jadwal Harian ke Web (didiskusikan 11 Oktober 2026, belum dikoding)
+### Tahap 29: Migrasi Jadwal Harian ke Web (langkah 1-2 selesai di server 11 Oktober 2026; langkah 3-4 belum)
 
 Lanjutan arah "Web jadi versi lengkap" (tahap 25-28). Baris "Jadwal harian & libur" di
 tabel migrasi masih "Belum dimulai" — tahap ini menuliskan rencananya. **Koreksi penting**:
@@ -1698,7 +1698,20 @@ blok. Yang belum ada cuma versi web/server-nya.
   Kalender, dst.) — tahap 29 ini didiskusikan duluan karena nyambung ke permintaan tampilan
   dashboard web.
 
-**Belum dikoding.** Menunggu keputusan mekanisme waktu sholat di atas sebelum mulai langkah 1.
+**Status (11 Oktober 2026):** langkah 1 dan 2 selesai di server, tidak bergantung pada keputusan waktu sholat.
+- ✅ Langkah 1: migrasi `schedule_blocks` dan `schedule_block_habits` (tautan ke `habits` server, hilang otomatis
+  kalau blok atau habitnya dihapus), model `ScheduleBlock`. Kolom mengikuti `ScheduleBlockEntity` Android.
+  `active_days` bitmask Senin = 1 sampai Minggu = 64.
+- ✅ Langkah 2: `GET/POST /api/v1/schedule-blocks`, `PUT/DELETE /api/v1/schedule-blocks/{id}` (token `user-token`).
+  PUT wajib `updated_at` dan dibalas 409 berisi versi server kalau beda. Tautan habit dikirim sebagai `habit_ids`
+  (id habit **di server**) dan menggantikan seluruh tautan blok; habit milik user lain dibalas 422. Blok berpatokan
+  sholat wajib `prayer`, jam tetap harus 0-1439 menit dan tanpa `prayer`. Tes: `ScheduleBlockApiTest` (15 tes; seluruh
+  suite server 58 tes lulus).
+- **Belum:** endpoint cache "jadwal hari ini yang sudah dihitung" (hanya perlu kalau opsi a dipilih), seed 16 blok awal
+  untuk user baru di server, langkah 3 (kartu Sekarang/Berikutnya di web), dan langkah 4 (Android sinkron). Id habit
+  Android (Room) berbeda dari id server, jadi langkah 4 butuh pemetaan id habit lokal ke server sebelum `habit_ids` bisa
+  dikirim.
+- **Masih menunggu keputusan:** mekanisme waktu sholat di web. Langkah 3 tidak bisa dimulai sebelum itu diputuskan.
 
 ### Tahap 30: Fokus Kesehatan Harian (langkah 1-2 selesai di Android 11 Oktober 2026; langkah 3-6 belum)
 
