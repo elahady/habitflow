@@ -1454,7 +1454,7 @@ pindah, baru dipertimbangkan apakah 19B dipensiunkan total.
 | Follow-up kerja | `follow_ups` | 19 | **Tahap 27: selesai (server, web, Android); Android diuji sebagian di HP fisik** |
 | To-do tim | `team_todos`, `teams`, `team_invites` | baru | **Selesai (web+API+Android) — tahap 26** |
 | Habit + to-do harian | `habits`, `habit_entries`, `todos` | 1-9 | **Selesai (web+API+Android)** — tahap 28 |
-| Jadwal harian & libur | `schedule_blocks`, `schedule_block_habits`, `days_off`, `holiday_cancellations` | 17, 22 | Sebagian: server `schedule_blocks` dan API selesai (tahap 29 langkah 1-2); `days_off` dan libur belum |
+| Jadwal harian & libur | `schedule_blocks`, `schedule_block_habits`, `days_off`, `holiday_cancellations` | 17, 22 | Sebagian: server `schedule_blocks`, API, cache waktu sholat, dan kartu web selesai (tahap 29 langkah 1-3); sinkron Android, `days_off`, dan libur belum |
 | Daily scrum/EOD | `work_days` | 19 | Belum dimulai |
 | Kesehatan (berat, tensi) | `weight_entries`, `blood_pressure_entries` | 21 | **Tahap 30 (satu arah, web hanya membaca, belum dikoding)**. Beda dari pola penuh: input hanya di Android, tanpa deteksi konflik |
 | Asupan makan | `meals`, `drink_counts`, `habit_manual_marks` | 20, 23 | Belum dimulai |
@@ -1661,7 +1661,7 @@ perubahan dan push+pull jaring pengaman tiap 30 menit lewat WorkManager - lihat 
   WorkManager - di HP MIUI bisa tertunda signifikan, lihat catatan Doze di langkah 5).
 - ✅ Tidak ada data yang hilang saat transisi dari model snapshot ke model baru ini.
 
-### Tahap 29: Migrasi Jadwal Harian ke Web (langkah 1-2 selesai di server 11 Oktober 2026; langkah 3-4 belum)
+### Tahap 29: Migrasi Jadwal Harian ke Web (langkah 1-3 selesai di server dan web 11 Oktober 2026; langkah 4 Android belum)
 
 Lanjutan arah "Web jadi versi lengkap" (tahap 25-28). Baris "Jadwal harian & libur" di
 tabel migrasi masih "Belum dimulai" — tahap ini menuliskan rencananya. **Koreksi penting**:
@@ -1678,7 +1678,7 @@ blok. Yang belum ada cuma versi web/server-nya.
 | Lingkup kerja | Web dan Android sekaligus (pola migrasi penuh 4 langkah seperti tahap 26-28), bukan web dulu lalu Android menyusul |
 | Blok di web | Baca saja (read-only) — tidak ada tombol "selesai", tidak menyentuh level atau streak hari. Sama seperti aturan yang sudah berlaku di Android (blok cuma mencentang habit tertaut lewat notifikasi) |
 | Data awal | Pakai 16 blok yang sudah ada dan sudah final di Android (tabel di tahap 17), bukan draft `visi-super-app.md` yang lama dan belum menghitung waktu sholat |
-| Waktu sholat di web | **Belum diputuskan mekanismenya** — dua opsi dipertimbangkan: (a) Android kirim jadwal hari itu yang sudah dihitung (resolved) sebagai cache harian saat sinkron, tanpa PHP perlu tahu hisab sama sekali; (b) port mesin Ephemeris `EphemerisPrayerCalculator.kt` ke PHP supaya web bisa hitung sendiri. Opsi (a) jauh lebih murah untuk mulai, (b) dibutuhkan kalau nanti ada fitur web yang butuh hisab independen dari Android (misalnya kalau Android lama tidak sinkron) |
+| Waktu sholat di web | **Diputuskan opsi (a)** (11 Oktober 2026). Dua opsi yang dipertimbangkan: (a) Android kirim jadwal hari itu yang sudah dihitung (resolved) sebagai cache harian saat sinkron, tanpa PHP perlu tahu hisab sama sekali; (b) port mesin Ephemeris `EphemerisPrayerCalculator.kt` ke PHP supaya web bisa hitung sendiri. Opsi (a) jauh lebih murah untuk mulai, (b) dibutuhkan kalau nanti ada fitur web yang butuh hisab independen dari Android (misalnya kalau Android lama tidak sinkron) |
 
 **Rencana teknis (ikut pola migrasi 4 langkah, lihat tahap 25-28):**
 1. Tabel MySQL `schedule_blocks` (+ `schedule_block_habits` untuk tautan habit) meniru
@@ -1693,7 +1693,7 @@ blok. Yang belum ada cuma versi web/server-nya.
    jadwal harian.
 
 **Belum diputuskan:**
-- Mekanisme waktu sholat di web (lihat baris di atas).
+- ~~Mekanisme waktu sholat di web~~ diputuskan 11 Oktober 2026: opsi (a), cache dari Android.
 - Urutan detail langkah 1-4 vs tahap migrasi lain yang masih "Belum dimulai" (Kesehatan,
   Kalender, dst.) — tahap 29 ini didiskusikan duluan karena nyambung ke permintaan tampilan
   dashboard web.
@@ -1707,11 +1707,26 @@ blok. Yang belum ada cuma versi web/server-nya.
   (id habit **di server**) dan menggantikan seluruh tautan blok; habit milik user lain dibalas 422. Blok berpatokan
   sholat wajib `prayer`, jam tetap harus 0-1439 menit dan tanpa `prayer`. Tes: `ScheduleBlockApiTest` (15 tes; seluruh
   suite server 58 tes lulus).
-- **Belum:** endpoint cache "jadwal hari ini yang sudah dihitung" (hanya perlu kalau opsi a dipilih), seed 16 blok awal
-  untuk user baru di server, langkah 3 (kartu Sekarang/Berikutnya di web), dan langkah 4 (Android sinkron). Id habit
-  Android (Room) berbeda dari id server, jadi langkah 4 butuh pemetaan id habit lokal ke server sebelum `habit_ids` bisa
-  dikirim.
-- **Masih menunggu keputusan:** mekanisme waktu sholat di web. Langkah 3 tidak bisa dimulai sebelum itu diputuskan.
+- ✅ **Langkah 3 (server dan web selesai, 11 Oktober 2026), memakai opsi (a)**: keputusan pemilik, Android mengirim waktu
+  sholat yang sudah dihitung, server tidak menghitung hisab.
+  - Tabel `prayer_days` (satu baris per user per tanggal: `timezone`, `subuh`, `dzuhur`, `ashar`, `maghrib`, `isya`;
+    waktu `null` berarti tidak ada). `PUT /api/v1/prayer-days` menerima `timezone` dan `days` (1-14 hari sekaligus,
+    kelima waktu wajib ada kuncinya, boleh `null`). Idempotent: kirim ulang menimpa tanggal yang sama tanpa 409.
+    `GET /api/v1/prayer-days?from=Y-m-d`. Tes: `PrayerDayApiTest`.
+  - `App\Support\Schedule\ScheduleResolver` adalah **salinan PHP** dari `resolveBlocks` dan `nowAndNext` di
+    `domain/schedule/Schedule.kt`. Aturannya sengaja sama (hari aktif, patokan sholat plus selisih, pemotongan ke 0-1440,
+    urutan mulai/sort_order/id, titik waktu tidak pernah Sekarang). **Kalau salah satu berubah, ubah keduanya.**
+    Tes: `ScheduleResolverTest`.
+  - Kartu **Jadwal sekarang** (Livewire `ScheduleCard`) di `/`, hanya baca, diperbarui tiap 60 detik. Jam "sekarang"
+    dihitung di zona waktu terakhir yang dikirim HP (cadangan `Asia/Jakarta`), bukan UTC server. Kalau waktu sholat hari
+    ini belum dikirim, blok yang berpatokan sholat tidak tampil dan kartu menjelaskannya. Tes: `ScheduleCardTest`
+    (termasuk uji bahwa memakai UTC membuat tes gagal). Seluruh suite server 87 tes lulus.
+  - **Batasan:** "Hari ini libur" belum ada di server (tabel `days_off` belum dibuat), jadi web menganggap tidak libur.
+    Kartu belum dilihat langsung di browser, hanya diuji lewat tes Livewire.
+- **Belum:** langkah 4 (Android sinkron: kirim blok, tautan habit, dan `prayer_days` 7 hari ke depan). Id habit Android
+  (Room) berbeda dari id server, jadi butuh pemetaan id habit lokal ke server sebelum `habit_ids` bisa dikirim. Seed 16
+  blok awal untuk user baru di server juga belum ada; sampai langkah 4 jalan, kartu di web kosong ("Belum ada jadwal di
+  server").
 
 ### Tahap 30: Fokus Kesehatan Harian (langkah 1-2 selesai di Android 11 Oktober 2026; langkah 3-6 belum)
 
