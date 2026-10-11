@@ -2228,29 +2228,33 @@ Status: belum dikerjakan. Bergantung pada 31C, 31D, 31J, 31K, 31L.
 - Batas harian email layanan terlampaui: pendaftaran gagal dengan pesan yang jelas, dan pemilik sudah diberi tahu sejak 80%.
 - Layanan email mati: pendaftaran tidak macet (antrean) dan pengguna melihat pesan tenang, bukan galat teknis.
 
-#### Belum diputuskan
+#### Keputusan enam butir terbuka (diputuskan pemilik 11 Oktober 2026)
 
-**Semua butir di bawah ditandai pemilik pada 11 Oktober 2026 untuk dibahas dan diputuskan pada 12 Oktober 2026. Belum ada yang dijawab, dan tidak ada yang boleh dikoding sebelum diputuskan.** Yang tertahan oleh masing-masing butir:
+Butir-butir ini sebelumnya ditandai untuk dibahas 12 Oktober 2026, tapi pemilik memutuskan lebih cepat, 11 Oktober 2026:
 
-| Butir | Tertahan | Usulan sementara |
+| Butir | Tertahan | Keputusan |
 |---|---|---|
-| Lokasi backup di luar VM dan pemegang kunci enkripsinya | 31K (dan karena itu 31M) | Belum ada |
-| Kunci app (sidik jari atau PIN) | Tidak menahan tahap 31. Jadi tahap sendiri sesudahnya | Dikerjakan sesudah tahap 31 kalau diinginkan |
-| Web memakai kode atau tautan | 31C | Kode, sama dengan app |
-| Tema tampilan setelah Keluar | 31H | Dipertahankan (preferensi perangkat) |
-| Kapan tabel `api_tokens` dihapus | 31L | Di 31L, setelah semua berjalan |
-| Urutan terhadap tahap 29, 30 (langkah 3-6), dan 32 | Sebelum 31B dimulai | Tahap 30 langkah 3-6 sesudah 31E. Tahap 32 dicek ulang setelah 31B |
+| Lokasi backup di luar VM dan pemegang kunci enkripsinya | 31K (dan karena itu 31M) | **Cloudflare R2** untuk lokasi, kunci dipegang **Roziq sendiri**. Lihat rincian di bawah |
+| Kunci app (sidik jari atau PIN) | Tidak menahan tahap 31 | **Disetujui** — dikerjakan sebagai tahap sendiri sesudah tahap 31 |
+| Web memakai kode atau tautan | 31C | **Disetujui: kode**, sama dengan app |
+| Tema tampilan setelah Keluar | 31H | **Disetujui: dipertahankan** (ikut preferensi perangkat) |
+| Kapan tabel `api_tokens` dihapus | 31L | **Disetujui**: di 31L, setelah semua berjalan |
+| Urutan terhadap tahap 29, 30 (langkah 3-6), 32, dan 33 | Sebelum 31B dimulai | **Disetujui: kerjakan tahap 31 dulu** sampai selesai, baru lanjut ke 29 langkah 4, 30 langkah 3-6, 32, dan 33 |
 
 Rincian tiap butir:
 
-- **Kunci app (sidik jari atau PIN)** sebagai perlindungan data lokal yang sebenarnya, seperti yang diusulkan Claude di riwayat nomor 6. Tidak dijawab pemilik. Login wajib tidak melindungi data di HP yang tidak terkunci.
-  Kalau diinginkan, dikerjakan sebagai tahap sendiri sesudah tahap ini.
-- **Lokasi backup di luar VM** (penyimpanan awan atau mesin lain) dan siapa pemegang kunci enkripsi backup. **Ditandai oleh pemilik untuk dibahas dan diputuskan pada 12 Oktober 2026.** Harus sudah diputuskan sebelum 31K dimulai.
-- **Web memakai kode atau tautan** untuk verifikasi dan reset kata sandi (usulan: kode, sama dengan app). Subdomain pengirim sudah diputuskan: `mail.roziqrizal.com`.
-- **Tema tampilan setelah Keluar:** usulan dipertahankan karena preferensi perangkat.
-- **Kapan tabel `api_tokens` dihapus:** usulan di 31L, setelah semua berjalan.
-- **Urutan terhadap tahap 29, 30 (langkah 3-6), dan 32.** Tahap 30 langkah 3-6 lebih sederhana kalau dikerjakan setelah 31E. Tahap 32 memakai `user-token` yang sama jadi kemungkinan tidak terpengaruh, tapi dicek ulang
-  setelah 31B.
+- **Kunci app (sidik jari atau PIN)** sebagai perlindungan data lokal yang sebenarnya, seperti yang diusulkan Claude di riwayat nomor 6. **Disetujui pemilik 11 Oktober 2026**: dikerjakan sebagai tahap sendiri sesudah tahap 31 selesai.
+- **Lokasi backup di luar VM dan pemegang kunci enkripsinya.** Konteks: Gerbang D di `rilis-play-store.md` mewajibkan "backup MySQL otomatis harian ke lokasi di luar VM, terenkripsi, dengan rotasi 30 hari" **sebelum penguji sungguhan diundang** (31M) — karena semua pengguna sekarang bergantung pada satu VM Hyper-V di rumah; kalau VM itu rusak/kena ransomware/salah hapus, semua data pengguna hilang permanen tanpa cara pulih.
+  **Diputuskan pemilik 11 Oktober 2026:**
+  - Lokasi: **Cloudflare R2** (satu ekosistem dengan Cloudflare Tunnel yang sudah dipakai, S3-compatible, tier gratis 10GB tanpa biaya egress — penting untuk latihan pemulihan berkala).
+  - Enkripsi: dump MySQL dienkripsi **di sisi klien sebelum diunggah** (`age` atau GPG simetris), supaya kredensial R2 yang bocor tidak otomatis membuka isi backup.
+  - Pemegang kunci: **Roziq sendiri**, disimpan di password manager, **terpisah dari VM dan dari repo git**, dengan satu salinan cadangan offline/fisik. Kunci ini **beda** dari kunci app yang sudah mengenkripsi snapshot sejak tahap 19B (lihat inventaris data di `rilis-play-store.md` bagian 1) — kunci ini khusus untuk backup MySQL.
+  - Rotasi: tetap 30 hari seperti usulan awal di `rilis-play-store.md`.
+  - Catatan: Gerbang D juga mewajibkan **latihan pemulihan** (restore ke database kosong dan diperiksa) — backup yang belum pernah dicoba dipulihkan dianggap belum ada. Ini dikerjakan sebagai bagian dari 31K, sesudah backup otomatis jalan.
+- **Web memakai kode atau tautan** untuk verifikasi dan reset kata sandi. **Disetujui pemilik 11 Oktober 2026: kode**, sama dengan app. Subdomain pengirim sudah diputuskan: `mail.roziqrizal.com`.
+- **Tema tampilan setelah Keluar.** **Disetujui pemilik 11 Oktober 2026**: dipertahankan karena preferensi perangkat.
+- **Kapan tabel `api_tokens` dihapus.** **Disetujui pemilik 11 Oktober 2026**: di 31L, setelah semua berjalan.
+- **Urutan terhadap tahap 29, 30 (langkah 3-6), 32, dan 33.** **Diputuskan pemilik 11 Oktober 2026: kerjakan tahap 31 sampai selesai dulu**, baru lanjut ke tahap-tahap lain yang sudah antre (termasuk tahap 33 yang dicatat hari yang sama).
 
 ### Tahap 32: Rekap kerja otomatis dari Claude (diputuskan garis besar 11 Oktober 2026, belum dikoding)
 
