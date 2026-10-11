@@ -1700,7 +1700,7 @@ blok. Yang belum ada cuma versi web/server-nya.
 
 **Belum dikoding.** Menunggu keputusan mekanisme waktu sholat di atas sebelum mulai langkah 1.
 
-### Tahap 30: Fokus Kesehatan Harian (didiskusikan dan dirancang 11 Oktober 2026, belum dikoding)
+### Tahap 30: Fokus Kesehatan Harian (langkah 1-2 selesai di Android 11 Oktober 2026; langkah 3-6 belum)
 
 Aturan fitur di `docs/rancangan.md` bagian Fokus kesehatan harian. Mockup web dan mobile:
 https://claude.ai/artifact/TWJ8Uus2hKtQQa81wKujG5
@@ -1737,9 +1737,9 @@ menampilkan angka. Android menampilkannya di dashboard Hari ini, web di `/dashbo
 
 **Langkah bangun:**
 
-1. **Domain + unit test.** `Focus.kt` dan tes untuk setiap aturan, urutan prioritas, setiap angka batas, dan setiap
+1. ✅ **Domain + unit test.** `Focus.kt` dan tes untuk setiap aturan, urutan prioritas, setiap angka batas, dan setiap
    pagar (BMI kurus, di bawah target, tensi tinggi, data kurang).
-2. **Kartu Fokus di Android.** Kartu hero di atas dashboard Hari ini, "Kenapa ini?", dan catatan nilai baru di
+2. ✅ **Kartu Fokus di Android.** Kartu hero di atas dashboard Hari ini, "Kenapa ini?", dan catatan nilai baru di
    `docs/design/README.md` lebih dulu.
 3. **Server.** Migrasi tabel, endpoint `PUT /api/v1/health`, tes Laravel.
 4. **Android mengirim.** Kirim catatan, langkah 7 hari, dan fokus; aman diulang.
@@ -1760,7 +1760,7 @@ menampilkan angka. Android menampilkannya di dashboard Hari ini, web di `/dashbo
 - Label tab bawah di mockup mobile (Hari Ini, Agenda, Kerja, Kemajuan, Tentang) hanya tebakan dari nama layar di kode.
 - Urutan terhadap tahap 29 (jadwal ke web). Keduanya tidak saling bergantung.
 
-**Belum dikoding.**
+**Status (11 Oktober 2026):** langkah 1 dan 2 selesai. `domain/health/Focus.kt` dengan `FocusTest` (lulus), kartu `FocusCard` di Hari ini, dan seluruh layar Hari ini disesuaikan dengan mockup mobile (kepala sapaan, Sekarang/Berikutnya dua kolom, Berat/Tensi/Langkah bergaya baru, kemajuan Habit/To-do, ikon tab bawah; nilai desain di `docs/design/README.md`). Terpasang dan terlihat di HP fisik; **belum diuji tiap aturan lewat data nyata di HP** (hanya kondisi "di jalur" yang terlihat). Teks fokus (judul, kalimat, alasan) ada di `ui/FocusCard.kt`, belum dikirim ke server. Langkah 3-6 (server, kirim dari Android, web, verifikasi) belum dikerjakan.
 
 ## Daftar pertanyaan terbuka
 

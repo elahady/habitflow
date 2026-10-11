@@ -4,6 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -37,6 +40,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.roziqrizal.habitflow.data.Todo
 import com.roziqrizal.habitflow.domain.MAX_TODOS_PER_DAY
 import com.roziqrizal.habitflow.domain.TODOS_FOR_LEVEL_4
@@ -45,6 +49,10 @@ import com.roziqrizal.habitflow.domain.meals.MealKind
 import com.roziqrizal.habitflow.domain.meals.coffeeOverLimit
 import com.roziqrizal.habitflow.domain.schedule.GLASSES_TARGET
 import com.roziqrizal.habitflow.ui.theme.LocalHeatColors
+import com.roziqrizal.habitflow.domain.health.computeFocus
+import com.roziqrizal.habitflow.ui.theme.tokens
+import java.time.LocalDate
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -73,14 +81,34 @@ fun TodayScreen(
     onAddTodo: (String) -> Unit,
     onToggleTodo: (Todo) -> Unit,
     onDeleteTodo: (Todo) -> Unit,
+    accountName: String? = null,
 ) {
     var showAddDialog by rememberSaveable { mutableStateOf(false) }
+    val now = LocalTime.now()
+    val minuteOfDay = now.hour * 60 + now.minute
+    val focus = computeFocus(
+        focusInputOf(
+            health = health,
+            coffee = state.coffee,
+            sweet = state.sweet,
+            mealLoggedToday = state.meals.isNotEmpty(),
+            minuteOfDay = minuteOfDay,
+        ),
+    )
 
     LazyColumn(
         modifier = Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 96.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 96.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
+        item { DayGreeting(date = state.date, hour = now.hour, accountName = accountName) }
+
+        item { FocusCard(focus = focus, health = health, coffee = state.coffee, sweet = state.sweet) }
+
+        if (work.inboxCount > 0 || work.overdueCount > 0) {
+            item { WorkSummaryCard(work, onOpenWork) }
+        }
+
         item { ScheduleCard(
                 state = schedule,
                 onSetDayOff = onSetDayOff,
@@ -88,13 +116,11 @@ fun TodayScreen(
                 onOpenEditor = onOpenSchedule,
             ) }
 
-        if (work.inboxCount > 0 || work.overdueCount > 0) {
-            item { WorkSummaryCard(work, onOpenWork) }
-        }
-
-        item { DayHeader(state) }
+        item { HealthSummaryCards(health, onRecordBp = onRecordBp, onRecordWeight = onRecordWeight) }
 
         item { StepsCard(health.steps, onRequestAccess = onRequestStepsAccess, onOpenHealthConnectStore = onOpenHealthConnectStore) }
+
+        item { DayProgress(state) }
 
         item {
             WaterCard(
@@ -111,8 +137,6 @@ fun TodayScreen(
         }
 
         item { MealCard(meals = state.meals, onOpen = onOpenMeal) }
-
-        item { HealthSummaryCards(health, onRecordBp = onRecordBp, onRecordWeight = onRecordWeight) }
 
         item { SectionTitle("Habit") }
         items(state.habits, key = { "habit-${it.habit.id}" }) { item ->
@@ -173,21 +197,54 @@ fun TodayScreen(
     }
 }
 
+/** "Selamat pagi" sampai "Selamat malam" menurut jam. */
+private fun greetingFor(hour: Int): String = when (hour) {
+    in 4..10 -> "Selamat pagi"
+    in 11..14 -> "Selamat siang"
+    in 15..17 -> "Selamat sore"
+    else -> "Selamat malam"
+}
+
+/** Kepala layar: tanggal, sapaan serif dengan nama depan akun, dan lingkaran inisial di kanan. */
 @Composable
-private fun DayHeader(state: TodayUiState) {
-    val heat = LocalHeatColors.current
-    val dateText = state.date.format(DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy", Locale("id", "ID")))
-
-    AppCard(hero = true, contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 16.dp)) {
-        Text(dateText, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-
-        Row(modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 16.dp)) {
-            StatBlock(value = "${state.doneHabits}/${state.totalHabits}", label = "Habit")
-            Spacer(Modifier.width(24.dp))
-            StatBlock(value = "${state.doneTodos}/$MAX_TODOS_PER_DAY", label = "To-do")
+private fun DayGreeting(date: LocalDate, hour: Int, accountName: String?) {
+    val dateText = date.format(DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy", Locale("id", "ID")))
+    val firstName = accountName?.trim()?.substringBefore(' ')?.takeIf { it.isNotEmpty() }
+    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(dateText, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                text = if (firstName != null) "${greetingFor(hour)}, $firstName" else greetingFor(hour),
+                style = MaterialTheme.typography.titleLarge.copy(fontSize = 24.sp, lineHeight = 29.sp),
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(top = 2.dp),
+            )
         }
+        if (firstName != null) {
+            Box(
+                modifier = Modifier.size(36.dp).background(MaterialTheme.tokens.primaryFixed, CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    firstName.first().uppercase(),
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
+            }
+        }
+    }
+}
 
-        Row(verticalAlignment = Alignment.CenterVertically) {
+/** Kemajuan habit dan to-do hari ini berdampingan, lalu baris level dan streak. */
+@Composable
+private fun DayProgress(state: TodayUiState) {
+    val heat = LocalHeatColors.current
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            ProgressCard("Habit hari ini", state.doneHabits, state.totalHabits, Modifier.weight(1f).fillMaxHeight())
+            ProgressCard("To-do hari ini", state.doneTodos, MAX_TODOS_PER_DAY, Modifier.weight(1f).fillMaxHeight())
+        }
+        Row(modifier = Modifier.padding(start = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(
                 modifier = Modifier
                     .size(14.dp)
@@ -200,12 +257,21 @@ private fun DayHeader(state: TodayUiState) {
                 style = MaterialTheme.typography.titleMedium,
             )
         }
-        Spacer(Modifier.height(4.dp))
         Text(
             text = "Level 4 butuh semua habit dan $TODOS_FOR_LEVEL_4 to-do selesai.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 4.dp),
         )
+    }
+}
+
+@Composable
+private fun ProgressCard(label: String, done: Int, total: Int, modifier: Modifier = Modifier) {
+    AppCard(modifier = modifier, contentPadding = PaddingValues(14.dp)) {
+        Text(label, style = MaterialTheme.typography.labelMedium.copy(fontSize = 13.sp), color = MaterialTheme.colorScheme.onSurfaceVariant)
+        SerifValue("$done / $total", modifier = Modifier.padding(top = 8.dp))
+        ThinProgress(if (total > 0) done.toFloat() / total else 0f, modifier = Modifier.padding(top = 8.dp))
     }
 }
 

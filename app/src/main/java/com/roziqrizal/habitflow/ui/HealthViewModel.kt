@@ -51,7 +51,13 @@ sealed interface StepsUiState {
      * [backgroundOk] salah berarti langkah baru dibaca saat app dibuka. [backgroundAvailable] salah berarti Health Connect
      * di HP ini belum mendukung izin latar belakang, jadi tidak ada yang bisa diminta.
      */
-    data class Ready(val steps: Long, val backgroundOk: Boolean, val backgroundAvailable: Boolean) : StepsUiState
+    data class Ready(
+        val steps: Long,
+        val backgroundOk: Boolean,
+        val backgroundAvailable: Boolean,
+        /** Menit sejak 00.00 saat langkah dibaca, untuk keterangan "Health Connect · 11.28". */
+        val readMinute: Int = 0,
+    ) : StepsUiState
     data object NeedsPermission : StepsUiState
     data object NotInstalled : StepsUiState
     data object UpdateRequired : StepsUiState
@@ -177,7 +183,12 @@ class HealthViewModel(
             stepsState.value = runCatching { steps.refresh(clock.date.value, zone, inBackground = false) }
                 .map { reading ->
                     when (reading) {
-                        is StepsReading.Available -> StepsUiState.Ready(reading.steps, reading.background, reading.backgroundAvailable)
+                        is StepsReading.Available -> StepsUiState.Ready(
+                            reading.steps,
+                            reading.background,
+                            reading.backgroundAvailable,
+                            readMinute = java.time.LocalTime.now().let { it.hour * 60 + it.minute },
+                        )
                         StepsReading.NeedsPermission -> StepsUiState.NeedsPermission
                         StepsReading.NotInstalled -> StepsUiState.NotInstalled
                         StepsReading.UpdateRequired -> StepsUiState.UpdateRequired

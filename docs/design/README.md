@@ -166,13 +166,38 @@ detail hari memakai `ModalBottomSheet`.
 ## Pola layar
 
 ### Hari ini
-1. Kartu hero **Sekarang** dengan timeline (lihat [Dashboard di Hari ini](#dashboard-di-hari-ini-tahap-17)).
-2. Kartu hero: tanggal (labelMedium), dua `StatBlock` (Habit, To-do), lalu baris level dan streak.
-3. Kartu Langkah (tahap 21), kartu air (tahap 20, lihat [Pengingat kerja](#pengingat-kerja-tahap-20)), lalu kartu Tensi
-   dan Berat berdampingan (lihat [Kesehatan](#kesehatan-tahap-21)).
-4. Judul "Habit", lalu daftar habit (habit wajib di atas, bertanda "Wajib").
-5. Judul "To-do hari ini (x/5)", daftar to-do, lalu tombol `TonalButton` "+ To-do".
-   Tombol nonaktif saat sudah 5, dan pesan penuh muncul di bawahnya.
+Disesuaikan dengan mockup mobile "Hari Ini" (https://claude.ai/artifact/TWJ8Uus2hKtQQa81wKujG5), 11 Oktober 2026.
+Urutan dari atas:
+
+1. **Kepala**: tanggal (labelMedium, `onSurfaceVariant`), sapaan serif 24sp menurut jam ("Selamat pagi/siang/sore/malam,
+   {nama depan akun}"; tanpa akun hanya sapaan), dan lingkaran inisial 36dp (`primaryFixed`) di kanan.
+2. **Kartu Fokus hari ini** (tahap 30): kartu sudut besar (20dp) latar `primaryFixed` tanpa garis, teks `onPrimaryContainer`,
+   padding 20dp, jarak isi 12dp. Isi: ikon hati 18dp dan label "FOKUS HARI INI" (labelMedium tebal, huruf kapital), judul
+   serif 25sp, satu kalimat (bodyMedium, tinggi baris 22sp), batang langkah (6dp, trek `surfaceContainerLowest`, isi `primary`),
+   lalu tautan bergaris bawah "Kenapa ini?" (13sp tebal, tinggi sentuh 48dp). Terbuka: garis pemisah, baris label dan nilai
+   (Berat, Tren 4 minggu, Tensi), dan catatan aturan; tautan jadi "Tutup alasan". Tanpa warna merah.
+3. Kartu ringkasan Kerja (hanya kalau ada Inbox atau lewat tanggal).
+4. **Kartu Sekarang dan Berikutnya**: satu kartu 16dp, dua kolom dipisah garis tegak `outlineVariant`. Nama blok serif 16sp,
+   keterangan "sisa N menit · rentang" atau jam mulai di bawahnya (labelMedium, `onSurfaceVariant`). Di bawah garis pemisah:
+   "Lihat jadwal hari ini ▾" (membuka timeline) dan tombol teks "Atur", lalu "Hari ini libur".
+5. **Berat dan Tensi berdampingan**, tinggi sama: ikon garis 18dp (`primary`) dengan label 13sp, angka serif 26sp (satuan "kg"
+   14sp), kategori dan "kapan" (bodySmall, `onSurfaceVariant`), lalu `TonalButton` "+ Catat" selebar kartu (minimal 48dp) yang
+   selalu menempel di dasar kartu.
+6. **Kartu Langkah**: ikon aktivitas dan label di kiri, "Health Connect · jam baca" di kanan, angka serif 26sp dengan
+   "dari 8.000", batang kemajuan 6dp (trek `outlineVariant`).
+7. **Habit hari ini dan To-do hari ini** berdampingan: label 13sp, "4 / 9" serif 26sp, batang 6dp. Di bawahnya baris level dan
+   streak (kotak warna level 14dp) dan keterangan syarat level 4.
+8. Kartu air (tahap 20, lihat [Pengingat kerja](#pengingat-kerja-tahap-20)) dan kartu Makan (tahap 23).
+9. Judul "Habit", lalu daftar habit (habit wajib di atas, bertanda "Wajib").
+10. Judul "To-do hari ini (x/5)", daftar to-do, lalu tombol `TonalButton` "+ To-do".
+    Tombol nonaktif saat sudah 5, dan pesan penuh muncul di bawahnya.
+
+Nilai baru dari mockup: **angka kartu Hari ini memakai serif** (Libre Caslon Text 26sp) lewat `SerifValue`, pengecualian dari
+aturan "serif hanya untuk judul"; angka di tempat lain tetap Manrope. Jarak antarkartu 14dp. Batang kemajuan tipis 6dp
+(`ThinProgress`). Label kartu dengan ikon garis (`IconLabel`, ikon di `ui/Icons.kt`, gaya Feather 24dp tebal 2).
+
+**Tab bawah** memakai ikon garis di atas label (Hari ini, Kerja, Tugas Rumah, Progres, Habit, Tentang), label 11sp dan boleh
+dua baris ("Tugas Rumah"). Nama dan jumlah tab tetap seperti di app, bukan lima tab tebakan di mockup.
 
 ### Kontribusi
 1. Judul layar "Kontribusi" (headlineMedium).

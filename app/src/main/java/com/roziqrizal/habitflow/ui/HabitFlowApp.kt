@@ -3,6 +3,7 @@ package com.roziqrizal.habitflow.ui
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -21,6 +22,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.sp
 import com.roziqrizal.habitflow.data.AlarmSettings
 import com.roziqrizal.habitflow.data.HealthSettings
 import com.roziqrizal.habitflow.data.PlaceLocation
@@ -32,13 +36,13 @@ import com.roziqrizal.habitflow.domain.schedule.WorkAction
 import com.roziqrizal.habitflow.ui.theme.tokens
 import java.time.LocalTime
 
-enum class Tab(val label: String) {
-    TODAY("Hari ini"),
-    WORK("Kerja"),
-    TEAM("Tugas Rumah"),
-    CONTRIBUTION("Progres"),
-    HABITS("Habit"),
-    ABOUT("Tentang"),
+enum class Tab(val label: String, val icon: ImageVector) {
+    TODAY("Hari ini", AppIcons.Home),
+    WORK("Kerja", AppIcons.Briefcase),
+    TEAM("Tugas Rumah", AppIcons.Users),
+    CONTRIBUTION("Progres", AppIcons.BarChart),
+    HABITS("Habit", AppIcons.CheckSquare),
+    ABOUT("Tentang", AppIcons.Info),
 }
 
 /** Layar penuh di atas tab Kerja. */
@@ -160,8 +164,8 @@ fun HabitFlowApp(
                                 history.add(tab)
                             }
                         },
-                        icon = {},
-                        label = { Text(tab.label) },
+                        icon = { Icon(tab.icon, contentDescription = null) },
+                        label = { Text(tab.label, maxLines = 2, fontSize = 11.sp, lineHeight = 12.sp, textAlign = TextAlign.Center) },
                         colors = NavigationBarItemDefaults.colors(
                             indicatorColor = MaterialTheme.tokens.primaryFixed,
                             selectedTextColor = MaterialTheme.colorScheme.onSurface,
@@ -252,6 +256,7 @@ fun HabitFlowApp(
                         onAddTodo = today::addTodo,
                         onToggleTodo = today::toggleTodo,
                         onDeleteTodo = today::deleteTodo,
+                        accountName = accountStateForInvite.account?.name,
                     )
                 }
                 Tab.WORK -> WorkScreen(

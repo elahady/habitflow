@@ -4,11 +4,16 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -21,7 +26,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.roziqrizal.habitflow.domain.calendar.EventOccurrence
 import com.roziqrizal.habitflow.domain.schedule.ResolvedBlock
 import com.roziqrizal.habitflow.ui.theme.tokens
@@ -59,53 +66,65 @@ fun ScheduleCard(
 ) {
     var showTimeline by rememberSaveable { mutableStateOf(false) }
 
-    AppCard(modifier = Modifier.fillMaxWidth(), hero = true) {
+    val muted = MaterialTheme.colorScheme.onSurfaceVariant
+    val blockName = MaterialTheme.typography.titleLarge.copy(fontSize = 16.sp, lineHeight = 20.sp)
+
+    AppCard(modifier = Modifier.fillMaxWidth(), contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp)) {
+        // Sekarang dan Berikutnya berdampingan, dipisah garis tegak, seperti mockup.
+        Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text("Sekarang", style = MaterialTheme.typography.labelMedium, color = muted)
+                val now = state.now
+                if (now != null) {
+                    Text(now.block.name, style = blockName, modifier = Modifier.padding(top = 2.dp))
+                    now.eventCaption()?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = muted) }
+                    Text(
+                        "${remaining(now.endMinute - state.nowMinute).replaceFirstChar { it.lowercase() }} · ${now.range()}",
+                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Normal),
+                        color = muted,
+                        modifier = Modifier.padding(top = 2.dp),
+                    )
+                } else {
+                    Text("Tidak ada blok sekarang", style = blockName, modifier = Modifier.padding(top = 2.dp))
+                }
+            }
+            VerticalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant)
+            Column(modifier = Modifier.weight(1f)) {
+                Text("Berikutnya", style = MaterialTheme.typography.labelMedium, color = muted)
+                val next = state.next
+                if (next != null) {
+                    Text(next.block.name, style = blockName, modifier = Modifier.padding(top = 2.dp))
+                    next.eventCaption()?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = muted) }
+                    Text(
+                        formatMinute(next.startMinute),
+                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Normal),
+                        color = muted,
+                        modifier = Modifier.padding(top = 2.dp),
+                    )
+                } else {
+                    Text(
+                        if (state.timeline.isEmpty()) "Belum ada blok hari ini" else "Selesai untuk hari ini",
+                        style = blockName,
+                        modifier = Modifier.padding(top = 2.dp),
+                    )
+                }
+            }
+        }
+
+        HorizontalDivider(modifier = Modifier.padding(top = 8.dp), color = MaterialTheme.colorScheme.outlineVariant)
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                "Sekarang",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.weight(1f),
-            )
+            Row(
+                modifier = Modifier
+                    .weight(1f)
+                    .defaultMinSize(minHeight = 48.dp)
+                    .clickable(role = Role.Button) { showTimeline = !showTimeline },
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Text("Lihat jadwal hari ini", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                Text(if (showTimeline) "▴" else "▾", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+            }
             TextButton(onClick = onOpenEditor) { Text("Atur") }
-        }
-        val now = state.now
-        if (now != null) {
-            Text(now.block.name, style = MaterialTheme.typography.titleLarge)
-            now.eventCaption()?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-            Text(
-                "${now.range()} · ${remaining(now.endMinute - state.nowMinute)}",
-                style = MaterialTheme.typography.bodyMedium,
-            )
-        } else {
-            Text("Tidak ada blok sekarang", style = MaterialTheme.typography.titleLarge)
-        }
-
-        HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = MaterialTheme.colorScheme.outlineVariant)
-
-        Text("Berikutnya", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        val next = state.next
-        if (next != null) {
-            Text(next.block.name, style = MaterialTheme.typography.titleMedium)
-            next.eventCaption()?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-            Text("Mulai ${formatMinute(next.startMinute)}", style = MaterialTheme.typography.bodyMedium)
-        } else {
-            Text(
-                if (state.timeline.isEmpty()) "Belum ada blok hari ini" else "Selesai untuk hari ini",
-                style = MaterialTheme.typography.bodyMedium,
-            )
-        }
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { showTimeline = !showTimeline }
-                .padding(top = 12.dp, bottom = 4.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text("Lihat jadwal hari ini", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-            Text(if (showTimeline) "▴" else "▾", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
         }
 
         if (showTimeline) {
