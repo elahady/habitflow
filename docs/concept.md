@@ -13,7 +13,8 @@ dengan kriteria selesai di tiap tahap.
    selesai harus lolos build dan langsung di-push, sesuai [CLAUDE.md](../CLAUDE.md).
 3. **Habit selalu di atas to-do.** Di semua layar, habit tampil lebih dulu dan
    lebih besar.
-4. **Offline dan lokal.** Tidak ada akun, server, atau sinkronisasi di versi ini.
+4. **Akun wajib.** Setelah login, data harian tetap di HP (offline-first) dan server menjadi sumber bersama.
+   *(Sebelum tahap 31: "Offline dan lokal. Tidak ada akun, server, atau sinkronisasi di versi ini" — diganti 11 Oktober 2026, lihat tahap 31.)*
 
 ## Tahap 0: Persiapan (sudah selesai)
 
@@ -660,6 +661,11 @@ hanya ada di satu HP. Aturan fitur di `docs/rancangan.md` bagian Sinkron ke serv
 | Perlindungan | HTTPS wajib (kecuali emulator saat debug). Isi disimpan terenkripsi di server dengan kunci app Laravel |
 | Beban VPS | Tanpa layanan baru: Laravel stateless di PHP-FPM yang sudah ada, SQLite untuk metadata, berkas snapshot di storage. Satu permintaan per sinkron |
 
+> **Digantikan tahap 31 (11 Oktober 2026):** baris "Login: token pribadi, tanpa akun" di atas adalah keputusan awal tahap ini.
+> Sejak tahap 31, login pakai akun (email/kata sandi atau Google) dan wajib. `PUT /snapshot`/`GET /snapshot/latest` pindah
+> ke `user-token` (sub-tahap 31E), token pribadi (`api_tokens`) dipensiunkan setelah snapshot lama diklaim ke akun pemilik.
+> Baris di bawah dibiarkan sebagai riwayat keputusan tahap 19B.
+
 **Kontrak API** (semua di bawah `/api/v1`, header `Authorization: Bearer <token>`):
 
 | Metode dan jalur | Fungsi |
@@ -1143,7 +1149,7 @@ Keputusan final:
 | Database | Pindah dari SQLite ke **MySQL**, di-deploy sebagai container `shared-mysql` di VM rumah (network `shared-db`, lihat [repo `server`](https://github.com/elahady/build-server)) — dipakai bareng dengan project lain di VM yang sama kalau nanti perlu |
 | Login | **Email/password** sebagai cara utama (halaman Login dan Register beneran, dengan validasi dan rate limit). **Google** tersedia di kedua halaman itu juga (tombol "Masuk/Daftar dengan Google") **dan** bisa di-connect/diputus belakangan dari Dashboard untuk user yang sudah daftar pakai password. Satu `GoogleAuthController` menangani keduanya (dibedakan dari `Auth::check()` saat callback) karena Google Cloud Console cuma punya satu redirect URI terdaftar |
 | Pencocokan akun | Kalau login pakai Google dan email-nya sudah terdaftar (lewat password), **ditautkan ke akun yang sama** (dicocokkan `google_sub` dulu, lalu `email`) — tidak membuat akun duplikat |
-| API Android | **Tetap Google-only**, tidak berubah — `POST /api/v1/auth/google` beda jalur dari web, pakai `UserToken` terpisah dari sesi web |
+| API Android | **Tetap Google-only**, tidak berubah — `POST /api/v1/auth/google` beda jalur dari web, pakai `UserToken` terpisah dari sesi web. *Digantikan tahap 31: API Android tidak lagi Google-only, tambah email/kata sandi, lihat kontrak 31A* |
 | Framework web | **Livewire**, di dalam Laravel app yang sama dengan API (`server/`). Bukan SPA terpisah |
 | Repo | **Repo yang sama** (`habitflow`), bukan repo baru — satu codebase, satu migrasi, satu deploy |
 | Deploy | Container Docker sendiri di VM (pola sama seperti roziqrizalcom): `serversideup/php:8.3-fpm-nginx`, connect ke `shared-mysql`. Satu container melayani web Livewire **dan** API `/api/v1/...` sekaligus |
@@ -1206,6 +1212,7 @@ Dibahas 10 Oktober 2026. Butuh tahap 25 (akun, MySQL, Livewire) selesai lebih du
   untuk snapshot personal yang belum pakai akun. User yang mau pakai To-Do Tim wajib login
   Google dulu — bisa jalan berdampingan (app punya 2 jalur: token-only untuk data personal
   lama, akun untuk fitur tim baru).
+  *Digantikan tahap 31: login akun wajib untuk semua fitur, bukan cuma To-Do Tim — dua jalur di atas jadi satu jalur akun.*
 - App Android: tab "Tugas Rumah" baru dengan daftar to-do tim (kelompokkan per assignee atau
   tampilkan avatar/nama di tiap baris) + tombol tambah, state kosong "Belum gabung tim"
   dengan tombol "Buat tim" / tempel link undangan. Job WorkManager yang sudah ada diperluas:
@@ -1269,6 +1276,7 @@ Dibahas 10 Oktober 2026. Butuh tahap 25 (akun, MySQL, Livewire) selesai lebih du
   supaya tidak bergantung ke verifikasi domain - hasil: app terbuka langsung ke
   `JoinTeamDialog`, menampilkan "Masuk dengan Google dulu untuk bisa bergabung ke tim." (akun
   belum login di sesi uji ini), tidak ada crash.
+  *Digantikan tahap 31: setelah login wajib, keadaan "belum login" ini tidak mungkin lagi tercapai di tab manapun — dialog ini dihapus di 31H.*
 - ✅ **App Links terverifikasi otomatis** - diuji 10 Oktober 2026 setelah `assetlinks.json`
   di-deploy ke VM (`https://habitflow.roziqrizal.com/.well-known/assetlinks.json` membalas
   200). Catatan deploy: arsip `tar` dari PowerShell Windows (bsdtar) **melewatkan folder
@@ -1394,6 +1402,7 @@ dikerjakan sebelum atau sesudah tahap 26 — tidak saling bergantung.
    - **Snapshot 19B:** `followUps` **tidak ikut diekspor kalau sudah login** (`Snapshot.followUpsOmitted`,
      kunci `followUps` tidak ditulis). Belum login tetap ikut, supaya follow-up tanpa akun tetap tercadangkan.
      Memulihkan snapshot yang tidak memuat `followUps` tidak menghapus follow-up di HP.
+     *Digantikan tahap 31: login wajib berarti keadaan "belum login" tidak ada lagi — cabang `followUpsOmitted` yang mengecek itu dihapus di 31H (lihat `SyncManager.followUpsOnAccount`).*
    - **Batasan yang disadari:** memulihkan snapshot lama (yang memuat `followUps`) saat sedang login
      memasukkan baris tanpa `remoteId`, jadi terkirim sebagai item baru dan bisa dobel dengan yang sudah di
      server. Waktu dibuat dari HP tidak dikirim ke server (server memakai waktunya sendiri), hanya `done_at`
@@ -1446,6 +1455,12 @@ di app Android. Konsekuensinya dua hal mendasar berubah dari rencana awal:
 Token per-HP tanpa akun (tahap 19B) tetap ada selama masih ada fitur yang belum
 dimigrasi, dan endpoint `PUT /snapshot` tetap jalan untuk itu — begitu semua fitur sudah
 pindah, baru dipertimbangkan apakah 19B dipensiunkan total.
+
+> **Digantikan tahap 31 (11 Oktober 2026):** paragraf di atas sudah tidak berlaku persis seperti tertulis — sejak tahap 31,
+> `PUT /snapshot`/`GET /snapshot/latest` memakai `user-token` (akun), bukan token per-HP tanpa akun (sub-tahap 31E). Token
+> lama (`api_tokens`) dipensiunkan setelah snapshot lama diklaim ke akun pemilik, bukan menunggu semua fitur selesai dimigrasi
+> seperti rencana awal di atas. Fitur yang belum dimigrasi (jadwal, kesehatan, makan, kalender, pengaturan, EOD) tetap lewat
+> `PUT /snapshot`, hanya saja sekarang terikat akun.
 
 ### Peta migrasi (fitur → tabel yang dibutuhkan)
 
@@ -1770,7 +1785,8 @@ menampilkan angka. Android menampilkannya di dashboard Hari ini, web di `/dashbo
 2. ✅ **Kartu Fokus di Android.** Kartu hero di atas dashboard Hari ini, "Kenapa ini?", dan catatan nilai baru di
    `docs/design/README.md` lebih dulu.
 3. **Server.** Migrasi tabel, endpoint `PUT /api/v1/health`, tes Laravel.
-4. **Android mengirim.** Kirim catatan, langkah 7 hari, dan fokus; aman diulang.
+4. **Android mengirim.** Kirim catatan, langkah 7 hari, dan fokus; aman diulang. *Digantikan tahap 31: sekarang pasti ada
+   akun (login wajib), jadi langkah ini tidak lagi perlu menangani cabang "belum login".*
 5. **Web.** Kartu fokus dan bagian Kesehatan di `/dashboard`.
 6. **Verifikasi di HP fisik** dan catat hasilnya di sini.
 
@@ -1959,19 +1975,27 @@ kolom, atau izin berubah.
 
 #### 31A. Dokumen, kontrak API, dan mockup
 
-Status: belum dikerjakan.
+Status: dokumen selesai (11 Oktober 2026); kontrak API menunggu persetujuan eksplisit; mockup di artifact belum disentuh.
 
-- [ ] `docs/rancangan.md`: tulis bagian baru **Akun dan login (tahap 31)** lebih dulu: login wajib, cara masuk, verifikasi, sesi, Keluar, hapus akun, data lama,
-  tim. Perbarui bagian Sinkron ke server, Data, Di luar versi ini, dan catatan Daily scrum.
-- [ ] `docs/concept.md`: Prinsip kerja nomor 4 menjadi "Akun wajib. Setelah login, data harian tetap di HP (offline-first) dan server menjadi sumber bersama." Beri catatan
-  "digantikan tahap 31" di tahap 19B, 25, 26, 27, 28, 29, 30 pada baris yang dikutip di Inventaris.
-- [ ] `docs/visi-super-app.md` prinsip 3 dan `README.md` baris 6.
-- [ ] `docs/design/README.md`: layar baru Masuk, Daftar, Verifikasi kode, Lupa kata sandi (dua langkah), Profil (termasuk dialog Keluar, Keluar dari semua perangkat, Hapus akun,
-  Ubah kata sandi), Pengaturan; hapus bagian Tentang lama, "Atur server", dan sapaan "tanpa akun". Catat nilai desain baru lebih dulu (aturan repo). Catatan: pesan galat
-  formulir login boleh memakai warna `error` karena itu bukan data kesehatan.
+- [x] `docs/rancangan.md`: bagian baru **Akun dan login (tahap 31)** ditulis (login wajib, cara masuk, verifikasi, sesi, Keluar, hapus akun, data lama, tim).
+  Bagian Sinkron ke server, Data, Di luar versi ini, dan catatan Daily scrum diperbarui dengan catatan "digantikan tahap 31".
+- [x] `docs/concept.md`: Prinsip kerja nomor 4 diganti. Catatan "Digantikan tahap 31" ditambah di tahap 19B (baris Login), 25 (API Android Google-only), 26
+  (Token per-HP dua jalur, dialog "Masuk dengan Google dulu"), 27 (snapshot `followUpsOmitted`), bagian "Arah baru" migrasi 28/29 (Token per-HP tetap ada), dan
+  30 langkah 4. Tahap 32 tidak perlu catatan tambahan — "Belum diputuskan"-nya sudah menyebut dicek ulang setelah 31B.
+- [x] `docs/visi-super-app.md` prinsip 3 dan `README.md` baris 6 diperbarui.
+- [x] `docs/design/README.md`: bagian baru Pengaturan (gantikan Tentang), Profil, dan Masuk/Daftar/Lupa kata sandi ditulis **dari mockup yang sudah ada**
+  (`Login.dc.html`, `Register.dc.html`, `Forgot.dc.html`, `Profile.dc.html`, `Settings.dc.html`). Sapaan "tanpa akun" dan "Atur server" dihapus dari dokumen.
+  **Dua temuan penting saat menulis ulang dokumen ini** (belum diperbaiki, cuma dicatat):
+  1. Mockup `Profile.dc.html` dialog Keluar berbunyi "Data di HP ini tidak dihapus" — **bertentangan** dengan keputusan akhir tahap 31 bahwa Keluar justru
+     menghapus semua data lokal. Perlu diluruskan (di mockup atau di keputusan) sebelum 31H/31I dikoding.
+  2. Mockup `Settings.dc.html` **tidak** memuat Data tubuh (ada di `Profile.dc.html` saja) — beda dari rencana baris di bawah ("pindahkan Data tubuh ke
+     Pengaturan"). `docs/design/README.md` mengikuti mockup yang sudah digambar (Data tubuh di Profil); baris rencana di bawah perlu diluruskan.
+  Empat layar/dialog yang belum ada mockup-nya sama sekali (Verifikasi kode, Reset kata sandi lengkap, Sesi berakhir, dialog Keluar dengan perubahan belum
+  terkirim) dicatat nilainya sebagai **perkiraan pola**, bukan hasil gambar — lihat `docs/design/README.md` bagian Masuk/Daftar/Lupa kata sandi.
 - [ ] **Kontrak API** (tabel di bawah) disetujui pemilik sebelum server dikoding.
-- [ ] Mockup di artifact: hapus artboard Profil belum masuk dan tombol "Lewati dulu"; pindahkan Data tubuh ke Pengaturan; tambah artboard Verifikasi kode, Reset kata sandi (kode dan
-  sandi baru), dialog Keluar dengan perubahan belum terkirim, Hapus akun (konfirmasi kata sandi), dan layar "Sesi berakhir".
+- [ ] Mockup di artifact: hapus artboard Profil belum masuk dan tombol "Lewati dulu"; pindahkan Data tubuh ke Pengaturan *(cek ulang setelah temuan 2 di atas —
+  mungkin dibiarkan di Profil saja, bukan dipindah)*; tambah artboard Verifikasi kode, Reset kata sandi (kode dan sandi baru), dialog Keluar dengan perubahan
+  belum terkirim, Hapus akun (konfirmasi kata sandi), dan layar "Sesi berakhir". Perbaiki teks dialog Keluar di `Profile.dc.html` (temuan 1 di atas).
 
 **Kontrak API akun** (semua di bawah `/api/v1`, JSON, pesan galat dalam bahasa Indonesia, kode galat di field `code`):
 

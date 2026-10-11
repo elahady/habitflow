@@ -170,7 +170,9 @@ Disesuaikan dengan mockup mobile "Hari Ini" (https://claude.ai/artifact/TWJ8Uus2
 Urutan dari atas:
 
 1. **Kepala**: tanggal (labelMedium, `onSurfaceVariant`), sapaan serif 24sp menurut jam ("Selamat pagi/siang/sore/malam,
-   {nama depan akun}"; tanpa akun hanya sapaan), dan lingkaran inisial 36dp (`primaryFixed`) di kanan.
+   {nama depan akun}"), dan lingkaran inisial 36dp (`primaryFixed`) di kanan — tap membuka layar **Profil** (layar penuh
+   di atas tab, lihat bagian [Profil](#profil)). *(Sejak tahap 31, akun selalu ada setelah login — klausa "tanpa akun
+   hanya sapaan" tidak berlaku lagi.)*
 2. **Kartu Fokus hari ini** (tahap 30): kartu sudut besar (20dp) latar `primaryFixed` tanpa garis, teks `onPrimaryContainer`,
    padding 20dp, jarak isi 12dp. Isi: ikon hati 18dp dan label "FOKUS HARI INI" (labelMedium tebal, huruf kapital), judul
    serif 25sp, satu kalimat (bodyMedium, tinggi baris 22sp), batang langkah (6dp, trek `surfaceContainerLowest`, isi `primary`),
@@ -196,8 +198,10 @@ Nilai baru dari mockup: **angka kartu Hari ini memakai serif** (Libre Caslon Tex
 aturan "serif hanya untuk judul"; angka di tempat lain tetap Manrope. Jarak antarkartu 14dp. Batang kemajuan tipis 6dp
 (`ThinProgress`). Label kartu dengan ikon garis (`IconLabel`, ikon di `ui/Icons.kt`, gaya Feather 24dp tebal 2).
 
-**Tab bawah** memakai ikon garis di atas label (Hari ini, Kerja, Tugas Rumah, Progres, Habit, Tentang), label 11sp dan boleh
-dua baris ("Tugas Rumah"). Nama dan jumlah tab tetap seperti di app, bukan lima tab tebakan di mockup.
+**Tab bawah** memakai ikon garis di atas label (Hari ini, Kerja, Tugas Rumah, Progres, Habit, **Pengaturan**), label 11sp
+dan boleh dua baris ("Tugas Rumah"). Nama dan jumlah tab tetap seperti di app, bukan lima tab tebakan di mockup.
+*(Sejak tahap 31: tab keenam berganti nama dari "Tentang" menjadi "Pengaturan", ikon roda gigi — lihat bagian
+[Pengaturan](#pengaturan). Profil **bukan** tab, dibuka lewat lingkaran inisial di Kepala.)*
 
 ### Kontribusi
 1. Judul layar "Kontribusi" (headlineMedium).
@@ -218,28 +222,114 @@ dua baris ("Tugas Rumah"). Nama dan jumlah tab tetap seperti di app, bukan lima 
 4. Mematikan switch membuka `AlertDialog` "Lepas status wajib?" dengan tombol "Batal" dan
    "Lepas". Menyalakan switch langsung berlaku.
 
-### Tentang
-Nama app (headlineMedium), "Versi x.y" (bodyMedium, `onSurfaceVariant`), dan "Dibuat oleh Roziq Rizal".
-Teks dipusatkan. Di bawahnya enam bagian pengaturan, masing-masing dengan label labelMedium (`onSurfaceVariant`) dan jarak 32dp di atasnya:
+### Pengaturan
+*(Sejak tahap 31: pengganti layar "Tentang" di atas. Tab keenam berganti nama dan ikon [roda gigi], dan bagian Akun lama
+pindah ke layar [Profil](#profil) terpisah. Nilai di bawah dicatat dari mockup mobile `Settings.dc.html`,
+https://claude.ai/artifact/TWJ8Uus2hKtQQa81wKujG5, 11 Oktober 2026.)*
 
-- **Tampilan**: `SingleChoiceSegmentedButtonRow` dengan segmen Sistem, Terang, Gelap. Segmen aktif memakai latar `primaryFixed` dan teks `onPrimaryContainer`, sama dengan `TonalButton`.
-- **Lokasi untuk waktu sholat**: nama (bodyLarge) dan koordinat (bodySmall), lalu `TonalButton` "Pakai lokasi saat ini" dan `TextButton` "Atur manual" (dialog nama kota, lintang, bujur).
-- **Notifikasi**: satu baris dengan judul "Notifikasi tetap", keterangan bodySmall, dan `Switch` di kanan.
-- **Alarm**: "Alarm berikutnya" (bodyLarge) dengan hari, tanggal, dan jam (bodySmall); tombol teks "Matikan untuk tanggal itu" (jadi "Nyalakan lagi" kalau sudah dimatikan); tombol teks "Pilih nada" dengan nama nada terpilih di bawahnya.
-- **Pengingat adzan**: lima baris (Subuh, Dzuhur, Ashar, Maghrib, Isya), masing-masing nama (bodyLarge) dan `Switch` di kanan. Mematikan satu hanya menghentikan notifikasi waktu sholat itu.
-- **Sinkron ke server**: baris status (bodyLarge) "Belum diatur" atau "Terakhir berhasil: Rab 7 Okt 12.44", dengan
-  pesan hasil terakhir di bawahnya (bodySmall, `onSurfaceVariant`; gagal ditulis sebagai kalimat biasa, bukan merah).
-  Lalu satu baris "Sinkron otomatis" dengan `Switch` (nonaktif sebelum server diisi), `TonalButton` "Sinkron sekarang",
-  dan tiga `TextButton`: "Atur server", "Uji koneksi", "Pulihkan dari server". Tombol yang sedang berjalan menampilkan
-  "Memproses..." dan semuanya nonaktif selama itu.
-  - **Dialog Atur server** (`AlertDialog`): kolom alamat (placeholder `https://...`) dan kolom token (disamarkan), dengan
-    keterangan bodySmall "Token dibuat di server dengan `php artisan habitflow:token`". Simpan menolak alamat tanpa
-    `https://` dengan teks galat di bawah kolom.
-  - **Dialog pulihkan** (`AlertDialog`): judul "Pulihkan dari server?", isi menyebut waktu snapshot dan ringkasan
-    jumlahnya (habit, follow-up), lalu "Semua data di HP ini akan diganti. Ini tidak bisa dibatalkan." Tombol utama
-    `Button` "Ganti semua data", dan `TextButton` "Batal".
+Judul "Pengaturan" (headlineMedium) di kiri atas, tanpa nama app/versi di bagian ini — keduanya turun ke bagian **Tentang**
+paling bawah. Di bawah judul, bagian-bagian berkartu (`hf-card` → `Card` sudut 16dp, garis `outlineVariant`), masing-masing
+didahului label kecil tebal (labelMedium, `onSurfaceVariant`, huruf kapital kecil) dengan jarak 8dp di atas kartunya:
 
-Layar bisa digulir karena isinya lebih panjang dari layar kecil. Urutan bagian: Tampilan, Lokasi, Notifikasi, Pengingat kerja (tahap 20), Alarm, Pengingat adzan, Sinkron ke server.
+- **Tampilan**: `SingleChoiceSegmentedButtonRow` di dalam kartu (bukan di luar seperti layar lama) dengan segmen Sistem,
+  Terang, Gelap. Segmen aktif memakai latar `primaryFixed` dan teks `onPrimaryContainer`.
+- **Waktu dan sholat**: tiga baris dalam satu kartu, masing-masing judul (bodyLarge) + keterangan (bodySmall,
+  `onSurfaceVariant`) di kiri dan chevron `›` di kanan, tap membuka layar/dialog terkait:
+  1. "Lokasi untuk waktu sholat" — keterangan nama lokasi (mis. "Lokasi perangkat").
+  2. "Alarm" — keterangan "Berikutnya {hari, tanggal jam} · {nama blok}".
+  3. "Pengingat adzan" — keterangan "N dari 5 waktu aktif".
+- **Pengingat**: kartu berisi baris `Switch` untuk Notifikasi tetap, Minum air, Istirahat, Catatan makan (masing-masing
+  judul + keterangan satu baris), lalu baris chevron "Berat dan tensi" (keterangan "Berat Senin · tensi setiap hari")
+  yang membuka sub-pengaturan.
+- **Kalender**: kartu satu baris chevron "Kalender HP" dengan keterangan jumlah kalender dipilih.
+- **Data dan sinkron**: baris "Sinkron otomatis" dengan `Switch` dan keterangan waktu sinkron terakhir, lalu
+  `TonalButton` "Sinkron sekarang" selebar kartu, lalu baris chevron "Cadangan dan pulihkan" yang membuka layar/dialog
+  pulihkan dari akun (pengganti dialog "Atur server" dan "Pulihkan" lama — **tanpa kolom alamat server atau token**,
+  karena itu sudah jadi konfigurasi build sejak tahap 31).
+- **Tentang**: baris pertama tanpa chevron menampilkan nama app, "Versi x.y", dan "Dibuat oleh Roziq Rizal" (ketiganya
+  jadi satu baris keterangan bodySmall di bawah judul "Habitflow"), lalu baris chevron "Kebijakan privasi" yang membuka
+  tautan web.
+
+Layar bisa digulir karena isinya lebih panjang dari layar kecil. Urutan bagian: Tampilan, Waktu dan sholat, Pengingat,
+Kalender, Data dan sinkron, Tentang. *Catatan: "Data tubuh" (tinggi dan target berat) **tidak** ada di Pengaturan menurut
+mockup yang sudah dibuat — itu ada di [Profil](#profil). Ini beda dari rencana di `concept.md` sub-tahap 31I yang sempat
+menyebut Data tubuh masuk Pengaturan; mockup yang sudah digambar dipakai sebagai acuan, `concept.md` perlu diluruskan
+saat 31I dikerjakan.*
+
+### Profil
+*(Baru, tahap 31. Layar penuh di atas tab, dibuka dari lingkaran inisial di Kepala layar Hari ini, tombol kembali
+menutupnya. Dicatat dari mockup mobile `Profile.dc.html`, 11 Oktober 2026. Tidak ada lagi keadaan "belum masuk" — mockup
+`ProfileGuest.dc.html` akan dihapus dari canvas, lihat catatan di bawah [Masuk](#masuk-daftar-lupa-kata-sandi).)*
+
+1. **Kepala**: tombol kembali 44dp lalu judul "Profil" (headlineMedium/24sp Caslon).
+2. **Identitas**: dipusatkan — lingkaran avatar 72dp (`primaryFixed`, inisial nama serif 30sp), nama (serif 22sp), email
+   (bodySmall, `onSurfaceVariant`).
+3. **Kartu "Data tubuh"**: dua baris chevron, "Tinggi badan" dan "Target berat", masing-masing judul + keterangan satu
+   baris di kiri, nilai (serif 16sp) dan chevron di kanan. *(Dipindah dari layar Tentang lama.)*
+4. **Kartu "Akun"**: baris pertama tanpa chevron "Cara masuk" dengan keterangan menyebut metode aktif (mis. "Email dan
+   kata sandi, Google terhubung"), lalu baris chevron "Ubah kata sandi" (disembunyikan kalau akun Google tanpa kata
+   sandi — lihat kontrak API 31A, field `has_password`).
+5. **Kartu "Sinkron"**: padding langsung (bukan baris berbaris), satu kalimat status (bodySmall, `onSurfaceVariant`)
+   lalu `TonalButton` "Sinkron sekarang" selebar kartu.
+6. **Tombol Keluar**: `OutlinedButton` selebar layar dengan ikon keluar + label "Keluar".
+7. **Tombol Hapus akun**: `TextButton` warna `error`, dipusatkan, di bawah tombol Keluar.
+8. **Dialog konfirmasi** (`AlertDialog`, sama untuk Keluar dan Hapus akun, judul dan isi berbeda):
+   - Keluar: judul "Keluar dari akun?", isi "Data di HP ini tidak dihapus. Sinkron ke web dan Tugas Rumah berhenti
+     sampai kamu masuk lagi." *(Catatan: isi ini dari mockup dan perlu diperbarui saat 31H dikerjakan — keputusan akhir
+     tahap 31 bilang Keluar justru **menghapus** data lokal, kebalikan dari teks mockup ini. Jangan dikoding sebelum
+     diluruskan.)* Tombol utama `Button` "Keluar", `TextButton` "Batal".
+   - Hapus akun: judul "Hapus akun?", isi menyebut semua data yang terhapus permanen (habit, to-do, kesehatan,
+     follow-up, keanggotaan tim). Tombol utama `Button` warna `error` "Hapus akun permanen", `TextButton` "Batal".
+   - *Mockup saat ini belum meminta konfirmasi ulang kata sandi di dialog Hapus akun, padahal kontrak API 31A
+     mensyaratkannya (`DELETE account` butuh `password` atau `id_token` Google). Field kata sandi perlu ditambah ke
+     dialog ini saat mockup diperbarui.*
+
+### Masuk, Daftar, Lupa kata sandi
+*(Baru, tahap 31. Tiga layar penuh berurutan, dibuka sebelum tab manapun — gerbang di depan app. Dicatat dari mockup
+mobile `Login.dc.html`, `Register.dc.html`, `Forgot.dc.html`, 11 Oktober 2026.)*
+
+Pola bersama ketiganya:
+- Kolom tunggal, padding 24dp samping, judul serif 30sp, satu kalimat penjelas (bodyMedium, `onSurfaceVariant`,
+  tinggi baris 1,6) di bawah judul.
+- Kolom isian: label labelMedium di atas `OutlinedTextField` tinggi minimal 48dp, sudut 12dp.
+- Tombol utama `Button` selebar layar, tinggi 48dp, sudut penuh (pill).
+- Pemisah "atau" (garis `outlineVariant` kiri-kanan, teks bodySmall di tengah) sebelum tombol "Masuk/Daftar dengan
+  Google" (`OutlinedButton`, ikon Google empat warna resmi 18dp + label).
+- Tautan (`TextButton` warna `primary`, garis bawah) tinggi sentuh minimal 44dp.
+
+Per layar:
+1. **Masuk**: email, kata sandi (`TrailingIcon` mata untuk tampil/sembunyikan, `contentDescription` berubah
+   "Tampilkan/Sembunyikan kata sandi"), tautan "Lupa kata sandi?" rata kanan di atas tombol Masuk, lalu pemisah dan
+   tombol Google, lalu teks "Belum punya akun? **Daftar**" di bawah.
+2. **Daftar**: tombol kembali ke Masuk di pojok, nama, email, kata sandi (keterangan "Minimal 8 karakter" di bawah
+   kolom), ulangi kata sandi, lalu `Checkbox` persetujuan kebijakan privasi (teks menyebut data kesehatan secara
+   eksplisit, sesuai Gerbang C `rilis-play-store.md`) — baris checkbox tinggi sentuh 44dp, kotak 22dp. Pesan galat
+   kata sandi tidak cocok (warna `error`) muncul di bawah kolom ulangi.
+3. **Lupa kata sandi**: satu kolom email, tombol "Kirim tautan reset". Setelah terkirim, form diganti kartu status
+   (`primaryFixed`/`onPrimaryContainer`) "Cek email kamu" + kalimat penjelas, dan tautan "Kirim ulang atau ganti email".
+   *Catatan penting: mockup ini menampilkan "tautan reset" (klik link di email membuka halaman web), tapi keputusan
+   akhir tahap 31 (konsisten dengan kontrak API 31A) memakai **kode 6 angka yang diketik di app**, bukan tautan. Mockup
+   perlu artboard tambahan "Verifikasi kode"/"Reset kata sandi" (isi kode + kata sandi baru) sebelum 31G dikoding —
+   lihat daftar kekurangan mockup di bawah.*
+
+**Dihapus dari mockup saat diperbarui (belum dieksekusi ke canvas per catatan ini, 11 Oktober 2026):**
+- Artboard `ProfileGuest.dc.html` ("Profil belum masuk") — keadaan ini tidak mungkin lagi sejak login wajib.
+- Tombol/tautan "Lewati dulu" di `Login.dc.html`, `Register.dc.html`, dan kalimat "Habit, to-do, dan jadwal tetap
+  jalan di HP ini tanpa akun" di bawahnya — bertentangan dengan keputusan login wajib.
+
+**Mockup yang belum ada dan masih perlu dibuat (tidak ada artboard sama sekali per 11 Oktober 2026):**
+- **Verifikasi kode**: kolom 6 digit, hitung mundur 10 menit, tombol "Kirim ulang" (nonaktif dengan hitung mundur
+  sendiri saat baru dikirim).
+- **Reset kata sandi** (lanjutan Lupa kata sandi, setelah kode diverifikasi): kata sandi baru + ulangi, pola sama
+  dengan kolom kata sandi di Daftar.
+- **Layar "Sesi berakhir"**: dibuka otomatis kalau token ditolak server (401) selagi app dipakai — varian layar Masuk
+  dengan banner "Sesi berakhir, masuk lagi" dan email terisi otomatis.
+- Dialog **Keluar dengan perubahan belum terkirim**: varian dialog Keluar yang menyebut jumlah perubahan yang belum
+  tersinkron, dengan peringatan lebih keras kalau tanpa internet.
+
+Nilai-nilai di atas untuk ketiga mockup yang sudah ada (Masuk/Daftar/Lupa kata sandi) dan untuk Pengaturan/Profil cukup
+dipakai langsung sebagai acuan 31G/31I. Empat butir terakhir (belum ada mockup) adalah **perkiraan pola dari layar
+sejenis**, bukan hasil gambar — dibuatkan artboard dulu sebelum dikoding kalau pemilik mau nilai yang pasti.
 
 ### Dashboard di Hari ini (tahap 17)
 1. Kartu hero "Sekarang" paling atas, di atas kartu skor: label "Sekarang" (labelMedium,

@@ -311,6 +311,8 @@ Rincian (10 Oktober 2026):
 
 > Aturan di bawah tidak jadi dipakai. Daily scrum akan dibangun dari follow-up kerja di
 > tahap 19, lihat `docs/visi-super-app.md`. Bagian ini disimpan sampai tahap 19 diputuskan.
+> *Catatan tahap 31 (11 Oktober 2026): baris "Tidak ada akun dan tidak ada sinkron" di bawah juga sudah usang sejak
+> akun jadi wajib — ditinggalkan di sini sebagai riwayat, bukan diperbaiki, karena seluruh bagian ini memang batal.*
 
 - Catatan pribadi per hari, disimpan lokal seperti data lain. Tidak ada akun dan tidak
   ada sinkron. Bisa dibagikan sebagai teks lewat share sheet Android.
@@ -328,21 +330,78 @@ Rincian (10 Oktober 2026):
 - **Pengingat**: opsional, diatur di layar Tentang (switch dan jam), awalnya mati.
   Notifikasi muncul sekali sehari di jam itu, hanya kalau daily scrum hari itu belum diisi.
 
+## Akun dan login (tahap 31)
+
+> Mengganti asumsi "tanpa akun, offline dan lokal" yang berlaku sejak tahap 1. Keputusan lengkap dan riwayat diskusi
+> ada di `docs/concept.md` tahap 31; bagian ini ringkasan aturan fitur untuk acuan coding.
+
+- **Login wajib.** Tanpa login, app tidak bisa dipakai — layar Masuk menjadi gerbang di depan semua layar, tab, alarm,
+  notifikasi, dan worker latar belakang. Tidak ada lagi keadaan "belum masuk, tetap bisa pakai app lokal".
+- **Offline setelah login tetap penuh.** Room tetap sumber data harian (offline-first); internet hanya dibutuhkan untuk
+  login pertama kali dan sinkron. Login wajib mengubah **siapa boleh memakai app**, bukan **cara app menyimpan data**.
+- **Cara masuk**: email dan kata sandi, atau Google — sama seperti web (tahap 25). API Android tidak lagi Google-only.
+  Login Google dengan email yang sudah terdaftar dan **terverifikasi** ditautkan ke akun yang sama; email yang
+  **belum** terverifikasi malah diambil alih oleh login Google (kata sandi lama dikosongkan, semua token dicabut) —
+  ini sengaja, untuk menutup celah pengambilalihan akun.
+- **Verifikasi email wajib** untuk akun email dan kata sandi: kode 6 angka di app, berlaku 10 menit, sekali pakai,
+  disimpan sebagai hash di server, 5 kali salah menghanguskan kode. Akun Google dianggap sudah terverifikasi.
+- **Lupa kata sandi**: kode 6 angka lewat email (pola sama dengan verifikasi, **bukan tautan**). Jawaban server **sama**
+  persis baik email terdaftar maupun tidak, supaya tidak bisa dipakai menebak akun mana yang ada (anti-enumerasi).
+- **Aturan kata sandi**: minimal 8 karakter, ditolak kalau termasuk daftar kata sandi paling umum. Tanpa autentikasi
+  dua langkah di tahap ini.
+- **Sesi tidak kedaluwarsa.** Hanya dicabut oleh: Keluar, ganti kata sandi (mencabut sesi lain, bukan sesi yang
+  sedang dipakai), "Keluar dari semua perangkat", hapus akun, atau dari web.
+- **Keluar** menghapus **semua data lokal** di HP (database, pengaturan, cache), menghentikan semua alarm, notifikasi,
+  dan worker, lalu app dimulai ulang ke layar Masuk — supaya HP bisa dipakai akun lain tanpa sisa data akun
+  sebelumnya. Kalau ada perubahan yang belum terkirim ke server, app menampilkan jumlahnya dan minta konfirmasi dulu;
+  tanpa internet, peringatannya lebih keras karena perubahan itu akan hilang permanen.
+- **Hapus akun**: wajib ada, bisa dari app (Profil) **dan** dari halaman web publik yang bisa dibuka tanpa app
+  (syarat Google Play). Permanen dan langsung dalam satu transaksi (tanpa masa tunggu), dengan konfirmasi ulang kata
+  sandi (atau `id_token` Google untuk akun tanpa kata sandi). Menghapus seluruh data pengguna di server — daftar
+  lengkap ada di inventaris `docs/rilis-play-store.md` bagian 1.
+- **Data lama di HP** (dari sebelum tahap 31, format tanpa akun) **diambil alih oleh akun pertama yang login** di
+  pemasangan itu, sekali saja — jalur gabung yang sama dengan tahap 27/28 dipakai ulang.
+- **Snapshot (tahap 19B)** pindah ke akun: `PUT /snapshot` dan `GET /snapshot/latest` memakai `user-token`, bukan lagi
+  token per-HP. Token lama (`api_tokens`) dipensiunkan setelah snapshot lama diklaim ke akun pemilik lewat satu
+  perintah artisan. Data yang belum dimigrasi ke tabel sendiri (jadwal, kesehatan, makan, kalender, pengaturan, EOD)
+  tetap lewat jalur snapshot, hanya saja sekarang terikat akun.
+- **Tim (Tugas Rumah)** saat pemilik tim menghapus akunnya: kalau ada anggota lain, kepemilikan pindah ke anggota
+  terlama dan to-do buatan pemilik tetap ada dengan nama "Pengguna dihapus". Kalau tidak ada anggota lain, timnya ikut
+  dihapus. Anggota biasa yang menghapus akun hanya keluar dari tim, tidak menghapus tim.
+- **Layar baru**: Masuk, Daftar, Verifikasi kode, Lupa kata sandi (dua langkah: minta kode, lalu kata sandi baru).
+  Tombol "Lewati dulu" di layar Masuk/Daftar **dihapus** — tidak relevan lagi karena login wajib.
+- **Navigasi berubah**: tab "Tentang" diganti **Pengaturan** (ikon roda gigi); nama app, versi, dan "Dibuat oleh"
+  turun ke bagian paling bawah Pengaturan. Lingkaran inisial di Kepala layar Hari ini membuka halaman **Profil**
+  (layar penuh di atas tab, bukan tab ketujuh) — berisi Data tubuh (tinggi dan target berat, dipindah dari Tentang
+  lama), Akun (cara masuk, ubah kata sandi), Sinkron, tombol Keluar dan Hapus akun. Tidak ada lagi halaman "Profil
+  belum masuk" karena keadaan itu tidak mungkin tercapai.
+- **"Atur server" dan kolom token di pengaturan dihapus.** Alamat server menjadi konfigurasi build — pengguna Play
+  Store tidak pernah mengisi alamat server atau token manual; itu dulunya alat pengembang saja.
+- Detail layar lengkap (nilai desain, kontrak API, peta sub-tahap 31A-31M) ada di `docs/design/README.md` bagian
+  Pengaturan/Profil/Masuk-Daftar-Lupa kata sandi, dan `docs/concept.md` tahap 31.
+
 ## Sinkron ke server (tahap 19B)
+
+> **Digantikan sebagian oleh tahap 31.** Mekanisme snapshot di bawah masih berlaku untuk data yang belum dimigrasi ke
+> tabel sendiri (jadwal, kesehatan, makan, kalender, pengaturan, EOD), tapi dua hal berikut berubah: **login memakai
+> akun, bukan token pribadi tanpa akun** (baris "Login" di bawah sudah usang), dan **pulihkan dari server pindah ke
+> layar Pengaturan** (bukan Tentang). Lihat [Akun dan login (tahap 31)](#akun-dan-login-tahap-31) untuk aturan yang
+> berlaku sekarang.
 
 - Fungsinya **backup dan pindah HP**, bukan akses dari web atau laptop. HP tetap sumber data dan app
   tetap bisa dipakai penuh tanpa internet.
 - Arah satu jalur: HP mengirim **snapshot lengkap** (satu berkas JSON) ke server Laravel sendiri.
   Otomatis sekitar 5 menit setelah ada perubahan (hanya saat ada internet) dan sekali sehari, atau
-  lewat tombol "Sinkron sekarang" di Tentang.
-- Login memakai **token pribadi** yang dibuat sekali di server dan ditempel di Tentang, bersama alamat
-  server (HTTPS). Tanpa akun.
-- **Pulihkan dari server** hanya manual, di Tentang, dengan konfirmasi yang menyebut waktu snapshot.
+  lewat tombol "Sinkron sekarang" di Pengaturan.
+- ~~Login memakai **token pribadi** yang dibuat sekali di server dan ditempel di Tentang, bersama alamat
+  server (HTTPS). Tanpa akun.~~ **Digantikan tahap 31**: login memakai akun (email/kata sandi atau Google), snapshot
+  terikat `user-token`. Tidak ada lagi kolom alamat server atau token manual di pengaturan.
+- **Pulihkan dari server** hanya manual, di Pengaturan, dengan konfirmasi yang menyebut waktu snapshot.
   Pemulihan **mengganti seluruh data** di HP (habit, riwayat, to-do, jadwal, follow-up, EOD,
   pengaturan) dalam satu transaksi.
 - Nada alarm dan tanggal alarm yang dimatikan sekali tidak ikut disinkron.
 - Isi snapshot disimpan terenkripsi di server. Server menyimpan 14 snapshot terakhir.
-- Kontrak API dan format snapshot ada di `docs/concept.md` tahap 19B.
+- Kontrak API dan format snapshot ada di `docs/concept.md` tahap 19B. Perubahan jalur login ada di tahap 31.
 
 ## Level warna per hari
 
@@ -411,12 +470,19 @@ gradasi sage dengan level 0 abu-abu netral. UI memakai Jetpack Compose (Material
 - `habit_entries`: id habit, tanggal (ISO `yyyy-MM-dd`). Satu baris = habit selesai di tanggal itu.
 - `todos`: id, judul, tanggal, selesai (boolean), tanggal dibuat.
 
-Semua disimpan lokal di perangkat lewat Room. Tidak ada akun. Cadangan opsional ke server sendiri lewat
-token pribadi (lihat Sinkron ke server).
+Semua disimpan lokal di perangkat lewat Room (offline-first, tetap sumber data harian). **Sejak tahap 31, akun
+wajib** — data tidak lagi "tanpa akun dengan cadangan opsional", tapi terikat ke akun lewat `user-token`: habit,
+to-do, follow-up, jadwal, dan tim (tahap 26-29) sudah sinkron dua arah langsung ke server; yang belum dimigrasi
+(kesehatan, makan, kalender, pengaturan, EOD) masih lewat snapshot satu arah (lihat Sinkron ke server) tapi tetap
+terikat akun yang sama, bukan token pribadi tanpa akun.
 
 ## Di luar versi ini
 
-- Input angka untuk tekanan darah, gula darah, berat badan, dan lingkar perut.
-- Notifikasi pengingat.
+Diperbarui 11 Oktober 2026 — beberapa butir lama di bagian ini sudah jadi fitur sejak tahap 21-28 dan dihapus dari
+daftar. Yang masih benar-benar di luar versi ini:
+
+- Gula darah dan lingkar perut (berat dan tensi sudah ada sejak tahap 21).
 - Ekspor CSV.
-- Sinkronisasi dua arah antar perangkat (yang ada hanya cadangan satu arah ke server, tahap 19B).
+- Autentikasi dua langkah (2FA) untuk login — diputuskan eksplisit di tahap 31, tidak masuk versi ini.
+- Mail hosting sendiri untuk verifikasi email — dipakai layanan pihak ketiga (Resend/Brevo, tahap 31).
+- Menyalakan R8/pengecil kode build rilis — mati sampai app tayang dan stabil (tahap 31), jadi tahap tersendiri nanti.

@@ -20,9 +20,12 @@ desain, dan datanya tetap dipakai. Nama app bisa ditinjau nanti.
    tanggal, atau layar dulu. Merapikan dilakukan belakangan.
 2. **Sedikit notifikasi yang berarti**, bukan banyak notifikasi yang diabaikan. Lihat
    bagian Notifikasi.
-3. **Offline dulu.** Semua fitur inti jalan tanpa internet. HP adalah sumber data. Data
-   disinkron ke server sendiri (tahap 19B) untuk backup dan pindah HP, saat ada internet.
-   Fitur yang butuh internet (AI) bersifat opsional.
+3. **Offline dulu, akun wajib.** Semua fitur harian jalan tanpa internet setelah login pertama kali — HP tetap
+   sumber data sehari-hari (Room, offline-first). Internet dibutuhkan untuk login dan sinkron ke server, yang
+   sejak tahap 31 menjadi sumber bersama (bukan sekadar backup) karena app mewajibkan akun. Fitur yang butuh
+   internet terus-menerus (AI) tetap opsional.
+   *(Sebelum tahap 31: "Offline dulu. Semua fitur inti jalan tanpa internet. HP adalah sumber data. Data
+   disinkron ke server sendiri (tahap 19B) untuk backup dan pindah HP, saat ada internet." — diganti 11 Oktober 2026.)*
 4. **Tenang, bukan memarahi.** Prinsip desain yang sudah ada tetap berlaku.
 5. **Habit tetap pusat.** Jadwal, kesehatan, dan kerja terhubung ke habit yang sudah ada,
    misalnya langkah 8.000 mencentang "Jalan kaki" dan 8 gelas mencentang "Air putih 2 liter".

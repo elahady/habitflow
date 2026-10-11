@@ -3,7 +3,9 @@
 # Habitflow
 
 Aplikasi Android untuk memantau habit harian dan to-do kecil, dengan heatmap kontribusi
-ala GitHub. Data disimpan lokal di perangkat, tanpa akun dan tanpa internet.
+ala GitHub. Login wajib (email/kata sandi atau Google); setelah itu data harian tetap
+tersimpan di perangkat dan dipakai penuh tanpa internet (offline-first), sinkron ke server
+sendiri saat ada koneksi.
 
 | Hari ini | Kontribusi | Kelola habit |
 |---|---|---|
