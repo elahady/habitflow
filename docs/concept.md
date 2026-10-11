@@ -1456,11 +1456,11 @@ pindah, baru dipertimbangkan apakah 19B dipensiunkan total.
 | Habit + to-do harian | `habits`, `habit_entries`, `todos` | 1-9 | **Selesai (web+API+Android)** — tahap 28 |
 | Jadwal harian & libur | `schedule_blocks`, `schedule_block_habits`, `days_off`, `holiday_cancellations` | 17, 22 | Belum dimulai |
 | Daily scrum/EOD | `work_days` | 19 | Belum dimulai |
-| Kesehatan (berat, tensi) | `weight_entries`, `blood_pressure_entries` | 21 | Belum dimulai |
+| Kesehatan (berat, tensi) | `weight_entries`, `blood_pressure_entries` | 21 | **Tahap 30 (satu arah, web hanya membaca, belum dikoding)**. Beda dari pola penuh: input hanya di Android, tanpa deteksi konflik |
 | Asupan makan | `meals`, `drink_counts`, `habit_manual_marks` | 20, 23 | Belum dimulai |
 | Kalender & acara | `events`, `event_exceptions` | 22 | Belum dimulai |
 | Pengaturan (lokasi, adzan, tema, pengingat) | `settings` per user | berbagai | Belum dimulai |
-| Langkah (steps) | **Tidak dimigrasi** — sumbernya sensor Health Connect di HP, web tidak punya akses. Tetap device-only; habit yang ke-centang otomatis dari langkah tetap ikut sinkron lewat `habit_entries` | 21 | N/A |
+| Langkah (steps) | Sumbernya sensor Health Connect di HP, web tidak punya akses, jadi **tidak ada migrasi dua arah**. Revisi (tahap 30): Android mengirim **total langkah per hari** (7 hari terakhir) ke server hanya untuk ditampilkan di web, tabel `step_days`. Habit yang tercentang otomatis dari langkah tetap ikut sinkron lewat `habit_entries` | 21, 30 | Tahap 30, belum dikoding |
 | Asisten AI | Belum diputuskan skemanya — ini fitur interaktif (chat), beda sifat dari data yang disinkron biasa. Didiskusikan terpisah saat gilirannya tiba | 24 | Belum diputuskan |
 
 **Setiap tahap migrasi mengikuti pola yang sama** (sudah terbukti di tahap 26-27):
@@ -1699,6 +1699,68 @@ blok. Yang belum ada cuma versi web/server-nya.
   dashboard web.
 
 **Belum dikoding.** Menunggu keputusan mekanisme waktu sholat di atas sebelum mulai langkah 1.
+
+### Tahap 30: Fokus Kesehatan Harian (didiskusikan dan dirancang 11 Oktober 2026, belum dikoding)
+
+Aturan fitur di `docs/rancangan.md` bagian Fokus kesehatan harian. Mockup web dan mobile:
+https://claude.ai/artifact/TWJ8Uus2hKtQQa81wKujG5
+
+Tujuan: dashboard menjawab "apa yang sebaiknya saya lakukan hari ini untuk target kesehatan saya", bukan hanya
+menampilkan angka. Android menampilkannya di dashboard Hari ini, web di `/dashboard`.
+
+**Keputusan (11 Oktober 2026):**
+
+| Pertanyaan | Keputusan |
+|---|---|
+| Bentuk | **Satu fokus per hari**, bukan daftar |
+| Cara memilih | **Berbasis aturan**, bukan AI. Deterministik, offline, bisa diuji. Tidak memakai kuota AI tahap 24 |
+| Keselamatan | Ada pagar tertulis (rancangan.md): tidak menyarankan turun berat saat kurus atau sudah di target, tanpa kalori atau diet, tensi ≥ 180/110 selalu menang |
+| Android dan web | Android: aksi cepat untuk hari ini. Web: gambaran lebih luas dan alasan di balik rekomendasi |
+| Sumber logika | **Satu**. Input berat dan tensi hanya di Android. Aturan hanya ditulis di Kotlin (`domain/health/`). Web tidak punya salinan aturan |
+| Arah data | **Satu arah, Android → server.** Web hanya membaca. Tanpa deteksi konflik 409, karena tidak ada tulis dari web |
+
+**Usulan teknis (belum diputuskan, ditandai agar bisa dikoreksi sebelum dikoding):**
+
+- Domain murni `domain/health/Focus.kt`: `FocusInput` (berat terakhir dan tren, tinggi, target, tensi dua terakhir,
+  langkah hari ini, kopi, manis, makan hari ini, jam sekarang) menjadi `Focus` (kode aturan, judul, kalimat, alasan).
+  Konstanta di satu tempat: ambang langkah 50%, 120 langkah per menit, batas 60 menit, berat lama 10 hari, turun cepat
+  2,0 kg per 28 hari, jam 10.00 dan 13.00.
+- Android menghitung fokus di `HealthViewModel` dari data yang sudah ada, tanpa tabel baru di Room.
+- Server menerima kiriman satu arah lewat endpoint baru `PUT /api/v1/health` (idempotent, upsert), berisi: catatan berat
+  dan tensi (kunci unik `user_id` + `time_millis`), total langkah 7 hari terakhir (Android membaca per hari dari Health
+  Connect), dan hasil fokus terakhir beserta angka dasarnya. Tabel: `weight_entries`, `blood_pressure_entries`,
+  `step_days`, `health_focus` (satu baris per user, termasuk `computed_at`).
+- Dikirim lewat `SyncScheduler` yang sama, dan setelah catat berat atau tensi. Snapshot 19B tetap menjadi cadangan.
+- Web: komponen Livewire hanya-baca di `/dashboard`, mengikuti mockup. Data lebih dari 24 jam diberi keterangan "terakhir
+  sinkron ...". Karena MIUI menunda WorkManager sekitar satu jam di HP uji, web boleh tertinggal; tombol sinkron manual
+  yang ada dipakai saat perlu.
+
+**Langkah bangun:**
+
+1. **Domain + unit test.** `Focus.kt` dan tes untuk setiap aturan, urutan prioritas, setiap angka batas, dan setiap
+   pagar (BMI kurus, di bawah target, tensi tinggi, data kurang).
+2. **Kartu Fokus di Android.** Kartu hero di atas dashboard Hari ini, "Kenapa ini?", dan catatan nilai baru di
+   `docs/design/README.md` lebih dulu.
+3. **Server.** Migrasi tabel, endpoint `PUT /api/v1/health`, tes Laravel.
+4. **Android mengirim.** Kirim catatan, langkah 7 hari, dan fokus; aman diulang.
+5. **Web.** Kartu fokus dan bagian Kesehatan di `/dashboard`.
+6. **Verifikasi di HP fisik** dan catat hasilnya di sini.
+
+**Selesai jika:**
+- Untuk setiap kondisi di tabel aturan, unit test membuktikan fokus yang benar, dan aturan 1 selalu menang.
+- BMI kurus atau berat di bawah target tidak pernah menghasilkan saran menurunkan berat.
+- Kartu fokus tampil di atas Hari ini tanpa internet, dan "Kenapa ini?" menampilkan angka yang sama dengan kartu lain.
+- Setelah mencatat berat di HP lalu sinkron, web menampilkan angka dan fokus yang sama persis dengan HP.
+- Web tidak punya tombol atau form pencatatan berat dan tensi.
+- Mengirim berulang tidak menggandakan catatan.
+
+**Belum diputuskan:**
+- Nilai konstanta di atas (120 langkah per menit, jam 10.00 dan 13.00, ambang 10 hari dan 2,0 kg) masih perkiraan awal.
+- Apakah 7 aturan ini terlalu banyak untuk versi pertama. Aturan 4 dan 7 bisa ditunda tanpa merusak yang lain.
+- Label tab bawah di mockup mobile (Hari Ini, Agenda, Kerja, Kemajuan, Tentang) hanya tebakan dari nama layar di kode.
+- Urutan terhadap tahap 29 (jadwal ke web). Keduanya tidak saling bergantung.
+
+**Belum dikoding.**
 
 ## Daftar pertanyaan terbuka
 

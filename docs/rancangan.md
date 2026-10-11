@@ -161,6 +161,57 @@ Rincian (9 Oktober 2026):
 - **Grafik** di tab Progres memakai catatan 90 hari terakhir. Tanpa data, tampil teks ajakan mencatat, bukan grafik
   kosong.
 
+## Fokus kesehatan harian (tahap 30)
+
+- Satu kartu **Fokus hari ini** menampilkan **satu** hal yang paling berguna dikerjakan hari ini untuk
+  target kesehatan, bukan daftar. Letaknya paling atas di dashboard Hari ini (Android) dan di atas
+  dashboard web.
+- Dipilih oleh **aturan**, bukan AI. Aturan dicek berurutan dan aturan pertama yang cocok yang menang.
+  Hasilnya selalu sama untuk data yang sama, jalan tanpa internet, dan bisa diuji.
+- Kartu menjelaskan alasannya ("Kenapa ini?"): angka yang dipakai dan aturan yang cocok.
+- Berat dan tensi **hanya dicatat di Android**. Web hanya menampilkan. Aturan hanya ada di kode
+  Android; web tidak punya salinan aturan dan menampilkan hasil yang dikirim Android.
+- Beda dengan **saran pola** di Asisten AI (tahap 24): saran pola adalah ringkasan mingguan dari AI,
+  fokus ini adalah satu langkah harian dari aturan. Kalau keduanya tampil, fokus di atas.
+
+Rincian (11 Oktober 2026):
+
+- **Urutan aturan** (yang pertama cocok menang):
+  1. **Tensi.** Tensi terakhir ≥ 180/110: tampil saran tenang yang sudah ada, tanpa fokus gaya hidup. Dua catatan
+     tensi terakhir sama-sama ≥ 140/90: fokus "Ukur ulang besok pagi, setelah duduk tenang 5 menit. Kalau tetap
+     tinggi, temui dokter."
+  2. **Data awal.** Belum ada berat atau tinggi: fokus "Catat berat pertama". Tidak ada rekomendasi lain sampai
+     data dasar ada.
+  3. **Data lama.** Berat terakhir lebih dari 10 hari lalu: fokus "Timbang berat hari ini", supaya rekomendasi
+     lain tidak bersandar pada angka basi.
+  4. **Turun terlalu cepat.** Tren 4 minggu turun 2,0 kg atau lebih (lebih cepat dari 0,5 kg per minggu): fokus
+     "Cukup, pertahankan porsi makan". Tidak ada saran menambah usaha menurun.
+  5. **Minuman.** Kopi hari ini 3 gelas atau lebih, atau minuman manis 1 atau lebih: fokus "Ganti minuman
+     berikutnya dengan air".
+  6. **Langkah rendah.** Pukul 10.00 atau lebih dan langkah di bawah 50% target (8.000): fokus "Jalan N menit
+     sore ini". N = sisa langkah ÷ 120 langkah per menit, dibulatkan ke atas ke kelipatan 5, paling banyak 60.
+  7. **Catat makan.** Berat di atas target, tren naik, pukul 13.00 atau lebih, dan belum ada catatan makan hari
+     ini: fokus "Catat makan hari ini dengan pola Isi Piringku".
+  8. **Di jalur** (bawaan kalau tidak ada yang cocok): "Hari ini sudah di jalur" beserta satu kalimat posisi
+     terhadap target. Tanpa tugas tambahan.
+- **Pagar keselamatan**, berlaku untuk semua aturan:
+  - Tidak pernah menyarankan menurunkan berat kalau BMI kurus (< 18,5) atau berat sudah di bawah atau sama dengan
+    target. Aturan 7 tidak berlaku dan kalimat posisi hanya menyebut "sudah di target".
+  - Tidak menyebut kalori, puasa, atau diet. Laju turun yang disebut wajar adalah 0,25 sampai 0,5 kg per minggu.
+  - Fokus langkah dibatasi 60 menit dan selalu berupa jalan santai, tidak pernah olahraga berat.
+  - Tensi ≥ 180/110 selalu menang atas semua fokus lain.
+  - Data kurang berarti tidak menebak. Aturan yang butuh angka yang belum ada dilewati.
+  - Nada tenang dan netral, tanpa warna merah dan tanpa menghakimi. Kategori adalah informasi, bukan diagnosis.
+- **Kapan dihitung.** Saat app dibuka, saat berat, tensi, makan, atau minuman dicatat, dan saat langkah dibaca. Fokus
+  berubah sendiri begitu kondisinya terpenuhi (misalnya langkah mencapai 8.000 berpindah ke aturan berikutnya).
+- **Tampilan Android.** Kartu hero sage muda (`primaryFixed`, teks `onPrimaryContainer`) di atas kartu Sekarang.
+  Isi: label "Fokus hari ini", judul, satu kalimat, progres langkah, dan tombol teks "Kenapa ini?" yang
+  membuka alasan. Kartu Berat dan Tensi tetap punya "+ Catat".
+- **Tampilan web** (`/dashboard`). Kartu fokus dengan panel "Dasar rekomendasi", lalu bagian Kesehatan: berat dengan
+  grafik 6 minggu dan garis target, langkah 7 hari dengan garis target, dan tensi terakhir. Tanpa tombol catat; ada
+  keterangan bahwa berat dan tensi dicatat lewat aplikasi di ponsel. Menampilkan waktu sinkron terakhir.
+- Rancangan visual: mockup web dan mobile di https://claude.ai/artifact/TWJ8Uus2hKtQQa81wKujG5
+
 ## Kalender (tahap 22)
 
 - Acara berbeda dari blok jadwal: blok adalah rutinitas harian, acara adalah kejadian di
