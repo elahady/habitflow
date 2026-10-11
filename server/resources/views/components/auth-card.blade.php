@@ -3,41 +3,16 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    @include('partials.theme-init')
     <title>{{ $title }} — {{ config('app.name') }}</title>
     <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --primary: #4D6359;
-            --on-primary: #FFFFFF;
-            --primary-fixed: #CFE8DB;
-            --on-primary-container: #273C33;
-            --background: #FAF9F7;
-            --surface-lowest: #FFFFFF;
-            --surface-container-low: #F5F3F1;
-            --on-surface: #1B1C1B;
-            --on-surface-variant: #424845;
-            --outline-variant: #C2C8C3;
-            --error: #BA1A1A;
-        }
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --primary: #B3CCBF;
-                --on-primary: #1F352B;
-                --primary-fixed: #354B42;
-                --on-primary-container: #CFE8DB;
-                --background: #121412;
-                --surface-lowest: #0D0F0E;
-                --surface-container-low: #1A1C1A;
-                --on-surface: #E3E3E0;
-                --on-surface-variant: #C2C8C3;
-                --outline-variant: #424845;
-                --error: #FFB4AB;
-            }
-        }
+        @include('partials.theme-styles')
         * { box-sizing: border-box; }
+        .theme-toggle.corner { position: fixed; top: 16px; right: 16px; background: var(--surface-lowest); }
         body {
             font-family: 'Manrope', system-ui, sans-serif;
             margin: 0;
@@ -158,6 +133,7 @@
     </style>
 </head>
 <body>
+    @include('partials.theme-toggle', ['class' => 'corner'])
     <div class="card">
         <div class="brand">
             <img src="{{ asset('images/logo.png') }}" alt="{{ config('app.name') }}">
