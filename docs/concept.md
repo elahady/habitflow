@@ -1310,7 +1310,7 @@ Dibahas 10 Oktober 2026. Butuh tahap 25 (akun, MySQL, Livewire) selesai lebih du
 + di-deploy ke VM. Yang belum: uji end-to-end join dua akun Google sungguhan (lihat catatan
 verifikasi di atas).**
 
-### Tahap 27: Web untuk Follow-up Kerja (selesai dikoding dan server di-deploy 11 Oktober 2026, Android belum diuji di perangkat)
+### Tahap 27: Web untuk Follow-up Kerja (selesai dan diuji sebagian di HP fisik, 11 Oktober 2026)
 
 Dibahas 10 Oktober 2026. Butuh tahap 25 (akun, MySQL, Livewire) selesai lebih dulu. Bisa
 dikerjakan sebelum atau sesudah tahap 26 — tidak saling bergantung.
@@ -1373,7 +1373,7 @@ dikerjakan sebelum atau sesudah tahap 26 — tidak saling bergantung.
 3. **Android ikut pindah**: follow-up kerja di app fetch/push langsung ke endpoint baru
    (bukan ikut snapshot lagi), tangani respons 409 dengan dialog yang sama seperti web.
 
-   ✅ **Kode selesai (11 Oktober 2026), 308 unit test lulus, belum diuji di HP/emulator (server sudah di-deploy, lihat di bawah):**
+   ✅ **Kode selesai (11 Oktober 2026), 308 unit test lulus, diuji sebagian di HP fisik (lihat hasil di bawah):**
    Pola sama dengan tahap 28 langkah 5 (Room tetap sumber utama, offline-first, sinkron di latar belakang).
    - **Skema (migrasi Room 9 → 10):** `follow_ups` dapat `remoteId`, `remoteUpdatedAt`, `dirty` (baris
      lama otomatis `dirty = 1` supaya ikut terkirim begitu login), dan `conflictJson` (versi server saat
@@ -1398,8 +1398,23 @@ dikerjakan sebelum atau sesudah tahap 26 — tidak saling bergantung.
      memasukkan baris tanpa `remoteId`, jadi terkirim sebagai item baru dan bisa dobel dengan yang sudah di
      server. Waktu dibuat dari HP tidak dikirim ke server (server memakai waktunya sendiri), hanya `done_at`
      yang dikirim. Tautan acara (`eventId`) dikirim apa adanya tapi hanya bermakna di HP.
-   - **Belum diverifikasi:** migrasi Room 9 → 10 di perangkat berisi data lama; push/pull end-to-end ke
+   - **Belum diverifikasi (sebelum uji di HP, lihat hasil di bawah):** migrasi Room 9 → 10 di perangkat berisi data lama; push/pull end-to-end ke
      server; dialog bentrok di layar (uji: ubah di web, ubah di HP sebelum sinkron, lalu sinkron).
+
+   ✅ **Hasil uji di HP fisik (Xiaomi 2311DRK48G, 11 Oktober 2026, akun login):**
+   - Update APK di atas versi lama (database v9) berhasil: `user_version = 10`, keempat kolom baru ada
+     (`dirty` default 1), app jalan tanpa crash. Tidak ada follow-up lama di HP uji, jadi migrasi baris
+     berisi belum teruji.
+   - Push buat: dua follow-up dicatat di HP, muncul di web, di HP `remoteId` terisi, `dirty = 0`, dan
+     `remoteUpdatedAt` sama dengan `updated_at` server.
+   - Bentrok: jaringan HP dimatikan (`adb shell svc wifi/data disable`), judul item diubah di server, judul
+     yang sama diubah di HP, jaringan dihidupkan, Sinkron sekarang. Server membalas `PUT` dengan 409, HP
+     menyimpan versi server di `conflictJson` tanpa menimpa, dan dialog "Berubah di tempat lain" muncul di tab
+     Kerja.
+   - "Pakai punyaku": `PUT` berikutnya 200, judul di server berubah ke versi HP, `dirty = 0`, `conflictJson`
+     kosong.
+   - **Masih belum diuji di HP:** "Pakai yang terbaru", tombol "Nanti", perubahan dari web yang ditarik ke HP
+     tanpa bentrok, penghapusan dari web yang ikut menghapus di HP, dan hapus di HP yang ikut menghapus di server.
 
    ✅ **Server di-deploy ke VM (11 Oktober 2026)** lewat `server/DEPLOY.md`: migrasi `follow_ups` jalan tanpa
    error, container sehat, `/follow-up` mengarahkan ke login (302) dan `/api/v1/follow-ups` tanpa token
@@ -1436,7 +1451,7 @@ pindah, baru dipertimbangkan apakah 19B dipensiunkan total.
 
 | Fitur | Tabel | Sumber tahap | Status |
 |---|---|---|---|
-| Follow-up kerja | `follow_ups` | 19 | **Tahap 27: selesai dikoding (server, web, Android); Android belum diuji di perangkat** |
+| Follow-up kerja | `follow_ups` | 19 | **Tahap 27: selesai (server, web, Android); Android diuji sebagian di HP fisik** |
 | To-do tim | `team_todos`, `teams`, `team_invites` | baru | **Selesai (web+API+Android) — tahap 26** |
 | Habit + to-do harian | `habits`, `habit_entries`, `todos` | 1-9 | **Selesai (web+API+Android)** — tahap 28 |
 | Jadwal harian & libur | `schedule_blocks`, `schedule_block_habits`, `days_off`, `holiday_cancellations` | 17, 22 | Belum dimulai |
