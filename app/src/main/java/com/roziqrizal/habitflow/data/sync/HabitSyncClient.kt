@@ -1,5 +1,6 @@
 package com.roziqrizal.habitflow.data.sync
 
+import com.roziqrizal.habitflow.data.FollowUpEntity
 import com.roziqrizal.habitflow.data.account.AccountClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -147,6 +148,43 @@ class HabitSyncClient(
         is Raw.Failed -> HabitApiResult.NetworkError(raw.detail)
         is Raw.Response -> if (raw.code == 204) HabitApiResult.Success(Unit) else failure(raw)
     }
+
+    // --- Follow-up kerja (tahap 27 langkah 3) ---
+
+    suspend fun listFollowUps(): HabitApiResult<List<RemoteFollowUp>> =
+        when (val raw = request("GET", "/api/v1/follow-ups")) {
+            is Raw.Failed -> HabitApiResult.NetworkError(raw.detail)
+            is Raw.Response -> if (raw.code == 200) {
+                parseList(raw.body, "follow_ups", RemoteFollowUp::fromJson)
+            } else {
+                failure(raw)
+            }
+        }
+
+    suspend fun createFollowUp(item: FollowUpEntity): HabitApiResult<RemoteFollowUp> =
+        when (val raw = request("POST", "/api/v1/follow-ups", item.toRequestJson().toString())) {
+            is Raw.Failed -> HabitApiResult.NetworkError(raw.detail)
+            is Raw.Response -> if (raw.code == 201) parseSingle(raw.body, "follow_up", RemoteFollowUp::fromJson) else failure(raw)
+        }
+
+    /** [item] harus punya `remoteId`. `updated_at` wajib untuk follow-up, jadi tanpa itu server menolak (422). */
+    suspend fun updateFollowUp(remoteId: Long, item: FollowUpEntity): HabitApiResult<RemoteFollowUp> {
+        val body = item.toRequestJson().apply { item.remoteUpdatedAt?.let { put("updated_at", it) } }.toString()
+        return when (val raw = request("PUT", "/api/v1/follow-ups/$remoteId", body)) {
+            is Raw.Failed -> HabitApiResult.NetworkError(raw.detail)
+            is Raw.Response -> when (raw.code) {
+                200 -> parseSingle(raw.body, "follow_up", RemoteFollowUp::fromJson)
+                409 -> parseConflict(raw.body, "follow_up", RemoteFollowUp::fromJson)
+                else -> failure(raw)
+            }
+        }
+    }
+
+    suspend fun deleteFollowUp(remoteId: Long): HabitApiResult<Unit> =
+        when (val raw = request("DELETE", "/api/v1/follow-ups/$remoteId")) {
+            is Raw.Failed -> HabitApiResult.NetworkError(raw.detail)
+            is Raw.Response -> if (raw.code == 204) HabitApiResult.Success(Unit) else failure(raw)
+        }
 
     private fun parseHabit(o: JSONObject) = RemoteHabit(
         id = o.getLong("id"),

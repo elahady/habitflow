@@ -267,6 +267,37 @@ interface FollowUpDao {
 
     @Query("DELETE FROM follow_ups WHERE id = :id")
     suspend fun delete(id: Long): Int
+
+    // --- Sinkron server (tahap 27 langkah 3) ---
+
+    @Query("SELECT * FROM follow_ups WHERE id = :id")
+    suspend fun getById(id: Long): FollowUpEntity?
+
+    @Query("SELECT * FROM follow_ups WHERE remoteId IS NULL")
+    suspend fun newForSync(): List<FollowUpEntity>
+
+    /** Perlu di-push sebagai update. Yang sedang bentrok menunggu pilihan pengguna dulu, jadi dilewati. */
+    @Query("SELECT * FROM follow_ups WHERE remoteId IS NOT NULL AND dirty = 1 AND conflictJson IS NULL")
+    suspend fun dirtyForSync(): List<FollowUpEntity>
+
+    @Query("SELECT * FROM follow_ups WHERE remoteId IS NOT NULL")
+    suspend fun sentToServer(): List<FollowUpEntity>
+
+    @Query("SELECT * FROM follow_ups WHERE remoteId = :remoteId LIMIT 1")
+    suspend fun byRemoteId(remoteId: Long): FollowUpEntity?
+
+    @Query("SELECT * FROM follow_ups WHERE conflictJson IS NOT NULL ORDER BY id ASC")
+    fun observeConflicts(): Flow<List<FollowUpEntity>>
+
+    @Query("UPDATE follow_ups SET remoteId = :remoteId, remoteUpdatedAt = :remoteUpdatedAt, dirty = 0 WHERE id = :id")
+    suspend fun markSynced(id: Long, remoteId: Long, remoteUpdatedAt: String?)
+
+    @Query("UPDATE follow_ups SET conflictJson = :json WHERE id = :id")
+    suspend fun setConflict(id: Long, json: String?)
+
+    /** Server sudah tidak punya barisnya (dihapus dari web): kirim ulang sebagai baru di putaran berikutnya. */
+    @Query("UPDATE follow_ups SET remoteId = NULL, remoteUpdatedAt = NULL, dirty = 1, conflictJson = NULL WHERE id = :id")
+    suspend fun forgetRemote(id: Long)
 }
 
 @Dao

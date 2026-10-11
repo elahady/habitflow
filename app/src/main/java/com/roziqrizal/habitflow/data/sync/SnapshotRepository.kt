@@ -9,7 +9,13 @@ class SnapshotRepository(private val db: HabitDatabase) {
     private val dao = db.syncDao()
 
     /** Membaca semua tabel dalam satu transaksi supaya hasilnya konsisten. [settings] datang dari penyimpanan pengaturan. */
-    suspend fun export(settings: SnapshotSettings, deviceId: String, appVersion: String, nowMillis: Long): Snapshot =
+    suspend fun export(
+        settings: SnapshotSettings,
+        deviceId: String,
+        appVersion: String,
+        nowMillis: Long,
+        includeFollowUps: Boolean = true,
+    ): Snapshot =
         db.withTransaction {
             val habitRows = dao.habits()
             val blockRows = dao.scheduleBlocks()
@@ -24,7 +30,7 @@ class SnapshotRepository(private val db: HabitDatabase) {
                 scheduleBlocks = blockRows,
                 scheduleBlockHabits = consistentLinks(dao.scheduleBlockHabits(), habitRows, blockRows),
                 daysOff = dao.daysOff(),
-                followUps = dao.followUps(),
+                followUps = if (includeFollowUps) dao.followUps() else emptyList(),
                 workDays = dao.workDays(),
                 drinkCounts = dao.drinkCounts(),
                 weightEntries = dao.weightEntries(),
@@ -35,6 +41,7 @@ class SnapshotRepository(private val db: HabitDatabase) {
                 meals = dao.meals(),
                 habitManualMarks = dao.habitManualMarks(),
                 settings = settings,
+                followUpsOmitted = !includeFollowUps,
             )
         }
 
@@ -47,7 +54,7 @@ class SnapshotRepository(private val db: HabitDatabase) {
         dao.clearScheduleBlockHabits()
         dao.clearScheduleBlocks()
         dao.clearDaysOff()
-        dao.clearFollowUps()
+        if (!snapshot.followUpsOmitted) dao.clearFollowUps()
         dao.clearWorkDays()
         dao.clearDrinkCounts()
         dao.clearWeightEntries()
@@ -67,7 +74,7 @@ class SnapshotRepository(private val db: HabitDatabase) {
         dao.insertScheduleBlocks(snapshot.scheduleBlocks)
         dao.insertScheduleBlockHabits(consistentLinks(snapshot.scheduleBlockHabits, snapshot.habits, snapshot.scheduleBlocks))
         dao.insertDaysOff(snapshot.daysOff)
-        dao.insertFollowUps(snapshot.followUps)
+        if (!snapshot.followUpsOmitted) dao.insertFollowUps(snapshot.followUps)
         dao.insertWorkDays(snapshot.workDays)
         dao.insertDrinkCounts(snapshot.drinkCounts)
         dao.insertWeightEntries(snapshot.weightEntries)

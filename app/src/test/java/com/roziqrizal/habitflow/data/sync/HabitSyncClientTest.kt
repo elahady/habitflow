@@ -1,6 +1,8 @@
 package com.roziqrizal.habitflow.data.sync
 
+import com.roziqrizal.habitflow.data.FollowUpEntity
 import kotlinx.coroutines.runBlocking
+import org.json.JSONObject
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -203,5 +205,88 @@ class HabitSyncClientTest {
         assertTrue(!HabitApiResult.Unauthorized.retryable)
         assertTrue(!HabitApiResult.NotFound.retryable)
         assertTrue(!HabitApiResult.Rejected("x").retryable)
+    }
+}
+
+private const val SERVER_FOLLOW_UP = """{"id":7,"title":"Tanya Budi","status":"ACTIVE","date":"2026-10-12","time":"09:30:00",
+    "person":"Budi","note":null,"done_at":null,"picked_date":null,"event_id":null,"event_date":null,"event_title":null,
+    "created_at":"2026-10-11T01:00:00.000000Z","updated_at":"2026-10-11T02:00:00.000000Z"}"""
+
+/** Follow-up kerja (tahap 27 langkah 3). Memakai server mini file ini. */
+class FollowUpSyncClientTest {
+
+    private val server = HabitTinyServer()
+
+    @Before
+    fun start() = server.start()
+
+    @After
+    fun stop() = server.stop()
+
+    private fun client() = HabitSyncClient("token-uji", "http://127.0.0.1:${server.port}")
+
+    private fun entity(remoteUpdatedAt: String? = null) = FollowUpEntity(
+        id = 3, title = "Tanya Budi", status = "ACTIVE", date = "2026-10-12", time = "09:30", person = "Budi", note = null,
+        createdAt = 1_000, doneAt = null, pickedDate = null, remoteId = 7, remoteUpdatedAt = remoteUpdatedAt,
+    )
+
+    @Test
+    fun daftarMembacaSemuaFieldDanMengubahWaktuServerJadiMilidetik() = runBlocking {
+        server.responseBody = """{"follow_ups":[$SERVER_FOLLOW_UP]}"""
+        val result = client().listFollowUps() as HabitApiResult.Success
+        assertEquals("GET", server.lastMethod)
+        assertEquals("/api/v1/follow-ups", server.lastPath)
+        val item = result.value.single()
+        assertEquals(7L, item.id)
+        assertEquals("09:30", item.time)
+        assertEquals("2026-10-12", item.date)
+        assertEquals(null, item.note)
+        assertEquals(1_791_680_400_000L, item.createdAt)
+        assertEquals("2026-10-11T02:00:00.000000Z", item.updatedAt)
+    }
+
+    @Test
+    fun buatMengirimNilaiKosongSebagaiNullDanMembacaIdServer() = runBlocking {
+        server.status = 201
+        server.responseBody = """{"follow_up":$SERVER_FOLLOW_UP}"""
+        val result = client().createFollowUp(entity().copy(date = null, time = null, person = null)) as HabitApiResult.Success
+        assertEquals("POST", server.lastMethod)
+        assertEquals("/api/v1/follow-ups", server.lastPath)
+        val body = JSONObject(server.lastBody)
+        assertEquals("Tanya Budi", body.getString("title"))
+        assertEquals("ACTIVE", body.getString("status"))
+        assertTrue(body.isNull("date") && body.isNull("time") && body.isNull("person") && body.isNull("done_at"))
+        assertEquals(7L, result.value.id)
+    }
+
+    @Test
+    fun ubahMengirimUpdatedAtDanJamHanyaLimaHuruf() = runBlocking {
+        server.responseBody = """{"follow_up":$SERVER_FOLLOW_UP}"""
+        val result = client().updateFollowUp(7, entity("2026-10-11T02:00:00.000000Z").copy(time = "09:30")) as HabitApiResult.Success
+        assertEquals("PUT", server.lastMethod)
+        assertEquals("/api/v1/follow-ups/7", server.lastPath)
+        val body = JSONObject(server.lastBody)
+        assertEquals("2026-10-11T02:00:00.000000Z", body.getString("updated_at"))
+        assertEquals("09:30", body.getString("time"))
+        assertEquals(7L, result.value.id)
+    }
+
+    @Test
+    fun ubahBentrokMengembalikanVersiServer() = runBlocking {
+        server.status = 409
+        server.responseBody = """{"message":"Berubah di tempat lain.","follow_up":$SERVER_FOLLOW_UP}"""
+        val result = client().updateFollowUp(7, entity("2026-10-11T01:00:00.000000Z"))
+        assertEquals("Tanya Budi", (result as HabitApiResult.Conflict).server.title)
+    }
+
+    @Test
+    fun hapusBerhasilDanTidakDitemukan() = runBlocking {
+        server.status = 204
+        server.responseBody = ""
+        assertTrue(client().deleteFollowUp(7) is HabitApiResult.Success)
+        assertEquals("DELETE", server.lastMethod)
+        assertEquals("/api/v1/follow-ups/7", server.lastPath)
+        server.status = 404
+        assertEquals(HabitApiResult.NotFound, client().deleteFollowUp(7))
     }
 }

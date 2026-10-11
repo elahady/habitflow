@@ -7,6 +7,7 @@ import com.roziqrizal.habitflow.domain.calendar.EventOccurrence
 import com.roziqrizal.habitflow.domain.work.EodAction
 import com.roziqrizal.habitflow.domain.work.EventSource
 import com.roziqrizal.habitflow.domain.work.FollowUp
+import com.roziqrizal.habitflow.domain.work.FollowUpConflict
 import com.roziqrizal.habitflow.domain.work.InboxChoice
 import com.roziqrizal.habitflow.domain.work.WorkDay
 import com.roziqrizal.habitflow.domain.work.WorkSection
@@ -44,6 +45,8 @@ data class WorkUiState(
     val eodToday: List<FollowUp> = emptyList(),
     val inbox: List<FollowUp> = emptyList(),
     val workDay: WorkDay? = null,
+    /** Follow-up yang bentrok dengan perubahan di server dan menunggu pilihan (tahap 27 langkah 3). */
+    val conflicts: List<FollowUpConflict> = emptyList(),
 )
 
 /** Filter orang disimpan di ViewModel, jadi bertahan selama app hidup. */
@@ -60,7 +63,8 @@ class WorkViewModel(
         repo.observeWorkDays(),
         clock.date,
         selectedPerson,
-    ) { items, days, today, person ->
+    repo.observeConflicts(),
+    ) { items, days, today, person, conflicts ->
         val unfiltered = items.groupedBySection(today)
         val people = allPeople(items)
         // Filter orang yang sudah tidak punya follow-up apa pun dilepas supaya daftar tidak kosong terus.
@@ -83,6 +87,7 @@ class WorkViewModel(
             eodToday = eodItems(items, today),
             inbox = unfiltered[WorkSection.INBOX].orEmpty(),
             workDay = days[today],
+            conflicts = conflicts,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -106,6 +111,11 @@ class WorkViewModel(
 
     fun delete(id: Long) {
         viewModelScope.launch { repo.delete(id) }
+    }
+
+    /** [useMine] true menimpa server dengan versi HP, false memakai versi terbaru dari server. */
+    fun resolveConflict(id: Long, useMine: Boolean) {
+        viewModelScope.launch { repo.resolveConflict(id, useMine) }
     }
 
     fun setDone(item: FollowUp) {

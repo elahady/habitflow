@@ -32,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.roziqrizal.habitflow.domain.work.EventSource
 import com.roziqrizal.habitflow.domain.work.FollowUp
+import com.roziqrizal.habitflow.domain.work.FollowUpConflict
 import com.roziqrizal.habitflow.domain.work.FollowUpStatus
 import com.roziqrizal.habitflow.domain.work.WorkSection
 import com.roziqrizal.habitflow.domain.work.daysOverdue
@@ -99,8 +100,11 @@ fun WorkScreen(
     onDone: (FollowUp) -> Unit,
     onSave: (FollowUp) -> Unit,
     onDelete: (Long) -> Unit,
+    onResolveConflict: (id: Long, useMine: Boolean) -> Unit,
 ) {
     var editing by remember { mutableStateOf<FollowUp?>(null) }
+    // Bentrok yang ditunda lewat "Nanti" tidak muncul lagi sampai tab ini dibuka ulang.
+    var postponed by remember { mutableStateOf(emptySet<Long>()) }
 
     LazyColumn(
         modifier = Modifier.fillMaxWidth(),
@@ -158,6 +162,16 @@ fun WorkScreen(
                 FollowUpCard(item = item, today = state.today, onDone = { onDone(item) }, onClick = { editing = item })
             }
         }
+    }
+
+    state.conflicts.firstOrNull { it.mine.id !in postponed }?.let { conflict ->
+        FollowUpConflictDialog(
+            conflict = conflict,
+            today = state.today,
+            onUseMine = { onResolveConflict(conflict.mine.id, true) },
+            onUseLatest = { onResolveConflict(conflict.mine.id, false) },
+            onLater = { postponed = postponed + conflict.mine.id },
+        )
     }
 
     editing?.let { item ->
@@ -301,4 +315,47 @@ fun FollowUpEditorDialog(
     if (pickingTime) {
         AppTimePickerDialog(initial = time, onDismiss = { pickingTime = false }, onPick = { time = it; pickingTime = false })
     }
+}
+
+/** Satu baris ringkasan versi follow-up di dialog bentrok: judul, status, lalu keterangan (tanggal, jam, orang). */
+private fun conflictSummary(item: FollowUp, today: LocalDate): String =
+    listOf(item.title, item.status.label(), followUpCaption(item, today, includePicked = false))
+        .filter { it.isNotEmpty() }
+        .joinToString("\n")
+
+/**
+ * Follow-up diubah di HP sementara di server sudah berubah di tempat lain (tahap 27 langkah 3). Tidak ditimpa diam-diam:
+ * pengguna memilih versi HP (menimpa server), versi terbaru dari server (perubahan di HP dibuang), atau menunda.
+ */
+@Composable
+fun FollowUpConflictDialog(
+    conflict: FollowUpConflict,
+    today: LocalDate,
+    onUseMine: () -> Unit,
+    onUseLatest: () -> Unit,
+    onLater: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onLater,
+        title = { Text("Berubah di tempat lain") },
+        text = {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    "Follow-up ini sudah diubah dari web atau perangkat lain sebelum perubahan di HP terkirim. Pilih versi yang dipakai.",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                Text("Di HP", style = MaterialTheme.typography.titleSmall)
+                Text(conflictSummary(conflict.mine, today), style = MaterialTheme.typography.bodyMedium)
+                Text("Terbaru di server", style = MaterialTheme.typography.titleSmall)
+                Text(conflictSummary(conflict.server, today), style = MaterialTheme.typography.bodyMedium)
+            }
+        },
+        confirmButton = { TextButton(onClick = onUseMine) { Text("Pakai punyaku") } },
+        dismissButton = {
+            Row {
+                TextButton(onClick = onLater) { Text("Nanti") }
+                TextButton(onClick = onUseLatest) { Text("Pakai yang terbaru") }
+            }
+        },
+    )
 }

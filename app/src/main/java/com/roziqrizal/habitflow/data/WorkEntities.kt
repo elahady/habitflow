@@ -29,6 +29,14 @@ data class FollowUpEntity(
     val eventId: Long? = null,
     val eventDate: String? = null,
     val eventTitle: String? = null,
+    /** Sinkron server (tahap 27 langkah 3) - null berarti belum pernah terkirim. */
+    val remoteId: Long? = null,
+    /** `updated_at` terakhir dari server, dikirim balik saat update untuk deteksi konflik. */
+    val remoteUpdatedAt: String? = null,
+    /** Ada perubahan lokal yang belum terkirim ke server. */
+    val dirty: Boolean = true,
+    /** Versi server (JSON [com.roziqrizal.habitflow.data.sync.RemoteFollowUp]) saat push ditolak 409; null kalau tidak ada bentrok. */
+    val conflictJson: String? = null,
 )
 
 /** Catatan harian kerja: catatan EOD dan kapan daily scrum dan EOD diselesaikan. Satu baris per tanggal. */

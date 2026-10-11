@@ -263,6 +263,7 @@ fun HabitFlowApp(
                     onDone = work::setDone,
                     onSave = work::save,
                     onDelete = work::delete,
+                    onResolveConflict = work::resolveConflict,
                 )
                 Tab.TEAM -> {
                     val teamState by team.state.collectAsState()

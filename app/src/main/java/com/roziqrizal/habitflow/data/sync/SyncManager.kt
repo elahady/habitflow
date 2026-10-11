@@ -30,6 +30,8 @@ class SyncManager(
     private val appSettings: AppSettingsGateway,
     private val appVersion: String,
     private val allowLocalCleartext: Boolean,
+    /** True kalau follow-up kerja sudah disinkron lewat akun (tahap 27) dan tidak perlu ikut snapshot cadangan. */
+    private val followUpsOnAccount: () -> Boolean = { false },
     private val now: () -> Long = System::currentTimeMillis,
     private val clientFor: (url: String, token: String) -> SyncClient = { url, token -> SyncClient(url, token) },
 ) {
@@ -48,7 +50,9 @@ class SyncManager(
     /** Mengunggah snapshot lengkap. Hasilnya dicatat di status (sukses menyimpan waktu, gagal menyimpan pesan). */
     suspend fun syncNow(): SyncResult = mutex.withLock {
         val client = client() ?: return@withLock SyncResult.NotConfigured
-        val snapshot = snapshots.export(appSettings.read(), settings.deviceId(), appVersion, now())
+        val snapshot = snapshots.export(
+            appSettings.read(), settings.deviceId(), appVersion, now(), includeFollowUps = !followUpsOnAccount(),
+        )
         val result = client.upload(SnapshotCodec.encode(snapshot))
         if (result.isSuccess) settings.recordSuccess(now(), result.message()) else settings.recordFailure(result.message())
         result

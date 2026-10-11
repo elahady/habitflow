@@ -41,6 +41,7 @@ class HabitSyncManager(
     private val entries = db.habitEntryDao()
     private val todos = db.todoDao()
     private val outbox = db.habitSyncOutboxDao()
+    private val followUps = db.followUpDao()
 
     private val _status = MutableStateFlow<HabitSyncStatus>(HabitSyncStatus.Idle)
     val status: StateFlow<HabitSyncStatus> = _status.asStateFlow()
@@ -74,9 +75,16 @@ class HabitSyncManager(
         val todoUpdates = pushTodoUpdates(client)
         todoUpdates.error?.let { return fail(it) }
 
+        pushFollowUpDeletes(client)?.let { return fail(it) }
+        pushFollowUpCreates(client)?.let { return fail(it) }
+        val followUpUpdates = pushFollowUpUpdates(client)
+        followUpUpdates.error?.let { return fail(it) }
+
         pushEntryOutbox(client)?.let { return fail(it) }
 
-        _status.value = HabitSyncStatus.Success(System.currentTimeMillis(), habitUpdates.conflicted || todoUpdates.conflicted)
+        _status.value = HabitSyncStatus.Success(
+            System.currentTimeMillis(), habitUpdates.conflicted || todoUpdates.conflicted || followUpUpdates.conflicted,
+        )
         return HabitApiResult.Success(Unit)
     }
 
@@ -173,6 +181,49 @@ class HabitSyncManager(
         return UpdateOutcome(null, conflicted)
     }
 
+    private suspend fun pushFollowUpDeletes(client: HabitSyncClient): HabitApiResult<Unit>? {
+        outbox.pendingDeletes(PendingDeleteEntity.FOLLOW_UP).forEach { pending ->
+            val result = client.deleteFollowUp(pending.remoteId)
+            if (result.isSuccessOrAlreadyGone()) {
+                outbox.deletePendingDelete(pending.id)
+            } else {
+                return result
+            }
+        }
+        return null
+    }
+
+    private suspend fun pushFollowUpCreates(client: HabitSyncClient): HabitApiResult<Unit>? {
+        followUps.newForSync().forEach { item ->
+            when (val result = client.createFollowUp(item)) {
+                is HabitApiResult.Success -> followUps.markSynced(item.id, result.value.id, result.value.updatedAt)
+                is HabitApiResult.Rejected -> Unit // ditolak server (mis. judul terlalu panjang) - ditinggalkan dan dicoba lagi nanti, tidak menahan yang lain
+                else -> return result.asUnit()
+            }
+        }
+        return null
+    }
+
+    private suspend fun pushFollowUpUpdates(client: HabitSyncClient): UpdateOutcome {
+        var conflicted = false
+        followUps.dirtyForSync().forEach { item ->
+            val remoteId = item.remoteId ?: return@forEach
+            when (val result = client.updateFollowUp(remoteId, item)) {
+                is HabitApiResult.Success -> followUps.markSynced(item.id, remoteId, result.value.updatedAt)
+                is HabitApiResult.Conflict -> {
+                    // Beda dari habit/to-do (server menang): follow-up tidak ditimpa diam-diam. Versi server disimpan,
+                    // pengguna memilih lewat dialog di tab Kerja. Selama belum dipilih, baris ini dilewati push.
+                    followUps.setConflict(item.id, result.server.toJson())
+                    conflicted = true
+                }
+                is HabitApiResult.NotFound -> followUps.forgetRemote(item.id) // dihapus dari web: kirim ulang sebagai baru
+                is HabitApiResult.Rejected -> Unit
+                else -> return UpdateOutcome(result.asUnit(), conflicted)
+            }
+        }
+        return UpdateOutcome(null, conflicted)
+    }
+
     private suspend fun pushEntryOutbox(client: HabitSyncClient): HabitApiResult<Unit>? {
         outbox.entryOutbox().forEach { pending ->
             val remoteHabitId = habits.getByIdForSync(pending.habitId)?.remoteId ?: return@forEach // habit belum tersinkron, coba lagi nanti
@@ -197,8 +248,12 @@ class HabitSyncManager(
         val todosResult = client.listTodos(today)
         if (todosResult !is HabitApiResult.Success) return fail(todosResult.asUnit())
 
+        val followUpsResult = client.listFollowUps()
+        if (followUpsResult !is HabitApiResult.Success) return fail(followUpsResult.asUnit())
+
         mergeHabits(habitsResult.value, today)
         mergeTodos(todosResult.value)
+        mergeFollowUps(followUpsResult.value)
 
         _status.value = HabitSyncStatus.Success(System.currentTimeMillis(), hadConflict = false)
         return HabitApiResult.Success(Unit)
@@ -229,6 +284,25 @@ class HabitSyncManager(
                 EntryMergeAction.None -> Unit
             }
         }
+    }
+
+    /**
+     * Baris lokal yang dirty (atau sedang bentrok) tidak ditimpa. Baris yang pernah terkirim tapi sudah tidak ada di
+     * server (dihapus dari web) dihapus di HP juga, kecuali masih dirty: itu dikirim ulang sebagai baru lewat push.
+     */
+    private suspend fun mergeFollowUps(remoteItems: List<RemoteFollowUp>) {
+        remoteItems.forEach { remote ->
+            val local = followUps.byRemoteId(remote.id)
+            if (local == null) {
+                followUps.insert(remote.toNewEntity())
+            } else if (!local.dirty && local.conflictJson == null) {
+                followUps.update(remote.applyTo(local))
+            }
+        }
+        val onServer = remoteItems.mapTo(HashSet()) { it.id }
+        followUps.sentToServer()
+            .filter { it.remoteId !in onServer && !it.dirty }
+            .forEach { followUps.delete(it.id) }
     }
 
     private suspend fun mergeTodos(remoteTodos: List<RemoteTodo>) {

@@ -1310,7 +1310,7 @@ Dibahas 10 Oktober 2026. Butuh tahap 25 (akun, MySQL, Livewire) selesai lebih du
 + di-deploy ke VM. Yang belum: uji end-to-end join dua akun Google sungguhan (lihat catatan
 verifikasi di atas).**
 
-### Tahap 27: Web untuk Follow-up Kerja (langkah 1-2 selesai 11 Oktober 2026, langkah 3 Android belum)
+### Tahap 27: Web untuk Follow-up Kerja (selesai dikoding 11 Oktober 2026, Android belum diuji di perangkat)
 
 Dibahas 10 Oktober 2026. Butuh tahap 25 (akun, MySQL, Livewire) selesai lebih dulu. Bisa
 dikerjakan sebelum atau sesudah tahap 26 — tidak saling bergantung.
@@ -1373,6 +1373,34 @@ dikerjakan sebelum atau sesudah tahap 26 — tidak saling bergantung.
 3. **Android ikut pindah**: follow-up kerja di app fetch/push langsung ke endpoint baru
    (bukan ikut snapshot lagi), tangani respons 409 dengan dialog yang sama seperti web.
 
+   ✅ **Kode selesai (11 Oktober 2026), 308 unit test lulus, belum diuji di HP/emulator dan belum di-deploy:**
+   Pola sama dengan tahap 28 langkah 5 (Room tetap sumber utama, offline-first, sinkron di latar belakang).
+   - **Skema (migrasi Room 9 → 10):** `follow_ups` dapat `remoteId`, `remoteUpdatedAt`, `dirty` (baris
+     lama otomatis `dirty = 1` supaya ikut terkirim begitu login), dan `conflictJson` (versi server saat
+     bentrok). `pending_deletes` dapat jenis `follow_up`.
+   - **Kode:** `HabitSyncClient` (list/create/update/delete follow-up), `RemoteFollowUp.kt` (model server,
+     JSON bolak-balik, pemetaan ke entity), `HabitSyncManager` (push hapus → buat → ubah, pull ikut
+     `syncNow()` yang sudah jalan saat app dibuka dan tiap 30 menit), `WorkRepository` (menjaga kolom sinkron
+     saat simpan, mencatat penghapusan tertunda, `resolveConflict`). Tabel `follow_ups` ikut dipantau debounce
+     push 1 menit di `HabitSyncScheduler`.
+   - **Konflik 409 - beda dari habit/to-do (server menang):** versi server disimpan di `conflictJson`, baris
+     itu dilewati push, dan tab Kerja menampilkan `FollowUpConflictDialog` dengan tiga pilihan: **Pakai
+     punyaku** (`remoteUpdatedAt` diganti milik server lalu dikirim ulang, jadi menimpa server), **Pakai yang
+     terbaru** (isi lokal diganti versi server, perubahan HP dibuang), atau **Nanti** (muncul lagi saat tab
+     dibuka ulang).
+   - **Dihapus dari web:** pull menghapus baris lokal yang pernah terkirim, tidak dirty, dan sudah tidak ada
+     di server. Kalau barisnya masih dirty, push update menerima 404 lalu `remoteId` dilupakan dan dikirim
+     ulang sebagai baru (edit lokal tidak hilang).
+   - **Snapshot 19B:** `followUps` **tidak ikut diekspor kalau sudah login** (`Snapshot.followUpsOmitted`,
+     kunci `followUps` tidak ditulis). Belum login tetap ikut, supaya follow-up tanpa akun tetap tercadangkan.
+     Memulihkan snapshot yang tidak memuat `followUps` tidak menghapus follow-up di HP.
+   - **Batasan yang disadari:** memulihkan snapshot lama (yang memuat `followUps`) saat sedang login
+     memasukkan baris tanpa `remoteId`, jadi terkirim sebagai item baru dan bisa dobel dengan yang sudah di
+     server. Waktu dibuat dari HP tidak dikirim ke server (server memakai waktunya sendiri), hanya `done_at`
+     yang dikirim. Tautan acara (`eventId`) dikirim apa adanya tapi hanya bermakna di HP.
+   - **Belum diverifikasi:** migrasi Room 9 → 10 di perangkat berisi data lama; push/pull end-to-end ke
+     server; dialog bentrok di layar (uji: ubah di web, ubah di HP sebelum sinkron, lalu sinkron).
+
 **Selesai jika:**
 - Follow-up kerja bisa di-CRUD penuh dari web, dan HP yang fetch ulang melihat perubahan
   itu.
@@ -1403,7 +1431,7 @@ pindah, baru dipertimbangkan apakah 19B dipensiunkan total.
 
 | Fitur | Tabel | Sumber tahap | Status |
 |---|---|---|---|
-| Follow-up kerja | `follow_ups` | 19 | **Tahap 27: tabel, API, dan web selesai, Android belum** |
+| Follow-up kerja | `follow_ups` | 19 | **Tahap 27: selesai dikoding (server, web, Android); Android belum diuji di perangkat** |
 | To-do tim | `team_todos`, `teams`, `team_invites` | baru | **Selesai (web+API+Android) — tahap 26** |
 | Habit + to-do harian | `habits`, `habit_entries`, `todos` | 1-9 | **Selesai (web+API+Android)** — tahap 28 |
 | Jadwal harian & libur | `schedule_blocks`, `schedule_block_habits`, `days_off`, `holiday_cancellations` | 17, 22 | Belum dimulai |

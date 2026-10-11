@@ -35,6 +35,12 @@ data class FollowUp(
 )
 
 /** Kelompok di tab Kerja. Selesai tidak ditampilkan di daftar. */
+/**
+ * Follow-up yang diubah di HP sementara di server sudah berubah di tempat lain (tahap 27 langkah 3). [mine] versi di HP,
+ * [server] versi terbaru dari server dengan id lokal yang sama. Pengguna memilih salah satu di dialog tab Kerja.
+ */
+data class FollowUpConflict(val mine: FollowUp, val server: FollowUp)
+
 enum class WorkSection { INBOX, OVERDUE, TODAY, WAITING, LATER }
 
 private fun FollowUp.isOpen() = status != FollowUpStatus.DONE

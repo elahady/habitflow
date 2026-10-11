@@ -21,6 +21,7 @@ data class HabitEntryOutbox(
 object PendingDeleteEntity {
     const val HABIT = "habit"
     const val TODO = "todo"
+    const val FOLLOW_UP = "follow_up"
 }
 
 /**

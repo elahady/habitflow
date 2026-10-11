@@ -362,4 +362,21 @@ class SnapshotCodecTest {
         assertEquals(listOf(ScheduleBlockHabit(2, 1), ScheduleBlockHabit(2, 3)), consistentLinks(links, habits, blocks))
         assertEquals(emptyList<ScheduleBlockHabit>(), consistentLinks(links, emptyList(), blocks))
     }
+
+    @Test
+    fun followUpYangDikecualikanTidakDitulisDanTerbacaSebagaiDikecualikan() {
+        val omitted = sample().copy(followUps = emptyList(), followUpsOmitted = true)
+        val json = SnapshotCodec.encode(omitted)
+        assertTrue(!JSONObject(json).getJSONObject("data").has("followUps"))
+        val decoded = SnapshotCodec.decode(json)
+        assertTrue(decoded.followUpsOmitted)
+        assertEquals(emptyList<FollowUpEntity>(), decoded.followUps)
+        assertEquals(omitted, decoded)
+    }
+
+    @Test
+    fun snapshotDenganFollowUpKosongBukanDikecualikan() {
+        val decoded = SnapshotCodec.decode(SnapshotCodec.encode(sample().copy(followUps = emptyList())))
+        assertTrue(!decoded.followUpsOmitted)
+    }
 }
