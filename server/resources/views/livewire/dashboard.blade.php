@@ -6,7 +6,8 @@
     @endif
 
     <h1>Selamat datang, {{ auth()->user()->name }}</h1>
-    <p>Belum ada apa-apa di sini — menyusul fitur To-Do Tim dan Follow-up Kerja.</p>
+
+    <livewire:schedule-card />
 
     <div style="margin-top: 24px; padding: 16px; border: 1px solid var(--outline-variant); border-radius: 16px;">
         @if (auth()->user()->google_sub)
