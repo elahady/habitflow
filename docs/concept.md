@@ -1887,7 +1887,6 @@ Mockup (artboard Masuk, Daftar, Lupa kata sandi, Profil, Pengaturan): https://cl
 
 **Belum diputuskan:**
 - **Layanan pengiriman email** (verifikasi dan lupa kata sandi): belum dipilih. Rekomendasi layanan pengirim terkelola, bukan server email sendiri; alasannya di [rilis-play-store.md](rilis-play-store.md) bagian 6. Email adalah jalur kritis: tanpa email, pengguna baru tidak bisa daftar.
-- **Tim saat pemilik menghapus akun:** usulan di [rilis-play-store.md](rilis-play-store.md) bagian 2 (kepemilikan pindah ke anggota terlama, atau tim dihapus kalau tidak ada anggota lain).
 - **Masa simpan backup server** setelah akun dihapus (usulan 30 hari) dan lokasi backup di luar VM.
 - Urutan terhadap tahap 29 dan 30. Tahap 30 langkah 3-6 (kirim ke server) bisa lebih sederhana kalau dikerjakan setelah tahap ini.
 

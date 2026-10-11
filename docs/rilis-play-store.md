@@ -54,7 +54,7 @@ Diputuskan pemilik 11 Oktober 2026 kecuali ditandai lain.
 | Penautan Google ke akun email | Hanya ke akun yang emailnya **sudah terverifikasi**. Akun email yang belum terverifikasi tidak pernah ditautkan, karena itu celah pengambilalihan akun |
 | Lupa kata sandi | Kode 6 angka lewat email, pola yang sama. Jawaban server **sama** apakah email terdaftar atau tidak |
 | Sesi | Tidak kedaluwarsa. Ganti kata sandi mencabut semua sesi lain. Ada tombol "Keluar dari semua perangkat" di Profil |
-| Tim saat pemilik menghapus akun *(usulan, belum disetujui)* | Kalau ada anggota lain, kepemilikan pindah ke anggota terlama dan to-do yang dibuat pemilik tetap ada dengan nama "Pengguna dihapus". Kalau tidak ada anggota lain, tim dihapus. Anggota biasa yang menghapus akun hanya keluar dari tim |
+| Tim saat pemilik menghapus akun (disetujui pemilik 11 Oktober 2026) | Kalau ada anggota lain, kepemilikan pindah ke anggota terlama dan to-do yang dibuat pemilik tetap ada dengan nama "Pengguna dihapus". Kalau tidak ada anggota lain, tim dihapus. Anggota biasa yang menghapus akun hanya keluar dari tim |
 | Penghapusan | Langsung dan permanen dalam satu transaksi, tanpa masa tunggu. Salinan di backup server hilang saat backup itu berputar (usulan 30 hari), dan kebijakan privasi menyebutnya |
 
 ## 3. Penjaga otomatis (yang membuat kesalahan tidak sengaja gagal)
@@ -112,6 +112,7 @@ Email menjadi **jalur kritis**: tanpa email, orang baru tidak bisa daftar, tidak
 - [ ] Domain pengirim diverifikasi: **SPF, DKIM (2048 bit), dan DMARC** lulus, dicek dengan alat uji email. Bukti:
 - [ ] Email dikirim lewat **antrean** (queue) supaya pendaftaran tidak macet kalau layanan email lambat, dan gagal kirim tercatat. Bukti:
 - [ ] Batas kirim per email dan per IP, supaya tidak bisa dipakai membanjiri kotak orang lain. Bukti:
+- [ ] Jumlah email terkirim per hari dihitung, dan pemilik diberi tahu saat mencapai 80% batas harian paket. Bukti:
 - [ ] Email uji sampai di Gmail dan satu penyedia lain **di kotak masuk, bukan spam**. Bukti:
 
 ### Gerbang C. Privasi dan hukum
@@ -200,8 +201,20 @@ Pertanyaan pemilik: bagaimana kalau membangun mail hosting sendiri. **Rekomendas
 Kalau tetap ingin memiliki infrastruktur sendiri, jalur yang masuk akal: **hanya mengirim** (Postfix dan OpenDKIM, tanpa kotak masuk) dari VPS dengan IP tetap dan PTR yang bisa
 diatur, bukan dari VM rumah, dan tetap memerlukan SPF, DKIM, DMARC dan masa pemanasan reputasi. Itu pekerjaan operasional yang berkelanjutan untuk satu fitur kecil.
 
-**Pilihan yang disarankan:** layanan pengirim terkelola (Resend, atau Brevo lewat SMTP, atau Amazon SES). Kode Laravel tidak terikat penyedia, jadi bisa diganti dengan mengubah `.env`.
-Harga dan batas gratis berubah-ubah: cek halaman harga saat memilih. *Belum diputuskan pemilik.*
+**Batas gratis (dicek 11 Oktober 2026, cek ulang saat memilih):**
+
+| Layanan | Gratis | Catatan |
+|---|---|---|
+| Resend | 3.000 email per bulan, **maksimal 100 per hari**, 1 domain, log 30 hari | Gratis tanpa batas waktu. Berbayar mulai $20 per bulan (50.000 email, tanpa batas harian). Integrasi Laravel paling ringkas |
+| Brevo | **300 email per hari** (sekitar 9.000 per bulan), SMTP dan API | Gratis tanpa batas waktu. Berbayar mulai sekitar $9 per bulan. Dipakai lewat SMTP biasa |
+| Amazon SES | 3.000 email per bulan **hanya 12 bulan pertama** untuk pelanggan AWS baru, setelah itu bayar per email | Bukan gratis jangka panjang. Skema harganya berubah per Juli 2026 dan syarat gratisnya bergantung tanggal akun AWS. Pengaturan awal paling rumit |
+
+Satu pengguna baru memakai sekitar 1 email (kode verifikasi), ditambah 1 setiap lupa kata sandi. Batas harian Resend (100) cukup untuk tahap uji tertutup dan awal rilis,
+tapi **kalau batas harian terlewati, pendaftaran baru gagal**. Karena itu:
+- Server mencatat jumlah email terkirim per hari dan memberi tahu pemilik saat mencapai 80% batas (bagian Gerbang B dan D).
+- Pindah penyedia hanya mengubah `.env`, jadi pindah ke Brevo (batas harian 3x lebih besar) atau ke paket berbayar bisa dilakukan tanpa mengubah kode.
+
+**Pilihan yang disarankan:** mulai dengan **Resend gratis**, dengan Brevo gratis sebagai cadangan. Kode Laravel tidak terikat penyedia. *Belum diputuskan pemilik.*
 
 ## 7. Jalur kritis dan urutan waktu
 
