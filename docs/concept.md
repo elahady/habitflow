@@ -1310,7 +1310,7 @@ Dibahas 10 Oktober 2026. Butuh tahap 25 (akun, MySQL, Livewire) selesai lebih du
 + di-deploy ke VM. Yang belum: uji end-to-end join dua akun Google sungguhan (lihat catatan
 verifikasi di atas).**
 
-### Tahap 27: Web untuk Follow-up Kerja (selesai dikoding 11 Oktober 2026, Android belum diuji di perangkat)
+### Tahap 27: Web untuk Follow-up Kerja (selesai dikoding dan server di-deploy 11 Oktober 2026, Android belum diuji di perangkat)
 
 Dibahas 10 Oktober 2026. Butuh tahap 25 (akun, MySQL, Livewire) selesai lebih dulu. Bisa
 dikerjakan sebelum atau sesudah tahap 26 — tidak saling bergantung.
@@ -1373,7 +1373,7 @@ dikerjakan sebelum atau sesudah tahap 26 — tidak saling bergantung.
 3. **Android ikut pindah**: follow-up kerja di app fetch/push langsung ke endpoint baru
    (bukan ikut snapshot lagi), tangani respons 409 dengan dialog yang sama seperti web.
 
-   ✅ **Kode selesai (11 Oktober 2026), 308 unit test lulus, belum diuji di HP/emulator dan belum di-deploy:**
+   ✅ **Kode selesai (11 Oktober 2026), 308 unit test lulus, belum diuji di HP/emulator (server sudah di-deploy, lihat di bawah):**
    Pola sama dengan tahap 28 langkah 5 (Room tetap sumber utama, offline-first, sinkron di latar belakang).
    - **Skema (migrasi Room 9 → 10):** `follow_ups` dapat `remoteId`, `remoteUpdatedAt`, `dirty` (baris
      lama otomatis `dirty = 1` supaya ikut terkirim begitu login), dan `conflictJson` (versi server saat
@@ -1400,6 +1400,11 @@ dikerjakan sebelum atau sesudah tahap 26 — tidak saling bergantung.
      yang dikirim. Tautan acara (`eventId`) dikirim apa adanya tapi hanya bermakna di HP.
    - **Belum diverifikasi:** migrasi Room 9 → 10 di perangkat berisi data lama; push/pull end-to-end ke
      server; dialog bentrok di layar (uji: ubah di web, ubah di HP sebelum sinkron, lalu sinkron).
+
+   ✅ **Server di-deploy ke VM (11 Oktober 2026)** lewat `server/DEPLOY.md`: migrasi `follow_ups` jalan tanpa
+   error, container sehat, `/follow-up` mengarahkan ke login (302) dan `/api/v1/follow-ups` tanpa token
+   membalas 401. Yang ikut ter-deploy: halaman web follow-up, API, dan toggle tema terang/gelap (commit
+   `af9cbff`). **Belum:** APK Android versi baru dipasang di HP dan sinkron follow-up diuji end-to-end.
 
 **Selesai jika:**
 - Follow-up kerja bisa di-CRUD penuh dari web, dan HP yang fetch ulang melihat perubahan

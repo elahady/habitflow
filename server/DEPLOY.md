@@ -102,3 +102,13 @@ scp elahady@<ip-vm>:~/apps/habitflow/composer.lock server/composer.lock
 - Folder `storage/framework/sessions`, `storage/framework/views` tidak ada di repo (cuma
   dibuat runtime oleh Laravel) - harus dibuat eksplisit di `Dockerfile` kalau storage
   di-mount sebagai Docker volume kosong.
+
+## Catatan: folder `~/apps/habitflow` di VM berisi sampah (ditemukan 11 Oktober 2026)
+
+Folder `~/apps/habitflow/` di VM berisi sekitar 1.500 file `.dll`/sistem Windows (±1,1 GB,
+tanggal Jul-Sep, folder diubah 10 Oktober 05:04) selain kode aplikasi. Kemungkinan besar sisa
+`tar` yang dijalankan dari folder yang salah (mis. `C:\Windows\System32`) pada deploy
+sebelumnya. Tidak merusak aplikasi (deploy 11 Oktober berjalan normal), tapi membuat konteks
+`docker compose build` jauh lebih besar dan lambat. **Belum dibersihkan** - butuh
+persetujuan dulu karena menghapus file di VM. Pastikan `pwd` adalah `server/` sebelum
+menjalankan `tar` di langkah 1 (cek isi arsip dengan `tar -tzf ... | head`).
