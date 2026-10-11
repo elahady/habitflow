@@ -251,10 +251,9 @@ didahului label kecil tebal (labelMedium, `onSurfaceVariant`, huruf kapital keci
   tautan web.
 
 Layar bisa digulir karena isinya lebih panjang dari layar kecil. Urutan bagian: Tampilan, Waktu dan sholat, Pengingat,
-Kalender, Data dan sinkron, Tentang. *Catatan: "Data tubuh" (tinggi dan target berat) **tidak** ada di Pengaturan menurut
-mockup yang sudah dibuat — itu ada di [Profil](#profil). Ini beda dari rencana di `concept.md` sub-tahap 31I yang sempat
-menyebut Data tubuh masuk Pengaturan; mockup yang sudah digambar dipakai sebagai acuan, `concept.md` perlu diluruskan
-saat 31I dikerjakan.*
+Kalender, Data dan sinkron, Tentang. **"Data tubuh" (tinggi dan target berat) sengaja tidak ada di sini** — diputuskan
+pemilik 11 Oktober 2026 tetap di [Profil](#profil), sesuai mockup yang sudah digambar. Rencana lama di `concept.md`
+sub-tahap 31I yang sempat menyebut Data tubuh pindah ke Pengaturan sudah usang, diperbaiki saat 31I dikerjakan.
 
 ### Profil
 *(Baru, tahap 31. Layar penuh di atas tab, dibuka dari lingkaran inisial di Kepala layar Hari ini, tombol kembali
@@ -274,10 +273,12 @@ menutupnya. Dicatat dari mockup mobile `Profile.dc.html`, 11 Oktober 2026. Tidak
 6. **Tombol Keluar**: `OutlinedButton` selebar layar dengan ikon keluar + label "Keluar".
 7. **Tombol Hapus akun**: `TextButton` warna `error`, dipusatkan, di bawah tombol Keluar.
 8. **Dialog konfirmasi** (`AlertDialog`, sama untuk Keluar dan Hapus akun, judul dan isi berbeda):
-   - Keluar: judul "Keluar dari akun?", isi "Data di HP ini tidak dihapus. Sinkron ke web dan Tugas Rumah berhenti
-     sampai kamu masuk lagi." *(Catatan: isi ini dari mockup dan perlu diperbarui saat 31H dikerjakan — keputusan akhir
-     tahap 31 bilang Keluar justru **menghapus** data lokal, kebalikan dari teks mockup ini. Jangan dikoding sebelum
-     diluruskan.)* Tombol utama `Button` "Keluar", `TextButton` "Batal".
+   - Keluar: judul "Keluar dari akun?", isi **"Semua data di HP ini akan dihapus (habit, to-do, jadwal, kesehatan,
+     pengaturan). Pastikan sudah tersinkron."** — *(Diputuskan pemilik 11 Oktober 2026: ikut keputusan akhir tahap 31,
+     **bukan** teks mockup `Profile.dc.html` yang berbunyi "Data di HP ini tidak dihapus" — teks mockup itu salah dan
+     perlu diperbaiki di artboard saat 31A bagian mockup dikerjakan.)* Kalau ada perubahan belum tersinkron, dialog
+     ini digabung dengan varian "perubahan belum terkirim" (lihat daftar mockup yang belum ada, di bawah) dan
+     menyebut jumlahnya. Tombol utama `Button` "Keluar", `TextButton` "Batal".
    - Hapus akun: judul "Hapus akun?", isi menyebut semua data yang terhapus permanen (habit, to-do, kesehatan,
      follow-up, keanggotaan tim). Tombol utama `Button` warna `error` "Hapus akun permanen", `TextButton` "Batal".
    - *Mockup saat ini belum meminta konfirmasi ulang kata sandi di dialog Hapus akun, padahal kontrak API 31A

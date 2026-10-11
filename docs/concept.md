@@ -1985,17 +1985,17 @@ Status: dokumen selesai (11 Oktober 2026); kontrak API menunggu persetujuan eksp
 - [x] `docs/visi-super-app.md` prinsip 3 dan `README.md` baris 6 diperbarui.
 - [x] `docs/design/README.md`: bagian baru Pengaturan (gantikan Tentang), Profil, dan Masuk/Daftar/Lupa kata sandi ditulis **dari mockup yang sudah ada**
   (`Login.dc.html`, `Register.dc.html`, `Forgot.dc.html`, `Profile.dc.html`, `Settings.dc.html`). Sapaan "tanpa akun" dan "Atur server" dihapus dari dokumen.
-  **Dua temuan penting saat menulis ulang dokumen ini** (belum diperbaiki, cuma dicatat):
-  1. Mockup `Profile.dc.html` dialog Keluar berbunyi "Data di HP ini tidak dihapus" — **bertentangan** dengan keputusan akhir tahap 31 bahwa Keluar justru
-     menghapus semua data lokal. Perlu diluruskan (di mockup atau di keputusan) sebelum 31H/31I dikoding.
-  2. Mockup `Settings.dc.html` **tidak** memuat Data tubuh (ada di `Profile.dc.html` saja) — beda dari rencana baris di bawah ("pindahkan Data tubuh ke
-     Pengaturan"). `docs/design/README.md` mengikuti mockup yang sudah digambar (Data tubuh di Profil); baris rencana di bawah perlu diluruskan.
+  **Dua temuan saat menulis ulang dokumen ini, keduanya sudah diputuskan pemilik 11 Oktober 2026:**
+  1. Mockup `Profile.dc.html` dialog Keluar berbunyi "Data di HP ini tidak dihapus" — bertentangan dengan keputusan akhir tahap 31. **Diputuskan: ikut
+     keputusan tahap 31 (data dihapus)**, teks dialog di `docs/design/README.md` sudah diperbaiki; artboard `Profile.dc.html` masih perlu disunting menyusul.
+  2. Mockup `Settings.dc.html` tidak memuat Data tubuh (ada di `Profile.dc.html` saja). **Diputuskan: Data tubuh tetap di Profil**, tidak dipindah ke
+     Pengaturan — rencana baris di bawah ("pindahkan Data tubuh ke Pengaturan") sudah usang.
   Empat layar/dialog yang belum ada mockup-nya sama sekali (Verifikasi kode, Reset kata sandi lengkap, Sesi berakhir, dialog Keluar dengan perubahan belum
   terkirim) dicatat nilainya sebagai **perkiraan pola**, bukan hasil gambar — lihat `docs/design/README.md` bagian Masuk/Daftar/Lupa kata sandi.
 - [ ] **Kontrak API** (tabel di bawah) disetujui pemilik sebelum server dikoding.
-- [ ] Mockup di artifact: hapus artboard Profil belum masuk dan tombol "Lewati dulu"; pindahkan Data tubuh ke Pengaturan *(cek ulang setelah temuan 2 di atas —
-  mungkin dibiarkan di Profil saja, bukan dipindah)*; tambah artboard Verifikasi kode, Reset kata sandi (kode dan sandi baru), dialog Keluar dengan perubahan
-  belum terkirim, Hapus akun (konfirmasi kata sandi), dan layar "Sesi berakhir". Perbaiki teks dialog Keluar di `Profile.dc.html` (temuan 1 di atas).
+- [ ] Mockup di artifact: hapus artboard Profil belum masuk dan tombol "Lewati dulu"; perbaiki teks dialog Keluar di `Profile.dc.html` jadi "Semua data di HP
+  ini akan dihapus..." (temuan 1); **Data tubuh dibiarkan di Profil, tidak dipindah** (temuan 2, sudah diputuskan); tambah artboard Verifikasi kode, Reset
+  kata sandi (kode dan sandi baru), dialog Keluar dengan perubahan belum terkirim, Hapus akun (konfirmasi kata sandi), dan layar "Sesi berakhir".
 
 **Kontrak API akun** (semua di bawah `/api/v1`, JSON, pesan galat dalam bahasa Indonesia, kode galat di field `code`):
 
