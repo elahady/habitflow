@@ -2201,7 +2201,19 @@ Status: belum dikerjakan. Bergantung pada 31C, 31D, 31J, 31K, 31L.
 - Layanan email mati: pendaftaran tidak macet (antrean) dan pengguna melihat pesan tenang, bukan galat teknis.
 
 #### Belum diputuskan
-**Semua butir di bawah ditandai pemilik pada 11 Oktober 2026 untuk dibahas dan diputuskan pada 12 Oktober 2026. Belum ada yang dijawab, dan tidak ada yang boleh dikoding sebelum diputuskan.** Yang tertahan oleh masing-masing butir:| Butir | Tertahan | Usulan sementara ||---|---|---|| Lokasi backup di luar VM dan pemegang kunci enkripsinya | 31K (dan karena itu 31M) | Belum ada || Kunci app (sidik jari atau PIN) | Tidak menahan tahap 31. Jadi tahap sendiri sesudahnya | Dikerjakan sesudah tahap 31 kalau diinginkan || Web memakai kode atau tautan | 31C | Kode, sama dengan app || Tema tampilan setelah Keluar | 31H | Dipertahankan (preferensi perangkat) || Kapan tabel `api_tokens` dihapus | 31L | Di 31L, setelah semua berjalan || Urutan terhadap tahap 29, 30 (langkah 3-6), dan 32 | Sebelum 31B dimulai | Tahap 30 langkah 3-6 sesudah 31E. Tahap 32 dicek ulang setelah 31B |Rincian tiap butir:
+
+**Semua butir di bawah ditandai pemilik pada 11 Oktober 2026 untuk dibahas dan diputuskan pada 12 Oktober 2026. Belum ada yang dijawab, dan tidak ada yang boleh dikoding sebelum diputuskan.** Yang tertahan oleh masing-masing butir:
+
+| Butir | Tertahan | Usulan sementara |
+|---|---|---|
+| Lokasi backup di luar VM dan pemegang kunci enkripsinya | 31K (dan karena itu 31M) | Belum ada |
+| Kunci app (sidik jari atau PIN) | Tidak menahan tahap 31. Jadi tahap sendiri sesudahnya | Dikerjakan sesudah tahap 31 kalau diinginkan |
+| Web memakai kode atau tautan | 31C | Kode, sama dengan app |
+| Tema tampilan setelah Keluar | 31H | Dipertahankan (preferensi perangkat) |
+| Kapan tabel `api_tokens` dihapus | 31L | Di 31L, setelah semua berjalan |
+| Urutan terhadap tahap 29, 30 (langkah 3-6), dan 32 | Sebelum 31B dimulai | Tahap 30 langkah 3-6 sesudah 31E. Tahap 32 dicek ulang setelah 31B |
+
+Rincian tiap butir:
 
 - **Kunci app (sidik jari atau PIN)** sebagai perlindungan data lokal yang sebenarnya, seperti yang diusulkan Claude di riwayat nomor 6. Tidak dijawab pemilik. Login wajib tidak melindungi data di HP yang tidak terkunci.
   Kalau diinginkan, dikerjakan sebagai tahap sendiri sesudah tahap ini.
