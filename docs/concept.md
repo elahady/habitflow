@@ -2053,7 +2053,7 @@ Status: **kode dan tes selesai (12 Oktober 2026), belum bisa ditutup**: pengirim
 - [x] **Tes Laravel** (`tests/Feature/AccountAuthApiTest.php`, 47 tes): pengambilalihan akun, kode kedaluwarsa, sekali pakai, lima salah menghanguskan, batas kirim
   ulang, kode disimpan sebagai hash, pencabutan sesi untuk semua jalur, jawaban identik untuk email terdaftar dan tidak, login salah, rate limit, Google dan email pada akun
   yang sama, akun lama terverifikasi oleh migrasi. Seluruh suite 134 tes lulus.
-- [ ] **Celah yang dibiarkan sampai 31C:** pendaftaran **web** (`RegisteredUserController`) masih langsung login tanpa verifikasi dan membuat akun belum terverifikasi. Itu tidak membuka celah baru
+- [x] **Celah yang dibiarkan sampai 31C (ditutup di 31C):** pendaftaran **web** (`RegisteredUserController`) masih langsung login tanpa verifikasi dan membuat akun belum terverifikasi. Itu tidak membuka celah baru
   (akun itu bisa diambil alih Google yang sah) tapi berarti web belum memakai alur kode. Dikerjakan di 31C.
 - [ ] Catatan untuk sub-tahap lain: **31D** — tes inventaris skema harus mengenal `email_codes` (hapus saat hapus akun) dan `jobs`/`failed_jobs` (bukan data akun, tapi berisi kode asli sementara).
   **31K** — bersihkan `failed_jobs` berkala dan pantau antrean macet.
@@ -2062,18 +2062,36 @@ Status: **kode dan tes selesai (12 Oktober 2026), belum bisa ditutup**: pengirim
 
 #### 31C. Server: halaman web
 
-Status: belum dikerjakan. Bergantung pada 31B.
+Status: **kode dan tes selesai (12 Oktober 2026), kecuali hapus akun dan teks hukum yang masih menunggu pemilik.** Bergantung pada 31B (kode ✅, email sungguhan belum).
 
-- [ ] Register web memakai alur kode yang sama (halaman `/verifikasi-email`), dengan centang persetujuan kebijakan privasi. Login akun belum terverifikasi diarahkan ke halaman itu.
-- [ ] `/lupa-kata-sandi` dan `/reset-kata-sandi` (kode dan sandi baru), desain mengikuti `docs/design/README.md` seperti halaman Login yang ada.
-- [ ] Dashboard: ubah kata sandi (atau "Buat kata sandi" untuk akun Google), "Keluar dari semua perangkat", dan hapus akun (konfirmasi kata sandi atau Google).
-- [ ] Halaman publik **`/hapus-akun`**: menjelaskan data apa yang dihapus dan kapan, lalu login untuk menghapus, atau untuk yang sudah mencopot app, masuk lewat kode email. URL ini
-  dipakai di Play Console.
-- [ ] Halaman publik **`/kebijakan-privasi`** (HTML, bukan PDF, URL tetap, dan versi bernomor yang dicatat saat persetujuan). Isinya sesuai inventaris data dan syarat di
-  [rilis-play-store.md](rilis-play-store.md) Gerbang C.
-- [ ] Tes Feature untuk setiap halaman dan alurnya.
+- [x] Register web memakai alur kode yang sama (halaman `/verifikasi-email`), dengan centang persetujuan kebijakan privasi (teks menyebut data kesehatan). Daftar tidak langsung masuk; masuk setelah kode benar.
+  Login akun belum terverifikasi (kata sandi benar) tidak masuk, mengirim kode, lalu diarahkan ke halaman itu. Celah 31B ("web belum memakai alur kode") **tertutup**.
+  Aturan akun dipindah ke `AccountService` supaya API dan web memakai batas laju dan kode yang sama.
+- [x] `/lupa-kata-sandi` dan `/reset-kata-sandi` (kode dan sandi baru), memakai kartu yang sama dengan Login. Jawaban sama untuk email terdaftar atau tidak. Reset mencabut semua token API dan semua sesi browser.
+- [x] Halaman **`/akun`** (tautan di nama pengguna di kepala halaman): ubah kata sandi (atau "Buat kata sandi" untuk akun Google), "Keluar dari semua perangkat", dan Hubungkan/Putuskan Google (pindah dari Beranda).
+  **Pemutusan sesi browser sungguhan:** kolom `users.session_epoch` dan middleware `EnsureSessionNotRevoked`. Sebelumnya hanya cookie "ingat saya" yang putus, sedangkan sesi file yang sedang hidup tetap berjalan.
+  Ganti kata sandi di web mempertahankan sesi ini dan mengeluarkan yang lain. Dua penjagaan tambahan yang tidak diminta: **Putuskan Google ditolak kalau akun belum punya kata sandi** (akan terkunci), dan
+  **Hubungkan Google ditolak kalau akun Google itu sudah dipakai akun lain** (sebelumnya galat 500).
+- [ ] **Hapus akun di dashboard (konfirmasi kata sandi atau Google): belum, dikerjakan di 31D** bersama penghapusan menyeluruh. Tombolnya sengaja belum ada daripada menghapus sebagian data.
+- [~] Halaman publik **`/hapus-akun`**: halaman informasi sudah ada (data apa yang dihapus, kapan, dan cara). **Jangan didaftarkan di Play Console sebelum 31D selesai**, karena langkah "Profil lalu Hapus akun" dan
+  "halaman Akun lalu Hapus akun" yang disebutnya belum ada. Jalur "masuk lewat kode email untuk yang sudah mencopot app" juga belum ada: teks sekarang menyuruh masuk di web dengan akun yang sama
+  dan memberi alamat email kontak. Kalau pemilik mau jalur kode email yang sungguhan, itu dikerjakan di 31D.
+- [~] Halaman publik **`/kebijakan-privasi`** (HTML, URL tetap, versi bernomor dari `PRIVACY_POLICY_VERSION`, tanggal dari `PRIVACY_POLICY_EFFECTIVE`, persetujuan mencatat versinya) **ditulis dari inventaris data oleh Claude, belum ditinjau pemilik.**
+  **Harus dibaca dan disetujui pemilik sebelum rilis.** Bagian yang saya isi dengan asumsi dan harus diperiksa:
+  1. **Kontak:** diambil dari `PRIVACY_CONTACT_EMAIL` (kosong di `.env.example`). Kalau kosong, halaman tidak menampilkan kontak, jadi Gerbang C belum terpenuhi sampai diisi.
+  2. **Lokasi server:** ditulis "server milik pengelola di rumah pengelola di Indonesia". Betulkan kalau tidak persis begitu.
+  3. **Cadangan 30 hari terenkripsi di penyimpanan terpisah (Cloudflare R2):** itu **rencana 31K, belum ada**. Kalimatnya baru benar setelah 31K selesai.
+  4. **Penghapusan langsung dan permanen:** baru benar setelah 31D.
+  5. **"Tidak ditujukan untuk anak di bawah 13 tahun":** angka itu saya pilih sendiri, bukan keputusan pemilik.
+  6. Pihak ketiga yang disebut: Google, Resend (Brevo cadangan), Cloudflare. Tambahkan kalau ada lagi.
+  7. Rujukan UU PDP (pemberitahuan 3 x 24 jam) dari dokumen rilis, **bukan nasihat hukum**. Untuk rilis publik sebaiknya dibaca orang yang paham hukum.
+  Prosedur kebocoran data (Gerbang C butir 4) **belum ditulis**, itu 31K.
+- [x] Tes Feature (`tests/Feature/AccountWebTest.php`, 39 tes): daftar dengan dan tanpa persetujuan, verifikasi (benar, salah, kedaluwarsa, sekali pakai, laju), masuk (belum terverifikasi, salah, dikunci), lupa dan reset,
+  halaman Akun, ganti kata sandi, pemutusan sesi, halaman publik tanpa login, dan Google di web (akun baru, pengambilalihan, email belum diverifikasi, tabrakan, putuskan). Seluruh suite 173 tes lulus.
+  **Belum dilihat di browser:** tampilan halaman baru (kode 6 digit, kartu Akun, halaman hukum) hanya diuji lewat HTML, belum dilihat mata.
 
-**Selesai jika:** pemilik bisa daftar, verifikasi, reset kata sandi, dan menghapus akun uji dari browser, dan `/hapus-akun` serta `/kebijakan-privasi` terbuka tanpa login.
+**Selesai jika:** pemilik bisa daftar, verifikasi, reset kata sandi, dan menghapus akun uji dari browser (**hapus akun belum, 31D**), dan `/hapus-akun` serta `/kebijakan-privasi` terbuka tanpa login (✅).
+Daftar, verifikasi, dan reset dari browser baru bisa dicoba nyata setelah email sungguhan hidup (31B).
 
 #### 31D. Server: hapus akun menyeluruh dan penjaga skema
 
