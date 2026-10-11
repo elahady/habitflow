@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\FollowUpController;
 use App\Http\Controllers\Api\GoogleAuthController;
 use App\Http\Controllers\Api\HabitController;
+use App\Http\Controllers\Api\ScheduleBlockController;
 use App\Http\Controllers\Api\TeamController;
 use App\Http\Controllers\Api\TeamTodoController;
 use App\Http\Controllers\Api\TodoController;
@@ -55,4 +56,13 @@ Route::prefix('v1')->middleware(['user-token', 'throttle:habitflow'])->group(fun
     Route::post('follow-ups', [FollowUpController::class, 'store']);
     Route::put('follow-ups/{followUp}', [FollowUpController::class, 'update']);
     Route::delete('follow-ups/{followUp}', [FollowUpController::class, 'destroy']);
+});
+
+// Jadwal harian (tahap 29) - per user, PUT dicek konfliknya (409). Hanya blok; waktu sholat
+// tidak dihitung di server (mekanisme untuk web belum diputuskan).
+Route::prefix('v1')->middleware(['user-token', 'throttle:habitflow'])->group(function () {
+    Route::get('schedule-blocks', [ScheduleBlockController::class, 'index']);
+    Route::post('schedule-blocks', [ScheduleBlockController::class, 'store']);
+    Route::put('schedule-blocks/{scheduleBlock}', [ScheduleBlockController::class, 'update']);
+    Route::delete('schedule-blocks/{scheduleBlock}', [ScheduleBlockController::class, 'destroy']);
 });
