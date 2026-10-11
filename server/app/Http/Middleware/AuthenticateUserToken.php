@@ -43,6 +43,7 @@ class AuthenticateUserToken
             $token->forceFill(['last_used_at' => now()])->save();
         }
 
+        $request->attributes->set('user_token', $token);
         $request->setUserResolver(fn () => $token->user);
 
         return $next($request);

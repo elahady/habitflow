@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use App\Models\UserToken;
+use App\Services\GoogleAccountLinker;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -18,9 +18,13 @@ use Illuminate\Validation\ValidationException;
  */
 class GoogleAuthController extends Controller
 {
-    public function login(Request $request): JsonResponse
+    public function login(Request $request, GoogleAccountLinker $linker): JsonResponse
     {
-        $request->validate(['id_token' => ['required', 'string']]);
+        $request->validate([
+            'id_token' => ['required', 'string'],
+            'device_name' => ['nullable', 'string', 'max:100'],
+            'privacy_policy_version' => ['nullable', 'string', 'max:32'],
+        ]);
 
         $response = Http::get('https://oauth2.googleapis.com/tokeninfo', [
             'id_token' => $request->string('id_token'),
@@ -41,25 +45,20 @@ class GoogleAuthController extends Controller
             throw ValidationException::withMessages(['id_token' => 'Email Google belum diverifikasi.']);
         }
 
-        $user = User::updateOrCreate(
-            ['google_sub' => $claims['sub']],
-            [
-                'email' => $claims['email'],
-                'name' => $claims['name'] ?? $claims['email'],
-                'avatar' => $claims['picture'] ?? null,
-            ]
+        // Aturan penautan (termasuk pengambilalihan akun email yang belum terverifikasi) ada di linker.
+        $user = $linker->resolve(
+            $claims['sub'],
+            $claims['email'],
+            $claims['name'] ?? $claims['email'],
+            $claims['picture'] ?? null,
+            $request->input('privacy_policy_version'),
         );
 
-        [, $plain] = UserToken::issue($user, 'android');
+        [, $plain] = UserToken::issue($user, $request->input('device_name', 'android'));
 
-        return response()->json([
-            'token' => $plain,
-            'user' => [
-                'id' => $user->id,
-                'email' => $user->email,
-                'name' => $user->name,
-                'avatar' => $user->avatar,
-            ],
-        ]);
+        $account = $user->toAccount();
+
+        // `user` dipertahankan untuk app yang sudah terpasang (membaca "user"); kontrak 31A memakai `account`.
+        return response()->json(['token' => $plain, 'account' => $account, 'user' => $account]);
     }
 }

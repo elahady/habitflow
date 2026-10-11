@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
+use App\Services\GoogleAccountLinker;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
@@ -25,7 +25,7 @@ class GoogleAuthController extends Controller
         return Socialite::driver('google')->redirect();
     }
 
-    public function callback(): RedirectResponse
+    public function callback(GoogleAccountLinker $linker): RedirectResponse
     {
         $googleUser = Socialite::driver('google')->user();
 
@@ -38,22 +38,17 @@ class GoogleAuthController extends Controller
             return redirect()->route('dashboard')->with('status', 'Akun Google terhubung.');
         }
 
-        $user = User::where('google_sub', $googleUser->getId())->first()
-            ?? User::where('email', $googleUser->getEmail())->first();
-
-        if ($user) {
-            $user->forceFill([
-                'google_sub' => $googleUser->getId(),
-                'avatar' => $googleUser->getAvatar(),
-            ])->save();
-        } else {
-            $user = User::create([
-                'google_sub' => $googleUser->getId(),
-                'email' => $googleUser->getEmail(),
-                'name' => $googleUser->getName(),
-                'avatar' => $googleUser->getAvatar(),
-            ]);
+        // Hanya email yang dinyatakan terverifikasi oleh Google yang boleh menaut atau mengambil alih akun.
+        if (! filter_var($googleUser->user['email_verified'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
+            return redirect()->route('login')->withErrors(['email' => 'Email Google belum diverifikasi.']);
         }
+
+        $user = $linker->resolve(
+            $googleUser->getId(),
+            $googleUser->getEmail(),
+            (string) $googleUser->getName(),
+            $googleUser->getAvatar(),
+        );
 
         Auth::login($user, remember: true);
 

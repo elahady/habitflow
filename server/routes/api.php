@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Api\AccountController;
+use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\FollowUpController;
 use App\Http\Controllers\Api\GoogleAuthController;
 use App\Http\Controllers\Api\HabitController;
@@ -19,8 +21,25 @@ Route::prefix('v1')->middleware(['token', 'throttle:habitflow'])->group(function
 });
 
 // Login Google (tahap 25) - tukar ID token Google dengan token API per-user.
+// Akun email dan kata sandi (tahap 31B): daftar, verifikasi kode, masuk, lupa dan atur ulang kata sandi.
+// Batas laju khusus tiap jalur ada di AuthController dan EmailCodeService.
 Route::prefix('v1')->middleware('throttle:habitflow')->group(function () {
     Route::post('auth/google', [GoogleAuthController::class, 'login']);
+
+    Route::post('auth/register', [AuthController::class, 'register']);
+    Route::post('auth/verify-email', [AuthController::class, 'verifyEmail']);
+    Route::post('auth/resend-verification', [AuthController::class, 'resendVerification']);
+    Route::post('auth/login', [AuthController::class, 'login']);
+    Route::post('auth/forgot-password', [AuthController::class, 'forgotPassword']);
+    Route::post('auth/reset-password', [AuthController::class, 'resetPassword']);
+});
+
+// Sesi dan akun yang sedang masuk (tahap 31B).
+Route::prefix('v1')->middleware(['user-token', 'throttle:habitflow'])->group(function () {
+    Route::post('auth/logout', [AuthController::class, 'logout']);
+    Route::post('auth/logout-all', [AuthController::class, 'logoutAll']);
+    Route::get('me', [AccountController::class, 'show']);
+    Route::put('account/password', [AccountController::class, 'updatePassword']);
 });
 
 // To-Do Tim (tahap 26) - butuh login Google dulu (UserToken), beda dari token 19B di atas.
