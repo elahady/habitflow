@@ -1762,6 +1762,132 @@ menampilkan angka. Android menampilkannya di dashboard Hari ini, web di `/dashbo
 
 **Status (11 Oktober 2026):** langkah 1 dan 2 selesai. `domain/health/Focus.kt` dengan `FocusTest` (lulus), kartu `FocusCard` di Hari ini, dan seluruh layar Hari ini disesuaikan dengan mockup mobile (kepala sapaan, Sekarang/Berikutnya dua kolom, Berat/Tensi/Langkah bergaya baru, kemajuan Habit/To-do, ikon tab bawah; nilai desain di `docs/design/README.md`). Terpasang dan terlihat di HP fisik; **belum diuji tiap aturan lewat data nyata di HP** (hanya kondisi "di jalur" yang terlihat). Teks fokus (judul, kalimat, alasan) ada di `ui/FocusCard.kt`, belum dikirim ke server. Langkah 3-6 (server, kirim dari Android, web, verifikasi) belum dikerjakan.
 
+### Tahap 31: Login Wajib (diputuskan 11 Oktober 2026, belum dikoding)
+
+Keputusan pemilik (11 Oktober 2026): **untuk memakai app, pengguna harus login.** Ini membalik asumsi dasar yang dipakai sejak
+tahap 1 ("offline dan lokal, tanpa akun") dan yang masih tertulis di beberapa dokumen dan kode. Perubahannya menyentuh banyak
+bagian, jadi dikerjakan sebagai satu tahap sendiri supaya tidak ada yang tertinggal setengah. App akan diunggah ke Play Store.
+
+Mockup (artboard Masuk, Daftar, Lupa kata sandi, Profil, Pengaturan): https://claude.ai/artifact/TWJ8Uus2hKtQQa81wKujG5
+
+**Keputusan (sudah diputuskan pemilik):**
+
+| Pertanyaan | Keputusan |
+|---|---|
+| Aturan | Tanpa login, app tidak bisa dipakai. Layar Masuk menjadi gerbang di depan semua layar |
+| Cara masuk | **Email dan kata sandi, plus Google**, sama seperti web (tahap 25). Berarti API Android tidak lagi Google-only |
+| Layar baru | Masuk, Daftar, Lupa kata sandi (tombol "Lewati dulu" di mockup dihapus) |
+| Tab Tentang | Diganti **Pengaturan** (ikon roda gigi). Versi dan "Dibuat oleh" turun ke bagian Tentang paling bawah |
+| Lingkaran profil di Hari ini | Membuka halaman **Profil** (layar penuh di atas tab, bukan tab ketujuh): data akun, sinkron, Keluar, Hapus akun |
+| Halaman Profil belum masuk | **Tidak ada**, karena tidak ada keadaan "belum masuk" lagi |
+
+**Usulan (belum diputuskan, ditandai agar dikoreksi sebelum dikoding):**
+
+| Pertanyaan | Usulan | Alasan |
+|---|---|---|
+| Offline setelah login | **Tetap bisa.** Room tetap sumber data harian, sesi login disimpan di HP. Internet hanya dibutuhkan untuk login pertama | Prinsip "catat dalam 2 detik" dan hasil tahap 28 tidak dibuang. Login wajib mengubah siapa yang boleh memakai app, bukan cara app menyimpan data |
+| Keluar | **Menghapus semua data lokal** (database, pengaturan, cache) dan menghentikan alarm, notifikasi, serta worker | Login wajib berarti HP bisa dipakai akun lain. Data akun sebelumnya tidak boleh tersisa |
+| Keluar saat ada perubahan belum terkirim | Cek dulu, tampilkan jumlahnya, dan minta konfirmasi. Tanpa internet: peringatan keras bahwa perubahan itu akan hilang | Menghapus data lokal berarti perubahan yang belum tersinkron hilang permanen |
+| Data lama di HP (sebelum tahap ini) | **Diambil alih akun pertama yang login** di pemasangan itu, sekali saja. Selanjutnya data milik akun itu | Pemasangan yang punya data lama kemungkinan hanya HP pemilik (dan mungkin HP istri sebagai penguji), belum ada pengguna lain. Jalur gabung yang sudah ada (tahap 28 dan 27) dipakai ulang |
+| Snapshot 19B | **Pindah ke akun**: `PUT /snapshot` dan `GET /snapshot/latest` memakai `user-token`, snapshot terikat ke user. Token per-HP (`api_tokens`) dipensiunkan, dan snapshot lama diklaim ke akun pemilik lewat satu migrasi | Dua sistem login (token per-HP dan akun) tidak boleh hidup bersamaan. Data yang belum dimigrasi (jadwal, kesehatan, makan, kalender, pengaturan, EOD) masih hanya ada di snapshot |
+| "Atur server" dan token di Tentang | **Dihapus.** Alamat server menjadi konfigurasi build | Pengguna Play Store tidak mengisi alamat server dan token. Itu alat pengembang |
+| Sesi | Token API tidak kedaluwarsa sendiri, hanya bisa dicabut (Keluar, ganti kata sandi, atau dari web). Kalau server menjawab 401, app kembali ke layar Masuk setelah data lokal aman (lihat Edge case) | Sekarang `user_tokens` tidak punya masa berlaku |
+| Auto Backup Android | **Keluarkan `habitflow.db` dan `settings.xml`** dari `backup_rules.xml` dan `data_extraction_rules.xml` | Server sekarang cadangannya. Kalau tidak, database akun lama bisa dipulihkan ke HP baru lalu diambil alih akun lain |
+| Hapus akun | **Wajib ada**, di app (Profil) dan di web (tautan yang bisa dibuka tanpa app) | Syarat Google Play untuk app yang punya pembuatan akun |
+
+**Bagian yang harus berubah (hasil penelusuran 11 Oktober 2026):**
+
+*Dokumen*
+- `docs/concept.md`: Prinsip kerja nomor 4 ("Tidak ada akun, server, atau sinkronisasi di versi ini"). Tahap 19B (baris Sifat app dan
+  Login: token pribadi tanpa akun). Tahap 25 (baris "API Android tetap Google-only"). Bagian Arah baru ("Token per-HP tanpa akun
+  tetap ada"). Tahap 27 (snapshot 19B "Belum login tetap ikut, supaya follow-up tanpa akun tetap tercadangkan"). Tahap 26
+  (teks "Masuk dengan Google dulu untuk bisa bergabung"). Tahap 28 dan 29 (peta migrasi dan sifat offline). Tahap 30 (langkah 4
+  kirim ke server sekarang pasti terjadi karena pasti ada akun). Edge case baru di bawah.
+- `docs/visi-super-app.md`: Prinsip nomor 3 ("Offline dulu... HP adalah sumber data. Data disinkron ke server sendiri untuk backup").
+- `docs/rancangan.md`: bagian Sinkron ke server (token pribadi, "Tanpa akun", Pulihkan manual di Tentang), bagian Data ("Tidak ada
+  akun. Cadangan opsional"), Di luar versi ini, dan bagian Daily scrum yang dibatalkan ("Tidak ada akun dan tidak ada sinkron").
+  Aturan baru Login wajib ditulis di sini lebih dulu.
+- `docs/design/README.md`: layar Tentang (enam bagian, termasuk Akun dan Sinkron ke server dengan dialog "Atur server"), daftar
+  tab, sapaan "tanpa akun hanya sapaan" di Hari ini, `SignInPrompt` di layar Tugas Rumah. Layar baru: Masuk, Daftar, Lupa kata
+  sandi, Profil, Pengaturan.
+- `README.md` baris 6: "Data disimpan lokal di perangkat, tanpa akun dan tanpa internet."
+
+*Android*
+- `MainActivity` dan `HabitFlowApp`: gerbang sesi. Belum login hanya menampilkan layar Masuk. Link undangan tim
+  (`pendingInviteToken`) harus bertahan melewati layar Masuk lalu diproses setelah login.
+- `HabitFlowApplication`: `syncScheduler`, `habitSyncScheduler`, `teamPollScheduler`, `StepsWorker.ensureScheduled`, dan
+  `keepNotificationsInSync` jalan sebelum ada login. Semuanya baru boleh hidup setelah login dan dihentikan saat keluar.
+  `AndroidManifest`: receiver `BOOT_COMPLETED` tidak boleh menjadwalkan alarm kalau belum ada sesi.
+- `AccountManager`, `AccountClient`, `AccountSettings`: tambah login dan daftar email, lupa dan ubah kata sandi, keluar yang mencabut
+  token di server, dan penanganan 401.
+- `AccountSection` dan bagian Akun di `AboutScreen`: dipindah ke halaman Profil. `AboutScreen` menjadi Pengaturan dengan bagian
+  Data tubuh (tinggi dan target berat dari `HealthSettings`).
+- `SyncSection`, `SyncViewModel`, `SyncSettings` (alamat dan token), `SyncScheduler`, `SyncManager` (`followUpsOnAccount`),
+  `Snapshot.followUpsOmitted`: sistem 19B pindah ke akun, UI "Atur server" dan token dihapus, cabang "belum login" dihapus.
+- `TeamScreen` (`SignInPrompt`, dialog undangan "Masuk dengan Google dulu") dan `TeamViewModel` (`account == null`): cabang belum
+  login dihapus.
+- `WorkRepository` dan sinkron habit (`HabitSyncManager`, `HabitSyncScheduler`): jalur "belum login" dan "gagal diam-diam karena belum
+  login" tidak lagi ada. Perlu jalur "ambil alih data lama" dan "hapus semua data lokal".
+- `res/xml/backup_rules.xml` dan `data_extraction_rules.xml`: keluarkan database dan pengaturan.
+- Build debug: alur uji lewat adb (receiver debug di `src/debug`) butuh cara masuk tanpa mengetik, misalnya receiver debug yang
+  memasang sesi uji.
+
+*Server (`server/`)*
+- Endpoint API baru di samping `POST auth/google`: `auth/register`, `auth/login` (rate limit seperti web: 5 gagal per menit),
+  `auth/logout` (cabut token), `auth/forgot-password`, `PUT account/password`, `DELETE account`, dan `GET me`.
+- Web belum punya: lupa kata sandi (butuh pengiriman email, belum ada layanan email di VM), ubah kata sandi, dan hapus akun beserta
+  halaman publiknya.
+- `routes/api.php`: `PUT /snapshot` dan `GET /snapshot/latest` pindah dari middleware `token` ke `user-token`. `api_tokens`,
+  `AuthenticateToken`, dan perintah artisan pembuat token dipensiunkan setelah migrasi snapshot lama.
+- Google-only user (kolom `password` kosong) perlu jalur "buat kata sandi".
+
+*Rilis Play Store*
+- Kebijakan privasi (sudah ada di roziqrizal.com) harus menyebut data kesehatan (berat, tensi, langkah) dan penghapusan akun.
+- Formulir Data safety dan deklarasi Health Connect di Play Console. Akun uji untuk peninjau Google.
+
+**Langkah bangun** (urutan disarankan; tiap langkah satu commit atau lebih, dan catat statusnya di sini):
+
+1. **Dokumen.** Tulis aturan Login wajib di `rancangan.md`, perbarui semua dokumen di atas, dan catatan desain layar baru di
+   `docs/design/README.md` lebih dulu.
+2. **Server: auth API.** Endpoint email di atas, pencabutan token, tes Laravel (login salah, rate limit, daftar email sudah dipakai,
+   Google dan email pada akun yang sama).
+3. **Server: web.** Lupa dan ubah kata sandi, hapus akun, halaman hapus akun yang bisa dibuka tanpa app. Putuskan layanan email.
+4. **Server: snapshot ke akun.** Migrasi `snapshots` dan `api_tokens` ke user, klaim data lama ke akun pemilik, middleware diganti.
+5. **Android: gerbang dan layar auth.** Masuk, Daftar, Lupa kata sandi, penanganan 401, link undangan melewati login.
+6. **Android: siklus hidup sesi.** Semua latar belakang (alarm, notifikasi, worker, boot receiver) hanya hidup selama ada sesi.
+7. **Android: Keluar dan data lama.** Cek perubahan belum terkirim, hapus data lokal, ambil alih data lama saat login pertama, dan uji
+   ganti akun di HP yang sama.
+8. **Android: Pengaturan dan Profil.** Ganti Tentang, halaman Profil, Data tubuh, hapus UI "Atur server" dan token, keluarkan backup
+   Android.
+9. **Hapus akun dan rilis.** Hapus akun di app dan web, kebijakan privasi, Data safety.
+10. **Verifikasi di HP fisik** dan catat hasilnya di sini.
+
+**Selesai jika:**
+- Pada pemasangan baru, tidak ada layar app yang bisa dibuka sebelum login, dan tidak ada alarm, notifikasi, atau worker yang jalan.
+- Login email, daftar email, dan Google semuanya berhasil, dan akun yang sama lewat Google dan email tidak menjadi dua akun.
+- Setelah login, app tetap bisa dipakai tanpa internet, dan perubahan terkirim saat online lagi.
+- Keluar menghapus semua data lokal, dan login akun lain di HP yang sama tidak menampilkan data akun sebelumnya.
+- Data HP pemilik yang sudah ada sebelum tahap ini terambil alih ke akun pemilik tanpa kehilangan, dan snapshot lama bisa dipulihkan.
+- Tidak ada lagi UI atau kode yang meminta alamat server atau token di app.
+- Akun bisa dihapus dari app dan dari web, dan semua data di server ikut terhapus.
+
+**Edge case baru yang harus diuji:**
+- Login di HP yang masih memegang data akun lain (misalnya dari cadangan Android atau pembaruan dari versi lama).
+- Token dicabut dari web atau perangkat lain saat app sedang dipakai. Perubahan lokal yang belum terkirim tidak boleh hilang diam-diam.
+- Hari pertama tanpa internet: layar Masuk menjelaskan bahwa login butuh internet.
+- Link undangan tim dibuka saat belum login, lalu login dengan akun yang berbeda dari yang diundang.
+- Keluar saat ada perubahan belum terkirim, dengan dan tanpa internet.
+- Pengguna yang daftar lewat Google lalu mencoba masuk dengan email dan kata sandi (akun belum punya kata sandi).
+- Memulihkan snapshot lama pada akun yang sudah punya data di server (tahap 27 sudah punya batasan "dobel").
+- Alarm Subuh yang sudah terjadwal saat sesi berakhir: harus dibatalkan, tidak berbunyi sendiri.
+
+**Belum diputuskan:**
+- Apakah usulan di tabel di atas disetujui, terutama "Keluar menghapus data lokal" dan "offline tetap bisa setelah login".
+- Verifikasi email saat daftar (mencegah daftar dengan email orang lain). Butuh layanan email yang sama dengan lupa kata sandi.
+- Layanan pengiriman email (lupa kata sandi dan verifikasi): belum ada di VM.
+- Masa berlaku sesi. Usulan: tidak kedaluwarsa. Alternatif: kedaluwarsa 90 hari tanpa dipakai.
+- Urutan terhadap tahap 29 dan 30. Tahap 30 langkah 3-6 (kirim ke server) bisa lebih sederhana kalau dikerjakan setelah tahap ini.
+
 ## Daftar pertanyaan terbuka
 
 - Urutan habit bisa diubah atau tidak (tahap 9, opsional).
