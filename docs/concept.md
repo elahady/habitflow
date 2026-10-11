@@ -1975,7 +1975,9 @@ kolom, atau izin berubah.
 
 #### 31A. Dokumen, kontrak API, dan mockup
 
-Status: dokumen selesai (11 Oktober 2026); kontrak API menunggu persetujuan eksplisit; mockup di artifact belum disentuh.
+Status: dokumen dan kontrak API selesai (11 Oktober 2026). Mockup di artifact **sengaja ditunda** (diputuskan pemilik
+11 Oktober 2026) — tidak menahan 31B, dikerjakan kapan saja sebelum 31G (Android: gerbang dan layar auth) butuh
+acuan layarnya.
 
 - [x] `docs/rancangan.md`: bagian baru **Akun dan login (tahap 31)** ditulis (login wajib, cara masuk, verifikasi, sesi, Keluar, hapus akun, data lama, tim).
   Bagian Sinkron ke server, Data, Di luar versi ini, dan catatan Daily scrum diperbarui dengan catatan "digantikan tahap 31".
@@ -1992,10 +1994,11 @@ Status: dokumen selesai (11 Oktober 2026); kontrak API menunggu persetujuan eksp
      Pengaturan — rencana baris di bawah ("pindahkan Data tubuh ke Pengaturan") sudah usang.
   Empat layar/dialog yang belum ada mockup-nya sama sekali (Verifikasi kode, Reset kata sandi lengkap, Sesi berakhir, dialog Keluar dengan perubahan belum
   terkirim) dicatat nilainya sebagai **perkiraan pola**, bukan hasil gambar — lihat `docs/design/README.md` bagian Masuk/Daftar/Lupa kata sandi.
-- [ ] **Kontrak API** (tabel di bawah) disetujui pemilik sebelum server dikoding.
-- [ ] Mockup di artifact: hapus artboard Profil belum masuk dan tombol "Lewati dulu"; perbaiki teks dialog Keluar di `Profile.dc.html` jadi "Semua data di HP
-  ini akan dihapus..." (temuan 1); **Data tubuh dibiarkan di Profil, tidak dipindah** (temuan 2, sudah diputuskan); tambah artboard Verifikasi kode, Reset
-  kata sandi (kode dan sandi baru), dialog Keluar dengan perubahan belum terkirim, Hapus akun (konfirmasi kata sandi), dan layar "Sesi berakhir".
+- [x] **Kontrak API** (tabel di bawah) disetujui pemilik apa adanya, 11 Oktober 2026.
+- [ ] Mockup di artifact (**ditunda**, tidak menahan 31B): hapus artboard Profil belum masuk dan tombol "Lewati dulu"; perbaiki teks dialog Keluar di
+  `Profile.dc.html` jadi "Semua data di HP ini akan dihapus..." (temuan 1); **Data tubuh dibiarkan di Profil, tidak dipindah** (temuan 2, sudah diputuskan);
+  tambah artboard Verifikasi kode, Reset kata sandi (kode dan sandi baru), dialog Keluar dengan perubahan belum terkirim, Hapus akun (konfirmasi kata sandi),
+  dan layar "Sesi berakhir".
 
 **Kontrak API akun** (semua di bawah `/api/v1`, JSON, pesan galat dalam bahasa Indonesia, kode galat di field `code`):
 
@@ -2017,7 +2020,9 @@ Status: dokumen selesai (11 Oktober 2026); kontrak API menunggu persetujuan eksp
 `account` berisi `id`, `name`, `email`, `avatar`. Aturan kata sandi (diputuskan pemilik 11 Oktober 2026): minimal 8 karakter, dan ditolak kalau ada di daftar kata sandi paling umum. Tanpa autentikasi dua langkah di tahap ini.
 Tidak ada endpoint yang membedakan "email tidak terdaftar" dari "terdaftar" selain register yang sudah dijelaskan.
 
-**Selesai jika:** tidak ada dokumen yang masih menyatakan "tanpa akun", kontrak API disetujui pemilik, dan mockup mencerminkan keputusan terbaru.
+**Selesai jika:** tidak ada dokumen yang masih menyatakan "tanpa akun" (✅, 11 Oktober 2026), kontrak API disetujui
+pemilik (✅, 11 Oktober 2026), dan mockup mencerminkan keputusan terbaru (**ditunda**, dikerjakan sebelum 31G butuh
+acuan layarnya — lihat status di atas).
 
 #### 31B. Server: akun, verifikasi email, reset kata sandi (API)
 
