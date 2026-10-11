@@ -50,10 +50,16 @@ class User extends Authenticatable
         $this->tokens()->when($exceptTokenId, fn ($q) => $q->where('id', '!=', $exceptTokenId))->delete();
     }
 
-    /** Putuskan sesi web "ingat saya" juga: cookie lama tidak cocok lagi dengan remember_token baru. */
-    public function rotateRememberToken(): void
+    /**
+     * Putuskan semua sesi browser: cookie "ingat saya" lama tidak cocok lagi dengan remember_token
+     * baru, dan sesi yang sedang hidup ditolak oleh EnsureSessionNotRevoked karena session_epoch naik.
+     */
+    public function revokeWebSessions(): void
     {
-        $this->forceFill(['remember_token' => Str::random(60)])->save();
+        $this->forceFill([
+            'remember_token' => Str::random(60),
+            'session_epoch' => $this->session_epoch + 1,
+        ])->save();
     }
 
     public function tokens(): HasMany

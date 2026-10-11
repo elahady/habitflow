@@ -3,28 +3,23 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\EmailCode;
 use App\Models\User;
 use App\Models\UserToken;
 use App\Rules\StrongPassword;
+use App\Services\AccountService;
 use App\Services\EmailCodeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\RateLimiter;
 
 /**
  * Akun email dan kata sandi untuk app Android (tahap 31B, kontrak di docs/concept.md 31A).
  * Pesan galat bahasa Indonesia dengan kode di field `code`. Jawaban tidak membedakan email
  * terdaftar atau tidak, kecuali register (yang memang harus bilang email sudah dipakai).
+ * Aturannya ada di AccountService, dipakai bersama halaman web.
  */
 class AuthController extends Controller
 {
-    private const LOGIN_IP_MAX = 5;
-
-    private const LOGIN_EMAIL_MAX = 10;
-
-    public function __construct(private EmailCodeService $codes) {}
+    public function __construct(private AccountService $accounts) {}
 
     public function register(Request $request): JsonResponse
     {
@@ -34,28 +29,14 @@ class AuthController extends Controller
             'password' => ['required', 'string', 'confirmed', new StrongPassword],
             'privacy_policy_version' => ['required', 'string', 'in:'.config('habitflow.privacy_policy_version')],
         ]);
-        $email = $this->normalizeEmail($data['email']);
 
-        $user = User::where('email', $email)->first();
+        $user = $this->accounts->register($data['name'], $data['email'], $data['password'], $data['privacy_policy_version']);
 
-        if ($user?->hasVerifiedEmail()) {
+        if (! $user) {
             return $this->error('email_taken', 'Email ini sudah terdaftar. Silakan masuk.', 422);
         }
 
-        // Email ada tapi belum terverifikasi: pendaftar terbaru yang memegang email itu berhak,
-        // jadi nama dan kata sandi diperbarui lalu kode dikirim ulang (kode lama hangus).
-        $user ??= new User(['email' => $email]);
-        $user->fill(['name' => $data['name'], 'password' => $data['password']]);
-        $user->forceFill([
-            'privacy_consented_at' => now(),
-            'privacy_policy_version' => $data['privacy_policy_version'],
-        ])->save();
-
-        if ($this->codes->allowSend($email, 'verify', 5)) {
-            $this->codes->issue($user, EmailCode::PURPOSE_VERIFY);
-        }
-
-        return response()->json(['status' => 'verification_required', 'email' => $email], 201);
+        return response()->json(['status' => 'verification_required', 'email' => $user->email], 201);
     }
 
     public function verifyEmail(Request $request): JsonResponse
@@ -65,22 +46,17 @@ class AuthController extends Controller
             'code' => ['required', 'string'],
             'device_name' => ['required', 'string', 'max:100'],
         ]);
-        $email = $this->normalizeEmail($data['email']);
+        $email = $this->accounts->normalizeEmail($data['email']);
 
-        if ($tooMany = $this->tooManyCodeAttempts('verify', $request, $email)) {
-            return $tooMany;
+        if ($wait = $this->accounts->codeAttemptWait('verify', $request->ip(), $email)) {
+            return $this->tooMany($wait);
         }
 
-        $user = User::where('email', $email)->first();
-        $result = $user && ! $user->hasVerifiedEmail()
-            ? $this->codes->verify($user, EmailCode::PURPOSE_VERIFY, $data['code'])
-            : EmailCodeService::INVALID;
+        [$result, $user] = $this->accounts->verifyEmail($email, $data['code']);
 
         if ($result !== EmailCodeService::OK) {
             return $this->codeError($result);
         }
-
-        $user->forceFill(['email_verified_at' => now()])->save();
 
         return $this->issueSession($user, $data['device_name']);
     }
@@ -88,12 +64,8 @@ class AuthController extends Controller
     public function resendVerification(Request $request): JsonResponse
     {
         $data = $request->validate(['email' => ['required', 'string', 'email']]);
-        $email = $this->normalizeEmail($data['email']);
 
-        $user = User::where('email', $email)->first();
-        if ($user && ! $user->hasVerifiedEmail() && $this->codes->allowSend($email, 'verify', 5)) {
-            $this->codes->issue($user, EmailCode::PURPOSE_VERIFY);
-        }
+        $this->accounts->sendVerification(User::where('email', $this->accounts->normalizeEmail($data['email']))->first());
 
         return response()->json(['status' => 'accepted'], 202);
     }
@@ -105,47 +77,22 @@ class AuthController extends Controller
             'password' => ['required', 'string'],
             'device_name' => ['required', 'string', 'max:100'],
         ]);
-        $email = $this->normalizeEmail($data['email']);
 
-        $ipKey = 'login-fail:ip:'.$request->ip();
-        $emailKey = 'login-fail:email:'.$email;
-        if (RateLimiter::tooManyAttempts($ipKey, self::LOGIN_IP_MAX) || RateLimiter::tooManyAttempts($emailKey, self::LOGIN_EMAIL_MAX)) {
-            return $this->tooMany(max(RateLimiter::availableIn($ipKey), RateLimiter::availableIn($emailKey)));
-        }
+        [$status, $detail] = $this->accounts->checkLogin($data['email'], $data['password'], $request->ip());
 
-        $user = User::where('email', $email)->first();
-
-        // Email tak dikenal atau akun tanpa kata sandi (hanya Google): tetap hitung hash supaya
-        // waktu jawab tidak membocorkan apakah emailnya terdaftar.
-        $passwordOk = $user?->password
-            ? Hash::check($data['password'], $user->password)
-            : $this->burnHashTime($data['password']);
-
-        if (! $passwordOk) {
-            RateLimiter::hit($ipKey, 60);
-            RateLimiter::hit($emailKey, 900);
-
-            return $this->error('invalid_credentials', 'Email atau kata sandi salah.', 422);
-        }
-
-        if (! $user->hasVerifiedEmail()) {
-            return $this->error('email_not_verified', 'Email belum diverifikasi.', 403);
-        }
-
-        RateLimiter::clear($emailKey);
-
-        return $this->issueSession($user, $data['device_name']);
+        return match ($status) {
+            AccountService::LOGIN_THROTTLED => $this->tooMany($detail),
+            AccountService::LOGIN_INVALID => $this->error('invalid_credentials', 'Email atau kata sandi salah.', 422),
+            AccountService::LOGIN_UNVERIFIED => $this->error('email_not_verified', 'Email belum diverifikasi.', 403),
+            default => $this->issueSession($detail, $data['device_name']),
+        };
     }
 
     public function forgotPassword(Request $request): JsonResponse
     {
         $data = $request->validate(['email' => ['required', 'string', 'email']]);
-        $email = $this->normalizeEmail($data['email']);
 
-        $user = User::where('email', $email)->first();
-        if ($user?->hasVerifiedEmail() && $this->codes->allowSend($email, 'reset', 3, withCooldown: false)) {
-            $this->codes->issue($user, EmailCode::PURPOSE_RESET);
-        }
+        $this->accounts->sendPasswordReset($data['email']);
 
         return response()->json(['status' => 'accepted'], 202);
     }
@@ -157,26 +104,17 @@ class AuthController extends Controller
             'code' => ['required', 'string'],
             'password' => ['required', 'string', 'confirmed', new StrongPassword],
         ]);
-        $email = $this->normalizeEmail($data['email']);
+        $email = $this->accounts->normalizeEmail($data['email']);
 
-        if ($tooMany = $this->tooManyCodeAttempts('reset', $request, $email)) {
-            return $tooMany;
+        if ($wait = $this->accounts->codeAttemptWait('reset', $request->ip(), $email)) {
+            return $this->tooMany($wait);
         }
 
-        $user = User::where('email', $email)->first();
-        $result = $user?->hasVerifiedEmail()
-            ? $this->codes->verify($user, EmailCode::PURPOSE_RESET, $data['code'])
-            : EmailCodeService::INVALID;
+        $result = $this->accounts->resetPassword($email, $data['code'], $data['password']);
 
-        if ($result !== EmailCodeService::OK) {
-            return $this->codeError($result);
-        }
-
-        $user->forceFill(['password' => $data['password']])->save();
-        $user->revokeTokens();
-        $user->rotateRememberToken();
-
-        return response()->json(null, 204);
+        return $result === EmailCodeService::OK
+            ? response()->json(null, 204)
+            : $this->codeError($result);
     }
 
     public function logout(Request $request): JsonResponse
@@ -189,7 +127,7 @@ class AuthController extends Controller
     public function logoutAll(Request $request): JsonResponse
     {
         $request->user()->revokeTokens();
-        $request->user()->rotateRememberToken();
+        $request->user()->revokeWebSessions();
 
         return response()->json(null, 204);
     }
@@ -199,30 +137,6 @@ class AuthController extends Controller
         [, $plain] = UserToken::issue($user, $deviceName);
 
         return response()->json(['token' => $plain, 'account' => $user->toAccount()]);
-    }
-
-    /** Selalu false; hanya menghabiskan waktu hash yang sama dengan pemeriksaan kata sandi sungguhan. */
-    private function burnHashTime(string $password): bool
-    {
-        Hash::check($password, Hash::make('pemerata-waktu'));
-
-        return false;
-    }
-
-    /** Batas percobaan kode per email dan per IP supaya tebak-tebak 6 angka tidak praktis. */
-    private function tooManyCodeAttempts(string $scope, Request $request, string $email): ?JsonResponse
-    {
-        $emailKey = "code-try:$scope:email:$email";
-        $ipKey = "code-try:$scope:ip:".$request->ip();
-
-        if (RateLimiter::tooManyAttempts($emailKey, 10) || RateLimiter::tooManyAttempts($ipKey, 30)) {
-            return $this->tooMany(max(RateLimiter::availableIn($emailKey), RateLimiter::availableIn($ipKey)));
-        }
-
-        RateLimiter::hit($emailKey, 900);
-        RateLimiter::hit($ipKey, 900);
-
-        return null;
     }
 
     private function codeError(string $code): JsonResponse
@@ -243,10 +157,5 @@ class AuthController extends Controller
     private function error(string $code, string $message, int $status): JsonResponse
     {
         return response()->json(['message' => $message, 'code' => $code], $status);
-    }
-
-    private function normalizeEmail(string $email): string
-    {
-        return mb_strtolower(trim($email));
     }
 }

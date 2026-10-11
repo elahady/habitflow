@@ -609,9 +609,10 @@ class AccountAuthApiTest extends TestCase
 
     public function test_migrasi_menandai_akun_yang_sudah_ada_sebagai_terverifikasi(): void
     {
-        $this->artisan('migrate:rollback', ['--step' => 2]);
+        $migrasi = 'database/migrations/2026_10_12_090000_add_account_verification_to_users_table.php';
+        $this->artisan('migrate:rollback', ['--path' => $migrasi]);
         \DB::table('users')->insert(['google_sub' => 'lama', 'email' => 'lama@example.com', 'name' => 'Lama', 'created_at' => now(), 'updated_at' => now()]);
-        $this->artisan('migrate');
+        $this->artisan('migrate', ['--path' => $migrasi]);
 
         $this->assertNotNull(User::where('email', 'lama@example.com')->first()->email_verified_at);
     }

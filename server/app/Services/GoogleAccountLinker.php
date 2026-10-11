@@ -40,7 +40,7 @@ class GoogleAccountLinker
                 'email_verified_at' => now(),
                 'avatar' => $avatar,
             ])->save();
-            $user->rotateRememberToken();
+            $user->revokeWebSessions();
 
             return $user;
         }

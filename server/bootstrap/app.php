@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\AuthenticateToken;
 use App\Http\Middleware\AuthenticateUserToken;
+use App\Http\Middleware\EnsureSessionNotRevoked;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -18,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'token' => AuthenticateToken::class,
             'user-token' => AuthenticateUserToken::class,
+            'session-not-revoked' => EnsureSessionNotRevoked::class,
         ]);
 
         // Traffic masuk lewat Cloudflare Tunnel (cloudflared di VM yang sama) - tanpa ini,
