@@ -21,7 +21,7 @@ class PrayerDay extends Model
     /** Waktu sholat [$prayer] (huruf besar atau kecil) sebagai menit sejak 00.00, atau null kalau tidak ada. */
     public function minuteOf(string $prayer): ?int
     {
-        $value = $this->getRawOriginal(strtolower($prayer));
+        $value = $this->getAttributes()[strtolower($prayer)] ?? null;
         if ($value === null) {
             return null;
         }
