@@ -1766,129 +1766,448 @@ menampilkan angka. Android menampilkannya di dashboard Hari ini, web di `/dashbo
 
 Keputusan pemilik (11 Oktober 2026): **untuk memakai app, pengguna harus login.** Ini membalik asumsi dasar yang dipakai sejak
 tahap 1 ("offline dan lokal, tanpa akun") dan yang masih tertulis di beberapa dokumen dan kode. Perubahannya menyentuh banyak
-bagian, jadi dikerjakan sebagai satu tahap sendiri supaya tidak ada yang tertinggal setengah. App akan diunggah ke Play Store.
+bagian, jadi dikerjakan sebagai satu tahap sendiri (dengan sub-tahap 31A sampai 31M) supaya tidak ada yang tertinggal setengah.
+App akan diunggah ke Play Store, jadi tahap ini juga memuat semua kewajiban rilis publik.
 
-Mockup (artboard Masuk, Daftar, Lupa kata sandi, Profil, Pengaturan): https://claude.ai/artifact/TWJ8Uus2hKtQQa81wKujG5
+Dokumen pendamping (wajib dibaca bersama tahap ini): [rilis-play-store.md](rilis-play-store.md) berisi inventaris data, penjaga
+otomatis, gerbang rilis A sampai H, daftar izin, dan perbandingan layanan email.
 
-**Keputusan (sudah diputuskan pemilik):**
+Mockup (artboard Masuk, Daftar, Lupa kata sandi, Profil, Profil belum masuk, Pengaturan, dan Hari ini dengan lingkaran profil):
+https://claude.ai/artifact/TWJ8Uus2hKtQQa81wKujG5. Dua artboard di sana sudah usang dan harus diubah di 31A: **Profil belum masuk**
+(tidak ada lagi keadaan itu) dan tombol **"Lewati dulu"** di Masuk dan Daftar.
+
+#### Riwayat diskusi (11 Oktober 2026, urutan terjadinya)
+
+Dicatat lengkap supaya sesi mana pun tahu **apa yang diputuskan, apa yang ditolak, dan kenapa**.
+
+1. **Usulan pemilik.** Tab Tentang diganti Pengaturan. Tombol kanan atas yang berisi foto profil menjadi halaman Profil. Semua hal tentang
+   profil yang ada di Tentang (termasuk keluar dari app) pindah ke sana. Nanti ada halaman login dan register.
+2. **Tanggapan Claude atas usulan itu.** Setuju untuk Pengaturan dan Profil. Tinggi badan dan target berat diusulkan pindah ke Profil.
+   Untuk login dan register, ditunjukkan bahwa cara masuk di app saat itu hanya Google (akun dibuat otomatis di server saat masuk pertama,
+   jadi "register" baru bermakna kalau ada akun email dan kata sandi), dan bahwa login sebaiknya tidak jadi gerbang wajib karena app ini
+   offline-first.
+3. **Jawaban pemilik.** Cara masuk dijadikan seperti web (web sudah punya email dan kata sandi plus Google). Pekerjaan besar email dan kata sandi
+   "tidak masalah, kita kerjakan". App akan diunggah ke Play Store. Login tidak wajib: **disetujui** pada saat itu.
+4. **Mockup pertama** dibuat di artifact: Masuk, Daftar, Lupa kata sandi, Profil, Profil belum masuk, Pengaturan, dan lingkaran profil di Hari ini
+   membuka Profil. Tab bawah di mockup disamakan dengan app (enam tab, ikon di atas label, Pengaturan menggantikan Tentang).
+5. **Pertanyaan pemilik: apakah halaman Profil belum masuk perlu?** Claude mengusulkan menghapusnya (lingkaran profil langsung ke Masuk,
+   data tubuh pindah ke Pengaturan). Pemilik lalu **lupa kesepakatan login opsional** dan minta pembahasannya diulang, karena aneh kalau
+   tanpa login bisa melihat halaman berisi informasi pribadi.
+6. **Pembahasan ulang.** Dijelaskan bahwa login tidak melindungi data lokal (data tetap ada di HP dan tidak terenkripsi, siapa pun yang memegang
+   HP yang tidak terkunci bisa melihatnya); login hanya menentukan identitas untuk server. Dua pilihan: login wajib atau opsional. Claude
+   merekomendasikan opsional **ditambah kunci app (sidik jari atau PIN)** sebagai perlindungan data yang sebenarnya.
+7. **Keputusan pemilik: login wajib.** "Kalau dia mau pakai aplikasi ini maka dia harus login. Perubahan itu harus diikuti semua konsep di app ini."
+   Pemilik meminta penelusuran bagian yang terdampak dan dijadikan satu tahap sendiri. Dihasilkanlah tahap ini dan inventaris di bawah.
+   *Catatan: usulan kunci app (langkah 6) tidak dijawab dan tidak ditolak. Dicatat sebagai pertanyaan terbuka di bawah.*
+8. **Verifikasi email dan layanan email.** Claude menunjukkan celah pengambilalihan akun (web menautkan Google ke akun yang emailnya sama, jadi
+   penyerang yang mendaftar duluan dengan email korban tetap memegang kata sandinya). Pemilik **setuju verifikasi email wajib**. Soal layanan
+   pengirim email, pemilik bertanya apakah bisa membangun mail hosting sendiri. Claude **menyarankan tidak**: port 25 keluar diblokir ISP
+   rumahan, IP rumahan tanpa reverse DNS dan tanpa reputasi, Cloudflare Tunnel hanya membawa lalu lintas web, dan kalau email gagal tidak ada
+   pengguna baru yang bisa mendaftar. Setelah dibandingkan batas gratisnya, pemilik **menyetujui Resend gratis dengan Brevo gratis sebagai
+   cadangan**. Amazon SES ditolak karena gratisnya hanya 12 bulan.
+9. **Sesi tidak kedaluwarsa** (keputusan pemilik). Konsekuensinya ditambah "Keluar dari semua perangkat" di Profil, dan ganti kata sandi
+   mencabut sesi lain.
+10. **Pertanyaan pemilik: apakah menyimpan semua aktivitas pengguna di database jadi kendala di Google Play?** Jawaban: bukan kendala, tapi ada
+    kewajiban transparansi dan kontrol pengguna (kebijakan privasi, Data safety, hapus akun, deklarasi Health Connect). Ditambah tanggung jawab
+    hukum (UU PDP) dan operasional (server satu VM). Pemilik menyetujui semua usulan dan meminta **konsep tanpa celah supaya tidak ada kesalahan
+    yang tidak disengaja**. Hasilnya [rilis-play-store.md](rilis-play-store.md), dengan catatan jujur bahwa nol celah tidak bisa dijamin, yang bisa
+    dijamin adalah pemilik, bukti, dan tes yang gagal kalau dilanggar.
+11. **Temuan penelusuran syarat rilis** yang sebelumnya tidak ada di rencana: layar persetujuan OAuth Google masih mode uji (orang lain tidak bisa
+    login Google), client ID Android harus memakai SHA-1 kunci Play App Signing, peninjau Google butuh akun uji permanen yang sudah terverifikasi,
+    akun pengembang pribadi baru wajib uji tertutup 12 penguji selama 14 hari berturut-turut, dua izin dibatasi Google (`USE_EXACT_ALARM`,
+    `USE_FULL_SCREEN_INTENT`), `targetSdk` 34 hampir pasti di bawah syarat, Auto Backup membawa database, belum ada keystore rilis, dan file
+    snapshot terenkripsi di storage server ikut harus terhapus saat hapus akun.
+12. **Kepemilikan tim saat pemilik menghapus akun:** pemilik **setuju** (kepemilikan pindah ke anggota terlama, tim dihapus kalau tidak ada anggota lain).
+
+#### Keputusan akhir
+
+**Diputuskan pemilik:**
 
 | Pertanyaan | Keputusan |
 |---|---|
 | Aturan | Tanpa login, app tidak bisa dipakai. Layar Masuk menjadi gerbang di depan semua layar |
-| Cara masuk | **Email dan kata sandi, plus Google**, sama seperti web (tahap 25). Berarti API Android tidak lagi Google-only |
-| Layar baru | Masuk, Daftar, Lupa kata sandi (tombol "Lewati dulu" di mockup dihapus) |
+| Cara masuk | **Email dan kata sandi, plus Google**, sama seperti web (tahap 25). API Android tidak lagi Google-only |
+| Verifikasi email | **Wajib** untuk akun email dan kata sandi: kode 6 angka di app, berlaku 10 menit, sekali pakai, disimpan sebagai hash. Akun Google dianggap terverifikasi |
+| Penautan Google | Hanya ke akun yang emailnya sudah terverifikasi. Akun email yang belum terverifikasi diambil alih oleh login Google (kata sandi dikosongkan, semua token dicabut) |
+| Lupa kata sandi | Kode 6 angka lewat email. Jawaban server sama apakah email terdaftar atau tidak |
+| Layanan email | **Resend gratis** (3.000 per bulan, maksimal 100 per hari), **Brevo gratis** (300 per hari) sebagai cadangan. Tanpa server email sendiri |
+| Sesi | **Tidak kedaluwarsa.** Hanya dicabut oleh Keluar, ganti kata sandi, "Keluar dari semua perangkat", hapus akun, atau dari web |
+| Layar baru | Masuk, Daftar, Verifikasi kode, Lupa kata sandi (tombol "Lewati dulu" dihapus) |
 | Tab Tentang | Diganti **Pengaturan** (ikon roda gigi). Versi dan "Dibuat oleh" turun ke bagian Tentang paling bawah |
-| Lingkaran profil di Hari ini | Membuka halaman **Profil** (layar penuh di atas tab, bukan tab ketujuh): data akun, sinkron, Keluar, Hapus akun |
+| Lingkaran profil di Hari ini | Membuka halaman **Profil** (layar penuh di atas tab, bukan tab ketujuh) |
 | Halaman Profil belum masuk | **Tidak ada**, karena tidak ada keadaan "belum masuk" lagi |
-| Verifikasi email | **Wajib** untuk akun email dan kata sandi: kode 6 angka di app, berlaku 10 menit. Penautan Google hanya ke akun yang emailnya sudah terverifikasi (mencegah pengambilalihan akun). Rinciannya di [rilis-play-store.md](rilis-play-store.md) bagian 2 |
-| Kebutuhan rilis | Seluruh syarat Play Store, privasi, dan operasional server ada di [rilis-play-store.md](rilis-play-store.md), dengan tes yang gagal kalau dilanggar |
+| Tim saat pemilik menghapus akun | Kepemilikan pindah ke anggota terlama. Tidak ada anggota lain: tim dihapus. To-do buatan pemilik tetap ada dengan nama "Pengguna dihapus". Anggota biasa yang menghapus akun hanya keluar dari tim |
 
-**Usulan (disetujui pemilik 11 Oktober 2026 dengan jawaban "setuju dengan semua usulan"; koreksi kalau ternyata tidak termasuk):**
+**Disetujui pemilik lewat jawaban "setuju dengan semua usulan" (koreksi kalau ternyata tidak termasuk):**
 
-| Pertanyaan | Usulan | Alasan |
+| Pertanyaan | Keputusan | Alasan |
 |---|---|---|
-| Offline setelah login | **Tetap bisa.** Room tetap sumber data harian, sesi login disimpan di HP. Internet hanya dibutuhkan untuk login pertama | Prinsip "catat dalam 2 detik" dan hasil tahap 28 tidak dibuang. Login wajib mengubah siapa yang boleh memakai app, bukan cara app menyimpan data |
-| Keluar | **Menghapus semua data lokal** (database, pengaturan, cache) dan menghentikan alarm, notifikasi, serta worker | Login wajib berarti HP bisa dipakai akun lain. Data akun sebelumnya tidak boleh tersisa |
-| Keluar saat ada perubahan belum terkirim | Cek dulu, tampilkan jumlahnya, dan minta konfirmasi. Tanpa internet: peringatan keras bahwa perubahan itu akan hilang | Menghapus data lokal berarti perubahan yang belum tersinkron hilang permanen |
-| Data lama di HP (sebelum tahap ini) | **Diambil alih akun pertama yang login** di pemasangan itu, sekali saja. Selanjutnya data milik akun itu | Pemasangan yang punya data lama kemungkinan hanya HP pemilik (dan mungkin HP istri sebagai penguji), belum ada pengguna lain. Jalur gabung yang sudah ada (tahap 28 dan 27) dipakai ulang |
-| Snapshot 19B | **Pindah ke akun**: `PUT /snapshot` dan `GET /snapshot/latest` memakai `user-token`, snapshot terikat ke user. Token per-HP (`api_tokens`) dipensiunkan, dan snapshot lama diklaim ke akun pemilik lewat satu migrasi | Dua sistem login (token per-HP dan akun) tidak boleh hidup bersamaan. Data yang belum dimigrasi (jadwal, kesehatan, makan, kalender, pengaturan, EOD) masih hanya ada di snapshot |
+| Offline setelah login | **Tetap bisa.** Room tetap sumber data harian, sesi disimpan di HP. Internet hanya dibutuhkan untuk login pertama | Prinsip "catat dalam 2 detik" dan hasil tahap 28 tidak dibuang. Login wajib mengubah siapa yang boleh memakai app, bukan cara app menyimpan data |
+| Keluar | **Menghapus semua data lokal** (database, pengaturan, cache), menghentikan alarm, notifikasi, worker, lalu memulai ulang proses app | HP bisa dipakai akun lain. Data akun sebelumnya tidak boleh tersisa |
+| Keluar saat ada perubahan belum terkirim | Cek dulu, tampilkan jumlahnya, minta konfirmasi. Tanpa internet: peringatan keras bahwa perubahan itu akan hilang | Menghapus data lokal berarti perubahan yang belum tersinkron hilang permanen |
+| Data lama di HP (sebelum tahap ini) | **Diambil alih akun pertama yang login** di pemasangan itu, sekali saja | Pemasangan yang punya data lama kemungkinan hanya HP pemilik (dan mungkin HP istri), belum ada pengguna lain. Jalur gabung tahap 28 dan 27 dipakai ulang |
+| Snapshot 19B | **Pindah ke akun**: `PUT /snapshot` dan `GET /snapshot/latest` memakai `user-token`, snapshot terikat ke user. Token per-HP (`api_tokens`) dipensiunkan, snapshot lama diklaim ke akun pemilik lewat satu perintah | Dua sistem login tidak boleh hidup bersamaan. Data yang belum dimigrasi (jadwal, kesehatan, makan, kalender, pengaturan, EOD) masih hanya ada di snapshot |
 | "Atur server" dan token di Tentang | **Dihapus.** Alamat server menjadi konfigurasi build | Pengguna Play Store tidak mengisi alamat server dan token. Itu alat pengembang |
-| Sesi (diputuskan pemilik 11 Oktober 2026: tidak kedaluwarsa) | Token API tidak kedaluwarsa sendiri, hanya bisa dicabut (Keluar, ganti kata sandi yang mencabut semua sesi lain, "Keluar dari semua perangkat" di Profil, atau dari web). Kalau server menjawab 401, app kembali ke layar Masuk setelah data lokal aman (lihat Edge case) | Sekarang `user_tokens` tidak punya masa berlaku |
-| Auto Backup Android | **Keluarkan `habitflow.db` dan `settings.xml`** dari `backup_rules.xml` dan `data_extraction_rules.xml` | Server sekarang cadangannya. Kalau tidak, database akun lama bisa dipulihkan ke HP baru lalu diambil alih akun lain |
-| Hapus akun | **Wajib ada**, di app (Profil) dan di web (tautan yang bisa dibuka tanpa app) | Syarat Google Play untuk app yang punya pembuatan akun |
+| Auto Backup Android | **Keluarkan `habitflow.db` dan `settings.xml`** dari `backup_rules.xml` dan `data_extraction_rules.xml` | Server sekarang cadangannya. Kalau tidak, database akun lama bisa dipulihkan ke HP lain lalu diambil alih akun lain |
+| Hapus akun | **Wajib ada**, di app (Profil) dan di web (halaman publik yang bisa dibuka tanpa app). Permanen dan langsung, dengan konfirmasi ulang kata sandi | Syarat Google Play untuk app yang punya pembuatan akun |
+| Keluar dari semua perangkat | Tombol di Profil. Ganti kata sandi mencabut semua sesi lain | Sesi tidak kedaluwarsa, jadi harus ada cara mencabut kalau HP hilang |
+| Syarat rilis | Seluruh isi [rilis-play-store.md](rilis-play-store.md): penjaga otomatis, gerbang rilis, daftar izin | "Konsep tanpa celah" yang diminta pemilik |
 
-**Bagian yang harus berubah (hasil penelusuran 11 Oktober 2026):**
+#### Inventaris bagian yang harus berubah (hasil penelusuran 11 Oktober 2026)
 
 *Dokumen*
 - `docs/concept.md`: Prinsip kerja nomor 4 ("Tidak ada akun, server, atau sinkronisasi di versi ini"). Tahap 19B (baris Sifat app dan
   Login: token pribadi tanpa akun). Tahap 25 (baris "API Android tetap Google-only"). Bagian Arah baru ("Token per-HP tanpa akun
   tetap ada"). Tahap 27 (snapshot 19B "Belum login tetap ikut, supaya follow-up tanpa akun tetap tercadangkan"). Tahap 26
   (teks "Masuk dengan Google dulu untuk bisa bergabung"). Tahap 28 dan 29 (peta migrasi dan sifat offline). Tahap 30 (langkah 4
-  kirim ke server sekarang pasti terjadi karena pasti ada akun). Edge case baru di bawah.
+  kirim ke server sekarang pasti terjadi karena pasti ada akun). Tahap 32 (`user-token` tidak terpengaruh, cek ulang).
 - `docs/visi-super-app.md`: Prinsip nomor 3 ("Offline dulu... HP adalah sumber data. Data disinkron ke server sendiri untuk backup").
 - `docs/rancangan.md`: bagian Sinkron ke server (token pribadi, "Tanpa akun", Pulihkan manual di Tentang), bagian Data ("Tidak ada
   akun. Cadangan opsional"), Di luar versi ini, dan bagian Daily scrum yang dibatalkan ("Tidak ada akun dan tidak ada sinkron").
-  Aturan baru Login wajib ditulis di sini lebih dulu.
 - `docs/design/README.md`: layar Tentang (enam bagian, termasuk Akun dan Sinkron ke server dengan dialog "Atur server"), daftar
-  tab, sapaan "tanpa akun hanya sapaan" di Hari ini, `SignInPrompt` di layar Tugas Rumah. Layar baru: Masuk, Daftar, Lupa kata
-  sandi, Profil, Pengaturan.
+  tab, sapaan "tanpa akun hanya sapaan" di Hari ini, `SignInPrompt` di layar Tugas Rumah.
 - `README.md` baris 6: "Data disimpan lokal di perangkat, tanpa akun dan tanpa internet."
 
 *Android*
-- `MainActivity` dan `HabitFlowApp`: gerbang sesi. Belum login hanya menampilkan layar Masuk. Link undangan tim
-  (`pendingInviteToken`) harus bertahan melewati layar Masuk lalu diproses setelah login.
+- `MainActivity` dan `HabitFlowApp`: gerbang sesi. Link undangan tim (`pendingInviteToken`) harus bertahan melewati layar Masuk.
 - `HabitFlowApplication`: `syncScheduler`, `habitSyncScheduler`, `teamPollScheduler`, `StepsWorker.ensureScheduled`, dan
   `keepNotificationsInSync` jalan sebelum ada login. Semuanya baru boleh hidup setelah login dan dihentikan saat keluar.
   `AndroidManifest`: receiver `BOOT_COMPLETED` tidak boleh menjadwalkan alarm kalau belum ada sesi.
-- `AccountManager`, `AccountClient`, `AccountSettings`: tambah login dan daftar email, lupa dan ubah kata sandi, keluar yang mencabut
-  token di server, dan penanganan 401.
-- `AccountSection` dan bagian Akun di `AboutScreen`: dipindah ke halaman Profil. `AboutScreen` menjadi Pengaturan dengan bagian
-  Data tubuh (tinggi dan target berat dari `HealthSettings`).
+- `AccountManager`, `AccountClient`, `AccountSettings`: login dan daftar email, verifikasi, lupa dan ubah kata sandi, keluar yang
+  mencabut token di server, hapus akun, penanganan 401.
+- `AccountSection` dan bagian Akun di `AboutScreen`: pindah ke Profil. `AboutScreen` menjadi Pengaturan dengan bagian Data tubuh
+  (tinggi dan target berat dari `HealthSettings`).
 - `SyncSection`, `SyncViewModel`, `SyncSettings` (alamat dan token), `SyncScheduler`, `SyncManager` (`followUpsOnAccount`),
   `Snapshot.followUpsOmitted`: sistem 19B pindah ke akun, UI "Atur server" dan token dihapus, cabang "belum login" dihapus.
-- `TeamScreen` (`SignInPrompt`, dialog undangan "Masuk dengan Google dulu") dan `TeamViewModel` (`account == null`): cabang belum
-  login dihapus.
-- `WorkRepository` dan sinkron habit (`HabitSyncManager`, `HabitSyncScheduler`): jalur "belum login" dan "gagal diam-diam karena belum
-  login" tidak lagi ada. Perlu jalur "ambil alih data lama" dan "hapus semua data lokal".
+- `TeamScreen` (`SignInPrompt`, dialog undangan "Masuk dengan Google dulu") dan `TeamViewModel` (`account == null`).
+- `WorkRepository`, `HabitSyncManager`, `HabitSyncScheduler`: jalur "belum login" dan "gagal diam-diam karena belum login".
 - `res/xml/backup_rules.xml` dan `data_extraction_rules.xml`: keluarkan database dan pengaturan.
-- Build debug: alur uji lewat adb (receiver debug di `src/debug`) butuh cara masuk tanpa mengetik, misalnya receiver debug yang
-  memasang sesi uji.
+- `app/build.gradle.kts`: `targetSdk = 34` (di bawah syarat Play untuk rilis baru), `isMinifyEnabled = false`, belum ada `signingConfigs` rilis.
+- `AndroidManifest`: `USE_EXACT_ALARM` dan `USE_FULL_SCREEN_INTENT` (dibatasi Google), tipe foreground service, `READ_CALENDAR`,
+  `ACCESS_COARSE_LOCATION`, izin Health Connect.
+- Build debug: alur uji lewat adb (receiver debug di `src/debug`) butuh cara masuk tanpa mengetik.
 
 *Server (`server/`)*
-- Endpoint API baru di samping `POST auth/google`: `auth/register`, `auth/login` (rate limit seperti web: 5 gagal per menit),
-  `auth/logout` (cabut token), `auth/forgot-password`, `PUT account/password`, `DELETE account`, dan `GET me`.
-- Web belum punya: lupa kata sandi (butuh pengiriman email, belum ada layanan email di VM), ubah kata sandi, dan hapus akun beserta
-  halaman publiknya.
+- API baru di samping `POST auth/google`: lihat kontrak di 31A.
+- Web belum punya: verifikasi email, lupa dan ubah kata sandi, hapus akun, halaman publik hapus akun, halaman kebijakan privasi.
 - `routes/api.php`: `PUT /snapshot` dan `GET /snapshot/latest` pindah dari middleware `token` ke `user-token`. `api_tokens`,
   `AuthenticateToken`, dan perintah artisan pembuat token dipensiunkan setelah migrasi snapshot lama.
 - Google-only user (kolom `password` kosong) perlu jalur "buat kata sandi".
+- Snapshot disimpan sebagai **berkas** di storage: hapus akun harus menghapus berkasnya, bukan hanya barisnya.
+- Tabel `sessions` (kalau driver sesi database) dan `email_codes` (baru) ikut daftar hapus akun.
 
-*Rilis Play Store*
-- Kebijakan privasi (sudah ada di roziqrizal.com) harus menyebut data kesehatan (berat, tensi, langkah) dan penghapusan akun.
-- Formulir Data safety dan deklarasi Health Connect di Play Console. Akun uji untuk peninjau Google.
+*Rilis Play Store dan operasional*
+- Kebijakan privasi (versi untuk Habitflow, bukan hanya yang ada di roziqrizal.com) menyebut data kesehatan, penyimpanan, backup, dan hapus akun.
+- Formulir Data safety, deklarasi Health apps dan Health Connect, akun uji untuk peninjau, uji tertutup 14 hari.
+- Backup MySQL ke luar VM, latihan pemulihan, pemantauan, prosedur kebocoran data (UU PDP: pemberitahuan paling lambat 3x24 jam).
+- Layar persetujuan OAuth Google ke produksi, SHA-1 Play App Signing, keystore rilis dan salinannya.
 
-**Langkah bangun** (urutan disarankan; tiap langkah satu commit atau lebih, dan catat statusnya di sini):
+#### Peta sub-tahap dan urutan
 
-1. **Dokumen.** Tulis aturan Login wajib di `rancangan.md`, perbarui semua dokumen di atas, dan catatan desain layar baru di
-   `docs/design/README.md` lebih dulu.
-2. **Server: auth API.** Endpoint email di atas, pencabutan token, tes Laravel (login salah, rate limit, daftar email sudah dipakai,
-   Google dan email pada akun yang sama).
-3. **Server: web.** Lupa dan ubah kata sandi, hapus akun, halaman hapus akun yang bisa dibuka tanpa app. Putuskan layanan email.
-4. **Server: snapshot ke akun.** Migrasi `snapshots` dan `api_tokens` ke user, klaim data lama ke akun pemilik, middleware diganti.
-5. **Android: gerbang dan layar auth.** Masuk, Daftar, Lupa kata sandi, penanganan 401, link undangan melewati login.
-6. **Android: siklus hidup sesi.** Semua latar belakang (alarm, notifikasi, worker, boot receiver) hanya hidup selama ada sesi.
-7. **Android: Keluar dan data lama.** Cek perubahan belum terkirim, hapus data lokal, ambil alih data lama saat login pertama, dan uji
-   ganti akun di HP yang sama.
-8. **Android: Pengaturan dan Profil.** Ganti Tentang, halaman Profil, Data tubuh, hapus UI "Atur server" dan token, keluarkan backup
-   Android.
-9. **Hapus akun dan rilis.** Hapus akun di app dan web, kebijakan privasi, Data safety (rinciannya di langkah 10 dan 11).
-10. **Penjaga otomatis dan skrip cek rilis.** Semua tes di [rilis-play-store.md](rilis-play-store.md) bagian 3 (inventaris skema, hapus akun menyeluruh, pengambilalihan akun, kode verifikasi, pencabutan sesi, Keluar di Android) dan `scripts/cek-rilis`. Dikerjakan **bersamaan** dengan langkah yang bersangkutan, bukan di akhir.
-11. **Gerbang rilis.** Backup dan latihan pemulihan, Google Sign-In produksi, kebijakan privasi, Play Console, penandatanganan, dan uji tertutup 14 hari: daftar periksa dan buktinya di [rilis-play-store.md](rilis-play-store.md). Uji tertutup dimulai sedini mungkin karena tidak bisa dipercepat.
-12. **Verifikasi di HP fisik** dan catat hasilnya di sini.
+| Sub-tahap | Isi | Bergantung pada |
+|---|---|---|
+| **31A** | Dokumen, kontrak API, perbarui mockup | - |
+| **31B** | Server: akun, verifikasi email, reset kata sandi (API) | 31A |
+| **31C** | Server: halaman web (verifikasi, reset, ubah sandi, hapus akun, kebijakan privasi) | 31B |
+| **31D** | Server: hapus akun menyeluruh dan penjaga skema | 31B |
+| **31E** | Server: snapshot ke akun, pensiunkan token 19B | 31B |
+| **31F** | Android: lapisan akun dan sesi | 31B |
+| **31G** | Android: gerbang dan layar auth | 31F |
+| **31H** | Android: siklus hidup sesi, Keluar, data lama, ganti akun | 31F, 31E |
+| **31I** | Android: Pengaturan, Profil, Data tubuh | 31G, 31D |
+| **31J** | Skrip cek rilis dan tes pelengkap | 31I |
+| **31K** | Operasional server: backup, pemantauan, prosedur insiden | bisa paralel setelah 31B, **wajib sebelum 31M** |
+| **31L** | Rilis teknis: targetSdk, izin, penandatanganan, Google Sign-In produksi | 31I |
+| **31M** | Uji tertutup 14 hari, formulir Play Console, produksi | 31C, 31D, 31J, 31K, 31L |
 
-**Selesai jika:**
+Dua jalur bisa jalan bersamaan setelah 31A: **server** (31B, 31C, 31D, 31E) dan **Android** (31F, lalu 31G dan 31H, lalu 31I). **Jalur terpanjang
+adalah uji tertutup 14 hari di 31M** yang tidak bisa dipercepat, jadi semua yang mendahuluinya dikerjakan secepat mungkin dan tidak ada yang
+menunggu 31M selesai. Aturan umum tiap sub-tahap: satu commit atau lebih per langkah, tes ditulis bersama kodenya, status dicatat di sini
+sebelum lanjut (ganti `[ ]` jadi `[x]`), dan inventaris di [rilis-play-store.md](rilis-play-store.md) bagian 1 diperbarui di commit yang sama kalau tabel,
+kolom, atau izin berubah.
+
+#### 31A. Dokumen, kontrak API, dan mockup
+
+Status: belum dikerjakan.
+
+- [ ] `docs/rancangan.md`: tulis bagian baru **Akun dan login (tahap 31)** lebih dulu: login wajib, cara masuk, verifikasi, sesi, Keluar, hapus akun, data lama,
+  tim. Perbarui bagian Sinkron ke server, Data, Di luar versi ini, dan catatan Daily scrum.
+- [ ] `docs/concept.md`: Prinsip kerja nomor 4 menjadi "Akun wajib. Setelah login, data harian tetap di HP (offline-first) dan server menjadi sumber bersama." Beri catatan
+  "digantikan tahap 31" di tahap 19B, 25, 26, 27, 28, 29, 30 pada baris yang dikutip di Inventaris.
+- [ ] `docs/visi-super-app.md` prinsip 3 dan `README.md` baris 6.
+- [ ] `docs/design/README.md`: layar baru Masuk, Daftar, Verifikasi kode, Lupa kata sandi (dua langkah), Profil (termasuk dialog Keluar, Keluar dari semua perangkat, Hapus akun,
+  Ubah kata sandi), Pengaturan; hapus bagian Tentang lama, "Atur server", dan sapaan "tanpa akun". Catat nilai desain baru lebih dulu (aturan repo). Catatan: pesan galat
+  formulir login boleh memakai warna `error` karena itu bukan data kesehatan.
+- [ ] **Kontrak API** (tabel di bawah) disetujui pemilik sebelum server dikoding.
+- [ ] Mockup di artifact: hapus artboard Profil belum masuk dan tombol "Lewati dulu"; pindahkan Data tubuh ke Pengaturan; tambah artboard Verifikasi kode, Reset kata sandi (kode dan
+  sandi baru), dialog Keluar dengan perubahan belum terkirim, Hapus akun (konfirmasi kata sandi), dan layar "Sesi berakhir".
+
+**Kontrak API akun** (semua di bawah `/api/v1`, JSON, pesan galat dalam bahasa Indonesia, kode galat di field `code`):
+
+| Metode dan jalur | Masuk | Keluar | Catatan |
+|---|---|---|---|
+| `POST auth/register` | `name`, `email`, `password`, `password_confirmation`, `privacy_policy_version` | 201 `{status:"verification_required", email}` | Tanpa token sebelum email terverifikasi. 422 kalau email sudah terverifikasi di akun lain; kalau email ada tapi belum terverifikasi, kirim ulang kode dan tetap 201. Mencatat waktu dan versi persetujuan |
+| `POST auth/verify-email` | `email`, `code`, `device_name` | 200 `{token, account}` | 422 `code_invalid` atau `code_expired`. 5 kali salah menghanguskan kode. 429 kalau terlalu sering |
+| `POST auth/resend-verification` | `email` | 202 selalu | Maksimal 1 per 60 detik dan 5 per jam per email |
+| `POST auth/login` | `email`, `password`, `device_name` | 200 `{token, account}` | 403 `email_not_verified` (app membuka layar Verifikasi). 422 pesan sama untuk email salah dan sandi salah. 429 setelah 5 gagal per menit per IP dan 10 per 15 menit per email |
+| `POST auth/google` | `id_token`, `device_name` | 200 `{token, account}` | Sudah ada. Ditambah aturan penautan akun di 31B |
+| `POST auth/forgot-password` | `email` | 202 selalu | Jawaban sama apakah email terdaftar atau tidak. Maksimal 3 per jam per email |
+| `POST auth/reset-password` | `email`, `code`, `password`, `password_confirmation` | 204 | Mencabut **semua** token akun. App kembali ke layar Masuk |
+| `POST auth/logout` | token di header | 204 | Mencabut token ini |
+| `POST auth/logout-all` | token di header | 204 | Mencabut semua token akun, termasuk ini |
+| `PUT account/password` | `current_password` (tidak perlu untuk akun Google tanpa sandi), `password`, `password_confirmation` | 204 | Mencabut semua token **selain** yang dipakai |
+| `DELETE account` | `password`, atau `id_token` Google untuk akun tanpa sandi | 204 | Konfirmasi ulang wajib. Menghapus semua data (31D). Token ikut tercabut |
+| `GET me` | token di header | 200 `{account, has_password, google_linked, email_verified}` | Dipakai Profil dan pemeriksaan sesi |
+
+`account` berisi `id`, `name`, `email`, `avatar`. Aturan kata sandi: minimal 8 karakter (sama dengan web); ditolak kalau ada di daftar kata sandi paling umum *(usulan)*.
+Tidak ada endpoint yang membedakan "email tidak terdaftar" dari "terdaftar" selain register yang sudah dijelaskan.
+
+**Selesai jika:** tidak ada dokumen yang masih menyatakan "tanpa akun", kontrak API disetujui pemilik, dan mockup mencerminkan keputusan terbaru.
+
+#### 31B. Server: akun, verifikasi email, reset kata sandi (API)
+
+Status: belum dikerjakan. Bergantung pada 31A.
+
+- [ ] **Migrasi.** `users.email_verified_at`, `users.privacy_consented_at`, `users.privacy_policy_version`. Tabel `email_codes` (`user_id`, `purpose` verify atau reset,
+  `code_hash`, `expires_at`, `attempts`, `consumed_at`). Akun yang **sudah ada** diberi `email_verified_at` oleh migrasi satu kali (pemiliknya dikenal: pemilik dan istri).
+- [ ] **Email.** Pasang Resend (`resend/resend-laravel`), `MAIL_MAILER=resend`, domain pengirim diverifikasi (SPF, DKIM, DMARC) di DNS, alamat pengirim
+  `noreply@` pada subdomain khusus (usulan `mail.roziqrizal.com`, supaya terpisah dari email pribadi). Cadangan Brevo disiapkan di `.env.example` (SMTP) dan diuji sekali.
+  Email lewat **antrean** (driver database, ada proses `queue:work` di deployment) supaya pendaftaran tidak macet kalau layanan lambat. Teks email bahasa Indonesia, pendek,
+  menyebut kode, masa berlaku, dan "abaikan kalau bukan kamu".
+- [ ] **Layanan.** `EmailCodeService` (terbit, verifikasi, batas percobaan, hanguskan kode lama saat terbit baru), `AuthService`, dan penghitung email terkirim per hari dengan
+  pemberitahuan ke pemilik di 80% batas paket.
+- [ ] **Endpoint** sesuai kontrak 31A, dengan pembatas laju yang disebut di sana.
+- [ ] **Aturan penautan Google** (API dan web): Google hanya ditautkan ke akun yang `email_verified_at`-nya terisi. Kalau akun dengan email itu ada tapi **belum terverifikasi**,
+  login Google mengambil alih: `password` dikosongkan, semua token dicabut, `google_sub` diisi, `email_verified_at` diisi. Login Google hanya diterima kalau klaim
+  `email_verified` dari Google benar.
+- [ ] Pencabutan token: `logout`, `logout-all`, reset dan ganti kata sandi, sesuai kontrak.
+- [ ] **Tes Laravel** (nama sesuai [rilis-play-store.md](rilis-play-store.md) bagian 3): pengambilalihan akun, kode kedaluwarsa, sekali pakai, lima salah menghanguskan, batas kirim
+  ulang, kode disimpan sebagai hash, pencabutan sesi untuk semua jalur, jawaban identik untuk email terdaftar dan tidak, login salah, rate limit, Google dan email pada akun
+  yang sama, akun lama terverifikasi oleh migrasi.
+
+**Selesai jika:** semua tes lulus, email uji sampai di Gmail **kotak masuk** dan satu penyedia lain, dan alur register, verifikasi, login, lupa dan reset kata sandi jalan dengan `curl`.
+
+#### 31C. Server: halaman web
+
+Status: belum dikerjakan. Bergantung pada 31B.
+
+- [ ] Register web memakai alur kode yang sama (halaman `/verifikasi-email`), dengan centang persetujuan kebijakan privasi. Login akun belum terverifikasi diarahkan ke halaman itu.
+- [ ] `/lupa-kata-sandi` dan `/reset-kata-sandi` (kode dan sandi baru), desain mengikuti `docs/design/README.md` seperti halaman Login yang ada.
+- [ ] Dashboard: ubah kata sandi (atau "Buat kata sandi" untuk akun Google), "Keluar dari semua perangkat", dan hapus akun (konfirmasi kata sandi atau Google).
+- [ ] Halaman publik **`/hapus-akun`**: menjelaskan data apa yang dihapus dan kapan, lalu login untuk menghapus, atau untuk yang sudah mencopot app, masuk lewat kode email. URL ini
+  dipakai di Play Console.
+- [ ] Halaman publik **`/kebijakan-privasi`** (HTML, bukan PDF, URL tetap, dan versi bernomor yang dicatat saat persetujuan). Isinya sesuai inventaris data dan syarat di
+  [rilis-play-store.md](rilis-play-store.md) Gerbang C.
+- [ ] Tes Feature untuk setiap halaman dan alurnya.
+
+**Selesai jika:** pemilik bisa daftar, verifikasi, reset kata sandi, dan menghapus akun uji dari browser, dan `/hapus-akun` serta `/kebijakan-privasi` terbuka tanpa login.
+
+#### 31D. Server: hapus akun menyeluruh dan penjaga skema
+
+Status: belum dikerjakan. Bergantung pada 31B.
+
+- [ ] `AccountDeletionService`, dipakai API dan web, dalam **satu transaksi**: semua tabel di inventaris ([rilis-play-store.md](rilis-play-store.md) bagian 1), `user_tokens`, `email_codes`, `sessions`,
+  snapshot (baris **dan berkas di storage**), serta data tim sesuai aturan kepemilikan di bawah.
+- [ ] **Aturan tim:** pemilik tim dengan anggota lain memindahkan kepemilikan ke anggota terlama; to-do tim buatan pemilik tetap ada dengan nama "Pengguna dihapus";
+  tanpa anggota lain, tim dan isinya dihapus. Anggota biasa hanya keluar dari tim. Undangan aktif buatan pengguna dihanguskan.
+- [ ] Catatan audit **tanpa data pribadi** (waktu hapus dan sumber: app atau web) untuk bukti penghapusan.
+- [ ] **Tes inventaris skema:** membaca semua tabel dari database dan gagal kalau ada tabel yang tidak ada di daftar "dihapus saat hapus akun" maupun di daftar "bukan data
+  pengguna, beserta alasannya". Tes ini yang mencegah tabel baru (misalnya berat dan tensi di tahap 30) terlupa.
+- [ ] **Tes hapus akun menyeluruh:** pengguna dengan baris di setiap tabel dan berkas snapshot, hapus, lalu **nol baris dan nol berkas** tersisa.
+- [ ] Tes kasus tim, tes token ikut tercabut, dan **tes log**: permintaan berisi berat, tensi, atau snapshot tidak masuk log aplikasi.
+- [ ] Tambahkan `php artisan test` sebagai langkah wajib sebelum deploy di `server/DEPLOY.md`.
+
+**Selesai jika:** semua tes lulus dan menambah tabel tanpa memutuskan nasibnya saat hapus akun membuat tes gagal (dibuktikan dengan mencobanya sekali).
+
+#### 31E. Server: snapshot ke akun, pensiunkan token 19B
+
+Status: belum dikerjakan. Bergantung pada 31B.
+
+- [ ] Migrasi `snapshots.user_id`. Perintah artisan **`habitflow:claim-legacy {email}`** (dengan `--dry-run`) menautkan snapshot dan token 19B yang ada ke akun pemilik, lalu satu kali lagi untuk akun istri.
+  Mencetak jumlah baris sebelum dan sesudah.
+- [ ] `routes/api.php`: `PUT /snapshot` dan `GET /snapshot/latest` pindah ke `user-token`. Batas ukuran, laju, dan retensi 14 salinan tetap, sekarang per user.
+- [ ] `AuthenticateToken` dan `api_tokens` dipensiunkan: tabel dibiarkan sampai 31L selesai (jalan mundur), lalu dihapus lewat migrasi.
+- [ ] Tes: snapshot satu user tidak terbaca user lain, klaim legacy idempoten, token 19B lama menjawab 401 setelah dipensiunkan.
+
+**Selesai jika:** snapshot lama pemilik terbaca lewat akunnya, dan token lama tidak lagi diterima.
+
+#### 31F. Android: lapisan akun dan sesi
+
+Status: belum dikerjakan. Bergantung pada 31B.
+
+- [ ] `AccountClient` dan `AccountManager`: register, verifikasi, kirim ulang, login email, Google (yang sudah ada), lupa dan reset, keluar (mencabut token di server), keluar dari semua perangkat, ubah kata sandi,
+  hapus akun, dan `me`. Semua hasil dalam tipe tertutup (`Success`, `Failed(code)`, `Unauthorized`, `Offline`).
+- [ ] `AccountSettings`: status sesi (`SignedOut`, `SignedIn`, `Expired`), dan **`ownerAccountId`** (pemilik data lokal), disimpan di berkas yang tidak ikut backup.
+- [ ] **Penanganan 401 di satu tempat.** Sekarang `HabitSyncClient`, `TeamClient`, `SyncClient`, dan klien follow-up masing-masing menangani sendiri. Semuanya melapor ke satu `SessionGuard` yang menandai
+  sesi `Expired` tanpa menghapus data lokal.
+- [ ] **Konfigurasi build:** `BuildConfig.API_BASE_URL` (debug: emulator atau alamat lokal, rilis: `https://habitflow.roziqrizal.com`), `GOOGLE_SERVER_CLIENT_ID` per varian. Pembacaan alamat dari `SyncSettings` dihentikan.
+- [ ] **Debug saja:** `DebugSessionReceiver` di `src/debug` yang memasang sesi uji lewat adb, supaya alur uji tidak perlu mengetik. Tidak boleh ada di rilis (dijaga 31J).
+- [ ] Unit test dengan klien palsu untuk setiap hasil, 401 dari tiap klien menghasilkan `Expired`, dan `ownerAccountId` tersimpan.
+
+**Selesai jika:** semua hasil termodelkan dan teruji, dan tidak ada klien yang menangani 401 sendiri.
+
+#### 31G. Android: gerbang dan layar auth
+
+Status: belum dikerjakan. Bergantung pada 31F. Catatan desain ditulis di `docs/design/README.md` lebih dulu (31A).
+
+- [ ] `AuthGate` di `MainActivity` sebelum `HabitFlowApp`: `Loading` (membaca sesi), `SignedOut`, `Expired` (layar Masuk dengan banner "Sesi berakhir, masuk lagi" dan email terisi), `SignedIn`.
+  Tidak ada satu pun layar app, alarm, notifikasi, atau worker yang hidup selagi bukan `SignedIn` (diselesaikan bersama 31H).
+- [ ] Layar **Masuk**, **Daftar** (dengan centang kebijakan privasi yang menyebut data kesehatan dan menautkan `/kebijakan-privasi`), **Verifikasi kode** (6 kotak, tempel kode, kirim ulang dengan hitung mundur
+  60 detik, teks masa berlaku), **Lupa kata sandi** (email, lalu kode dan sandi baru), dan tombol **Google**. Sesuai mockup.
+- [ ] `AuthViewModel` sebagai mesin keadaan murni yang bisa diuji: validasi lokal (format email, sandi minimal 8, konfirmasi sama), tombol tidak bisa ditekan dua kali, pemetaan galat
+  (422, 403 `email_not_verified`, 429, tanpa internet) ke kalimat tenang dalam bahasa Indonesia.
+- [ ] **Link undangan tim** (`pendingInviteToken`) disimpan melewati gerbang (termasuk saat proses dimatikan) dan diproses setelah login.
+- [ ] Hari pertama tanpa internet: layar Masuk menjelaskan bahwa login butuh internet, tanpa membuat pengguna mengira app rusak.
+- [ ] Aksesibilitas: area sentuh minimal 48dp, label untuk pembaca layar, urutan fokus keyboard, kolom kode mendukung isi otomatis.
+- [ ] Unit test `AuthViewModel` untuk setiap jalur: daftar sampai verifikasi, login belum terverifikasi, kode salah dan kedaluwarsa, kirim ulang, lupa dan reset, tanpa internet, Google batal.
+
+**Selesai jika:** di HP fisik pengguna bisa daftar, verifikasi lewat email sungguhan, keluar, masuk lagi, dan reset kata sandi, dan tidak ada jalan masuk ke app tanpa sesi.
+
+#### 31H. Android: siklus hidup sesi, Keluar, data lama, ganti akun
+
+Status: belum dikerjakan. Bergantung pada 31F dan 31E.
+
+- [ ] **`SessionManager`** satu-satunya yang menyalakan dan mematikan semua yang jalan di latar belakang: `syncScheduler`, `habitSyncScheduler`, `teamPollScheduler`, `StepsWorker`, `keepNotificationsInSync`, alarm dan
+  adzan, notifikasi tetap, dan layanan alarm. `HabitFlowApplication` tidak lagi memulainya langsung. Receiver `BOOT_COMPLETED` memeriksa sesi dulu.
+- [ ] **Registri berkas pengaturan.** Semua `SharedPreferences` dibuka lewat satu daftar nama (enum). Tes memastikan setiap nama di daftar ikut terhapus saat Keluar, sehingga pengaturan baru
+  tidak mungkin terlupa. Tema tampilan dikecualikan (preferensi perangkat, bukan data akun).
+- [ ] **Keluar:** hitung perubahan belum terkirim (outbox habit, follow-up dirty, penghapusan tertunda, dan perubahan snapshot-only) dan tampilkan jumlahnya. Dengan internet: coba sinkron dulu. Tanpa internet: peringatan
+  keras. Setelah konfirmasi: cabut token di server, batalkan semua alarm dan worker, hapus notifikasi, hapus Room dan semua berkas pengaturan, kosongkan cache, lalu **mulai ulang proses app** supaya tidak ada
+  keadaan di memori yang tersisa.
+- [ ] **Ambil alih data lama.** Pada pembaruan dari versi sebelum tahap ini: kalau ada sesi lama di `account.xml`, `ownerAccountId` diisi dari situ. Kalau tidak ada sesi tetapi ada data, akun pertama yang login mengambil alih
+  (`ownerAccountId` diisi) dan datanya diunggah memakai jalur gabung tahap 28 dan 27 yang sudah ada.
+- [ ] **Ganti akun di HP yang sama:** kalau `ownerAccountId` berbeda dari akun yang login, login ditahan dan pengguna diberi tahu bahwa data akun lain masih di HP ini dan akan dihapus; baru setelah konfirmasi data dihapus lalu login
+  dilanjutkan. Kalau sesi `Expired` lalu **akun yang sama** login lagi, data lokal dipertahankan dan sinkron dilanjutkan.
+- [ ] Hapus akun dari app: konfirmasi kata sandi, panggil `DELETE account`, lalu jalur wipe yang sama dengan Keluar.
+- [ ] Unit test (nama sesuai [rilis-play-store.md](rilis-play-store.md) bagian 3): Keluar mengosongkan database dan semua berkas pengaturan, ganti akun tidak menampilkan data akun lama, tanpa sesi tidak ada pekerjaan terjadwal,
+  jumlah perubahan belum terkirim dihitung benar, alarm terjadwal dibatalkan saat sesi berakhir.
+
+**Selesai jika:** diuji di HP fisik dengan dua akun bergantian, tidak ada data akun A yang terlihat di akun B, dan alarm Subuh yang sudah terjadwal tidak berbunyi setelah Keluar.
+
+#### 31I. Android: Pengaturan, Profil, Data tubuh
+
+Status: belum dikerjakan. Bergantung pada 31G dan 31D.
+
+- [ ] Tab **Tentang menjadi Pengaturan** (ikon roda gigi di `Icons.kt`). `AboutScreen` menjadi `SettingsScreen` dengan bagian: Tampilan, Waktu dan sholat, Pengingat, **Data tubuh** (tinggi badan dan target berat), Kalender, Data dan
+  sinkron, Tentang, sesuai mockup.
+- [ ] **Profil** (layar penuh di atas tab, tombol kembali menutupnya): foto dan nama, email, cara masuk, ubah kata sandi (atau buat kata sandi untuk akun Google), status sinkron dan "Sinkron sekarang", **Keluar**, **Keluar dari
+  semua perangkat**, **Hapus akun**. Lingkaran inisial di Hari ini membuka Profil.
+- [ ] Hapus semua UI "Atur server", token, "Uji koneksi", dan `SyncSection`. "Pulihkan dari server" menjadi "Cadangan dan pulihkan" berbasis akun dengan konfirmasi yang menyebut waktu snapshot.
+- [ ] `TeamScreen` dan `TeamViewModel`: hapus `SignInPrompt` dan semua cabang `account == null`.
+- [ ] `backup_rules.xml` dan `data_extraction_rules.xml`: keluarkan `habitflow.db` dan `settings.xml`.
+- [ ] Hapus cabang "belum login" yang tersisa: `SyncManager.followUpsOnAccount`, `Snapshot.followUpsOmitted`, dan sejenisnya. Pastikan pencarian `account == null` dan `Masuk dengan Google dulu` tidak menemukan apa pun.
+- [ ] Perbarui `docs/design/README.md` dan inventaris di [rilis-play-store.md](rilis-play-store.md).
+
+**Selesai jika:** tidak ada lagi UI atau kode yang meminta alamat server atau token, dan semua tindakan akun bisa dilakukan dari Profil di HP fisik.
+
+#### 31J. Skrip cek rilis dan tes pelengkap
+
+Status: belum dikerjakan. Bergantung pada 31I.
+
+- [ ] **`scripts/cek-rilis.ps1`** (keluar dengan kode bukan nol kalau ada yang gagal) memeriksa manifest rilis hasil gabungan dan konfigurasi build: `debuggable` mati, tidak ada komponen `src/debug` (termasuk
+  `DebugSessionReceiver`), `usesCleartextTraffic` mati dan `API_BASE_URL` berawalan `https://`, daftar izin **sama persis** dengan `scripts/izin-disetujui.txt`, `targetSdk` sama atau lebih tinggi dari
+  `scripts/target-sdk-minimum.txt` (diisi pemilik dari syarat Play saat itu), file backup tidak memuat database dan pengaturan, client ID Google bukan nilai uji, tidak ada rahasia di repo, dan `versionCode`
+  lebih besar dari `scripts/versi-terakhir.txt`.
+- [ ] Perintah tunggal yang menjalankan seluruh tes unit Android dan skrip ini, dan dicatat di `CLAUDE.md` sebagai langkah wajib sebelum mengunggah AAB.
+- [ ] Mencoba setiap pemeriksaan sekali dengan sengaja melanggarnya (misalnya menambah izin) untuk membuktikan skrip benar-benar gagal.
+
+**Selesai jika:** skrip lulus pada build rilis yang benar dan gagal untuk setiap pelanggaran uji.
+
+#### 31K. Operasional server: backup, pemantauan, prosedur insiden
+
+Status: belum dikerjakan. Bisa paralel setelah 31B. **Wajib selesai sebelum penguji diundang di 31M** (penguji adalah pengguna sungguhan dengan data sungguhan).
+
+- [ ] **Backup MySQL harian** (`mysqldump --single-transaction`), dikompres, **terenkripsi**, dikirim ke lokasi **di luar VM**, ditambah berkas snapshot di storage. Rotasi 30 hari. Sinyal "backup berhasil" ke layanan
+  pemantau supaya kegagalan diam-diam ketahuan.
+- [ ] **Latihan pemulihan:** skrip yang memulihkan backup terbaru ke database kosong lalu memeriksa jumlah baris. Dijalankan sekali sebelum 31M, dan seterusnya sebulan sekali.
+- [ ] **Pemantauan:** pengecekan situs dari luar (uptime), peringatan disk hampir penuh, backup gagal, dan email terkirim mencapai 80% batas harian. Pemberitahuan sampai ke ponsel pemilik.
+- [ ] **Rahasia:** `.env.production` dan kunci app yang mengenkripsi snapshot disalin ke tempat aman terpisah (kunci hilang berarti semua snapshot tidak terbaca). Catat cara memutar kunci tanpa kehilangan
+  snapshot (perintah enkripsi ulang).
+- [ ] Putusan tertulis soal **enkripsi disk VM** (data kesehatan di tabel MySQL berupa teks biasa) dan pembatasan akses admin database (tidak terbuka ke internet).
+- [ ] Jadwal pembaruan keamanan PHP, Laravel, dan image Docker.
+- [ ] **`docs/insiden-data.md`:** prosedur kebocoran data. Siapa menilai, cara menahan (`habitflow:revoke-all-sessions`, memutar kunci), cara memastikan cakupan, dan templat pemberitahuan ke pengguna dan lembaga
+  pengawas. UU PDP mewajibkan pemberitahuan paling lambat 3x24 jam, jadi prosedurnya ditulis **sebelum** dibutuhkan.
+
+**Selesai jika:** backup dipulihkan dengan sukses di latihan, peringatan uji sampai ke ponsel pemilik, dan prosedur insiden bisa dijalankan tanpa membaca kode.
+
+#### 31L. Rilis teknis: targetSdk, izin, penandatanganan, Google Sign-In produksi
+
+Status: belum dikerjakan. Bergantung pada 31I.
+
+- [ ] **Naikkan `targetSdk` dan `compileSdk`** ke angka syarat Play saat itu (sekarang 34, di bawah syarat). Telusuri perubahan perilaku yang berlaku (edge-to-edge, tipe layanan foreground, izin alarm, notifikasi,
+  dukungan ukuran halaman memori 16 KB kalau berlaku untuk pustaka yang dipakai) dan uji ulang di HP fisik: alarm Subuh, adzan, notifikasi tetap, pembacaan langkah, kalender, Health Connect.
+- [ ] **Izin yang dibatasi:** siapkan jalan tanpa izin untuk `USE_EXACT_ALARM` (misalnya izin yang diberikan pengguna) dan `USE_FULL_SCREEN_INTENT` (notifikasi heads-up) sebelum rilis, supaya penolakan Google tidak
+  mematikan fitur. Isi alasan deklarasi dengan jujur.
+- [ ] **Penandatanganan:** buat kunci unggah, **dua salinan di tempat berbeda** beserta kata sandinya, aktifkan Play App Signing, `signingConfigs` membaca `keystore.properties` yang tidak masuk repo.
+- [ ] **R8 (`isMinifyEnabled`)**: putuskan nyala atau mati *(lihat Belum diputuskan)*. Kalau nyala, aturan keep untuk Room dan Health Connect, dan **seluruh** alur diuji ulang pada build rilis karena R8 bisa merusak refleksi.
+- [ ] **Google Sign-In produksi:** layar persetujuan OAuth dipindah dari uji ke **produksi** (nama app, logo, tautan kebijakan privasi, domain resmi); client ID Android memakai **SHA-1 dari kunci Play App Signing**
+  selain kunci unggah dan debug; `GOOGLE_ANDROID_CLIENT_ID` di server diperbarui. Diuji dari build yang **dipasang lewat jalur uji Play Store**, bukan adb.
+- [ ] **Akun peninjau:** perintah artisan `habitflow:make-reviewer-account` membuat akun permanen yang sudah terverifikasi dengan data contoh, untuk kolom App access di Play Console.
+- [ ] Hapus tabel `api_tokens` lewat migrasi (rencana 31E).
+
+**Selesai jika:** AAB rilis ditandatangani dan lulus 31J, login Google dan email berhasil dari build jalur uji Play Store, dan semua fitur latar belakang diuji di HP fisik pada `targetSdk` baru.
+
+#### 31M. Uji tertutup 14 hari, Play Console, dan produksi
+
+Status: belum dikerjakan. Bergantung pada 31C, 31D, 31J, 31K, 31L.
+
+- [ ] **Undang penguji:** 15 sampai 25 orang nyata (minimal 12 harus tetap bergabung setiap hari selama 14 hari **berturut-turut**; kalau turun di bawah 12 hitungan mengulang dari nol, dan Google memeriksa bahwa
+  penguji benar-benar memakai app). Beri petunjuk pemasangan dan cara melapor.
+- [ ] **Formulir Play Console** (sebagian besar bisa diisi selama 14 hari menunggu): Data safety dari inventaris, Health apps declaration, deklarasi Health Connect, deklarasi izin sensitif, URL kebijakan privasi, URL hapus akun,
+  App access (akun peninjau), peringkat konten, target audiens (bukan anak-anak), kategori, ikon, tangkapan layar, dan deskripsi tanpa klaim medis.
+- [ ] Pantau selama uji: jumlah penguji aktif harian, laporan crash (Android vitals), pendaftaran dan verifikasi yang gagal, email terkirim terhadap batas harian, dan keberhasilan backup. Perbaiki bug lewat build uji baru tanpa
+  mengganti penguji.
+- [ ] **Gerbang H** di [rilis-play-store.md](rilis-play-store.md): pasang dari jalur uji di HP yang bukan HP pengembangan lalu daftar, verifikasi email, pakai tanpa internet, sinkron, Keluar, login akun lain, hapus akun.
+- [ ] Ajukan produksi **hanya setelah semua gerbang A sampai H berstatus `[x]` dengan bukti.** Rilis bertahap (usulan 10%, 50%, 100%) dengan pemantauan di antara setiap tahap.
+- [ ] Pasca rilis: tanggapi permintaan hapus akun (otomatis lewat halaman), dan jadwalkan latihan pemulihan bulanan.
+
+**Selesai jika:** app tayang di Play Store dengan semua gerbang lulus dan terbukti, dan tidak ada item yang bergantung pada ingatan pemilik.
+
+#### Selesai jika (seluruh tahap 31)
+
 - Pada pemasangan baru, tidak ada layar app yang bisa dibuka sebelum login, dan tidak ada alarm, notifikasi, atau worker yang jalan.
-- Login email, daftar email, dan Google semuanya berhasil, dan akun yang sama lewat Google dan email tidak menjadi dua akun.
+- Login email, daftar email dengan verifikasi, dan Google semuanya berhasil, dan akun yang sama lewat Google dan email tidak menjadi dua akun.
 - Setelah login, app tetap bisa dipakai tanpa internet, dan perubahan terkirim saat online lagi.
 - Keluar menghapus semua data lokal, dan login akun lain di HP yang sama tidak menampilkan data akun sebelumnya.
 - Data HP pemilik yang sudah ada sebelum tahap ini terambil alih ke akun pemilik tanpa kehilangan, dan snapshot lama bisa dipulihkan.
 - Tidak ada lagi UI atau kode yang meminta alamat server atau token di app.
-- Akun bisa dihapus dari app dan dari web, dan semua data di server ikut terhapus.
+- Akun bisa dihapus dari app dan dari web, dan semua data di server (baris dan berkas) ikut terhapus, dibuktikan tes.
+- Semua penjaga otomatis di [rilis-play-store.md](rilis-play-store.md) bagian 3 ada dan lulus, dan skrip cek rilis lulus pada build yang diunggah.
+- Backup server terbukti bisa dipulihkan.
+- Semua gerbang rilis A sampai H berstatus selesai dengan bukti.
 
-**Edge case baru yang harus diuji:**
+#### Edge case baru yang harus diuji
+
 - Login di HP yang masih memegang data akun lain (misalnya dari cadangan Android atau pembaruan dari versi lama).
-- Token dicabut dari web atau perangkat lain saat app sedang dipakai. Perubahan lokal yang belum terkirim tidak boleh hilang diam-diam.
+- Token dicabut dari web atau perangkat lain saat app sedang dipakai. Perubahan lokal yang belum terkirim tidak boleh hilang diam-diam, dan akun yang sama yang login lagi melanjutkan tanpa kehilangan.
 - Hari pertama tanpa internet: layar Masuk menjelaskan bahwa login butuh internet.
+- Email verifikasi terlambat sampai atau kode kedaluwarsa sebelum diketik: kirim ulang jalan, kode lama tidak berlaku.
+- Pengguna menutup app di tengah verifikasi lalu membukanya lagi: kembali ke layar Verifikasi, bukan ke layar Daftar kosong.
+- Jam HP salah: kedaluwarsa kode dihitung server, bukan HP.
 - Link undangan tim dibuka saat belum login, lalu login dengan akun yang berbeda dari yang diundang.
 - Keluar saat ada perubahan belum terkirim, dengan dan tanpa internet.
-- Pengguna yang daftar lewat Google lalu mencoba masuk dengan email dan kata sandi (akun belum punya kata sandi).
+- Pengguna yang daftar lewat Google lalu mencoba masuk dengan email dan kata sandi (akun belum punya kata sandi): diarahkan ke "Buat kata sandi" lewat lupa kata sandi.
+- Seseorang mendaftar dengan email korban lalu korban login Google: akun diambil alih Google, kata sandi penyerang hilang.
 - Memulihkan snapshot lama pada akun yang sudah punya data di server (tahap 27 sudah punya batasan "dobel").
 - Alarm Subuh yang sudah terjadwal saat sesi berakhir: harus dibatalkan, tidak berbunyi sendiri.
+- HP restart (boot) saat belum ada sesi: tidak ada alarm yang dijadwalkan.
+- Pemilik tim menghapus akun saat ada anggota lain, dan saat tim berisi hanya dia.
+- Dua perangkat memakai akun yang sama, satu menekan "Keluar dari semua perangkat".
+- Batas harian email layanan terlampaui: pendaftaran gagal dengan pesan yang jelas, dan pemilik sudah diberi tahu sejak 80%.
+- Layanan email mati: pendaftaran tidak macet (antrean) dan pengguna melihat pesan tenang, bukan galat teknis.
 
-**Belum diputuskan:**
-- **Layanan pengiriman email** (verifikasi dan lupa kata sandi): belum dipilih. Rekomendasi layanan pengirim terkelola, bukan server email sendiri; alasannya di [rilis-play-store.md](rilis-play-store.md) bagian 6. Email adalah jalur kritis: tanpa email, pengguna baru tidak bisa daftar.
-- **Masa simpan backup server** setelah akun dihapus (usulan 30 hari) dan lokasi backup di luar VM.
-- Urutan terhadap tahap 29 dan 30. Tahap 30 langkah 3-6 (kirim ke server) bisa lebih sederhana kalau dikerjakan setelah tahap ini.
+#### Belum diputuskan
+
+- **Kunci app (sidik jari atau PIN)** sebagai perlindungan data lokal yang sebenarnya, seperti yang diusulkan Claude di riwayat nomor 6. Tidak dijawab pemilik. Login wajib tidak melindungi data di HP yang tidak terkunci.
+  Kalau diinginkan, dikerjakan sebagai tahap sendiri sesudah tahap ini.
+- **Lokasi backup di luar VM** (penyimpanan awan atau mesin lain) dan siapa pemegang kunci enkripsi backup.
+- **Subdomain pengirim email** (usulan `mail.roziqrizal.com`) dan apakah web memakai kode atau tautan (usulan: kode, sama dengan app).
+- **R8 (`isMinifyEnabled`)** nyala atau mati untuk rilis. Usulan nyala dengan uji penuh, tapi menambah risiko dan pekerjaan.
+- **Aturan kata sandi:** usulan minimal 8 karakter ditambah penolakan kata sandi paling umum. Tanpa autentikasi dua langkah di tahap ini.
+- **Tema tampilan setelah Keluar:** usulan dipertahankan karena preferensi perangkat.
+- **Kapan tabel `api_tokens` dihapus:** usulan di 31L, setelah semua berjalan.
+- **Urutan terhadap tahap 29, 30 (langkah 3-6), dan 32.** Tahap 30 langkah 3-6 lebih sederhana kalau dikerjakan setelah 31E. Tahap 32 memakai `user-token` yang sama jadi kemungkinan tidak terpengaruh, tapi dicek ulang
+  setelah 31B.
 
 ### Tahap 32: Rekap kerja otomatis dari Claude (diputuskan garis besar 11 Oktober 2026, belum dikoding)
 

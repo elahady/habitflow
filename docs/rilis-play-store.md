@@ -16,6 +16,8 @@ Tidak ada rencana yang bisa menjamin nol celah. Yang bisa dijamin adalah tiga ha
 Batas dokumen ini: ia hanya sebaik inventaris data di bawah. **Setiap kali ada tabel, kolom, izin, atau SDK baru, inventaris
 diperbarui di commit yang sama.** Itu satu-satunya aturan yang tidak bisa diganti tes.
 
+Pemetaan ke pekerjaan: gerbang dan penjaga di sini dikerjakan lewat sub-tahap 31A sampai 31M di [concept.md](concept.md): penjaga server di 31B, 31D, 31E; penjaga Android di 31H dan 31J; Gerbang A di 31B sampai 31I; Gerbang B di 31B; Gerbang C di 31C dan 31M; Gerbang D di 31K; Gerbang E, G di 31L; Gerbang F, H di 31M.
+
 ## 1. Inventaris data (sumber tunggal)
 
 Dipakai untuk tiga hal sekaligus: isi kebijakan privasi, jawaban formulir Data safety, dan daftar yang harus terhapus saat akun
@@ -50,6 +52,7 @@ Diputuskan pemilik 11 Oktober 2026 kecuali ditandai lain.
 
 | Pertanyaan | Keputusan |
 |---|---|
+| Layanan email | **Resend gratis**, Brevo gratis sebagai cadangan, tanpa server email sendiri (bagian 6) |
 | Verifikasi email | **Wajib** untuk akun email dan kata sandi. Kode 6 angka yang diketik di app, berlaku 10 menit, sekali pakai, disimpan sebagai hash, dengan batas kirim ulang. Akun Google dianggap terverifikasi (Google sudah memverifikasi email) |
 | Penautan Google ke akun email | Hanya ke akun yang emailnya **sudah terverifikasi**. Akun email yang belum terverifikasi tidak pernah ditautkan, karena itu celah pengambilalihan akun |
 | Lupa kata sandi | Kode 6 angka lewat email, pola yang sama. Jawaban server **sama** apakah email terdaftar atau tidak |
@@ -108,7 +111,7 @@ Urutan wajib. Kolom **Bukti** diisi saat item selesai (tautan, tangkapan layar, 
 
 ### Gerbang B. Email
 Email menjadi **jalur kritis**: tanpa email, orang baru tidak bisa daftar, tidak bisa verifikasi, dan tidak bisa reset kata sandi.
-- [ ] Layanan pengirim dipilih (lihat bagian 6). Bukti:
+- [x] Layanan pengirim dipilih: **Resend gratis, Brevo gratis sebagai cadangan** (bagian 6, diputuskan 11 Oktober 2026). Bukti: keputusan di [concept.md](concept.md) tahap 31
 - [ ] Domain pengirim diverifikasi: **SPF, DKIM (2048 bit), dan DMARC** lulus, dicek dengan alat uji email. Bukti:
 - [ ] Email dikirim lewat **antrean** (queue) supaya pendaftaran tidak macet kalau layanan email lambat, dan gagal kirim tercatat. Bukti:
 - [ ] Batas kirim per email dan per IP, supaya tidak bisa dipakai membanjiri kotak orang lain. Bukti:
@@ -214,7 +217,7 @@ tapi **kalau batas harian terlewati, pendaftaran baru gagal**. Karena itu:
 - Server mencatat jumlah email terkirim per hari dan memberi tahu pemilik saat mencapai 80% batas (bagian Gerbang B dan D).
 - Pindah penyedia hanya mengubah `.env`, jadi pindah ke Brevo (batas harian 3x lebih besar) atau ke paket berbayar bisa dilakukan tanpa mengubah kode.
 
-**Pilihan yang disarankan:** mulai dengan **Resend gratis**, dengan Brevo gratis sebagai cadangan. Kode Laravel tidak terikat penyedia. *Belum diputuskan pemilik.*
+**Diputuskan pemilik 11 Oktober 2026: Resend gratis, dengan Brevo gratis sebagai cadangan.** Kode Laravel tidak terikat penyedia, jadi pindah hanya mengubah `.env`. Amazon SES ditolak karena gratisnya hanya 12 bulan.
 
 ## 7. Jalur kritis dan urutan waktu
 
