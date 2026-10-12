@@ -32,7 +32,8 @@ dihapus. Kalau salah satu dari ketiganya berbeda dari tabel ini, tabel ini yang 
 | `jobs`, `failed_jobs` | antrean email. Berisi kode asli selama email belum terkirim (menit), dan kode asli bisa tertinggal di `failed_jobs` kalau pengiriman gagal | Kredensial, sementara | Dibersihkan otomatis saat terkirim. `failed_jobs` dibersihkan berkala (31K) |
 | `user_tokens` | hash token sesi per perangkat | Kredensial | Ya |
 | `api_tokens` | token per-HP tahap 19B | Kredensial | Dipensiunkan di tahap 31, lalu tabelnya dihapus |
-| `snapshots` | seluruh data yang belum dimigrasi (jadwal, kesehatan, makan, kalender, pengaturan, EOD), terenkripsi dengan kunci app | **Kesehatan, lokasi** | Ya, termasuk 14 salinan terakhir |
+| `snapshots` | seluruh data yang belum dimigrasi (jadwal, kesehatan, makan, kalender, pengaturan, EOD), terenkripsi dengan kunci app | **Kesehatan, lokasi** | Ya, termasuk 14 salinan terakhir dan berkasnya (sejak 31D, lewat `snapshots.user_id`; snapshot lama dari token 19B baru terikat ke akun di 31E) |
+| `account_deletions` | waktu dan sumber penghapusan akun (`app`, `web`, `web-code`), tanpa id, nama, atau email | Bukan data pengguna | Tidak (bukti penghapusan) |
 | `habits`, `habit_entries`, `todos` | habit, riwayat centang, to-do harian | Aktivitas | Ya |
 | `follow_ups` | follow-up kerja (judul, orang, catatan) | Aktivitas, nama orang lain | Ya |
 | `teams`, `team_members`, `team_invites`, `team_todos` | tim tugas rumah dan isinya | Aktivitas, melibatkan orang lain | **Aturan khusus, lihat Keputusan** |

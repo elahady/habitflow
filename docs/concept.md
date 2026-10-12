@@ -2072,8 +2072,8 @@ Status: **kode dan tes selesai (12 Oktober 2026), kecuali hapus akun dan teks hu
   **Pemutusan sesi browser sungguhan:** kolom `users.session_epoch` dan middleware `EnsureSessionNotRevoked`. Sebelumnya hanya cookie "ingat saya" yang putus, sedangkan sesi file yang sedang hidup tetap berjalan.
   Ganti kata sandi di web mempertahankan sesi ini dan mengeluarkan yang lain. Dua penjagaan tambahan yang tidak diminta: **Putuskan Google ditolak kalau akun belum punya kata sandi** (akan terkunci), dan
   **Hubungkan Google ditolak kalau akun Google itu sudah dipakai akun lain** (sebelumnya galat 500).
-- [ ] **Hapus akun di dashboard (konfirmasi kata sandi atau Google): belum, dikerjakan di 31D** bersama penghapusan menyeluruh. Tombolnya sengaja belum ada daripada menghapus sebagian data.
-- [~] Halaman publik **`/hapus-akun`**: halaman informasi sudah ada (data apa yang dihapus, kapan, dan cara). **Jangan didaftarkan di Play Console sebelum 31D selesai**, karena langkah "Profil lalu Hapus akun" dan
+- [x] **Hapus akun di web: dikerjakan di 31D** (halaman Akun dengan konfirmasi kata sandi, dan kode email untuk akun Google). Sengaja ditunda dari 31C supaya tidak ada penghapusan setengah data.
+- [~] Halaman publik **`/hapus-akun`**: informasi dan formulir kode email sekarang berfungsi (31D). **Masih jangan didaftarkan di Play Console sebelum 31I selesai**, karena langkah "Profil lalu Hapus akun" di app belum ada. Catatan lama: langkah
   "halaman Akun lalu Hapus akun" yang disebutnya belum ada. Jalur "masuk lewat kode email untuk yang sudah mencopot app" juga belum ada: teks sekarang menyuruh masuk di web dengan akun yang sama
   dan memberi alamat email kontak. Kalau pemilik mau jalur kode email yang sungguhan, itu dikerjakan di 31D.
 - [~] Halaman publik **`/kebijakan-privasi`** (HTML, URL tetap, versi bernomor dari `PRIVACY_POLICY_VERSION`, tanggal dari `PRIVACY_POLICY_EFFECTIVE`, persetujuan mencatat versinya) **ditulis dari inventaris data oleh Claude, belum ditinjau pemilik.**
@@ -2081,7 +2081,7 @@ Status: **kode dan tes selesai (12 Oktober 2026), kecuali hapus akun dan teks hu
   1. **Kontak:** diambil dari `PRIVACY_CONTACT_EMAIL` (kosong di `.env.example`). Kalau kosong, halaman tidak menampilkan kontak, jadi Gerbang C belum terpenuhi sampai diisi.
   2. **Lokasi server:** ditulis "server milik pengelola di rumah pengelola di Indonesia". Betulkan kalau tidak persis begitu.
   3. **Cadangan 30 hari terenkripsi di penyimpanan terpisah (Cloudflare R2):** itu **rencana 31K, belum ada**. Kalimatnya baru benar setelah 31K selesai.
-  4. **Penghapusan langsung dan permanen:** baru benar setelah 31D.
+  4. **Penghapusan langsung dan permanen:** benar di server sejak 31D; di app baru setelah 31I.
   5. **"Tidak ditujukan untuk anak di bawah 13 tahun":** angka itu saya pilih sendiri, bukan keputusan pemilik.
   6. Pihak ketiga yang disebut: Google, Resend (Brevo cadangan), Cloudflare. Tambahkan kalau ada lagi.
   7. Rujukan UU PDP (pemberitahuan 3 x 24 jam) dari dokumen rilis, **bukan nasihat hukum**. Untuk rilis publik sebaiknya dibaca orang yang paham hukum.
@@ -2095,20 +2095,41 @@ Daftar, verifikasi, dan reset dari browser baru bisa dicoba nyata setelah email 
 
 #### 31D. Server: hapus akun menyeluruh dan penjaga skema
 
-Status: belum dikerjakan. Bergantung pada 31B.
+Status: **selesai di server (12 Oktober 2026).** Bergantung pada 31B (kode ✅). Tombol di app Android menunggu 31I.
 
-- [ ] `AccountDeletionService`, dipakai API dan web, dalam **satu transaksi**: semua tabel di inventaris ([rilis-play-store.md](rilis-play-store.md) bagian 1), `user_tokens`, `email_codes`, `sessions`,
-  snapshot (baris **dan berkas di storage**), serta data tim sesuai aturan kepemilikan di bawah.
-- [ ] **Aturan tim:** pemilik tim dengan anggota lain memindahkan kepemilikan ke anggota terlama; to-do tim buatan pemilik tetap ada dengan nama "Pengguna dihapus";
-  tanpa anggota lain, tim dan isinya dihapus. Anggota biasa hanya keluar dari tim. Undangan aktif buatan pengguna dihanguskan.
-- [ ] Catatan audit **tanpa data pribadi** (waktu hapus dan sumber: app atau web) untuk bukti penghapusan.
-- [ ] **Tes inventaris skema:** membaca semua tabel dari database dan gagal kalau ada tabel yang tidak ada di daftar "dihapus saat hapus akun" maupun di daftar "bukan data
-  pengguna, beserta alasannya". Tes ini yang mencegah tabel baru (misalnya berat dan tensi di tahap 30) terlupa.
-- [ ] **Tes hapus akun menyeluruh:** pengguna dengan baris di setiap tabel dan berkas snapshot, hapus, lalu **nol baris dan nol berkas** tersisa.
-- [ ] Tes kasus tim, tes token ikut tercabut, dan **tes log**: permintaan berisi berat, tensi, atau snapshot tidak masuk log aplikasi.
-- [ ] Tambahkan `php artisan test` sebagai langkah wajib sebelum deploy di `server/DEPLOY.md`.
+- [x] `AccountDeletionService`, dipakai API dan web, dalam **satu transaksi**: semua tabel di inventaris, `user_tokens`, `email_codes`, snapshot (baris **dan berkas**, berkas dihapus setelah transaksi berhasil),
+  email yang tertahan di `jobs` dan `failed_jobs` (dicocokkan dengan alamat email), dan data tim. Tabel `sessions` tidak ada (sesi file), dan sesi browser mati sendiri begitu barisnya hilang.
+  Diuji: kalau satu langkah gagal di tengah, tidak ada baris atau berkas yang hilang.
+- [x] **Aturan tim:** pemilik dengan anggota lain memindahkan kepemilikan ke anggota yang **paling dulu bergabung**; to-do tim buatan pengguna tetap ada dengan `created_by` kosong (kolom dibuat nullable,
+  migrasi `prepare_account_deletion`); tanpa anggota lain, tim dan isinya dihapus. Anggota biasa hanya keluar. Undangan buatan pengguna hangus; undangan yang dia pakai tetap ada tanpa `used_by`.
+  **Keputusan yang saya tambahkan:** aturan "to-do tetap ada" berlaku juga untuk to-do buatan **anggota biasa** (spesifikasi hanya menyebut pemilik). Nama "Pengguna dihapus" belum perlu ditampilkan di mana pun karena
+  pembuat to-do tim tidak ditampilkan di web maupun app (Android tidak membaca `created_by`); `created_by` kosong sudah mewakilinya.
+- [x] Catatan audit **tanpa data pribadi**: tabel `account_deletions` (`id`, `source` = `app` | `web` | `web-code`, `deleted_at`). Diuji bahwa kolomnya hanya itu.
+- [x] **Cara konfirmasi** (kontrak 31A + 31C): API `DELETE /account` (kata sandi, atau `id_token` Google untuk akun tanpa sandi, salah 5 kali dikunci 15 menit); web halaman Akun (kata sandi); dan
+  **jalur kode email publik** di `/hapus-akun` untuk orang yang sudah mencopot app, lupa kata sandi, atau akun Google (kode 6 angka tujuan `delete`, berlaku 10 menit, sekali pakai, dibatasi seperti kode lain).
+  Kode lupa kata sandi tidak bisa dipakai menghapus akun (diuji).
+- [x] **Tes inventaris skema** (`SchemaInventoryTest` + `tests/Support/DataInventory.php`): gagal kalau ada tabel yang tidak ada di daftar "dihapus" maupun "bukan data pengguna, beserta alasannya", atau kalau daftar menyebut tabel
+  yang sudah tidak ada. **Dibuktikan sekali:** tabel percobaan `weight_entries` membuat tesnya gagal dengan pesan yang menyebut nama tabelnya, lalu lulus lagi setelah dihapus.
+- [x] **Tes hapus akun menyeluruh**: pengguna dengan baris di **setiap** tabel dan berkas snapshot, hapus, **nol baris dan nol berkas**. Tes pendamping memastikan `populate()` benar-benar mengisi tiap tabel di daftar
+  (kalau tidak, tabel baru yang lupa diisi akan lolos karena memang kosong). Tes lain: data pengguna lain tidak tersentuh.
+- [x] Tes kasus tim (tiga kasus + undangan), tes token ikut tercabut (API 401 setelah hapus), dan **tes log** (`LogLeakTest`): isi snapshot yang diterima, ditolak (bukan JSON, struktur salah, terlalu besar, token salah), atau memicu
+  galat 500, serta kata sandi dan kode di jalur masuk, daftar, dan hapus akun, tidak masuk log. **Berat dan tensi belum punya endpoint** (tahap 30): tambahkan permintaannya ke tes itu saat endpoint dibuat.
+- [x] `php artisan test` jadi langkah wajib sebelum deploy di `server/DEPLOY.md`.
+- [x] **Diuji di MariaDB 10.4 (XAMPP, instance sementara), bukan hanya SQLite:** seluruh suite 208 tes lulus di keduanya. **Itu menemukan cacat nyata di 31B** (lihat di bawah). Versi MySQL produksi (`shared-mysql`) belum dicek:
+  jalankan `docker exec shared-mysql mysqld --version` dan, kalau mungkin, jalankan suite sekali terhadap database uji di sana sebelum deploy.
 
-**Selesai jika:** semua tes lulus dan menambah tabel tanpa memutuskan nasibnya saat hapus akun membuat tes gagal (dibuktikan dengan mencobanya sekali).
+**Cacat 31B yang ditemukan dan diperbaiki di sini:** kolom `email_codes.expires_at` bertipe `TIMESTAMP NOT NULL` otomatis mendapat `ON UPDATE CURRENT_TIMESTAMP` di MySQL 5.7 dan MariaDB, sehingga **satu tebakan salah menimpa waktu
+kedaluwarsa dengan "sekarang" dan langsung menghanguskan kode**. Di MySQL 8 tidak terjadi. Diperbaiki dengan migrasi `make_expires_at_plain_datetime` (jadi `DATETIME`, juga untuk `team_invites.expires_at` yang punya masalah sama),
+plus tes regresi `test_tebakan_salah_tidak_mengubah_waktu_kedaluwarsa_kode`.
+
+**Celah yang diketahui:**
+- **Snapshot lama belum terikat ke akun.** `snapshots.user_id` baru ditambahkan (nullable) dan sudah ikut terhapus kalau terisi, tapi yang mengisinya adalah **31E** (klaim snapshot token per-HP ke akun pemilik). Sampai itu, snapshot hasil token 19B
+  (milik pemilik dan istri) tidak ikut terhapus saat akunnya dihapus. Pengguna Play Store tidak pernah punya token 19B, jadi ini tidak memengaruhi mereka.
+- Berkas snapshot yang gagal dihapus setelah transaksi (disk bermasalah) hanya dicatat di log (`Hapus akun: berkas snapshot gagal dihapus`, tanpa isi), tidak dilaporkan ke pengguna. Itu pembersihan manual.
+- Email di `jobs`/`failed_jobs` dicocokkan sebagai teks di payload; alamat email yang berisi `/` tersimpan dengan escape JSON dan tidak akan cocok (sangat jarang).
+- Backup database yang sudah ada tidak disentuh, sesuai keputusan (hilang saat berputar). Kebijakan privasi sudah menyebutnya.
+
+**Selesai jika:** semua tes lulus (✅) dan menambah tabel tanpa memutuskan nasibnya saat hapus akun membuat tes gagal (✅, dibuktikan dengan mencobanya sekali).
 
 #### 31E. Server: snapshot ke akun, pensiunkan token 19B
 

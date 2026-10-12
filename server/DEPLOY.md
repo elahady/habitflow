@@ -28,6 +28,10 @@ dikerjakan.
 
 ## Proses deploy (manual, belum ada script otomatis)
 
+**Wajib sebelum langkah apa pun: `php artisan test` di `server/` harus lulus semua** (tahap 31D). Di dalamnya ada penjaga
+yang gagal kalau tabel baru belum diputuskan nasibnya saat hapus akun, dan kalau isi permintaan bocor ke log. PHP ada di
+`C:\xampp\php`. Jangan deploy kalau ada tes merah, dan jangan menghapus tes supaya hijau.
+
 Setiap ada perubahan kode di `server/`, urutannya:
 
 ```bash
