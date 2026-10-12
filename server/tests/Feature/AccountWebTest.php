@@ -419,7 +419,7 @@ class AccountWebTest extends TestCase
             ->assertSee('langsung dan permanen', false)
             ->assertSee('Data kesehatan')
             ->assertSee('30 hari')
-            ->assertSee(route('login'), false);
+            ->assertSee(route('account'), false);
     }
 
     public function test_tautan_kebijakan_privasi_dan_hapus_akun_ada_di_halaman_setelah_masuk(): void
