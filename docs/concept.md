@@ -2123,7 +2123,7 @@ kedaluwarsa dengan "sekarang" dan langsung menghanguskan kode**. Di MySQL 8 tida
 plus tes regresi `test_tebakan_salah_tidak_mengubah_waktu_kedaluwarsa_kode`.
 
 **Celah yang diketahui:**
-- **Snapshot lama belum terikat ke akun.** `snapshots.user_id` baru ditambahkan (nullable) dan sudah ikut terhapus kalau terisi, tapi yang mengisinya adalah **31E** (klaim snapshot token per-HP ke akun pemilik). Sampai itu, snapshot hasil token 19B
+- **Snapshot lama belum terikat ke akun** *(kode ditutup di 31E, tinggal dijalankan di produksi lewat `habitflow:claim-legacy`)*. `snapshots.user_id` baru ditambahkan (nullable) dan sudah ikut terhapus kalau terisi, tapi yang mengisinya adalah **31E** (klaim snapshot token per-HP ke akun pemilik). Sampai klaim dijalankan, snapshot hasil token 19B
   (milik pemilik dan istri) tidak ikut terhapus saat akunnya dihapus. Pengguna Play Store tidak pernah punya token 19B, jadi ini tidak memengaruhi mereka.
 - Berkas snapshot yang gagal dihapus setelah transaksi (disk bermasalah) hanya dicatat di log (`Hapus akun: berkas snapshot gagal dihapus`, tanpa isi), tidak dilaporkan ke pengguna. Itu pembersihan manual.
 - Email di `jobs`/`failed_jobs` dicocokkan sebagai teks di payload; alamat email yang berisi `/` tersimpan dengan escape JSON dan tidak akan cocok (sangat jarang).
@@ -2133,15 +2133,26 @@ plus tes regresi `test_tebakan_salah_tidak_mengubah_waktu_kedaluwarsa_kode`.
 
 #### 31E. Server: snapshot ke akun, pensiunkan token 19B
 
-Status: belum dikerjakan. Bergantung pada 31B.
+Status: **selesai di kode dan tes (12 Oktober 2026), belum di-deploy.** Bergantung pada 31B (kode ✅).
 
-- [ ] Migrasi `snapshots.user_id`. Perintah artisan **`habitflow:claim-legacy {email}`** (dengan `--dry-run`) menautkan snapshot dan token 19B yang ada ke akun pemilik, lalu satu kali lagi untuk akun istri.
-  Mencetak jumlah baris sebelum dan sesudah.
-- [ ] `routes/api.php`: `PUT /snapshot` dan `GET /snapshot/latest` pindah ke `user-token`. Batas ukuran, laju, dan retensi 14 salinan tetap, sekarang per user.
-- [ ] `AuthenticateToken` dan `api_tokens` dipensiunkan: tabel dibiarkan sampai 31L selesai (jalan mundur), lalu dihapus lewat migrasi.
-- [ ] Tes: snapshot satu user tidak terbaca user lain, klaim legacy idempoten, token 19B lama menjawab 401 setelah dipensiunkan.
+- [x] Migrasi `2026_10_12_130000_move_snapshots_to_accounts`: `snapshots.api_token_id` jadi nullable (snapshot baru tidak punya token). Kolom `user_id` sudah ada dari 31D. Kolom dan tabel `api_tokens` **sengaja
+  dibiarkan sampai 31L** supaya rilis server sebelumnya masih bisa dipakai kalau harus jalan mundur. Diuji naik, turun, dan naik lagi di MariaDB 10.4.
+- [x] Perintah artisan **`habitflow:claim-legacy {email} [--token=nama] [--dry-run]`**: menautkan snapshot milik token 19B ke akun, dijalankan satu kali per HP (pemilik, lalu istri). Mencetak hitungan sebelum dan
+  sesudah. **Keputusan yang saya tambahkan:** opsi `--token` (spesifikasi hanya menyebut `{email}`), karena ada dua HP dan satu email tidak cukup untuk memilih snapshot yang mana; kalau tokennya lebih dari satu dan `--token`
+  tidak diisi, perintah gagal dan menyebut pilihannya. Idempoten: hanya baris yang `user_id`-nya masih kosong yang disentuh, jadi snapshot yang sudah milik akun lain tidak dirampas. Batas 14 salinan per akun
+  diterapkan setelah klaim. Token lamanya **tidak dihapus** (alasan sama dengan di atas).
+- [x] `routes/api.php`: `PUT /snapshot`, `GET /snapshot/latest`, dan `GET /ping` pindah ke `user-token`. Batas ukuran (5 MB), laju (60 per menit), dan retensi 14 salinan tetap, sekarang **per akun**. Berkas baru
+  disimpan di `snapshots/u{user_id}/`; berkas lama tetap di `snapshots/{token_id}/` (jalurnya tersimpan di barisnya, jadi tetap terbaca dan ikut terhapus saat hapus akun).
+- [x] **Dipensiunkan:** middleware `AuthenticateToken` (alias `token`) dan perintah `habitflow:token` dihapus. Tidak ada lagi cara membuat atau memakai token 19B. Hash isi snapshot kini dibandingkan hanya dengan snapshot
+  akun yang sama (isi yang sama milik dua akun berbeda tidak dianggap "tidak berubah").
+- [x] Tes: `SnapshotApiTest` ditulis ulang untuk token akun (termasuk token 19B lama menjawab 401, snapshot akun lain tidak terbaca, batas 14 per akun), `ClaimLegacyTest` baru (klaim, dry-run, idempoten, dua HP ke
+  dua akun, tidak merampas, token atau akun tidak ada, batas 14, ikut terhapus saat hapus akun), `LogLeakTest` memakai token akun. Suite 218 tes lulus di SQLite dan di MariaDB 10.4.
 
-**Selesai jika:** snapshot lama pemilik terbaca lewat akunnya, dan token lama tidak lagi diterima.
+**Dampak saat deploy (penting):** begitu 31E di-deploy, **app Android yang terpasang sekarang tidak bisa sinkron** (ia masih mengirim token 19B, jawabannya 401) sampai 31H selesai. Itu memang bagian dari rencana
+("token lama tidak lagi diterima"), tapi berarti cadangan snapshot dari HP pemilik terhenti sepanjang jeda itu. Urutan aman: (1) pastikan akun pemilik dan istri sudah ada, (2) deploy, (3) jalankan
+`habitflow:claim-legacy ... --dry-run` lalu tanpa `--dry-run` untuk tiap HP, (4) catat bahwa sinkron mati sampai 31H. Kalau jeda itu tidak bisa diterima, tunda deploy 31E sampai dekat 31H.
+
+**Selesai jika:** snapshot lama pemilik terbaca lewat akunnya (✅ diuji lewat API), dan token lama tidak lagi diterima (✅). **Belum dikerjakan:** menjalankan klaim terhadap data produksi (butuh deploy, di luar sesi ini).
 
 #### 31F. Android: lapisan akun dan sesi
 

@@ -6,7 +6,8 @@ saat ganti HP. Kontrak API dan format snapshot ada di [`../docs/concept.md`](../
 (tahap 19B).
 
 - Laravel 12, PHP 8.2 atau lebih baru. SQLite untuk metadata, berkas snapshot di `storage/app/private`.
-- Login dengan **token pribadi** (`Authorization: Bearer <token>`). Hanya hash SHA-256 yang disimpan.
+- Login dengan **token akun** (`Authorization: Bearer <token>`, didapat lewat `POST /api/v1/auth/login` atau `auth/google`).
+  Snapshot terikat ke akun sejak tahap 31E; token per-HP tahap 19B tidak lagi diterima. Hanya hash SHA-256 yang disimpan.
 - Isi snapshot **dienkripsi** dengan `APP_KEY` sebelum ditulis ke disk. 14 snapshot terakhir disimpan.
 - Tanpa antrean, cron, Redis, atau layanan lain. Satu permintaan per sinkron, jadi ringan untuk VPS yang
   sama dengan Al-Kaukaba.
@@ -31,8 +32,10 @@ cp .env.example .env
 php artisan key:generate          # catat dan cadangkan APP_KEY (lihat peringatan di atas)
 touch database/database.sqlite
 php artisan migrate --force
-php artisan habitflow:token hp    # token tampil sekali: salin ke app (Tentang, Sinkron ke server)
 ```
+
+Akun dibuat lewat app atau web (daftar atau Google). Kalau ini pemasangan lama yang punya snapshot token 19B,
+klaim ke akun pemilik: lihat bagian "Klaim snapshot lama" di bawah.
 
 Sesuaikan `APP_URL` di `.env`. Arahkan web server ke folder `server/public`, misalnya Nginx:
 
@@ -59,19 +62,23 @@ Pasang sertifikat HTTPS (misalnya `certbot --nginx -d habitflow.contoh.com`). Pa
 Uji dari mana saja:
 
 ```bash
-curl -H "Authorization: Bearer <token>" https://habitflow.contoh.com/api/v1/ping
+curl -H "Authorization: Bearer <token-akun>" https://habitflow.contoh.com/api/v1/ping
 # {"ok":true}
 ```
 
-## Token
+## Klaim snapshot lama (tahap 31E)
+
+Snapshot yang dikirim sebelum tahap 31 terikat ke token per-HP (`api_tokens`), bukan akun. Tautkan ke akun
+pemilik HP itu, satu kali per HP. Akun harus sudah ada (daftar atau masuk Google dulu).
 
 ```bash
-php artisan habitflow:token hp            # buat token bernama "hp" (tampil sekali)
-php artisan habitflow:token hp --revoke   # cabut, misalnya kalau HP hilang
+php artisan habitflow:claim-legacy pemilik@contoh.com --token=hp --dry-run   # lihat hitungannya saja
+php artisan habitflow:claim-legacy pemilik@contoh.com --token=hp             # tautkan
 ```
 
-Satu token per HP. Mencabut token menghapus token itu beserta semua snapshot-nya (baris database dan
-berkas terenkripsinya).
+`--token` boleh dihilangkan kalau hanya ada satu token. Aman diulang: snapshot yang sudah punya akun tidak
+disentuh, dan batas 14 salinan per akun tetap berlaku. Token lamanya tidak dihapus (API sudah menolaknya);
+tabel `api_tokens` dihapus di 31L setelah rilis stabil.
 
 ## Pengembangan dan tes
 
