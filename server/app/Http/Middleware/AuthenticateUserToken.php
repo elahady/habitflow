@@ -10,9 +10,9 @@ use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Login dengan token API per-user (didapat lewat POST /api/v1/auth/google setelah Google
- * Sign-In, tahap 25) di header `Authorization: Bearer <token>`. Beda dari AuthenticateToken
- * (token per-HP tanpa akun, tahap 19B) - dipakai untuk endpoint yang butuh identitas user
- * (follow-up kerja, to-do tim).
+ * Sign-In, tahap 25; sejak 31B juga lewat email) di header `Authorization: Bearer <token>`.
+ * Dipakai untuk semua endpoint yang butuh identitas user (snapshot, follow-up kerja, to-do tim).
+ * Token per-HP tahap 19B (AuthenticateToken) sudah dihapus di 31E.
  */
 class AuthenticateUserToken
 {

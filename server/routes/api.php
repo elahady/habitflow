@@ -13,8 +13,9 @@ use App\Http\Controllers\Api\TodoController;
 use App\Http\Controllers\SnapshotController;
 use Illuminate\Support\Facades\Route;
 
-// Kontrak API tahap 19B (token per-HP tanpa akun) ada di docs/concept.md.
-Route::prefix('v1')->middleware(['token', 'throttle:habitflow'])->group(function () {
+// Kontrak API tahap 19B ada di docs/concept.md. Sejak 31E snapshot terikat ke akun (user-token);
+// token per-HP 19B tidak lagi diterima.
+Route::prefix('v1')->middleware(['user-token', 'throttle:habitflow'])->group(function () {
     Route::get('ping', fn () => response()->json(['ok' => true]));
     Route::put('snapshot', [SnapshotController::class, 'store']);
     Route::get('snapshot/latest', [SnapshotController::class, 'latest']);

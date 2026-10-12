@@ -4,23 +4,27 @@ namespace Tests\Feature;
 
 use App\Models\ApiToken;
 use App\Models\Snapshot;
+use App\Models\User;
+use App\Models\UserToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
+/** Snapshot terikat ke akun (user-token) sejak tahap 31E. Token per-HP 19B tidak lagi diterima. */
 class SnapshotApiTest extends TestCase
 {
     use RefreshDatabase;
 
     private string $plain;
 
-    private ApiToken $token;
+    private User $user;
 
     protected function setUp(): void
     {
         parent::setUp();
         Storage::fake('local');
-        [$this->token, $this->plain] = ApiToken::issue('hp-uji');
+        $this->user = User::create(['google_sub' => 'sub-1', 'email' => 'a@example.com', 'name' => 'A']);
+        [, $this->plain] = UserToken::issue($this->user, 'hp-uji');
     }
 
     private function auth(?string $plain = null): array
@@ -46,6 +50,15 @@ class SnapshotApiTest extends TestCase
         ), json_encode($payload));
     }
 
+    /** Pengguna kedua lengkap dengan token-nya. */
+    private function otherUser(string $email = 'b@example.com'): array
+    {
+        $other = User::create(['google_sub' => 'sub-'.$email, 'email' => $email, 'name' => 'B']);
+        [, $plain] = UserToken::issue($other, 'hp-lain');
+
+        return [$other, $plain];
+    }
+
     public function test_tanpa_token_ditolak(): void
     {
         $this->getJson('/api/v1/ping')->assertStatus(401);
@@ -58,15 +71,19 @@ class SnapshotApiTest extends TestCase
         $this->getJson('/api/v1/ping', $this->auth('salah'))->assertStatus(401);
     }
 
+    public function test_token_19b_lama_tidak_lagi_diterima(): void
+    {
+        [, $legacy] = ApiToken::issue('hp-lama');
+
+        $this->getJson('/api/v1/ping', $this->auth($legacy))->assertStatus(401);
+        $this->putJson('/api/v1/snapshot', $this->snapshot(), $this->auth($legacy))->assertStatus(401);
+        $this->getJson('/api/v1/snapshot/latest', $this->auth($legacy))->assertStatus(401);
+        $this->assertSame(0, Snapshot::count());
+    }
+
     public function test_ping_dengan_token_sah(): void
     {
         $this->getJson('/api/v1/ping', $this->auth())->assertOk()->assertJson(['ok' => true]);
-    }
-
-    public function test_hanya_hash_token_yang_disimpan(): void
-    {
-        $this->assertSame(hash('sha256', $this->plain), $this->token->token_hash);
-        $this->assertDatabaseMissing('api_tokens', ['token_hash' => $this->plain]);
     }
 
     public function test_terlalu_banyak_percobaan_salah_diblokir(): void
@@ -79,13 +96,15 @@ class SnapshotApiTest extends TestCase
         $this->getJson('/api/v1/ping', $this->auth())->assertStatus(429);
     }
 
-    public function test_unggah_snapshot_tersimpan_terenkripsi_dan_bisa_diambil_persis(): void
+    public function test_unggah_snapshot_tersimpan_di_akun_terenkripsi_dan_bisa_diambil_persis(): void
     {
         $payload = $this->snapshot();
 
         $this->unggah($payload)->assertOk()->assertJson(['unchanged' => false])->assertJsonStructure(['id', 'receivedAt', 'bytes']);
 
         $row = Snapshot::firstOrFail();
+        $this->assertSame($this->user->id, $row->user_id);
+        $this->assertNull($row->api_token_id);
         $this->assertSame('perangkat-uji', $row->device_id);
         $this->assertSame(1, $row->schema_version);
 
@@ -130,6 +149,18 @@ class SnapshotApiTest extends TestCase
         $this->assertSame(16, json_decode($latest->getContent(), true)['createdAt']);
     }
 
+    public function test_batas_14_dihitung_per_akun(): void
+    {
+        [$other, $otherPlain] = $this->otherUser();
+        for ($i = 1; $i <= 16; $i++) {
+            $this->unggah($this->snapshot(['data' => ['todos' => [['id' => $i]]]]))->assertOk();
+        }
+        $this->unggah($this->snapshot(['data' => ['todos' => [['id' => 99]]]]), $otherPlain)->assertOk();
+
+        $this->assertSame(14, $this->user->snapshots()->count());
+        $this->assertSame(1, $other->snapshots()->count());
+    }
+
     public function test_isi_bukan_json_ditolak(): void
     {
         $this->call('PUT', '/api/v1/snapshot', [], [], [], $this->transformHeadersToServerVars(
@@ -161,12 +192,31 @@ class SnapshotApiTest extends TestCase
         $this->getJson('/api/v1/snapshot/latest', $this->auth())->assertStatus(404);
     }
 
-    public function test_token_lain_tidak_bisa_membaca_snapshot_orang_lain(): void
+    public function test_akun_lain_tidak_bisa_membaca_snapshot_orang_lain(): void
     {
         $this->unggah($this->snapshot())->assertOk();
-        [, $other] = ApiToken::issue('hp-lain');
+        [, $otherPlain] = $this->otherUser();
 
-        $this->getJson('/api/v1/snapshot/latest', $this->auth($other))->assertStatus(404);
+        $this->getJson('/api/v1/snapshot/latest', $this->auth($otherPlain))->assertStatus(404);
+    }
+
+    public function test_isi_sama_milik_dua_akun_tidak_dianggap_tidak_berubah(): void
+    {
+        [$other, $otherPlain] = $this->otherUser();
+        $payload = $this->snapshot();
+        $this->unggah($payload)->assertOk();
+
+        $this->unggah($payload, $otherPlain)->assertOk()->assertJson(['unchanged' => false]);
+        $this->assertSame(1, $other->snapshots()->count());
+    }
+
+    public function test_keluar_mencabut_token_tapi_snapshot_akun_tetap_ada(): void
+    {
+        $this->unggah($this->snapshot())->assertOk();
+        $this->postJson('/api/v1/auth/logout', [], $this->auth())->assertSuccessful();
+
+        $this->assertSame(1, $this->user->snapshots()->count());
+        $this->getJson('/api/v1/snapshot/latest', $this->auth())->assertStatus(401);
     }
 
     public function test_dibatasi_60_permintaan_per_menit(): void
@@ -175,29 +225,6 @@ class SnapshotApiTest extends TestCase
             $this->getJson('/api/v1/ping', $this->auth())->assertOk();
         }
         $this->getJson('/api/v1/ping', $this->auth())->assertStatus(429);
-    }
-
-    public function test_perintah_artisan_membuat_dan_mencabut_token(): void
-    {
-        $this->artisan('habitflow:token', ['name' => 'hp-baru'])->assertSuccessful();
-        $this->assertDatabaseHas('api_tokens', ['name' => 'hp-baru']);
-
-        $this->artisan('habitflow:token', ['name' => 'hp-baru'])->assertFailed();
-
-        $this->artisan('habitflow:token', ['name' => 'hp-baru', '--revoke' => true])->assertSuccessful();
-        $this->assertDatabaseMissing('api_tokens', ['name' => 'hp-baru']);
-    }
-
-    public function test_mencabut_token_menghapus_snapshot_dan_berkasnya(): void
-    {
-        $this->unggah($this->snapshot())->assertOk();
-        $this->assertCount(1, Storage::disk('local')->allFiles('snapshots'));
-
-        $this->artisan('habitflow:token', ['name' => 'hp-uji', '--revoke' => true])->assertSuccessful();
-
-        $this->assertSame(0, Snapshot::count());
-        $this->assertCount(0, Storage::disk('local')->allFiles('snapshots'));
-        $this->getJson('/api/v1/ping', $this->auth())->assertStatus(401);
     }
 
     public function test_isi_data_sama_tapi_waktu_kirim_beda_dianggap_tidak_berubah(): void

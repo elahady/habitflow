@@ -14,7 +14,7 @@ use Illuminate\Support\Str;
  * (email_verified_at kosong) sampai kode 6 angka dari email dipakai; akun Google dianggap
  * terverifikasi. Kolom verifikasi dan persetujuan sengaja tidak mass-assignable: hanya
  * diisi lewat forceFill di alur yang memang berwenang. Beda dari ApiToken (token per-HP
- * tanpa akun, tahap 19B), yang dipensiunkan di 31E.
+ * tanpa akun, tahap 19B), yang dipensiunkan di 31E dan modelnya dihapus di 31L.
  */
 class User extends Authenticatable
 {
@@ -90,6 +90,11 @@ class User extends Authenticatable
     public function prayerDays(): HasMany
     {
         return $this->hasMany(PrayerDay::class);
+    }
+
+    public function snapshots(): HasMany
+    {
+        return $this->hasMany(Snapshot::class);
     }
 
     public function scheduleBlocks(): HasMany

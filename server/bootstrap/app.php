@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Middleware\AuthenticateToken;
 use App\Http\Middleware\AuthenticateUserToken;
 use App\Http\Middleware\EnsureSessionNotRevoked;
 use Illuminate\Foundation\Application;
@@ -17,7 +16,6 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'token' => AuthenticateToken::class,
             'user-token' => AuthenticateUserToken::class,
             'session-not-revoked' => EnsureSessionNotRevoked::class,
         ]);

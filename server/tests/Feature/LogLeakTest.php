@@ -2,7 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Models\ApiToken;
+use App\Models\User;
+use App\Models\UserToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -43,6 +44,15 @@ class LogLeakTest extends TestCase
         return is_file($this->logPath) ? file_get_contents($this->logPath) : '';
     }
 
+    /** Token API sebuah akun (snapshot terikat akun sejak 31E). */
+    private function tokenAkun(): string
+    {
+        $user = User::create(['google_sub' => 'sub-log', 'email' => 'log@example.com', 'name' => 'Log']);
+        [, $plain] = UserToken::issue($user, 'hp-uji');
+
+        return $plain;
+    }
+
     private function kirimSnapshot(string $body, string $plain)
     {
         return $this->call('PUT', '/api/v1/snapshot', [], [], [], $this->transformHeadersToServerVars([
@@ -52,7 +62,7 @@ class LogLeakTest extends TestCase
 
     public function test_isi_snapshot_tidak_masuk_log_walau_diterima_ditolak_atau_memicu_galat(): void
     {
-        [, $plain] = ApiToken::issue('hp-uji');
+        $plain = $this->tokenAkun();
 
         // Diterima.
         $this->kirimSnapshot(json_encode(['schemaVersion' => 1, 'data' => ['berat' => self::SECRET, 'tensi' => self::SECRET]]), $plain)->assertOk();
@@ -68,7 +78,7 @@ class LogLeakTest extends TestCase
 
     public function test_galat_server_saat_menyimpan_snapshot_tidak_membocorkan_isi_ke_log(): void
     {
-        [, $plain] = ApiToken::issue('hp-uji');
+        $plain = $this->tokenAkun();
         // Penyimpanan rusak: galat 500 sungguhan, lengkap dengan jejak tumpukan yang dicatat Laravel.
         Storage::shouldReceive('disk')->andThrow(new \RuntimeException('disk rusak'));
 

@@ -6,6 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
+/**
+ * Token per-HP tahap 19B, tanpa akun. Dipensiunkan di 31E: tidak lagi diterima API, hanya dibaca
+ * oleh perintah `habitflow:claim-legacy`. Model dan tabelnya dihapus di 31L.
+ */
 class ApiToken extends Model
 {
     protected $fillable = ['name', 'token_hash', 'last_used_at'];

@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ApiToken;
 use App\Models\Snapshot;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Validator;
 /**
  * Menyimpan dan mengembalikan snapshot data Habitflow. Server tidak menafsirkan isinya; yang diperiksa
  * hanya bahwa isinya JSON dengan `schemaVersion` bilangan bulat dan `data` objek. Isi disimpan terenkripsi
- * (kunci APP_KEY) dan hanya [KEEP] snapshot terakhir per token yang disimpan.
+ * (kunci APP_KEY) dan hanya [KEEP] snapshot terakhir per akun yang disimpan.
  */
 class SnapshotController extends Controller
 {
@@ -24,8 +24,8 @@ class SnapshotController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        /** @var ApiToken $token */
-        $token = $request->attributes->get('api_token');
+        /** @var User $user */
+        $user = $request->user();
         $body = $request->getContent();
 
         if (strlen($body) > self::MAX_BYTES) {
@@ -56,12 +56,12 @@ class SnapshotController extends Controller
         // Hash isi saja (versi skema dan data): createdAt dan deviceId berubah di setiap kirim, jadi kalau ikut
         // dihitung, "isi tidak berubah" tidak akan pernah terdeteksi.
         $sha = hash('sha256', json_encode([$payload['schemaVersion'], $payload['data']]));
-        $latest = $token->snapshots()->latest('id')->first();
+        $latest = $user->snapshots()->latest('id')->first();
         if ($latest && $latest->sha256 === $sha) {
             return response()->json($this->summary($latest, unchanged: true));
         }
 
-        $snapshot = $token->snapshots()->create([
+        $snapshot = $user->snapshots()->create([
             'device_id' => $payload['deviceId'] ?? null,
             'schema_version' => $payload['schemaVersion'],
             'bytes' => strlen($body),
@@ -69,20 +69,20 @@ class SnapshotController extends Controller
             'path' => '',
             'client_created_at' => $payload['createdAt'] ?? null,
         ]);
-        $path = sprintf('snapshots/%d/%s-%d.enc', $token->id, now()->format('Ymd-His'), $snapshot->id);
+        $path = sprintf('snapshots/u%d/%s-%d.enc', $user->id, now()->format('Ymd-His'), $snapshot->id);
         Storage::disk('local')->put($path, Crypt::encryptString($body));
         $snapshot->update(['path' => $path]);
 
-        $this->prune($token);
+        $this->prune($user);
 
         return response()->json($this->summary($snapshot, unchanged: false));
     }
 
     public function latest(Request $request): JsonResponse|Response
     {
-        /** @var ApiToken $token */
-        $token = $request->attributes->get('api_token');
-        $snapshot = $token->snapshots()->latest('id')->first();
+        /** @var User $user */
+        $user = $request->user();
+        $snapshot = $user->snapshots()->latest('id')->first();
 
         if (! $snapshot || ! Storage::disk('local')->exists($snapshot->path)) {
             return response()->json(['message' => 'Belum ada snapshot.'], 404);
@@ -107,9 +107,9 @@ class SnapshotController extends Controller
     }
 
     /** Hapus snapshot yang lebih lama dari [KEEP] terakhir, beserta berkasnya. */
-    private function prune(ApiToken $token): void
+    private function prune(User $user): void
     {
-        $old = $token->snapshots()->latest('id')->skip(self::KEEP)->take(PHP_INT_MAX)->get();
+        $old = $user->snapshots()->latest('id')->skip(self::KEEP)->take(PHP_INT_MAX)->get();
         foreach ($old as $snapshot) {
             Storage::disk('local')->delete($snapshot->path);
             $snapshot->delete();
