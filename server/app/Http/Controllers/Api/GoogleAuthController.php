@@ -5,10 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\UserToken;
 use App\Services\GoogleAccountLinker;
+use App\Services\GoogleIdTokenVerifier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Validation\ValidationException;
 
 /**
  * Login API dari app Android lewat Google Sign-In (tahap 25). App kirim ID token dari
@@ -18,7 +17,7 @@ use Illuminate\Validation\ValidationException;
  */
 class GoogleAuthController extends Controller
 {
-    public function login(Request $request, GoogleAccountLinker $linker): JsonResponse
+    public function login(Request $request, GoogleAccountLinker $linker, GoogleIdTokenVerifier $verifier): JsonResponse
     {
         $request->validate([
             'id_token' => ['required', 'string'],
@@ -26,24 +25,7 @@ class GoogleAuthController extends Controller
             'privacy_policy_version' => ['nullable', 'string', 'max:32'],
         ]);
 
-        $response = Http::get('https://oauth2.googleapis.com/tokeninfo', [
-            'id_token' => $request->string('id_token'),
-        ]);
-
-        if (! $response->successful()) {
-            throw ValidationException::withMessages(['id_token' => 'Token Google tidak sah.']);
-        }
-
-        $claims = $response->json();
-
-        $expectedAudience = config('services.google.android_client_id');
-        if (($claims['aud'] ?? null) !== $expectedAudience) {
-            throw ValidationException::withMessages(['id_token' => 'Token Google bukan untuk app ini.']);
-        }
-
-        if (($claims['email_verified'] ?? 'false') !== 'true') {
-            throw ValidationException::withMessages(['id_token' => 'Email Google belum diverifikasi.']);
-        }
+        $claims = $verifier->claims($request->string('id_token')->toString());
 
         // Aturan penautan (termasuk pengambilalihan akun email yang belum terverifikasi) ada di linker.
         $user = $linker->resolve(

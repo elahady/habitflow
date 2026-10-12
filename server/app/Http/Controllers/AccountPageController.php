@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Rules\StrongPassword;
+use App\Services\AccountDeletionService;
 use App\Services\AccountService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -10,7 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
-/** Halaman Akun di web (tahap 31C): ganti atau buat kata sandi, dan Keluar dari semua perangkat. */
+/** Halaman Akun di web (tahap 31C): kata sandi, Keluar dari semua perangkat, dan hapus akun (31D). */
 class AccountPageController extends Controller
 {
     public function __construct(private AccountService $accounts) {}
@@ -56,5 +57,29 @@ class AccountPageController extends Controller
         $request->session()->regenerateToken();
 
         return redirect()->route('login')->with('status', 'Kamu sudah keluar dari semua perangkat.');
+    }
+
+    /** Hapus akun dengan konfirmasi kata sandi. Akun tanpa kata sandi memakai kode email (DeleteAccountController). */
+    public function destroy(Request $request, AccountDeletionService $deleter): RedirectResponse
+    {
+        $user = $request->user();
+        $data = $request->validate(['delete_password' => ['required', 'string']], [], ['delete_password' => 'kata sandi']);
+
+        [$status, $wait] = $this->accounts->confirmPasswordForDeletion($user, $data['delete_password']);
+
+        if ($status === AccountService::PASSWORD_THROTTLED) {
+            throw ValidationException::withMessages(['delete_password' => 'Terlalu banyak percobaan. Coba lagi dalam '.$wait.' detik.']);
+        }
+        if ($status === AccountService::PASSWORD_WRONG) {
+            throw ValidationException::withMessages(['delete_password' => 'Kata sandi salah.']);
+        }
+
+        $deleter->delete($user, AccountDeletionService::SOURCE_WEB);
+
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('login')->with('status', 'Akun dan semua datamu sudah dihapus.');
     }
 }

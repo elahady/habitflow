@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\EmailVerificationController;
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\DeleteAccountController;
 use App\Http\Controllers\InviteController;
 use App\Livewire\Dashboard;
 use App\Livewire\FollowUps;
@@ -21,6 +22,9 @@ Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback']);
 // Halaman publik (tahap 31C): bisa dibuka tanpa login, URL-nya dipakai di Play Console.
 Route::view('/kebijakan-privasi', 'legal.privacy')->name('privacy');
 Route::view('/hapus-akun', 'legal.delete-account')->name('delete-account');
+Route::post('/hapus-akun/kode', [DeleteAccountController::class, 'sendCode'])->name('delete-account.code');
+Route::get('/hapus-akun/konfirmasi', [DeleteAccountController::class, 'confirm'])->name('delete-account.confirm');
+Route::post('/hapus-akun/konfirmasi', [DeleteAccountController::class, 'destroy'])->name('delete-account.destroy');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
@@ -45,6 +49,7 @@ Route::middleware(['auth', 'session-not-revoked'])->group(function () {
     Route::get('/akun', [AccountPageController::class, 'show'])->name('account');
     Route::put('/akun/kata-sandi', [AccountPageController::class, 'updatePassword'])->name('account.password');
     Route::post('/akun/keluar-semua', [AccountPageController::class, 'logoutEverywhere'])->name('account.logout-all');
+    Route::delete('/akun', [AccountPageController::class, 'destroy'])->name('account.destroy');
 
     Route::get('/', Dashboard::class)->name('dashboard');
     Route::get('/tugas-rumah', Teams::class)->name('teams');

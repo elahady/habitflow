@@ -12,6 +12,8 @@ class EmailCode extends Model
 
     public const PURPOSE_RESET = 'reset';
 
+    public const PURPOSE_DELETE = 'delete';
+
     protected $fillable = ['user_id', 'purpose', 'code_hash', 'expires_at', 'attempts', 'consumed_at'];
 
     protected function casts(): array

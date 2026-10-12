@@ -40,6 +40,7 @@ Route::prefix('v1')->middleware(['user-token', 'throttle:habitflow'])->group(fun
     Route::post('auth/logout-all', [AuthController::class, 'logoutAll']);
     Route::get('me', [AccountController::class, 'show']);
     Route::put('account/password', [AccountController::class, 'updatePassword']);
+    Route::delete('account', [AccountController::class, 'destroy']);
 });
 
 // To-Do Tim (tahap 26) - butuh login Google dulu (UserToken), beda dari token 19B di atas.

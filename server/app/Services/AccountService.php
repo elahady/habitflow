@@ -76,6 +76,53 @@ class AccountService
         }
     }
 
+    /** Kode konfirmasi hapus akun (tahap 31D): hanya untuk akun yang emailnya terverifikasi. Diam kalau tidak. */
+    public function sendDeletionCode(string $email): void
+    {
+        $user = User::where('email', $this->normalizeEmail($email))->first();
+
+        if ($user?->hasVerifiedEmail() && $this->codes->allowSend($user->email, 'delete', 3, withCooldown: false)) {
+            $this->codes->issue($user, EmailCode::PURPOSE_DELETE);
+        }
+    }
+
+    /** Periksa kode hapus akun. Mengembalikan [hasil EmailCodeService::*, user atau null]; kodenya hangus kalau benar. */
+    public function verifyDeletionCode(string $email, string $code): array
+    {
+        $user = User::where('email', $this->normalizeEmail($email))->first();
+
+        if (! $user?->hasVerifiedEmail()) {
+            return [EmailCodeService::INVALID, null];
+        }
+
+        $result = $this->codes->verify($user, EmailCode::PURPOSE_DELETE, $code);
+
+        return [$result, $result === EmailCodeService::OK ? $user : null];
+    }
+
+    /**
+     * Konfirmasi kata sandi sebelum hapus akun. Salah 5 kali dikunci 15 menit. Mengembalikan
+     * [status PASSWORD_*, detik tunggu atau null]. Akun tanpa kata sandi selalu PASSWORD_WRONG
+     * (mereka konfirmasi lewat Google atau kode email).
+     */
+    public function confirmPasswordForDeletion(User $user, ?string $password): array
+    {
+        $key = 'account-delete-fail:'.$user->id;
+        if (RateLimiter::tooManyAttempts($key, 5)) {
+            return [self::PASSWORD_THROTTLED, RateLimiter::availableIn($key)];
+        }
+
+        if ($user->password === null || $password === null || ! Hash::check($password, $user->password)) {
+            RateLimiter::hit($key, 900);
+
+            return [self::PASSWORD_WRONG, null];
+        }
+
+        RateLimiter::clear($key);
+
+        return [self::PASSWORD_OK, null];
+    }
+
     /**
      * Periksa kode verifikasi email. Mengembalikan [hasil EmailCodeService::*, user atau null];
      * kalau OK, email sudah ditandai terverifikasi dan kodenya hangus.

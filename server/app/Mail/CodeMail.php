@@ -32,9 +32,11 @@ class CodeMail extends Mailable implements ShouldQueue
 
     public function envelope(): Envelope
     {
-        return new Envelope(subject: $this->purpose === EmailCode::PURPOSE_RESET
-            ? 'Kode atur ulang kata sandi Habitflow'
-            : 'Kode verifikasi email Habitflow');
+        return new Envelope(subject: match ($this->purpose) {
+            EmailCode::PURPOSE_RESET => 'Kode atur ulang kata sandi Habitflow',
+            EmailCode::PURPOSE_DELETE => 'Kode konfirmasi hapus akun Habitflow',
+            default => 'Kode verifikasi email Habitflow',
+        });
     }
 
     public function content(): Content

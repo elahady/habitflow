@@ -73,4 +73,33 @@
             <button type="submit" style="background: none; border: 1px solid var(--error); color: var(--error); padding: 8px 16px; border-radius: 999px; cursor: pointer; font-family: 'Manrope', sans-serif;">Keluar dari semua perangkat</button>
         </form>
     </section>
+    <section style="margin-top: 16px; padding: 20px; border: 1px solid var(--error); border-radius: 16px;">
+        <h2 style="margin: 0 0 8px; font-size: 17px; color: var(--error);">Hapus akun</h2>
+        <p style="margin: 0 0 12px; color: var(--on-surface-variant); font-size: 14px;">
+            Menghapus akunmu dan semua datamu (habit, to-do, follow-up, jadwal, data kesehatan, keanggotaan tim) secara
+            <strong>langsung dan permanen</strong>. Tidak bisa dibatalkan. <a href="{{ route('delete-account') }}" style="color: var(--primary);">Selengkapnya</a>.
+        </p>
+        @if ($user->password)
+            <form method="POST" action="{{ route('account.destroy') }}" style="display: block; max-width: 380px;"
+                  onsubmit="return confirm('Hapus akun dan semua datamu secara permanen? Ini tidak bisa dibatalkan.');">
+                @csrf
+                @method('DELETE')
+                <div class="field">
+                    <label for="delete_password">Masukkan kata sandimu untuk konfirmasi</label>
+                    <input type="password" id="delete_password" name="delete_password" required autocomplete="current-password">
+                    @error('delete_password')
+                        <p class="error-text">{{ $message }}</p>
+                    @enderror
+                </div>
+                <button type="submit" style="background: var(--error); color: var(--background); border: none; padding: 10px 20px; border-radius: 999px; cursor: pointer; font-family: 'Manrope', sans-serif; font-weight: 600;">Hapus akun permanen</button>
+            </form>
+        @else
+            <p style="margin: 0 0 12px; font-size: 14px;">Akunmu tidak punya kata sandi, jadi konfirmasinya lewat kode 6 angka yang dikirim ke emailmu.</p>
+            <form method="POST" action="{{ route('delete-account.code') }}" style="display: block;">
+                @csrf
+                <input type="hidden" name="email" value="{{ $user->email }}">
+                <button type="submit" style="background: var(--error); color: var(--background); border: none; padding: 10px 20px; border-radius: 999px; cursor: pointer; font-family: 'Manrope', sans-serif; font-weight: 600;">Kirim kode hapus akun</button>
+            </form>
+        @endif
+    </section>
 </x-layout>
