@@ -156,6 +156,22 @@ class AccountAuthApiTest extends TestCase
         $this->assertStringNotContainsString($code, json_encode($row->toArray()));
     }
 
+    public function test_tebakan_salah_tidak_mengubah_waktu_kedaluwarsa_kode(): void
+    {
+        // Regresi MySQL lama dan MariaDB: kolom TIMESTAMP pertama otomatis "ON UPDATE CURRENT_TIMESTAMP",
+        // sehingga satu tebakan salah (UPDATE attempts) menimpa expires_at dengan "sekarang".
+        $this->register();
+        $sebelum = EmailCode::first()->expires_at->timestamp;
+        $code = $this->lastCode();
+        $salah = $code === '000000' ? '111111' : '000000';
+        $this->travel(2)->minutes();
+
+        $this->postJson('/api/v1/auth/verify-email', ['email' => 'budi@example.com', 'code' => $salah, 'device_name' => 'hp'])->assertStatus(422);
+
+        $this->assertSame($sebelum, EmailCode::first()->expires_at->timestamp);
+        $this->postJson('/api/v1/auth/verify-email', ['email' => 'budi@example.com', 'code' => $code, 'device_name' => 'hp'])->assertOk();
+    }
+
     public function test_kode_sekali_pakai(): void
     {
         $this->register();
