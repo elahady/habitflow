@@ -23,7 +23,7 @@ data class PlaceLocation(val name: String, val latitude: Double, val longitude: 
  * akal sebelum izin lokasi diberikan; ganti lewat layar Tentang (GPS atau manual).
  */
 class LocationSettings(context: Context) {
-    private val prefs = context.applicationContext.getSharedPreferences("settings", Context.MODE_PRIVATE)
+    private val prefs = PrefFile.SETTINGS.open(context)
 
     private val _location = MutableStateFlow(read())
     val location: StateFlow<PlaceLocation> = _location.asStateFlow()

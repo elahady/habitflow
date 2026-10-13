@@ -10,6 +10,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.roziqrizal.habitflow.HabitFlowApplication
+import com.roziqrizal.habitflow.session.SessionGate
 import com.roziqrizal.habitflow.data.account.AccountSettings
 import com.roziqrizal.habitflow.data.account.UnauthorizedListener
 import com.roziqrizal.habitflow.domain.team.TeamTodoAssignment
@@ -93,6 +94,7 @@ suspend fun pollTeamTodosForNewAssignments(
 
 class TeamPollWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
+        if (!SessionGate.isActive(applicationContext)) return Result.success()
         val graph = (applicationContext as HabitFlowApplication).graph
         pollTeamTodosForNewAssignments(graph.accountSettings, graph.teamSettings, graph.sessionGuard) { todo ->
             TeamNotifier.notifyAssigned(applicationContext, todo)

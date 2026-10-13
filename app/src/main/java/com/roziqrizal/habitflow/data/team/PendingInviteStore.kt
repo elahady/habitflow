@@ -2,6 +2,7 @@ package com.roziqrizal.habitflow.data.team
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.roziqrizal.habitflow.data.PrefFile
 
 /**
  * Token undangan tim dari deep link yang belum diproses (tahap 26, diperluas di 31G). Link bisa dibuka saat pengguna
@@ -13,7 +14,7 @@ import android.content.SharedPreferences
  */
 class PendingInviteStore(private val prefs: SharedPreferences) {
 
-    constructor(context: Context) : this(context.applicationContext.getSharedPreferences("pending_invite", Context.MODE_PRIVATE))
+    constructor(context: Context) : this(PrefFile.PENDING_INVITE.open(context))
 
     fun read(): String? = prefs.getString(KEY_TOKEN, null)?.takeIf { it.isNotBlank() }
 

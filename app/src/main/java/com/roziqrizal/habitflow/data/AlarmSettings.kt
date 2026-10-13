@@ -11,7 +11,7 @@ import java.time.LocalDate
 
 /** Pengaturan alarm (nada, tanggal yang dimatikan sekali) dan pengingat adzan per waktu sholat. */
 class AlarmSettings(context: Context) {
-    private val prefs = context.applicationContext.getSharedPreferences("settings", Context.MODE_PRIVATE)
+    private val prefs = PrefFile.SETTINGS.open(context)
 
     private val _ringtone = MutableStateFlow(prefs.getString(KEY_RINGTONE, null))
     /** Uri nada pilihan pengguna, atau null untuk nada alarm bawaan HP. */

@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.asStateFlow
 
 /** Pengaturan catatan makan (tahap 23): pengingat sebelum batas tidur bisa dimatikan. Awalnya nyala. */
 class MealSettings(context: Context) {
-    private val prefs = context.applicationContext.getSharedPreferences("settings", Context.MODE_PRIVATE)
+    private val prefs = PrefFile.SETTINGS.open(context)
 
     private val _reminder = MutableStateFlow(prefs.getBoolean(KEY_REMINDER, true))
 

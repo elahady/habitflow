@@ -2,6 +2,7 @@ package com.roziqrizal.habitflow.data.account
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.roziqrizal.habitflow.data.PrefFile
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -34,9 +35,9 @@ sealed interface SessionState {
  */
 class AccountSettings(private val prefs: SharedPreferences) {
 
-    constructor(context: Context) : this(context.applicationContext.getSharedPreferences("account", Context.MODE_PRIVATE))
+    constructor(context: Context) : this(PrefFile.ACCOUNT.open(context))
 
-    private val _session = MutableStateFlow(readSession())
+    private val _session = MutableStateFlow(read(prefs))
     val session: StateFlow<SessionState> = _session.asStateFlow()
 
     private val _account = MutableStateFlow((_session.value as? SessionState.SignedIn)?.account)
@@ -46,31 +47,27 @@ class AccountSettings(private val prefs: SharedPreferences) {
 
     /** Akun pemilik data di database lokal, atau null kalau belum ada pemilik. */
     val ownerAccountId: Long?
-        get() = prefs.getLong(KEY_OWNER_ID, -1L).takeIf { it >= 0 }
+        get() = readOwner(prefs)
 
-    private fun readSession(): SessionState {
-        val email = prefs.getString(KEY_EMAIL, null)
-        val name = prefs.getString(KEY_NAME, null)
-        val id = prefs.getLong(KEY_ID, -1L).takeIf { it >= 0 }
-        val token = prefs.getString(KEY_TOKEN, null)
-        return when {
-            token != null && email != null && name != null && id != null ->
-                SessionState.SignedIn(Account(id, email, name, prefs.getString(KEY_AVATAR, null), token))
-            prefs.getBoolean(KEY_EXPIRED, false) && email != null -> SessionState.Expired(email, name)
-            else -> SessionState.SignedOut
-        }
-    }
-
+    /**
+     * Menyimpan sesi dan, kalau HP ini belum punya pemilik data, menjadikan akun ini pemiliknya: akun pertama yang masuk
+     * mengambil alih data yang sudah ada (tahap 31H). Penolakan akun lain yang mau memakai HP berisi data orang lain
+     * adalah tugas pemanggil ([AccountManager]) dan harus terjadi **sebelum** memanggil ini.
+     *
+     * Semua tulisan di kelas ini memakai `commit` (sinkron), bukan `apply`: sesi dan pemilik data adalah keadaan keamanan,
+     * dan proses app sengaja dimatikan segera setelah Keluar atau ganti akun, jadi tulisan yang masih antre akan hilang.
+     */
     @Synchronized
     fun save(account: Account) {
-        prefs.edit()
+        val editor = prefs.edit()
             .putLong(KEY_ID, account.id)
             .putString(KEY_TOKEN, account.token)
             .putString(KEY_EMAIL, account.email)
             .putString(KEY_NAME, account.name)
             .putString(KEY_AVATAR, account.avatar)
             .putBoolean(KEY_EXPIRED, false)
-            .apply()
+        if (readOwner(prefs) == null) editor.putLong(KEY_OWNER_ID, account.id)
+        editor.commit()
         publish(SessionState.SignedIn(account))
     }
 
@@ -82,7 +79,7 @@ class AccountSettings(private val prefs: SharedPreferences) {
     fun expire(token: String): Boolean {
         val current = _session.value as? SessionState.SignedIn ?: return false
         if (current.account.token != token) return false
-        prefs.edit().remove(KEY_TOKEN).putBoolean(KEY_EXPIRED, true).apply()
+        prefs.edit().remove(KEY_TOKEN).putBoolean(KEY_EXPIRED, true).commit()
         publish(SessionState.Expired(current.account.email, current.account.name))
         return true
     }
@@ -92,18 +89,30 @@ class AccountSettings(private val prefs: SharedPreferences) {
     fun clear() {
         prefs.edit()
             .remove(KEY_ID).remove(KEY_TOKEN).remove(KEY_EMAIL).remove(KEY_NAME).remove(KEY_AVATAR).remove(KEY_EXPIRED)
-            .apply()
+            .commit()
         publish(SessionState.SignedOut)
     }
 
     @Synchronized
     fun setOwnerAccountId(id: Long) {
-        prefs.edit().putLong(KEY_OWNER_ID, id).apply()
+        prefs.edit().putLong(KEY_OWNER_ID, id).commit()
     }
 
     @Synchronized
     fun clearOwnerAccountId() {
-        prefs.edit().remove(KEY_OWNER_ID).apply()
+        prefs.edit().remove(KEY_OWNER_ID).commit()
+    }
+
+    /**
+     * Pembaruan dari versi sebelum tahap 31: sesi lama (juga yang sudah berakhir) belum punya pemilik data, padahal data di
+     * HP ini miliknya. Mengisi pemilik dari id akun yang masih tercatat. Tidak melakukan apa-apa kalau pemilik sudah ada
+     * atau tidak ada akun yang tercatat (akun pertama yang masuk nanti yang mengambil alih lewat [save]).
+     */
+    @Synchronized
+    fun claimOwnerFromKnownAccount() {
+        if (readOwner(prefs) != null) return
+        val id = prefs.getLong(KEY_ID, -1L).takeIf { it >= 0 } ?: return
+        prefs.edit().putLong(KEY_OWNER_ID, id).commit()
     }
 
     private fun publish(state: SessionState) {
@@ -111,13 +120,30 @@ class AccountSettings(private val prefs: SharedPreferences) {
         _session.value = state
     }
 
-    private companion object {
-        const val KEY_ID = "id"
-        const val KEY_TOKEN = "token"
-        const val KEY_EMAIL = "email"
-        const val KEY_NAME = "name"
-        const val KEY_AVATAR = "avatar"
-        const val KEY_EXPIRED = "expired"
-        const val KEY_OWNER_ID = "owner_account_id"
+    companion object {
+        private const val KEY_ID = "id"
+        private const val KEY_TOKEN = "token"
+        private const val KEY_EMAIL = "email"
+        private const val KEY_NAME = "name"
+        private const val KEY_AVATAR = "avatar"
+        private const val KEY_EXPIRED = "expired"
+        private const val KEY_OWNER_ID = "owner_account_id"
+
+        private fun readOwner(prefs: SharedPreferences): Long? =
+            prefs.getLong(KEY_OWNER_ID, -1L).takeIf { it >= 0 }
+
+        /** Membaca sesi dari berkas tanpa membuat [AccountSettings]: dipakai receiver dan worker yang hanya perlu tahu "sudah masuk atau belum". */
+        fun read(prefs: SharedPreferences): SessionState {
+            val email = prefs.getString(KEY_EMAIL, null)
+            val name = prefs.getString(KEY_NAME, null)
+            val id = prefs.getLong(KEY_ID, -1L).takeIf { it >= 0 }
+            val token = prefs.getString(KEY_TOKEN, null)
+            return when {
+                token != null && email != null && name != null && id != null ->
+                    SessionState.SignedIn(Account(id, email, name, prefs.getString(KEY_AVATAR, null), token))
+                prefs.getBoolean(KEY_EXPIRED, false) && email != null -> SessionState.Expired(email, name)
+                else -> SessionState.SignedOut
+            }
+        }
     }
 }

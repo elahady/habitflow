@@ -7,6 +7,7 @@ import androidx.core.content.ContextCompat
 import com.roziqrizal.habitflow.data.DrinkRepository
 import com.roziqrizal.habitflow.data.HabitDatabase
 import com.roziqrizal.habitflow.data.ScheduleRepository
+import com.roziqrizal.habitflow.session.SessionGate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -19,6 +20,11 @@ import java.time.LocalDate
 class ScheduleReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
+        // Tanpa sesi masuk, alarm yang sudah terlanjur terjadwal tidak boleh berbunyi dan tombol notifikasi lama tidak boleh menyentuh data (31H).
+        if (!SessionGate.isActive(context)) {
+            ScheduleNotifier.cancelAll(context)
+            return
+        }
         val pending = goAsync()
         val app = context.applicationContext
         CoroutineScope(Dispatchers.Default).launch {

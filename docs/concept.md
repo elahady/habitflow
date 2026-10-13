@@ -2228,7 +2228,7 @@ Sesi lama dari tahap 25 (`account.xml` tanpa penanda `expired`) tetap terbaca se
 
 #### 31H. Android: siklus hidup sesi, Keluar, data lama, ganti akun
 
-Status: belum dikerjakan. Bergantung pada 31F dan 31E.
+Status: **sedang dikerjakan (13 Oktober 2026).** Bergantung pada 31F (✅) dan 31E (✅ di kode). Selesai: registri berkas pengaturan (`PrefFile`), `SessionManager` beserta penjaganya, pemilik data lokal. Belum: alur Keluar, ambil alih dan ganti akun, hapus akun dari app, dan uji di emulator.
 
 - [ ] **`SessionManager`** satu-satunya yang menyalakan dan mematikan semua yang jalan di latar belakang: `syncScheduler`, `habitSyncScheduler`, `teamPollScheduler`, `StepsWorker`, `keepNotificationsInSync`, alarm dan
   adzan, notifikasi tetap, dan layanan alarm. `HabitFlowApplication` tidak lagi memulainya langsung. Receiver `BOOT_COMPLETED` memeriksa sesi dulu.

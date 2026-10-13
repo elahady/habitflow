@@ -7,6 +7,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.roziqrizal.habitflow.HabitFlowApplication
+import com.roziqrizal.habitflow.session.SessionGate
 import java.time.LocalDate
 import java.time.ZoneId
 import java.util.concurrent.TimeUnit
@@ -15,6 +16,7 @@ import java.util.concurrent.TimeUnit
 class StepsWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result {
+        if (!SessionGate.isActive(applicationContext)) return Result.success()
         val graph = (applicationContext as HabitFlowApplication).graph
         // Kegagalan membaca (misalnya Health Connect sedang tidak siap) tidak perlu diulang: pembacaan berikutnya sejam lagi.
         runCatching { graph.stepsTracker.refresh(LocalDate.now(), ZoneId.systemDefault(), inBackground = true) }

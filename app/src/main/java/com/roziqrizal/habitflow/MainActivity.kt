@@ -29,6 +29,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.roziqrizal.habitflow.data.AlarmSettings
+import com.roziqrizal.habitflow.data.account.SessionState
 import com.roziqrizal.habitflow.data.DrinkRepository
 import com.roziqrizal.habitflow.data.EventRepository
 import com.roziqrizal.habitflow.data.HabitDatabase
@@ -69,7 +70,9 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -91,7 +94,11 @@ class MainActivity : ComponentActivity() {
         val notificationSettings = graph.notificationSettings
         val alarmSettings = graph.alarmSettings
         val workReminderSettings = graph.workReminderSettings
-        requestNotificationPermission()
+        // Izin notifikasi baru diminta setelah masuk, bukan di atas layar Masuk (31H).
+        lifecycleScope.launch {
+            graph.accountSettings.session.first { it is SessionState.SignedIn }
+            requestNotificationPermission()
+        }
         keepNotificationsInSync(
             locationSettings, notificationSettings, alarmSettings, workReminderSettings, graph.healthSettings, graph.calendarSettings,
             graph.mealSettings,
@@ -310,6 +317,9 @@ class MainActivity : ComponentActivity() {
         val eventRepo = EventRepository(HabitDatabase.get(applicationContext))
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
+                // Hanya selagi masuk: sesi berakhir atau Keluar menghentikan pengamatan, jadi tidak ada notifikasi baru (31H).
+                (application as HabitFlowApplication).graph.accountSettings.session.collectLatest { session ->
+                    if (session !is SessionState.SignedIn) return@collectLatest
                 combine(
                     repo.observeBlocks(),
                     repo.observeDaysOff(),
@@ -329,6 +339,7 @@ class MainActivity : ComponentActivity() {
                 ) { _ -> }
                     .debounce(500)
                     .collect { ScheduleNotifier.refresh(applicationContext, announce = false) }
+                }
             }
         }
     }

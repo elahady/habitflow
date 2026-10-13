@@ -204,10 +204,16 @@ class AlarmService : Service() {
 
         private const val CHANNEL_ALARM = "alarm"
         private const val NOTIFICATION_ID = 2
-        private const val REQUEST_SNOOZE = 2
+        internal const val REQUEST_SNOOZE = 2
 
         private val current = MutableStateFlow<RingingAlarm?>(null)
         val ringing: StateFlow<RingingAlarm?> = current.asStateFlow()
+
+        /** Menghentikan alarm yang sedang berbunyi dan menutup layar alarmnya (dipakai saat sesi berakhir atau Keluar). */
+        fun stopRinging(context: Context) {
+            current.value = null
+            context.stopService(Intent(context, AlarmService::class.java))
+        }
 
         fun intentFor(context: Context, action: String): Intent =
             Intent(context, AlarmService::class.java).setAction(action)

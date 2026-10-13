@@ -17,7 +17,7 @@ enum class ThemeMode { SYSTEM, LIGHT, DARK }
  */
 class ThemeSettings(context: Context) {
     private val appContext = context.applicationContext
-    private val prefs = appContext.getSharedPreferences("settings", Context.MODE_PRIVATE)
+    private val prefs = PrefFile.SETTINGS.open(appContext)
 
     private val _mode = MutableStateFlow(
         prefs.getString(KEY_MODE, null)
@@ -45,7 +45,7 @@ class ThemeSettings(context: Context) {
         appContext.getSystemService(UiModeManager::class.java).setApplicationNightMode(nightMode)
     }
 
-    private companion object {
+    companion object {
         const val KEY_MODE = "theme_mode"
     }
 }

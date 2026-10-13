@@ -1,6 +1,7 @@
 package com.roziqrizal.habitflow.data.calendar
 
 import android.content.Context
+import com.roziqrizal.habitflow.data.PrefFile
 import com.roziqrizal.habitflow.domain.calendar.EventLabel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -11,7 +12,7 @@ import kotlinx.coroutines.flow.asStateFlow
  * sengaja tidak ikut cadangan ke server.
  */
 class CalendarSettings(context: Context) {
-    private val prefs = context.applicationContext.getSharedPreferences("calendar", Context.MODE_PRIVATE)
+    private val prefs = PrefFile.CALENDAR.open(context)
 
     private val _selection = MutableStateFlow(read())
 

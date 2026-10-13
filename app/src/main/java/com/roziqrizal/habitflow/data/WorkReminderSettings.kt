@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.asStateFlow
 
 /** Pengingat kerja (tahap 20): minum air dan break bisa dimatikan sendiri-sendiri. Awalnya nyala. */
 class WorkReminderSettings(context: Context) {
-    private val prefs = context.applicationContext.getSharedPreferences("settings", Context.MODE_PRIVATE)
+    private val prefs = PrefFile.SETTINGS.open(context)
 
     private val _water = MutableStateFlow(prefs.getBoolean(KEY_WATER, true))
     val water: StateFlow<Boolean> = _water.asStateFlow()

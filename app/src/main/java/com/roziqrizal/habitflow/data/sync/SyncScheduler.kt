@@ -13,6 +13,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.roziqrizal.habitflow.HabitFlowApplication
+import com.roziqrizal.habitflow.session.SessionGate
 import com.roziqrizal.habitflow.data.HabitDatabase
 import com.roziqrizal.habitflow.data.account.AccountSettings
 import kotlinx.coroutines.CoroutineScope
@@ -99,6 +100,7 @@ class SyncScheduler(
 class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result {
+        if (!SessionGate.isActive(applicationContext)) return Result.success()
         val manager = (applicationContext as HabitFlowApplication).graph.syncManager
         val result = manager.syncNow()
         return when {

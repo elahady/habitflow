@@ -20,7 +20,6 @@ import com.roziqrizal.habitflow.data.ThemeMode
 import com.roziqrizal.habitflow.data.ThemeSettings
 import com.roziqrizal.habitflow.data.health.HealthConnectStepsSource
 import com.roziqrizal.habitflow.data.health.StepsTracker
-import com.roziqrizal.habitflow.data.health.StepsWorker
 import com.roziqrizal.habitflow.data.WorkReminderSettings
 import com.roziqrizal.habitflow.data.sync.AppSettingsGateway
 import com.roziqrizal.habitflow.data.sync.HabitSyncManager
@@ -35,6 +34,8 @@ import com.roziqrizal.habitflow.data.team.TeamPollScheduler
 import com.roziqrizal.habitflow.data.team.TeamSettings
 import com.roziqrizal.habitflow.domain.health.BpFrequency
 import com.roziqrizal.habitflow.domain.prayer.PrayerName
+import com.roziqrizal.habitflow.session.AndroidBackgroundWork
+import com.roziqrizal.habitflow.session.SessionManager
 
 class HabitFlowApplication : Application() {
 
@@ -42,17 +43,13 @@ class HabitFlowApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        // Sinkron otomatis: pasang jadwal harian kalau aktif, dan pantau perubahan data di proses mana pun.
-        graph.syncScheduler.observeAccount(SyncScheduler.newScope())
+        // Pantau perubahan data di proses mana pun untuk sinkron tertunda. Pengamat ini pasif: ia hanya menjadwalkan kalau
+        // sesi masuk (lihat `isActive` di masing-masing penjadwal).
         graph.syncScheduler.observeChanges(graph.db, SyncScheduler.newScope())
-        // Sinkron habit/todo ke server (tahap 28 langkah 5): hanya aktif kalau sudah login.
-        graph.habitSyncScheduler.onAccountChanged()
         graph.habitSyncScheduler.observeChanges(graph.db, HabitSyncScheduler.newScope())
-        // Polling to-do tim untuk notifikasi tugas baru (tahap 26 langkah 4): hanya aktif kalau sudah login.
-        graph.teamPollScheduler.onAccountChanged()
-        graph.teamPollScheduler.observeAccount(TeamPollScheduler.newScope())
-        // Cek langkah sekitar tiap jam untuk mencentang habit langkah walau app tertutup (tahap 21).
-        StepsWorker.ensureScheduled(this)
+        // Satu-satunya yang menyalakan dan mematikan latar belakang (sinkron, polling tim, langkah, alarm, notifikasi): hanya
+        // hidup selagi sesi masuk (tahap 31H).
+        graph.sessionManager.observe(SyncScheduler.newScope())
     }
 }
 
@@ -91,6 +88,12 @@ class AppGraph(app: Application) {
     /** Token undangan tim yang menunggu login (tahap 31G). */
     val pendingInviteStore = PendingInviteStore(app)
     val teamPollScheduler = TeamPollScheduler(app, accountSettings)
+
+    /** Menyalakan dan mematikan latar belakang menurut sesi (tahap 31H). */
+    val sessionManager = SessionManager(
+        accountSettings,
+        AndroidBackgroundWork(app, syncScheduler, habitSyncScheduler, teamPollScheduler, SyncScheduler.newScope()),
+    )
     val stepsTracker: StepsTracker by lazy { StepsTracker(HealthConnectStepsSource(app), db, healthSettings) }
 
     private val versionName: String =

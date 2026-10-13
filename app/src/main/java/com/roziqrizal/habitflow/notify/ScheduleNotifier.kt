@@ -35,6 +35,8 @@ import com.roziqrizal.habitflow.data.LocationSettings
 import com.roziqrizal.habitflow.data.MealRepository
 import com.roziqrizal.habitflow.data.MealSettings
 import com.roziqrizal.habitflow.data.NotificationSettings
+import com.roziqrizal.habitflow.data.PrefFile
+import com.roziqrizal.habitflow.session.SessionGate
 import com.roziqrizal.habitflow.data.ScheduleRepository
 import com.roziqrizal.habitflow.data.WorkReminderSettings
 import com.roziqrizal.habitflow.data.WorkRepository
@@ -119,7 +121,6 @@ object ScheduleNotifier {
      */
     private const val CATCH_UP_MINUTES = 15
 
-    private const val STATE_PREFS = "schedule_notifier_state"
     private const val KEY_LAST_DATE = "last_date"
     private const val KEY_LAST_MINUTE = "last_minute"
     private const val KEY_WATER_SEGMENT = "water_segment"
@@ -137,6 +138,12 @@ object ScheduleNotifier {
         clock: Clock = Clock.systemDefaultZone(),
     ) = withContext(NonCancellable + Dispatchers.Default) {
         val app = context.applicationContext
+        // Tanpa sesi masuk tidak ada yang boleh dijadwalkan atau ditampilkan (31H). Alarm yang sudah terlanjur terjadwal dan
+        // berbunyi sesudah Keluar berakhir di sini: bersihkan sisanya dan berhenti.
+        if (!SessionGate.isActive(app)) {
+            cancelAll(app)
+            return@withContext
+        }
         ensureChannels(app)
 
         val repo = ScheduleRepository(HabitDatabase.get(app), HolidayAssets.get(app))
@@ -251,7 +258,7 @@ object ScheduleNotifier {
         zone: ZoneId,
         mealMinute: Int?,
     ) {
-        val state = context.getSharedPreferences(STATE_PREFS, Context.MODE_PRIVATE)
+        val state = PrefFile.NOTIFIER_STATE.open(context)
         val since = if (state.getString(KEY_LAST_DATE, null) == today.toString()) {
             state.getInt(KEY_LAST_MINUTE, -1)
         } else {
@@ -381,7 +388,7 @@ object ScheduleNotifier {
 
         var kind = reminder.kind
         if (kind.includesWater) {
-            val state = context.getSharedPreferences(STATE_PREFS, Context.MODE_PRIVATE)
+            val state = PrefFile.NOTIFIER_STATE.open(context)
             val decision = decideWaterReminder(readWaterState(state), "$today:${reminder.blockId}", glasses)
             writeWaterState(state, decision.state)
             if (!decision.send) {
@@ -495,6 +502,25 @@ object ScheduleNotifier {
             .setAutoCancel(true)
             .build()
         NotificationManagerCompat.from(context).notify(FOLLOW_UP_ID_BASE + item.id.toInt(), notification)
+    }
+
+    /**
+     * Membatalkan semua alarm (alarm jadwal, alarm jam, dan tunda), semua notifikasi app, dan alarm yang sedang berbunyi.
+     * Dipanggil saat sesi berakhir atau Keluar (31H), dan oleh [refresh] kalau terpicu tanpa sesi.
+     */
+    fun cancelAll(context: Context) {
+        val app = context.applicationContext
+        val manager = app.getSystemService(AlarmManager::class.java)
+        val scheduleIntent = Intent(app, ScheduleReceiver::class.java).setAction(ACTION_ALARM)
+        val ringIntent = Intent(app, ScheduleReceiver::class.java).setAction(ACTION_RING)
+        listOf(0 to scheduleIntent, REQUEST_ALARM_CLOCK to ringIntent, AlarmService.REQUEST_SNOOZE to ringIntent).forEach { (code, intent) ->
+            PendingIntent.getBroadcast(app, code, intent, PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE)?.let {
+                manager.cancel(it)
+                it.cancel()
+            }
+        }
+        NotificationManagerCompat.from(app).cancelAll()
+        AlarmService.stopRinging(app)
     }
 
     fun cancelBlockNotification(context: Context, blockId: Long) {

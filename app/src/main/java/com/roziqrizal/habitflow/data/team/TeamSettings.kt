@@ -1,6 +1,7 @@
 package com.roziqrizal.habitflow.data.team
 
 import android.content.Context
+import com.roziqrizal.habitflow.data.PrefFile
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -11,7 +12,7 @@ import kotlinx.coroutines.flow.asStateFlow
  * [com.roziqrizal.habitflow.data.account.AccountSettings].
  */
 class TeamSettings(context: Context) {
-    private val prefs = context.applicationContext.getSharedPreferences("team", Context.MODE_PRIVATE)
+    private val prefs = PrefFile.TEAM.open(context)
 
     private val _activeTeamId = MutableStateFlow(readActiveTeamId())
     val activeTeamId: StateFlow<Long?> = _activeTeamId.asStateFlow()

@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.asStateFlow
 
 /** Pengaturan notifikasi jadwal. Notifikasi tetap "Sekarang · Berikutnya" nyala secara default. */
 class NotificationSettings(context: Context) {
-    private val prefs = context.applicationContext.getSharedPreferences("settings", Context.MODE_PRIVATE)
+    private val prefs = PrefFile.SETTINGS.open(context)
 
     private val _persistent = MutableStateFlow(prefs.getBoolean(KEY_PERSISTENT, true))
     val persistent: StateFlow<Boolean> = _persistent.asStateFlow()

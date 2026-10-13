@@ -1,6 +1,7 @@
 package com.roziqrizal.habitflow.data.sync
 
 import android.content.Context
+import com.roziqrizal.habitflow.data.PrefFile
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -14,7 +15,7 @@ data class SyncStatus(val lastSuccessAt: Long, val lastMessage: String?)
  * Auto Backup** (lihat `res/xml/backup_rules.xml`).
  */
 class SyncSettings(context: Context) {
-    private val prefs = context.applicationContext.getSharedPreferences("sync", Context.MODE_PRIVATE)
+    private val prefs = PrefFile.SYNC.open(context)
 
     init {
         // Sisa token cadangan 19B (sudah ditolak server sejak 31E) tidak perlu tinggal di HP.

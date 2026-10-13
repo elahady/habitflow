@@ -12,7 +12,7 @@ import java.time.LocalDate
  * diisi; target kosong berarti memakai target bawaan (batas atas BMI normal).
  */
 class HealthSettings(context: Context) {
-    private val prefs = context.applicationContext.getSharedPreferences("settings", Context.MODE_PRIVATE)
+    private val prefs = PrefFile.SETTINGS.open(context)
 
     private val _heightCm = MutableStateFlow(readDouble(KEY_HEIGHT))
     val heightCm: StateFlow<Double?> = _heightCm.asStateFlow()
