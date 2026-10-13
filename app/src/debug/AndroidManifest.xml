@@ -11,6 +11,9 @@
         <receiver
             android:name=".debug.DebugClockReceiver"
             android:exported="true" />
+        <receiver
+            android:name=".debug.DebugSessionReceiver"
+            android:exported="true" />
     </application>
 
 </manifest>
