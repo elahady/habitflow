@@ -88,8 +88,8 @@ abstract class HabitDatabase : RoomDatabase() {
                 super.onCreate(db)
                 SEED_HABITS.forEachIndexed { index, (name, mandatory) ->
                     db.execSQL(
-                        "INSERT INTO habits (name, createdAt, sortOrder, isMandatory, autoSource) " +
-                            "VALUES (?, date('now', 'localtime'), ?, ?, ?)",
+                        "INSERT INTO habits (name, createdAt, sortOrder, isMandatory, autoSource, dirty) " +
+                            "VALUES (?, date('now', 'localtime'), ?, ?, ?, 1)",
                         arrayOf(name, index, if (mandatory) 1 else 0, SEED_AUTO_SOURCES[name]),
                     )
                 }
