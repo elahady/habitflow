@@ -28,7 +28,10 @@ private class FakeChanges(private val events: Events) : PendingChangeSource {
 private class FakeSession(private val events: Events) : SessionEnding {
     var revoke: AccountResult<Unit> = AccountResult.Success(Unit)
     var delete: AccountResult<Unit> = AccountResult.Success(Unit)
+    var revokeAll: AccountResult<Unit> = AccountResult.Success(Unit)
     override suspend fun revokeAndClear(): AccountResult<Unit> { events.list += "revoke"; return revoke }
+    override suspend fun revokeAllSessions(): AccountResult<Unit> { events.list += "revokeAll"; return revokeAll }
+    override suspend fun closeSession() { events.list += "close" }
     override suspend fun deleteAccount(password: String?, googleIdToken: String?): AccountResult<Unit> {
         events.list += "delete $password $googleIdToken"
         return delete
@@ -156,6 +159,51 @@ class SignOutCoordinatorTest {
         coordinator.signOut()
 
         assertEquals("sesi di HP selalu ditutup dan data dihapus walau server tak terjangkau", listOf("wipe", "revoke", "restart"), events.list)
+    }
+
+    // --- Keluar dari semua perangkat -----------------------------------------------------------
+
+    @Test
+    fun keluarDariSemuaPerangkatMencabutDiServerLaluMenghapusDataHpLaluMemulaiUlang() = runBlocking {
+        val result = coordinator.signOutAllDevices()
+
+        assertEquals(AccountResult.Success(Unit), result)
+        assertEquals(listOf("revokeAll", "wipe", "close", "restart"), events.list)
+    }
+
+    @Test
+    fun keluarDariSemuaPerangkatTidakMemanggilLogoutBiasaLagi() = runBlocking {
+        coordinator.signOutAllDevices()
+
+        assertFalse("tokennya sudah mati di server, jangan memanggilnya lagi", "revoke" in events.list)
+    }
+
+    @Test
+    fun keluarDariSemuaPerangkatTanpaInternetTidakMengubahApaPun() = runBlocking {
+        session.revokeAll = AccountResult.Offline
+
+        assertEquals(AccountResult.Offline, coordinator.signOutAllDevices())
+
+        assertEquals("perangkat lain masih masuk, jadi HP ini juga jangan dihapus", listOf("revokeAll"), events.list)
+    }
+
+    @Test
+    fun keluarDariSemuaPerangkatSaatSesiBerakhirTidakMengubahApaPun() = runBlocking {
+        session.revokeAll = AccountResult.Unauthorized
+
+        assertEquals(AccountResult.Unauthorized, coordinator.signOutAllDevices())
+
+        assertEquals(listOf("revokeAll"), events.list)
+    }
+
+    @Test
+    fun keluarDariSemuaPerangkatDitolakServerTidakMengubahApaPun() = runBlocking {
+        val ditolak = AccountResult.Failed(500, null, "Server bermasalah.")
+        session.revokeAll = ditolak
+
+        assertEquals(ditolak, coordinator.signOutAllDevices())
+
+        assertEquals(listOf("revokeAll"), events.list)
     }
 
     // --- Hapus akun ----------------------------------------------------------------------------

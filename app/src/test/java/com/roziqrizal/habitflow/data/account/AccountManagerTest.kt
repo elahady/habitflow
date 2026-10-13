@@ -264,29 +264,39 @@ class AccountManagerTest {
     // --- keluar dari semua perangkat -----------------------------------------------------------
 
     @Test
-    fun keluarDariSemuaPerangkatBerhasilMenutupSesi() = runBlocking {
+    fun mencabutSemuaSesiMemanggilServerTanpaMenutupSesiDiHp() = runBlocking {
         signedIn()
         api.next = AccountResult.Success(Unit)
 
-        assertEquals(AccountResult.Success(Unit), manager.signOutAllDevices())
+        assertEquals(AccountResult.Success(Unit), manager.revokeAllSessions())
 
         assertEquals(listOf("logoutAll tok-ani"), api.calls)
-        assertEquals(SessionState.SignedOut, settings.session.value)
+        assertEquals("yang menutup sesi HP adalah alur Keluar, sesudah ini berhasil", SessionState.SignedIn(ani), settings.session.value)
     }
 
     @Test
-    fun keluarDariSemuaPerangkatTanpaInternetTidakMenutupSesiKarenaBelumTerlaksana() = runBlocking {
+    fun menutupSesiDiHpTidakMenghubungiServer() = runBlocking {
+        signedIn()
+
+        manager.closeSession()
+
+        assertEquals(SessionState.SignedOut, settings.session.value)
+        assertTrue(api.calls.isEmpty())
+    }
+
+    @Test
+    fun mencabutSemuaSesiTanpaInternetTidakMengubahSesi() = runBlocking {
         signedIn()
         api.next = AccountResult.Offline
 
-        assertEquals(AccountResult.Offline, manager.signOutAllDevices())
+        assertEquals(AccountResult.Offline, manager.revokeAllSessions())
 
         assertEquals(SessionState.SignedIn(ani), settings.session.value)
     }
 
     @Test
-    fun keluarDariSemuaPerangkatTanpaSesiTidakMemanggilServer() = runBlocking {
-        assertEquals(AccountResult.Unauthorized, manager.signOutAllDevices())
+    fun mencabutSemuaSesiTanpaSesiTidakMemanggilServer() = runBlocking {
+        assertEquals(AccountResult.Unauthorized, manager.revokeAllSessions())
         assertTrue(api.calls.isEmpty())
     }
 

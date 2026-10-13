@@ -121,12 +121,12 @@ class AccountManager(
         if (result is AccountResult.Unauthorized) AccountResult.Success(Unit) else result
     }
 
-    /** Mencabut semua sesi akun, termasuk di HP ini. Hanya menutup sesi lokal kalau server benar-benar mencabut. */
-    suspend fun signOutAllDevices(): AccountResult<Unit> = mutex.withLock {
+    override suspend fun closeSession() = mutex.withLock { settings.clear() }
+
+    /** Meminta server mencabut semua sesi akun. Sesi di HP tidak disentuh; alur Keluar menutupnya sesudah ini berhasil (31I). */
+    override suspend fun revokeAllSessions(): AccountResult<Unit> = mutex.withLock {
         val token = signedInToken() ?: return@withLock AccountResult.Unauthorized
-        val result = api.logoutAll(token)
-        if (result is AccountResult.Success || result is AccountResult.Unauthorized) settings.clear()
-        if (result is AccountResult.Unauthorized) AccountResult.Success(Unit) else result
+        api.logoutAll(token)
     }
 
     /** Ubah kata sandi. [currentPassword] null untuk akun Google yang belum punya sandi. Sesi ini tetap hidup. */

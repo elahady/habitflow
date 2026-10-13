@@ -51,6 +51,21 @@ class SignOutCoordinator(
     }
 
     /**
+     * Keluar dari semua perangkat (31I): server diminta mencabut semua sesi lebih dulu, dan **hanya kalau berhasil** HP ini ikut
+     * dibersihkan seperti [signOut]. Tanpa internet atau sesi sudah berakhir, tidak ada yang berubah di HP maupun di server,
+     * karena "keluar dari semua perangkat" yang setengah jalan lebih buruk daripada tidak jalan.
+     */
+    suspend fun signOutAllDevices(): AccountResult<Unit> {
+        val result = session.revokeAllSessions()
+        if (result is AccountResult.Success) {
+            reset.scheduleWipe()
+            session.closeSession()
+            reset.restartProcess()
+        }
+        return result
+    }
+
+    /**
      * Hapus akun: server diminta lebih dulu dan **hanya kalau berhasil** data HP dihapus. Kata sandi salah, tanpa internet, dan
      * sebagainya tidak menghapus apa pun di HP.
      */
