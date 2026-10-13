@@ -1,6 +1,7 @@
 package com.roziqrizal.habitflow.data.team
 
 import com.roziqrizal.habitflow.data.account.AccountClient
+import com.roziqrizal.habitflow.data.account.UnauthorizedListener
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -21,6 +22,8 @@ class TeamClient(
     private val baseUrl: String = AccountClient.BASE_URL,
     private val connectTimeoutMs: Int = 15_000,
     private val readTimeoutMs: Int = 30_000,
+    /** Dilapori token yang ditolak saat server menjawab 401 (lihat [SessionGuard]). */
+    private val unauthorized: UnauthorizedListener = UnauthorizedListener.None,
 ) {
     suspend fun listTeams(): TeamApiResult<List<RemoteTeam>> =
         when (val raw = request("GET", "/api/v1/teams")) {
@@ -195,6 +198,7 @@ class TeamClient(
                 connection.outputStream.use { it.write(body.toByteArray(Charsets.UTF_8)) }
             }
             val code = connection.responseCode
+            if (code == 401) unauthorized.onUnauthorized(token)
             val stream = if (code in 200..399) connection.inputStream else connection.errorStream
             val text = stream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }.orEmpty()
             Raw.Response(code, text)

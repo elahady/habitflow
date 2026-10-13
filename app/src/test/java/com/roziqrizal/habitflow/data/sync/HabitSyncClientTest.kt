@@ -190,6 +190,23 @@ class HabitSyncClientTest {
     }
 
     @Test
+    fun jawaban401MelaporTokenYangDitolakKeSatuPenangan() = runBlocking {
+        val rejected = mutableListOf<String>()
+        val client = HabitSyncClient("tok-mati", "http://127.0.0.1:${server.port}", unauthorized = { rejected += it })
+
+        status = 200
+        client.listHabits("2026-10-10")
+        assertTrue("jawaban sukses tidak boleh melapor", rejected.isEmpty())
+
+        status = 401
+        assertEquals(HabitApiResult.Unauthorized, client.listHabits("2026-10-10"))
+        assertEquals(HabitApiResult.Unauthorized, client.createHabit("Baca", true))
+        assertEquals(HabitApiResult.Unauthorized, client.deleteTodo(1))
+
+        assertEquals(List(3) { "tok-mati" }, rejected)
+    }
+
+    @Test
     fun serverTidakTerjangkauMenjadiNetworkErrorDanRetryable() = runBlocking {
         val port = server.port
         server.stop()
@@ -243,6 +260,19 @@ class FollowUpSyncClientTest {
         assertEquals(null, item.note)
         assertEquals(1_791_680_400_000L, item.createdAt)
         assertEquals("2026-10-11T02:00:00.000000Z", item.updatedAt)
+    }
+
+    @Test
+    fun jawaban401FollowUpMelaporTokenYangDitolakKeSatuPenangan() = runBlocking {
+        val rejected = mutableListOf<String>()
+        val client = HabitSyncClient("tok-mati", "http://127.0.0.1:${server.port}", unauthorized = { rejected += it })
+
+        server.status = 401
+        assertEquals(HabitApiResult.Unauthorized, client.listFollowUps())
+        assertEquals(HabitApiResult.Unauthorized, client.createFollowUp(entity()))
+        assertEquals(HabitApiResult.Unauthorized, client.deleteFollowUp(7))
+
+        assertEquals(List(3) { "tok-mati" }, rejected)
     }
 
     @Test

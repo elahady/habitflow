@@ -165,7 +165,7 @@ class MainActivity : ComponentActivity() {
                 val workRequest by pendingWork.collectAsState()
                 val syncViewModel: SyncViewModel = viewModel(
                     factory = viewModelFactory {
-                        initializer { SyncViewModel(graph.syncManager, graph.syncSettings, graph.syncScheduler) }
+                        initializer { SyncViewModel(graph.syncManager, graph.syncSettings, graph.accountSettings, graph.syncScheduler) }
                     },
                 )
                 val accountViewModel: AccountViewModel = viewModel(
@@ -177,7 +177,7 @@ class MainActivity : ComponentActivity() {
                     factory = viewModelFactory { initializer { ManageHabitsViewModel(repo, graph.habitSyncManager) } },
                 )
                 val team: TeamViewModel = viewModel(
-                    factory = viewModelFactory { initializer { TeamViewModel(graph.accountSettings, graph.teamSettings) } },
+                    factory = viewModelFactory { initializer { TeamViewModel(graph.accountSettings, graph.teamSettings, graph.sessionGuard) } },
                 )
                 val inviteToken by pendingInviteToken.collectAsState()
                 val openTeamRequest by pendingOpenTeam.collectAsState()

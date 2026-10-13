@@ -1,5 +1,8 @@
 package com.roziqrizal.habitflow.data.sync
 
+import com.roziqrizal.habitflow.data.account.AccountClient
+import com.roziqrizal.habitflow.data.account.AccountSettings
+import com.roziqrizal.habitflow.data.account.UnauthorizedListener
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -27,22 +30,20 @@ sealed interface RestoreResult {
 class SyncManager(
     private val snapshots: SnapshotRepository,
     private val settings: SyncSettings,
+    private val accountSettings: AccountSettings,
     private val appSettings: AppSettingsGateway,
     private val appVersion: String,
-    private val allowLocalCleartext: Boolean,
+    /** Dilapori token yang ditolak server (401). Wajib, supaya tidak ada jalur yang menangani 401 sendiri. */
+    unauthorized: UnauthorizedListener,
     /** True kalau follow-up kerja sudah disinkron lewat akun (tahap 27) dan tidak perlu ikut snapshot cadangan. */
     private val followUpsOnAccount: () -> Boolean = { false },
     private val now: () -> Long = System::currentTimeMillis,
-    private val clientFor: (url: String, token: String) -> SyncClient = { url, token -> SyncClient(url, token) },
+    private val clientFor: (token: String) -> SyncClient = { SyncClient(AccountClient.BASE_URL, it, unauthorized = unauthorized) },
 ) {
     private val mutex = Mutex()
 
-    private fun client(): SyncClient? {
-        val config = settings.config.value
-        val url = SyncUrl.normalize(config.url, allowLocalCleartext) ?: return null
-        if (config.token.isBlank()) return null
-        return clientFor(url, config.token)
-    }
+    /** Cadangan memakai token akun. Tanpa sesi masuk tidak ada klien (hasilnya [SyncResult.NotConfigured]). */
+    private fun client(): SyncClient? = accountSettings.account.value?.token?.let(clientFor)
 
     /** Uji alamat dan token tanpa mengubah status sinkron. */
     suspend fun testConnection(): SyncResult = mutex.withLock { client()?.ping() ?: SyncResult.NotConfigured }

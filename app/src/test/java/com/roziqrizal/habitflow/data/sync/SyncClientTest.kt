@@ -178,17 +178,20 @@ class SyncClientTest {
     }
 
     @Test
-    fun urlHanyaHttpsKecualiLocalSaatDebug() {
-        assertEquals("https://habitflow.contoh.com", SyncUrl.normalize(" https://habitflow.contoh.com/ ", false))
-        assertNull(SyncUrl.normalize("http://habitflow.contoh.com", false))
-        assertNull(SyncUrl.normalize("http://habitflow.contoh.com", true))
-        assertNull(SyncUrl.normalize("http://10.0.2.2:8000", false))
-        assertEquals("http://10.0.2.2:8000", SyncUrl.normalize("http://10.0.2.2:8000/", true))
-        assertEquals("http://localhost:8000", SyncUrl.normalize("http://localhost:8000", true))
-        assertNull(SyncUrl.normalize("", true))
-        assertNull(SyncUrl.normalize("habitflow.contoh.com", true))
-        assertNull(SyncUrl.normalize("ftp://habitflow.contoh.com", true))
-        assertNull(SyncUrl.normalize("https://habit flow.com", true))
+    fun jawaban401MelaporTokenYangDitolakKeSatuPenangan() = runBlocking {
+        val rejected = mutableListOf<String>()
+        val client = SyncClient("http://127.0.0.1:${server.port}", "tok-mati", unauthorized = { rejected += it })
+
+        status = 200
+        client.ping()
+        assertTrue("jawaban sukses tidak boleh melapor", rejected.isEmpty())
+
+        status = 401
+        assertEquals(SyncResult.Unauthorized, client.ping())
+        assertEquals(SyncResult.Unauthorized, client.upload("{}"))
+        assertEquals(SyncResult.Unauthorized, client.downloadLatest())
+
+        assertEquals(List(3) { "tok-mati" }, rejected)
     }
 
     @Test

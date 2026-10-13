@@ -6,6 +6,7 @@ import com.roziqrizal.habitflow.data.HabitEntry
 import com.roziqrizal.habitflow.data.PendingDeleteEntity
 import com.roziqrizal.habitflow.data.Todo
 import com.roziqrizal.habitflow.data.account.AccountSettings
+import com.roziqrizal.habitflow.data.account.UnauthorizedListener
 import com.roziqrizal.habitflow.domain.sync.EntryMergeAction
 import com.roziqrizal.habitflow.domain.sync.entryMergeAction
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,7 +35,9 @@ private class UpdateOutcome(val error: HabitApiResult<Unit>?, val conflicted: Bo
 class HabitSyncManager(
     private val db: HabitDatabase,
     private val accountSettings: AccountSettings,
-    private val clientFor: (token: String) -> HabitSyncClient = { HabitSyncClient(it) },
+    /** Dilapori token yang ditolak server (401). Wajib, supaya tidak ada jalur yang menangani 401 sendiri. */
+    unauthorized: UnauthorizedListener,
+    private val clientFor: (token: String) -> HabitSyncClient = { HabitSyncClient(it, unauthorized = unauthorized) },
 ) {
     private val mutex = Mutex()
     private val habits = db.habitDao()
@@ -342,7 +345,7 @@ private fun <T> HabitApiResult<T>.asUnit(): HabitApiResult<Unit> = when (this) {
 
 private fun HabitApiResult<*>.messageOrEmpty(): String = when (this) {
     is HabitApiResult.Rejected -> detail
-    HabitApiResult.Unauthorized -> "Token ditolak server."
+    HabitApiResult.Unauthorized -> "Sesi berakhir. Masuk lagi."
     HabitApiResult.NotFound -> "Tidak ditemukan di server."
     is HabitApiResult.ServerError -> "Server bermasalah (kode $code)."
     is HabitApiResult.NetworkError -> "Tidak bisa menjangkau server: $detail"

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.roziqrizal.habitflow.data.account.Account
 import com.roziqrizal.habitflow.data.account.AccountSettings
+import com.roziqrizal.habitflow.data.account.UnauthorizedListener
 import com.roziqrizal.habitflow.data.team.RemoteTeam
 import com.roziqrizal.habitflow.data.team.RemoteTeamTodo
 import com.roziqrizal.habitflow.data.team.TeamApiResult
@@ -36,6 +37,7 @@ sealed interface JoinInviteState {
 class TeamViewModel(
     private val accountSettings: AccountSettings,
     private val teamSettings: TeamSettings,
+    private val unauthorized: UnauthorizedListener,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(TeamUiState(account = accountSettings.account.value))
@@ -53,7 +55,7 @@ class TeamViewModel(
         }
     }
 
-    private fun client(): TeamClient? = accountSettings.account.value?.let { TeamClient(it.token) }
+    private fun client(): TeamClient? = accountSettings.account.value?.let { TeamClient(it.token, unauthorized = unauthorized) }
 
     fun refresh() {
         val client = client() ?: return
@@ -168,7 +170,7 @@ class TeamViewModel(
         }
         _joinState.value = JoinInviteState.InProgress
         viewModelScope.launch {
-            when (val result = TeamClient(account.token).acceptInvite(token)) {
+            when (val result = TeamClient(account.token, unauthorized = unauthorized).acceptInvite(token)) {
                 is TeamApiResult.Success -> {
                     teamSettings.setActiveTeam(result.value.id)
                     _joinState.value = JoinInviteState.Success(result.value.name)

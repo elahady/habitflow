@@ -1,5 +1,6 @@
 package com.roziqrizal.habitflow.data.sync
 
+import com.roziqrizal.habitflow.data.account.UnauthorizedListener
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONException
@@ -34,8 +35,8 @@ fun SyncResult.message(): String = when (this) {
     is SyncResult.Uploaded -> if (unchanged) "Data sudah sama dengan di server." else "Cadangan terkirim."
     is SyncResult.Downloaded -> "Snapshot diunduh."
     SyncResult.NoSnapshot -> "Belum ada cadangan di server."
-    SyncResult.NotConfigured -> "Isi alamat server dan token dulu."
-    SyncResult.Unauthorized -> "Token ditolak server. Periksa token di pengaturan."
+    SyncResult.NotConfigured -> "Masuk ke akun dulu."
+    SyncResult.Unauthorized -> "Sesi berakhir. Masuk lagi."
     SyncResult.TooLarge -> "Data terlalu besar untuk server (maksimal 5 MB)."
     SyncResult.RateLimited -> "Terlalu sering. Coba lagi sebentar."
     is SyncResult.Rejected -> "Server menolak data: $detail"
@@ -45,13 +46,15 @@ fun SyncResult.message(): String = when (this) {
 
 /**
  * Klien HTTP untuk server cadangan (kontrak di docs/concept.md tahap 19B). Memakai `HttpURLConnection`
- * bawaan Android, jadi tanpa dependensi tambahan. [baseUrl] sudah dinormalkan oleh [SyncUrl].
+ * bawaan Android, jadi tanpa dependensi tambahan. [baseUrl] adalah alamat server menurut varian build (`BuildConfig.API_BASE_URL`), [token] token akun.
  */
 class SyncClient(
     private val baseUrl: String,
     private val token: String,
     private val connectTimeoutMs: Int = 15_000,
     private val readTimeoutMs: Int = 30_000,
+    /** Dilapori token yang ditolak saat server menjawab 401 (lihat [SessionGuard]). */
+    private val unauthorized: UnauthorizedListener = UnauthorizedListener.None,
 ) {
 
     suspend fun ping(): SyncResult = request("GET", "/api/v1/ping").let { raw ->
@@ -116,6 +119,7 @@ class SyncClient(
                 connection.outputStream.use { it.write(body.toByteArray(Charsets.UTF_8)) }
             }
             val code = connection.responseCode
+            if (code == 401) unauthorized.onUnauthorized(token)
             val stream = if (code in 200..399) connection.inputStream else connection.errorStream
             val text = stream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }.orEmpty()
             Raw.Response(code, text, connection.getHeaderField("X-Received-At")?.toLongOrNull())
@@ -123,28 +127,6 @@ class SyncClient(
             Raw.Failed(e.message ?: e.javaClass.simpleName)
         } finally {
             connection.disconnect()
-        }
-    }
-}
-
-/** Memeriksa dan merapikan alamat server yang diketik pengguna. */
-object SyncUrl {
-
-    private val LOCAL_HOSTS = setOf("10.0.2.2", "localhost", "127.0.0.1")
-
-    /**
-     * Mengembalikan alamat tanpa garis miring di akhir, atau null kalau tidak boleh dipakai. Hanya `https://` yang
-     * diterima. `http://` hanya untuk emulator dan localhost, dan hanya kalau [allowLocalCleartext] (build debug).
-     */
-    fun normalize(input: String, allowLocalCleartext: Boolean): String? {
-        val text = input.trim().trimEnd('/')
-        if (text.isEmpty() || text.any { it.isWhitespace() }) return null
-        val url = runCatching { URL(text) }.getOrNull() ?: return null
-        val host = url.host.takeIf { it.isNotEmpty() } ?: return null
-        return when (url.protocol) {
-            "https" -> text
-            "http" -> if (allowLocalCleartext && host in LOCAL_HOSTS) text else null
-            else -> null
         }
     }
 }

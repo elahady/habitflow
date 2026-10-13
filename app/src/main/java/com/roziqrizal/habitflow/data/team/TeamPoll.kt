@@ -11,6 +11,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.roziqrizal.habitflow.HabitFlowApplication
 import com.roziqrizal.habitflow.data.account.AccountSettings
+import com.roziqrizal.habitflow.data.account.UnauthorizedListener
 import com.roziqrizal.habitflow.domain.team.TeamTodoAssignment
 import com.roziqrizal.habitflow.domain.team.assignmentKey
 import com.roziqrizal.habitflow.domain.team.newlyAssignedTodos
@@ -64,10 +65,11 @@ class TeamPollScheduler(context: Context, private val accountSettings: AccountSe
 suspend fun pollTeamTodosForNewAssignments(
     accountSettings: AccountSettings,
     teamSettings: TeamSettings,
+    unauthorized: UnauthorizedListener,
     notify: (TeamTodoAssignment) -> Unit,
 ) {
     val account = accountSettings.account.value ?: return
-    val client = TeamClient(account.token)
+    val client = TeamClient(account.token, unauthorized = unauthorized)
     val teams = when (val result = client.listTeams()) {
         is TeamApiResult.Success -> result.value
         else -> return
@@ -92,7 +94,7 @@ suspend fun pollTeamTodosForNewAssignments(
 class TeamPollWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
         val graph = (applicationContext as HabitFlowApplication).graph
-        pollTeamTodosForNewAssignments(graph.accountSettings, graph.teamSettings) { todo ->
+        pollTeamTodosForNewAssignments(graph.accountSettings, graph.teamSettings, graph.sessionGuard) { todo ->
             TeamNotifier.notifyAssigned(applicationContext, todo)
         }
         // Senyap-dan-coba-lagi: gagal jaringan/server bukan masalah besar, siklus berikutnya mencoba lagi.

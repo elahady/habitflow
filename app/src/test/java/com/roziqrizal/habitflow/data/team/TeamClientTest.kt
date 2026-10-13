@@ -4,6 +4,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.io.IOException
@@ -87,6 +88,33 @@ class TeamClientTest {
     fun stop() = server.stop()
 
     private fun client() = TeamClient("token-uji", "http://127.0.0.1:${server.port}")
+
+    @Test
+    fun jawaban401MelaporTokenYangDitolakKeSatuPenangan() = runBlocking {
+        val rejected = mutableListOf<String>()
+        val client = TeamClient("tok-mati", "http://127.0.0.1:${server.port}", unauthorized = { rejected += it })
+
+        status = 401
+        assertEquals(TeamApiResult.Unauthorized, client.listTeams())
+        assertEquals(TeamApiResult.Unauthorized, client.createTeam("Keluarga"))
+        assertEquals(TeamApiResult.Unauthorized, client.listTodos(1))
+        assertEquals(TeamApiResult.Unauthorized, client.acceptInvite("kode"))
+
+        assertEquals(List(4) { "tok-mati" }, rejected)
+    }
+
+    @Test
+    fun jawabanBukan401TidakMelapor() = runBlocking {
+        val rejected = mutableListOf<String>()
+        val client = TeamClient("tok", "http://127.0.0.1:${server.port}", unauthorized = { rejected += it })
+
+        status = 404
+        client.listTeams()
+        status = 500
+        client.listTeams()
+
+        assertTrue(rejected.isEmpty())
+    }
 
     @Test
     fun daftarTimMembacaAnggota() = runBlocking {

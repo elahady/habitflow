@@ -7,6 +7,15 @@ plugins {
     id("com.google.devtools.ksp")
 }
 
+// Diisi lewat local.properties, tidak di-commit.
+val localProps = Properties().apply {
+    val f = rootProject.file("local.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
+}
+
+// Alamat server produksi. Build rilis selalu memakai ini dan tidak bisa dialihkan lewat local.properties.
+val productionApiBaseUrl = "https://habitflow.roziqrizal.com"
+
 android {
     namespace = "com.roziqrizal.habitflow"
     compileSdk = 34
@@ -17,19 +26,6 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
-
-        // Client ID Google (tipe Web, dibuat di tahap 25) dipakai sebagai serverClientId saat
-        // minta ID token lewat Credential Manager - harus SAMA dengan GOOGLE_ANDROID_CLIENT_ID
-        // di .env.production server, supaya aud token cocok saat diverifikasi (lihat
-        // GoogleAuthController di server/). Diisi lewat local.properties, tidak di-commit.
-        val localProps = Properties().apply {
-            val f = rootProject.file("local.properties")
-            if (f.exists()) f.inputStream().use { load(it) }
-        }
-        buildConfigField(
-            "String", "GOOGLE_SERVER_CLIENT_ID",
-            "\"${localProps.getProperty("GOOGLE_SERVER_CLIENT_ID", "")}\"",
-        )
     }
 
     // Keystore release disimpan di luar repo. Lokasinya bisa diganti lewat properti
@@ -50,10 +46,33 @@ android {
         null
     }
 
+    // GOOGLE_SERVER_CLIENT_ID: Client ID Google tipe Web (tahap 25), dipakai sebagai serverClientId saat minta ID
+    // token lewat Credential Manager. Harus SAMA dengan GOOGLE_ANDROID_CLIENT_ID di .env server tujuan, supaya aud
+    // token cocok saat diverifikasi (lihat GoogleAuthController di server/). Per varian: kunci khusus varian
+    // (..._DEBUG atau ..._RELEASE) kalau ada, kalau tidak jatuh ke GOOGLE_SERVER_CLIENT_ID yang lama.
+    //
+    // API_BASE_URL: debug memakai API_BASE_URL_DEBUG dari local.properties (mis. http://10.0.2.2:8000 untuk server
+    // lokal di emulator; http hanya diizinkan ke emulator/localhost oleh network_security_config debug) dan kalau
+    // tidak diisi memakai server produksi, supaya HP yang memasang build debug tetap tersambung.
     buildTypes {
+        debug {
+            buildConfigField(
+                "String", "API_BASE_URL",
+                "\"${localProps.getProperty("API_BASE_URL_DEBUG", productionApiBaseUrl).trimEnd('/')}\"",
+            )
+            buildConfigField(
+                "String", "GOOGLE_SERVER_CLIENT_ID",
+                "\"${localProps.getProperty("GOOGLE_SERVER_CLIENT_ID_DEBUG") ?: localProps.getProperty("GOOGLE_SERVER_CLIENT_ID", "")}\"",
+            )
+        }
         release {
             isMinifyEnabled = false
             signingConfig = releaseSigning
+            buildConfigField("String", "API_BASE_URL", "\"$productionApiBaseUrl\"")
+            buildConfigField(
+                "String", "GOOGLE_SERVER_CLIENT_ID",
+                "\"${localProps.getProperty("GOOGLE_SERVER_CLIENT_ID_RELEASE") ?: localProps.getProperty("GOOGLE_SERVER_CLIENT_ID", "")}\"",
+            )
         }
     }
     compileOptions {

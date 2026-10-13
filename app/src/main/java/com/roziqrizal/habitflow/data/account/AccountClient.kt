@@ -1,5 +1,6 @@
 package com.roziqrizal.habitflow.data.account
 
+import com.roziqrizal.habitflow.BuildConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONException
@@ -191,6 +192,7 @@ class AccountClient(
     }
 
     companion object {
-        const val BASE_URL = "https://habitflow.roziqrizal.com"
+        /** Alamat server menurut varian build (`API_BASE_URL` di app/build.gradle.kts). */
+        const val BASE_URL = BuildConfig.API_BASE_URL
     }
 }

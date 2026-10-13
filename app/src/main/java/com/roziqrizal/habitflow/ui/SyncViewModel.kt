@@ -2,15 +2,13 @@ package com.roziqrizal.habitflow.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.roziqrizal.habitflow.BuildConfig
+import com.roziqrizal.habitflow.data.account.AccountSettings
 import com.roziqrizal.habitflow.data.sync.RestorePreview
 import com.roziqrizal.habitflow.data.sync.RestoreResult
-import com.roziqrizal.habitflow.data.sync.SyncConfig
 import com.roziqrizal.habitflow.data.sync.SyncManager
 import com.roziqrizal.habitflow.data.sync.SyncScheduler
 import com.roziqrizal.habitflow.data.sync.SyncSettings
 import com.roziqrizal.habitflow.data.sync.SyncStatus
-import com.roziqrizal.habitflow.data.sync.SyncUrl
 import com.roziqrizal.habitflow.data.sync.message
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -20,7 +18,10 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 data class SyncUiState(
-    val config: SyncConfig,
+    /** Sinkron otomatis menyala. */
+    val enabled: Boolean,
+    /** Ada sesi masuk. Cadangan memakai token akun, jadi tanpa ini semua aksi mati. */
+    val signedIn: Boolean,
     val status: SyncStatus,
     val busy: Boolean = false,
     /** Hasil operasi terakhir yang dipicu pengguna, untuk ditampilkan di bawah tombol. */
@@ -32,6 +33,7 @@ data class SyncUiState(
 class SyncViewModel(
     private val manager: SyncManager,
     private val settings: SyncSettings,
+    private val accountSettings: AccountSettings,
     private val scheduler: SyncScheduler,
 ) : ViewModel() {
 
@@ -39,27 +41,24 @@ class SyncViewModel(
     private val message = MutableStateFlow<String?>(null)
     private val restore = MutableStateFlow<RestorePreview.Ready?>(null)
 
-    val state: StateFlow<SyncUiState> = combine(settings.config, settings.status, busy, message, restore) { config, status, busy, message, restore ->
-        SyncUiState(config, status, busy, message, restore)
+    private val persisted = combine(settings.enabled, accountSettings.account, settings.status) { enabled, account, status ->
+        SyncUiState(enabled = enabled, signedIn = account != null, status = status)
+    }
+
+    val state: StateFlow<SyncUiState> = combine(persisted, busy, message, restore) { base, busy, message, restore ->
+        base.copy(busy = busy, message = message, restore = restore)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = SyncUiState(settings.config.value, settings.status.value),
+        initialValue = SyncUiState(
+            enabled = settings.enabled.value,
+            signedIn = accountSettings.account.value != null,
+            status = settings.status.value,
+        ),
     )
 
-    /** Menyimpan alamat dan token. Mengembalikan teks galat kalau alamat tidak boleh dipakai, atau null kalau berhasil. */
-    fun saveServer(url: String, token: String): String? {
-        if (token.isBlank()) return "Token wajib diisi."
-        val normalized = SyncUrl.normalize(url, allowLocalCleartext = BuildConfig.DEBUG)
-            ?: return "Alamat harus diawali https:// dan tidak boleh kosong."
-        settings.setServer(normalized, token)
-        scheduler.onConfigChanged()
-        message.value = null
-        return null
-    }
-
     fun setEnabled(enabled: Boolean) {
-        if (enabled && !settings.config.value.isConfigured) return
+        if (enabled && accountSettings.account.value == null) return
         settings.setEnabled(enabled)
         scheduler.onConfigChanged()
         // Begitu dinyalakan, kirim cadangan pertama tanpa menunggu perubahan atau jadwal harian.

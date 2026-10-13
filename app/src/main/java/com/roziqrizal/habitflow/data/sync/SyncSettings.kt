@@ -6,27 +6,27 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.util.UUID
 
-data class SyncConfig(val url: String, val token: String, val enabled: Boolean) {
-    val isConfigured: Boolean get() = url.isNotBlank() && token.isNotBlank()
-}
-
 data class SyncStatus(val lastSuccessAt: Long, val lastMessage: String?)
 
 /**
- * Alamat server, token, dan status sinkron. Disimpan di berkas `sync.xml` yang **sengaja tidak ikut Auto Backup**
- * (lihat `res/xml/backup_rules.xml`), supaya token tidak ikut ke cadangan awan Google.
+ * Status dan pilihan cadangan snapshot. Sejak 31F tidak ada lagi alamat server dan token di sini: cadangan memakai
+ * token akun dan alamat dari `BuildConfig.API_BASE_URL`. Disimpan di berkas `sync.xml` yang **sengaja tidak ikut
+ * Auto Backup** (lihat `res/xml/backup_rules.xml`).
  */
 class SyncSettings(context: Context) {
     private val prefs = context.applicationContext.getSharedPreferences("sync", Context.MODE_PRIVATE)
 
-    private val _config = MutableStateFlow(
-        SyncConfig(
-            url = prefs.getString(KEY_URL, "").orEmpty(),
-            token = prefs.getString(KEY_TOKEN, "").orEmpty(),
-            enabled = prefs.getBoolean(KEY_ENABLED, false),
-        ),
-    )
-    val config: StateFlow<SyncConfig> = _config.asStateFlow()
+    init {
+        // Sisa token cadangan 19B (sudah ditolak server sejak 31E) tidak perlu tinggal di HP.
+        if (prefs.contains(LEGACY_URL) || prefs.contains(LEGACY_TOKEN)) {
+            prefs.edit().remove(LEGACY_URL).remove(LEGACY_TOKEN).apply()
+        }
+    }
+
+    private val _enabled = MutableStateFlow(prefs.getBoolean(KEY_ENABLED, false))
+
+    /** Sinkron otomatis menyala. Hanya berlaku kalau sedang masuk ke akun. */
+    val enabled: StateFlow<Boolean> = _enabled.asStateFlow()
 
     private val _status = MutableStateFlow(
         SyncStatus(prefs.getLong(KEY_LAST_SUCCESS, 0L), prefs.getString(KEY_LAST_MESSAGE, null)),
@@ -37,14 +37,9 @@ class SyncSettings(context: Context) {
     fun deviceId(): String =
         prefs.getString(KEY_DEVICE_ID, null) ?: UUID.randomUUID().toString().also { prefs.edit().putString(KEY_DEVICE_ID, it).apply() }
 
-    fun setServer(url: String, token: String) {
-        prefs.edit().putString(KEY_URL, url.trim()).putString(KEY_TOKEN, token.trim()).apply()
-        _config.value = _config.value.copy(url = url.trim(), token = token.trim())
-    }
-
     fun setEnabled(enabled: Boolean) {
         prefs.edit().putBoolean(KEY_ENABLED, enabled).apply()
-        _config.value = _config.value.copy(enabled = enabled)
+        _enabled.value = enabled
     }
 
     fun recordSuccess(at: Long, message: String) {
@@ -59,8 +54,8 @@ class SyncSettings(context: Context) {
     }
 
     private companion object {
-        const val KEY_URL = "server_url"
-        const val KEY_TOKEN = "server_token"
+        const val LEGACY_URL = "server_url"
+        const val LEGACY_TOKEN = "server_token"
         const val KEY_ENABLED = "enabled"
         const val KEY_DEVICE_ID = "device_id"
         const val KEY_LAST_SUCCESS = "last_success_at"

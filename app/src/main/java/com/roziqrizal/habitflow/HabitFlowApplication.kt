@@ -1,10 +1,13 @@
 package com.roziqrizal.habitflow
 
 import android.app.Application
+import android.os.Build
 import com.roziqrizal.habitflow.data.AlarmSettings
+import com.roziqrizal.habitflow.data.account.AccountClient
 import com.roziqrizal.habitflow.data.account.AccountManager
 import com.roziqrizal.habitflow.data.account.AccountSettings
 import com.roziqrizal.habitflow.data.account.GoogleSignIn
+import com.roziqrizal.habitflow.data.account.SessionGuard
 import com.roziqrizal.habitflow.data.HabitDatabase
 import com.roziqrizal.habitflow.data.HealthSettings
 import com.roziqrizal.habitflow.data.calendar.CalendarSettings
@@ -39,7 +42,7 @@ class HabitFlowApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         // Sinkron otomatis: pasang jadwal harian kalau aktif, dan pantau perubahan data di proses mana pun.
-        graph.syncScheduler.onConfigChanged()
+        graph.syncScheduler.observeAccount(SyncScheduler.newScope())
         graph.syncScheduler.observeChanges(graph.db, SyncScheduler.newScope())
         // Sinkron habit/todo ke server (tahap 28 langkah 5): hanya aktif kalau sudah login.
         graph.habitSyncScheduler.onAccountChanged()
@@ -68,10 +71,18 @@ class AppGraph(app: Application) {
     val calendarSettings = CalendarSettings(app)
     val phoneCalendar = PhoneCalendarSource(app)
     val syncSettings = SyncSettings(app)
-    val syncScheduler = SyncScheduler(app, syncSettings)
     val accountSettings = AccountSettings(app)
-    val accountManager = AccountManager(accountSettings, GoogleSignIn(BuildConfig.GOOGLE_SERVER_CLIENT_ID))
-    val habitSyncManager: HabitSyncManager by lazy { HabitSyncManager(db, accountSettings) }
+
+    /** Satu-satunya penangan 401: semua klien melapor ke sini (tahap 31F). */
+    val sessionGuard = SessionGuard(accountSettings)
+    val syncScheduler = SyncScheduler(app, syncSettings, accountSettings)
+    val accountManager = AccountManager(
+        accountSettings,
+        GoogleSignIn(BuildConfig.GOOGLE_SERVER_CLIENT_ID),
+        AccountClient(unauthorized = sessionGuard),
+        deviceName = { "${Build.MANUFACTURER} ${Build.MODEL}".trim().take(100) },
+    )
+    val habitSyncManager: HabitSyncManager by lazy { HabitSyncManager(db, accountSettings, sessionGuard) }
     val habitSyncScheduler = HabitSyncScheduler(app, accountSettings)
     val teamSettings = TeamSettings(app)
     val teamPollScheduler = TeamPollScheduler(app, accountSettings)
@@ -84,9 +95,10 @@ class AppGraph(app: Application) {
         SyncManager(
             snapshots = SnapshotRepository(db),
             settings = syncSettings,
+            accountSettings = accountSettings,
             appSettings = SettingsGateway(),
             appVersion = versionName,
-            allowLocalCleartext = BuildConfig.DEBUG,
+            unauthorized = sessionGuard,
             followUpsOnAccount = { accountSettings.account.value != null },
         )
     }

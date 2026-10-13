@@ -14,9 +14,11 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.roziqrizal.habitflow.HabitFlowApplication
 import com.roziqrizal.habitflow.data.HabitDatabase
+import com.roziqrizal.habitflow.data.account.AccountSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 
@@ -24,12 +26,21 @@ import java.util.concurrent.TimeUnit
  * Menjadwalkan sinkron otomatis dengan WorkManager, hanya saat ada internet: sekali sehari, dan sekitar
  * [DEBOUNCE_MINUTES] menit setelah perubahan data terakhir (setiap perubahan baru mengulang hitungan mundur).
  */
-class SyncScheduler(context: Context, private val settings: SyncSettings) {
+class SyncScheduler(
+    context: Context,
+    private val settings: SyncSettings,
+    private val accountSettings: AccountSettings,
+) {
 
     private val work = WorkManager.getInstance(context.applicationContext)
     private val network = Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
 
-    /** Dipanggil saat pengaturan sinkron berubah: nyalakan jadwal harian kalau aktif dan lengkap, kalau tidak batalkan semua. */
+    /** Memasang ulang jadwal setiap kali sesi akun berubah (masuk, keluar, atau berakhir). */
+    fun observeAccount(scope: CoroutineScope) {
+        scope.launch { accountSettings.account.collectLatest { onConfigChanged() } }
+    }
+
+    /** Dipanggil saat pengaturan sinkron atau sesi berubah: nyalakan jadwal harian kalau aktif dan sedang masuk, kalau tidak batalkan semua. */
     fun onConfigChanged() {
         if (isActive()) {
             work.enqueueUniquePeriodicWork(
@@ -68,7 +79,7 @@ class SyncScheduler(context: Context, private val settings: SyncSettings) {
         }
     }
 
-    private fun isActive(): Boolean = settings.config.value.let { it.enabled && it.isConfigured }
+    private fun isActive(): Boolean = settings.enabled.value && accountSettings.account.value != null
 
     companion object {
         const val DEBOUNCE_MINUTES = 5L

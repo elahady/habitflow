@@ -313,7 +313,6 @@ fun HabitFlowApp(
                         alarmSettings = alarmSettings,
                         sync = syncState,
                         syncActions = SyncActions(
-                            onSaveServer = syncViewModel::saveServer,
                             onSetEnabled = syncViewModel::setEnabled,
                             onTest = syncViewModel::testConnection,
                             onSync = syncViewModel::syncNow,
