@@ -362,7 +362,6 @@ interface SyncDao {
     @Query("SELECT * FROM schedule_blocks") suspend fun scheduleBlocks(): List<ScheduleBlockEntity>
     @Query("SELECT * FROM schedule_block_habits") suspend fun scheduleBlockHabits(): List<ScheduleBlockHabit>
     @Query("SELECT * FROM days_off") suspend fun daysOff(): List<DayOff>
-    @Query("SELECT * FROM follow_ups") suspend fun followUps(): List<FollowUpEntity>
     @Query("SELECT * FROM work_days") suspend fun workDays(): List<WorkDayEntity>
     @Query("SELECT * FROM drink_counts") suspend fun drinkCounts(): List<DrinkCount>
     @Query("SELECT * FROM weight_entries") suspend fun weightEntries(): List<WeightEntry>
@@ -386,7 +385,6 @@ interface SyncDao {
     @Query("DELETE FROM schedule_block_habits") suspend fun clearScheduleBlockHabits()
     @Query("DELETE FROM schedule_blocks") suspend fun clearScheduleBlocks()
     @Query("DELETE FROM days_off") suspend fun clearDaysOff()
-    @Query("DELETE FROM follow_ups") suspend fun clearFollowUps()
     @Query("DELETE FROM work_days") suspend fun clearWorkDays()
     @Query("DELETE FROM habit_entries") suspend fun clearHabitEntries()
     @Query("DELETE FROM todos") suspend fun clearTodos()
@@ -398,7 +396,6 @@ interface SyncDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertScheduleBlocks(items: List<ScheduleBlockEntity>)
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertScheduleBlockHabits(items: List<ScheduleBlockHabit>)
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertDaysOff(items: List<DayOff>)
-    @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertFollowUps(items: List<FollowUpEntity>)
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertWorkDays(items: List<WorkDayEntity>)
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertDrinkCounts(items: List<DrinkCount>)
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertWeightEntries(items: List<WeightEntry>)

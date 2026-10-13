@@ -16,7 +16,7 @@ class SnapshotFingerprintTest {
     ) = Snapshot(
         createdAt = createdAt, deviceId = deviceId, appVersion = appVersion,
         habits = emptyList(), habitEntries = emptyList(), todos = emptyList(), scheduleBlocks = emptyList(),
-        scheduleBlockHabits = emptyList(), daysOff = emptyList(), followUps = emptyList(), workDays = emptyList(),
+        scheduleBlockHabits = emptyList(), daysOff = emptyList(), workDays = emptyList(),
         weightEntries = weights,
         settings = SnapshotSettings(
             locationName = location, latitude = -6.2, longitude = 106.8, persistentNotification = true,

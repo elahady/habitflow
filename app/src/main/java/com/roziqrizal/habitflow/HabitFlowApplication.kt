@@ -152,7 +152,6 @@ class AppGraph(app: Application) {
             appSettings = SettingsGateway(),
             appVersion = versionName,
             unauthorized = sessionGuard,
-            followUpsOnAccount = { accountSettings.account.value != null },
         )
     }
 

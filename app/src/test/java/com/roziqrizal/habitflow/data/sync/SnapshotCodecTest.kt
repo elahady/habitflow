@@ -5,7 +5,6 @@ import com.roziqrizal.habitflow.data.DayOff
 import com.roziqrizal.habitflow.data.DrinkCount
 import com.roziqrizal.habitflow.data.EventEntity
 import com.roziqrizal.habitflow.data.EventExceptionEntity
-import com.roziqrizal.habitflow.data.FollowUpEntity
 import com.roziqrizal.habitflow.data.Habit
 import com.roziqrizal.habitflow.data.HabitEntry
 import com.roziqrizal.habitflow.data.HabitManualMark
@@ -41,11 +40,6 @@ class SnapshotCodecTest {
         ),
         scheduleBlockHabits = listOf(ScheduleBlockHabit(1, 1)),
         daysOff = listOf(DayOff("2026-10-07")),
-        followUps = listOf(
-            FollowUpEntity(1, "Telepon vendor", "ACTIVE", "2026-10-07", "14:00", "Budi", "Bawa kontrak", 5, null, "2026-10-08"),
-            FollowUpEntity(2, "Catatan lepas", "INBOX", null, null, null, null, 6, null, null),
-            FollowUpEntity(3, "Selesai", "DONE", "2026-10-05", null, "Sari", null, 7, 1791350953356, null),
-        ),
         workDays = listOf(
             WorkDayEntity("2026-10-07", "Besok fokus demo", 100L, 200L),
             WorkDayEntity("2026-10-06", null, null, null),
@@ -103,9 +97,11 @@ class SnapshotCodecTest {
         assertEquals(1, root.getInt("schemaVersion"))
         val data = root.getJSONObject("data")
         listOf(
-            "habits", "habitEntries", "todos", "scheduleBlocks", "scheduleBlockHabits", "daysOff", "followUps",
+            "habits", "habitEntries", "todos", "scheduleBlocks", "scheduleBlockHabits", "daysOff",
             "workDays", "drinkCounts", "settings",
         ).forEach { assertTrue("$it hilang", data.has(it)) }
+        // Follow-up kerja disinkron lewat akun, bukan lewat snapshot (31I).
+        assertTrue(!data.has("followUps"))
         assertEquals(2, data.getJSONArray("habits").length())
     }
 
@@ -164,43 +160,18 @@ class SnapshotCodecTest {
     }
 
     @Test
-    fun tautanAcaraDiFollowUpTertulisDanTerbaca() {
-        val withLink = sample().copy(
-            followUps = listOf(
-                FollowUpEntity(
-                    1, "Kirim notulen", "INBOX", null, null, null, null, 5, null, null,
-                    eventId = 1, eventDate = "2026-10-27", eventTitle = "Meeting reguler",
-                ),
-                FollowUpEntity(2, "Tanpa acara", "INBOX", null, null, null, null, 6, null, null),
-            ),
-        )
-        val decoded = SnapshotCodec.decode(SnapshotCodec.encode(withLink))
-        assertEquals(withLink, decoded)
-        assertEquals(1L, decoded.followUps[0].eventId)
-        assertEquals(null, decoded.followUps[1].eventId)
-    }
-
-    @Test
     fun snapshotTanpaBidangTahap22TetapBisaDipulihkan() {
         val root = JSONObject(SnapshotCodec.encode(sample()))
         val data = root.getJSONObject("data")
         data.remove("events")
         data.remove("eventExceptions")
         data.remove("holidayCancellations")
-        for (i in 0 until data.getJSONArray("followUps").length()) {
-            data.getJSONArray("followUps").getJSONObject(i).apply {
-                remove("eventId")
-                remove("eventDate")
-                remove("eventTitle")
-            }
-        }
 
         val decoded = SnapshotCodec.decode(root.toString())
 
         assertEquals(emptyList<EventEntity>(), decoded.events)
         assertEquals(emptyList<EventExceptionEntity>(), decoded.eventExceptions)
         assertEquals(emptyList<HolidayCancellation>(), decoded.holidayCancellations)
-        assertTrue(decoded.followUps.all { it.eventId == null && it.eventTitle == null })
         assertEquals(sample().weightEntries, decoded.weightEntries)
     }
 
@@ -293,7 +264,6 @@ class SnapshotCodecTest {
 
         val decoded = SnapshotCodec.decode(SnapshotCodec.encode(sample()))
         assertEquals(null, decoded.scheduleBlocks[0].endMinuteOfDay)
-        assertEquals(null, decoded.followUps[1].date)
         assertEquals(null, decoded.workDays[1].eodNote)
     }
 
@@ -301,7 +271,7 @@ class SnapshotCodecTest {
     fun dataKosongTetapSah() {
         val empty = sample().copy(
             habits = emptyList(), habitEntries = emptyList(), todos = emptyList(), scheduleBlocks = emptyList(),
-            scheduleBlockHabits = emptyList(), daysOff = emptyList(), followUps = emptyList(), workDays = emptyList(),
+            scheduleBlockHabits = emptyList(), daysOff = emptyList(), workDays = emptyList(),
         )
         assertEquals(empty, SnapshotCodec.decode(SnapshotCodec.encode(empty)))
     }
@@ -364,19 +334,15 @@ class SnapshotCodecTest {
     }
 
     @Test
-    fun followUpYangDikecualikanTidakDitulisDanTerbacaSebagaiDikecualikan() {
-        val omitted = sample().copy(followUps = emptyList(), followUpsOmitted = true)
-        val json = SnapshotCodec.encode(omitted)
-        assertTrue(!JSONObject(json).getJSONObject("data").has("followUps"))
-        val decoded = SnapshotCodec.decode(json)
-        assertTrue(decoded.followUpsOmitted)
-        assertEquals(emptyList<FollowUpEntity>(), decoded.followUps)
-        assertEquals(omitted, decoded)
-    }
+    fun snapshotLamaYangMasihMemuatFollowUpTetapDibacaDanBagianItuDiabaikan() {
+        val root = JSONObject(SnapshotCodec.encode(sample()))
+        root.getJSONObject("data").put(
+            "followUps",
+            org.json.JSONArray().put(JSONObject().put("id", 1).put("title", "Telepon vendor").put("status", "ACTIVE")),
+        )
 
-    @Test
-    fun snapshotDenganFollowUpKosongBukanDikecualikan() {
-        val decoded = SnapshotCodec.decode(SnapshotCodec.encode(sample().copy(followUps = emptyList())))
-        assertTrue(!decoded.followUpsOmitted)
+        val decoded = SnapshotCodec.decode(root.toString())
+
+        assertEquals(sample(), decoded)
     }
 }

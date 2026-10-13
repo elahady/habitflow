@@ -5,7 +5,6 @@ import com.roziqrizal.habitflow.data.DayOff
 import com.roziqrizal.habitflow.data.DrinkCount
 import com.roziqrizal.habitflow.data.EventEntity
 import com.roziqrizal.habitflow.data.EventExceptionEntity
-import com.roziqrizal.habitflow.data.FollowUpEntity
 import com.roziqrizal.habitflow.data.Habit
 import com.roziqrizal.habitflow.data.HabitEntry
 import com.roziqrizal.habitflow.data.HabitManualMark
@@ -54,7 +53,6 @@ data class Snapshot(
     val scheduleBlocks: List<ScheduleBlockEntity>,
     val scheduleBlockHabits: List<ScheduleBlockHabit>,
     val daysOff: List<DayOff>,
-    val followUps: List<FollowUpEntity>,
     val workDays: List<WorkDayEntity>,
     /** Penghitung minuman (tahap 20). Snapshot lama tanpa bidang ini dibaca sebagai kosong. */
     val drinkCounts: List<DrinkCount> = emptyList(),
@@ -69,11 +67,8 @@ data class Snapshot(
     val meals: List<MealEntity> = emptyList(),
     val habitManualMarks: List<HabitManualMark> = emptyList(),
     val settings: SnapshotSettings,
-    /**
-     * Follow-up kerja sengaja tidak ikut snapshot ini karena sumber kebenarannya sudah di server lewat akun (tahap 27).
-     * Isi [followUps] kosong dan tidak ditulis ke JSON; memulihkan snapshot seperti ini tidak menyentuh follow-up di HP.
-     */
-    val followUpsOmitted: Boolean = false,
+    // Follow-up kerja tidak ikut snapshot: sumber kebenarannya di server lewat akun (tahap 27). Snapshot lama yang masih
+    // memuat `followUps` tetap bisa dibaca; bagian itu diabaikan dan memulihkannya tidak menyentuh follow-up di HP (31I).
 )
 
 /** Snapshot rusak, bukan JSON, atau dibuat oleh versi app yang lebih baru. [message] aman ditampilkan ke pengguna. */
@@ -115,16 +110,6 @@ object SnapshotCodec {
             })
             put("scheduleBlockHabits", array(s.scheduleBlockHabits) { obj("blockId" to it.blockId, "habitId" to it.habitId) })
             put("daysOff", JSONArray(s.daysOff.map { it.date }))
-            if (!s.followUpsOmitted) {
-                put("followUps", array(s.followUps) {
-                    obj(
-                        "id" to it.id, "title" to it.title, "status" to it.status, "date" to it.date, "time" to it.time,
-                        "person" to it.person, "note" to it.note, "createdAt" to it.createdAt, "doneAt" to it.doneAt,
-                        "pickedDate" to it.pickedDate, "eventId" to it.eventId, "eventDate" to it.eventDate,
-                        "eventTitle" to it.eventTitle,
-                    )
-                })
-            }
             put("workDays", array(s.workDays) {
                 obj("date" to it.date, "eodNote" to it.eodNote, "scrumDoneAt" to it.scrumDoneAt, "eodDoneAt" to it.eodDoneAt)
             })
@@ -222,15 +207,6 @@ object SnapshotCodec {
                     ScheduleBlockHabit(it.getLong("blockId"), it.getLong("habitId"))
                 },
                 daysOff = data.getJSONArray("daysOff").let { arr -> (0 until arr.length()).map { DayOff(arr.getString(it)) } },
-                followUpsOmitted = !data.has("followUps"),
-                followUps = data.optJSONArray("followUps")?.map {
-                    FollowUpEntity(
-                        id = it.getLong("id"), title = it.getString("title"), status = it.getString("status"),
-                        date = it.str("date"), time = it.str("time"), person = it.str("person"), note = it.str("note"),
-                        createdAt = it.getLong("createdAt"), doneAt = it.long("doneAt"), pickedDate = it.str("pickedDate"),
-                        eventId = it.long("eventId"), eventDate = it.str("eventDate"), eventTitle = it.str("eventTitle"),
-                    )
-                }.orEmpty(),
                 workDays = data.getJSONArray("workDays").map {
                     WorkDayEntity(it.getString("date"), it.str("eodNote"), it.long("scrumDoneAt"), it.long("eodDoneAt"))
                 },

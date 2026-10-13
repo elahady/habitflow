@@ -14,7 +14,6 @@ class SnapshotRepository(private val db: HabitDatabase) {
         deviceId: String,
         appVersion: String,
         nowMillis: Long,
-        includeFollowUps: Boolean = true,
     ): Snapshot =
         db.withTransaction {
             val habitRows = dao.habits()
@@ -30,7 +29,6 @@ class SnapshotRepository(private val db: HabitDatabase) {
                 scheduleBlocks = blockRows,
                 scheduleBlockHabits = consistentLinks(dao.scheduleBlockHabits(), habitRows, blockRows),
                 daysOff = dao.daysOff(),
-                followUps = if (includeFollowUps) dao.followUps() else emptyList(),
                 workDays = dao.workDays(),
                 drinkCounts = dao.drinkCounts(),
                 weightEntries = dao.weightEntries(),
@@ -41,7 +39,6 @@ class SnapshotRepository(private val db: HabitDatabase) {
                 meals = dao.meals(),
                 habitManualMarks = dao.habitManualMarks(),
                 settings = settings,
-                followUpsOmitted = !includeFollowUps,
             )
         }
 
@@ -54,7 +51,6 @@ class SnapshotRepository(private val db: HabitDatabase) {
         dao.clearScheduleBlockHabits()
         dao.clearScheduleBlocks()
         dao.clearDaysOff()
-        if (!snapshot.followUpsOmitted) dao.clearFollowUps()
         dao.clearWorkDays()
         dao.clearDrinkCounts()
         dao.clearWeightEntries()
@@ -74,7 +70,6 @@ class SnapshotRepository(private val db: HabitDatabase) {
         dao.insertScheduleBlocks(snapshot.scheduleBlocks)
         dao.insertScheduleBlockHabits(consistentLinks(snapshot.scheduleBlockHabits, snapshot.habits, snapshot.scheduleBlocks))
         dao.insertDaysOff(snapshot.daysOff)
-        if (!snapshot.followUpsOmitted) dao.insertFollowUps(snapshot.followUps)
         dao.insertWorkDays(snapshot.workDays)
         dao.insertDrinkCounts(snapshot.drinkCounts)
         dao.insertWeightEntries(snapshot.weightEntries)

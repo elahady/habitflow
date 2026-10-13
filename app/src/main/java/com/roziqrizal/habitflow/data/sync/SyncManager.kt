@@ -35,8 +35,6 @@ class SyncManager(
     private val appVersion: String,
     /** Dilapori token yang ditolak server (401). Wajib, supaya tidak ada jalur yang menangani 401 sendiri. */
     unauthorized: UnauthorizedListener,
-    /** True kalau follow-up kerja sudah disinkron lewat akun (tahap 27) dan tidak perlu ikut snapshot cadangan. */
-    private val followUpsOnAccount: () -> Boolean = { false },
     private val now: () -> Long = System::currentTimeMillis,
     private val clientFor: (token: String) -> SyncClient = { SyncClient(AccountClient.BASE_URL, it, unauthorized = unauthorized) },
 ) {
@@ -45,15 +43,10 @@ class SyncManager(
     /** Cadangan memakai token akun. Tanpa sesi masuk tidak ada klien (hasilnya [SyncResult.NotConfigured]). */
     private fun client(): SyncClient? = accountSettings.account.value?.token?.let(clientFor)
 
-    /** Uji alamat dan token tanpa mengubah status sinkron. */
-    suspend fun testConnection(): SyncResult = mutex.withLock { client()?.ping() ?: SyncResult.NotConfigured }
-
     /** Mengunggah snapshot lengkap. Hasilnya dicatat di status (sukses menyimpan waktu, gagal menyimpan pesan). */
     suspend fun syncNow(): SyncResult = mutex.withLock {
         val client = client() ?: return@withLock SyncResult.NotConfigured
-        val snapshot = snapshots.export(
-            appSettings.read(), settings.deviceId(), appVersion, now(), includeFollowUps = !followUpsOnAccount(),
-        )
+        val snapshot = snapshots.export(appSettings.read(), settings.deviceId(), appVersion, now())
         val result = client.upload(SnapshotCodec.encode(snapshot))
         if (result.isSuccess) settings.recordBackupFingerprint(SnapshotFingerprint.of(snapshot))
         if (result.isSuccess) settings.recordSuccess(now(), result.message()) else settings.recordFailure(result.message())
@@ -62,9 +55,7 @@ class SyncManager(
 
     /** True kalau isi HP berbeda dari cadangan terakhir yang berhasil terkirim (atau belum pernah ada cadangan). Dipakai peringatan Keluar. */
     suspend fun backupIsStale(): Boolean = mutex.withLock {
-        val snapshot = snapshots.export(
-            appSettings.read(), settings.deviceId(), appVersion, now(), includeFollowUps = !followUpsOnAccount(),
-        )
+        val snapshot = snapshots.export(appSettings.read(), settings.deviceId(), appVersion, now())
         SnapshotFingerprint.of(snapshot) != settings.backupFingerprint
     }
 
