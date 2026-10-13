@@ -2156,11 +2156,17 @@ Status: **selesai di kode dan tes (12 Oktober 2026), belum di-deploy.** Bergantu
 
 #### 31F. Android: lapisan akun dan sesi
 
-Status: belum dikerjakan. Bergantung pada 31B.
+Status: **sedang dikerjakan (13 Oktober 2026).** Bergantung pada 31B. Selesai: klien dan manajer akun, status sesi, `ownerAccountId`. Belum: penanganan 401 di semua klien, konfigurasi build, penerima debug.
 
-- [ ] `AccountClient` dan `AccountManager`: register, verifikasi, kirim ulang, login email, Google (yang sudah ada), lupa dan reset, keluar (mencabut token di server), keluar dari semua perangkat, ubah kata sandi,
-  hapus akun, dan `me`. Semua hasil dalam tipe tertutup (`Success`, `Failed(code)`, `Unauthorized`, `Offline`).
-- [ ] `AccountSettings`: status sesi (`SignedOut`, `SignedIn`, `Expired`), dan **`ownerAccountId`** (pemilik data lokal), disimpan di berkas yang tidak ikut backup.
+- [x] `AccountApi` (antarmuka), `AccountClient`, dan `AccountManager`: register, verifikasi, kirim ulang, login email, Google, lupa dan reset, keluar (mencabut token di server), keluar dari semua perangkat,
+  ubah kata sandi, hapus akun, dan `me`. Semua hasil bertipe `AccountResult` (`Success`, `Failed(status, code, message, retryAfterSeconds)`, `Unauthorized`, `Offline`); kode galat ada di `AccountErrors`.
+  Keputusan yang saya ambil: (1) pesan galat 422 validasi Laravel memakai galat field pertama (field `message`-nya hanya "dan N galat lain"), diberi kode `validation`; (2) **Keluar selalu menutup sesi di HP**
+  walau server tidak terjangkau, hasilnya `Offline` memberi tahu pemanggil bahwa token di server belum dicabut (31H memutuskan peringatannya); 401 pada logout dianggap berhasil; (3) **keluar dari semua perangkat
+  hanya menutup sesi lokal kalau server benar-benar mencabut**; (4) reset kata sandi hanya menutup sesi yang masih `SignedIn`, sesi `Expired` dibiarkan supaya email-nya tetap tersedia; (5) `SignInResult` ditambah `Offline`
+  (`AccountViewModel` disesuaikan); `LoginResult` lama dihapus. `POST auth/google` sekarang mengirim `device_name` dan membaca `account` (bukan `user`), jadi `user` di server boleh dihapus setelah 31F ini terpasang.
+- [x] `AccountSettings`: status sesi `SessionState` (`SignedOut`, `SignedIn(account)`, `Expired(email, name)`) dan **`ownerAccountId`**, di `account.xml` (tidak ikut backup). `Expired` membuang token tapi menyimpan email dan nama
+  untuk layar Masuk. **`ownerAccountId` sengaja terpisah dari sesi**: bertahan saat sesi berakhir dan saat keluar, hanya `clearOwnerAccountId()` yang menghapusnya (dipanggil bersama penghapusan data lokal di 31H).
+  31F **belum mengisi** `ownerAccountId` dari mana pun: itu bagian "Ambil alih data lama" di 31H. `account: StateFlow<Account?>` dipertahankan (null kecuali `SignedIn`) supaya penjadwal latar belakang yang ada berhenti sendiri saat sesi berakhir.
 - [ ] **Penanganan 401 di satu tempat.** Sekarang `HabitSyncClient`, `TeamClient`, `SyncClient`, dan klien follow-up masing-masing menangani sendiri. Semuanya melapor ke satu `SessionGuard` yang menandai
   sesi `Expired` tanpa menghapus data lokal.
 - [ ] **Konfigurasi build:** `BuildConfig.API_BASE_URL` (debug: emulator atau alamat lokal, rilis: `https://habitflow.roziqrizal.com`), `GOOGLE_SERVER_CLIENT_ID` per varian. Pembacaan alamat dari `SyncSettings` dihentikan.

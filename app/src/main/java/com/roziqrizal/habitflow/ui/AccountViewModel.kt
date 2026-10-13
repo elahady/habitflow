@@ -55,6 +55,7 @@ class AccountViewModel(
                     is SignInResult.Success -> message.value = "Masuk sebagai ${result.account.name}."
                     SignInResult.Cancelled -> Unit
                     is SignInResult.Failed -> message.value = result.message
+                    SignInResult.Offline -> message.value = "Tidak ada internet. Coba lagi nanti."
                 }
             } finally {
                 busy.value = false
