@@ -31,6 +31,15 @@ Kebutuhan: JDK 17 dan Android SDK (API 34). Lokasi SDK ditulis di `local.propert
 sdk.dir=C:/Users/<nama>/AppData/Local/Android/Sdk
 ```
 
+Kunci opsional lain di `local.properties` (tidak di-commit):
+
+```properties
+# Client ID Google tipe Web. Kunci _DEBUG atau _RELEASE dipakai kalau ada, kalau tidak jatuh ke yang tanpa akhiran.
+GOOGLE_SERVER_CLIENT_ID=...
+# Build debug memakai server produksi kecuali ini diisi (mis. server lokal di emulator). Build rilis selalu produksi.
+API_BASE_URL_DEBUG=http://10.0.2.2:8000
+```
+
 Debug, langsung dipasang ke emulator atau perangkat yang terhubung:
 
 ```sh

@@ -2156,7 +2156,7 @@ Status: **selesai di kode dan tes (12 Oktober 2026), belum di-deploy.** Bergantu
 
 #### 31F. Android: lapisan akun dan sesi
 
-Status: **sedang dikerjakan (13 Oktober 2026).** Bergantung pada 31B. Selesai: klien dan manajer akun, status sesi, `ownerAccountId`. Belum: penanganan 401 di semua klien, konfigurasi build, penerima debug.
+Status: **selesai di kode dan tes (13 Oktober 2026), belum diuji di perangkat.** Bergantung pada 31B (kode ✅, email sungguhan belum). Sisa yang disebut di bawah menunggu 31G dan perangkat sungguhan.
 
 - [x] `AccountApi` (antarmuka), `AccountClient`, dan `AccountManager`: register, verifikasi, kirim ulang, login email, Google, lupa dan reset, keluar (mencabut token di server), keluar dari semua perangkat,
   ubah kata sandi, hapus akun, dan `me`. Semua hasil bertipe `AccountResult` (`Success`, `Failed(status, code, message, retryAfterSeconds)`, `Unauthorized`, `Offline`); kode galat ada di `AccountErrors`.
@@ -2167,13 +2167,33 @@ Status: **sedang dikerjakan (13 Oktober 2026).** Bergantung pada 31B. Selesai: k
 - [x] `AccountSettings`: status sesi `SessionState` (`SignedOut`, `SignedIn(account)`, `Expired(email, name)`) dan **`ownerAccountId`**, di `account.xml` (tidak ikut backup). `Expired` membuang token tapi menyimpan email dan nama
   untuk layar Masuk. **`ownerAccountId` sengaja terpisah dari sesi**: bertahan saat sesi berakhir dan saat keluar, hanya `clearOwnerAccountId()` yang menghapusnya (dipanggil bersama penghapusan data lokal di 31H).
   31F **belum mengisi** `ownerAccountId` dari mana pun: itu bagian "Ambil alih data lama" di 31H. `account: StateFlow<Account?>` dipertahankan (null kecuali `SignedIn`) supaya penjadwal latar belakang yang ada berhenti sendiri saat sesi berakhir.
-- [ ] **Penanganan 401 di satu tempat.** Sekarang `HabitSyncClient`, `TeamClient`, `SyncClient`, dan klien follow-up masing-masing menangani sendiri. Semuanya melapor ke satu `SessionGuard` yang menandai
-  sesi `Expired` tanpa menghapus data lokal.
-- [ ] **Konfigurasi build:** `BuildConfig.API_BASE_URL` (debug: emulator atau alamat lokal, rilis: `https://habitflow.roziqrizal.com`), `GOOGLE_SERVER_CLIENT_ID` per varian. Pembacaan alamat dari `SyncSettings` dihentikan.
-- [ ] **Debug saja:** `DebugSessionReceiver` di `src/debug` yang memasang sesi uji lewat adb, supaya alur uji tidak perlu mengetik. Tidak boleh ada di rilis (dijaga 31J).
-- [ ] Unit test dengan klien palsu untuk setiap hasil, 401 dari tiap klien menghasilkan `Expired`, dan `ownerAccountId` tersimpan.
+- [x] **Penanganan 401 di satu tempat.** `AccountClient`, `HabitSyncClient` (habit, to-do, dan follow-up ada di klien yang sama), `SyncClient`, dan `TeamClient` melapor ke `UnauthorizedListener` di dalam `request()` mereka,
+  jadi tidak ada jalur yang bisa terlewat. `SessionGuard` mengimplementasikannya dan menandai sesi `Expired` tanpa menghapus data lokal. **Yang dilaporkan adalah token yang ditolak**, bukan sekadar "ada 401": `AccountSettings.expire(token)`
+  hanya bekerja kalau token itu masih token sesi sekarang, supaya permintaan terlambat dengan token lama tidak mematikan sesi baru. Pendaftaran listener dibuat **wajib** (tanpa nilai bawaan) di `SyncManager`,
+  `HabitSyncManager`, `TeamViewModel`, dan `pollTeamTodosForNewAssignments`, jadi klien baru yang lupa dipasang gagal dikompilasi. Diperiksa dengan pencarian kode: satu-satunya yang mengubah sesi karena 401 adalah `SessionGuard`;
+  `HabitSyncManager` dan `TeamViewModel` hanya menampilkan pesan dari hasil `Unauthorized`.
+- [x] **Konfigurasi build** (`app/build.gradle.kts`): `BuildConfig.API_BASE_URL` dan `GOOGLE_SERVER_CLIENT_ID` per varian. **Keputusan yang saya ambil dan tolong koreksi kalau tidak setuju:** debug **tetap ke server produksi** kecuali
+  `API_BASE_URL_DEBUG` diisi di `local.properties` (mis. `http://10.0.2.2:8000` untuk server lokal di emulator), supaya HP pemilik yang memasang build debug tidak putus sinkron; rilis selalu `https://habitflow.roziqrizal.com` dan tidak bisa
+  dialihkan. Client ID: `GOOGLE_SERVER_CLIENT_ID_DEBUG` atau `_RELEASE` kalau ada, kalau tidak jatuh ke `GOOGLE_SERVER_CLIENT_ID` yang lama (jadi `local.properties` yang sekarang tetap jalan). `http://` hanya lolos ke emulator dan localhost
+  oleh `network_security_config` debug yang sudah ada. **Pembacaan alamat dari `SyncSettings` dihentikan:** cadangan snapshot (`SyncManager`) memakai token akun dan `API_BASE_URL`; `SyncUrl`, `SyncConfig`, dialog "Atur server", dan
+  `allowLocalCleartext` dihapus; `SyncSettings` tinggal `enabled`, status, dan id perangkat, dan **menghapus sisa `server_url` dan `server_token` 19B dari `sync.xml` saat app dibuka**. `SyncScheduler` aktif hanya kalau sinkron otomatis menyala **dan** ada sesi
+  `SignedIn`, serta dipasang ulang tiap sesi berubah.
+- [x] **Debug saja:** `DebugSessionReceiver` di `src/debug` (perintah `set`, `expire`, `clear`, `owner`, `owner-clear`, contoh di KDoc-nya). Diperiksa di manifest hasil gabungan: ada di debug, **tidak ada di rilis**.
+  **Belum dijalankan di perangkat atau emulator** (tidak ada yang terhubung saat sesi ini), hanya terkompilasi dan terdaftar. Pemeriksaan otomatis "tidak ada di rilis" adalah tugas 31J.
+- [x] Tes (seluruh suite Android: 398 tes lulus): `AccountClientTest` (24: semua jalur dan isian kontrak, kode galat, `Retry-After`, validasi Laravel, jawaban rusak, 401 dengan dan tanpa token, offline, alamat bukan http),
+  `AccountManagerTest` (30, klien palsu untuk tiap hasil), `AccountSettingsTest` (14, termasuk `ownerAccountId` tersimpan dan bertahan, token lama terlambat, berkas format lama tahap 25), dan satu tes 401 di setiap klien
+  (`SyncClientTest`, `HabitSyncClientTest` untuk habit/to-do dan follow-up, `TeamClientTest`). Satu tes klien-ke-`SessionGuard`-ke-`AccountSettings` menunjukkan 401 benar-benar menghasilkan `Expired`.
+  Tes menemukan **cacat nyata** yang sudah diperbaiki: alamat bukan http(s) membuat `openConnection() as HttpURLConnection` melempar `ClassCastException` (bukan `IOException`) dan lolos dari penangkapan; sekarang jadi `Offline`.
 
-**Selesai jika:** semua hasil termodelkan dan teruji, dan tidak ada klien yang menangani 401 sendiri.
+**Yang sengaja belum, dan keadaan sementara sampai 31G:** tidak ada layar masuk email, daftar, atau verifikasi di app; `AccountManager` sudah siap tapi belum ada yang memanggilnya selain tombol Google lama di Tentang.
+Saat sesi `Expired`, layar-layar lama membaca `account` sebagai kosong dan menampilkan tombol "Masuk dengan Google" seperti saat belum masuk, jadi akun email yang sesinya berakhir **belum bisa masuk lagi lewat UI**
+(di HP pemilik dan istri yang memakai Google tidak masalah). Pesan "Sesi berakhir" yang tenang dan email terisi adalah pekerjaan 31G. Cadangan snapshot memakai token akun: **HP yang belum masuk ke akun tidak
+mencadangkan** (memang bagian rencana 31E: token 19B sudah tidak diterima server).
+
+**Belum diverifikasi di perangkat:** `DELETE /account` mengirim body JSON lewat `HttpURLConnection`. Itu jalan di JVM (tes), tapi implementasi Android-nya (OkHttp internal) belum dicoba; kalau ternyata menolak body pada DELETE,
+perbaikannya ada di `AccountClient.call`. Jalur peningkatan dari versi sebelum 31F (penghapusan `server_token` lama, `account.xml` tanpa penanda `expired`) diuji lewat tes `AccountSettingsTest` dan dibaca dari kode, belum dicoba pada HP yang sungguh diperbarui.
+
+**Selesai jika:** semua hasil termodelkan dan teruji (✅), dan tidak ada klien yang menangani 401 sendiri (✅, `SessionGuard` satu-satunya yang mengubah sesi; diperiksa dengan pencarian kode dan dijaga oleh parameter listener yang wajib).
 
 #### 31G. Android: gerbang dan layar auth
 

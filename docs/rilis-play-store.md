@@ -45,8 +45,8 @@ dihapus. Kalau salah satu dari ketiganya berbeda dari tabel ini, tabel ini yang 
 |---|---|---|
 | Room `habitflow.db` (18 entitas, versi 10) | semua data di atas dalam bentuk lokal, termasuk berat, tensi, makan, kalender | Ya |
 | `settings.xml` | tema, lokasi (nama dan koordinat), pengingat, tinggi dan target berat | Ya |
-| `account.xml` | token sesi dan profil akun | Ya |
-| `sync.xml` | alamat server dan token 19B | Dipensiunkan di tahap 31 |
+| `account.xml` | token sesi, profil akun, penanda sesi berakhir, dan `owner_account_id` (akun pemilik data lokal) | Sesi: ya. `owner_account_id`: dihapus bersama data lokal (31H) |
+| `sync.xml` | pilihan sinkron otomatis, status terakhir, id perangkat. Alamat dan token 19B dihapus otomatis saat app dibuka sejak 31F | Ya (31H) |
 | Izin yang diminta | lokasi perkiraan, kalender (baca), notifikasi, Health Connect (langkah, baca di latar belakang), alarm pasti, layar penuh | Izin tetap ada di sistem, tapi app berhenti memakainya |
 
 ## 2. Keputusan yang mengikat dokumen ini
