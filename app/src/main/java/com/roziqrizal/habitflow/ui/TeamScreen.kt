@@ -1,6 +1,5 @@
 package com.roziqrizal.habitflow.ui
 
-import android.content.Context
 import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,7 +34,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.roziqrizal.habitflow.data.account.Account
 import com.roziqrizal.habitflow.data.team.RemoteTeamTodo
 import com.roziqrizal.habitflow.data.team.TeamMember
 
@@ -51,7 +49,6 @@ fun TeamScreen(
     onSetDone: (RemoteTeamTodo, Boolean) -> Unit,
     onAssign: (RemoteTeamTodo, Long?) -> Unit,
     onDelete: (RemoteTeamTodo) -> Unit,
-    onSignIn: (Context) -> Unit,
 ) {
     val context = LocalContext.current
 
@@ -65,7 +62,6 @@ fun TeamScreen(
         }
 
         when {
-            state.account == null -> item { SignInPrompt(busy = state.busy, onSignIn = { onSignIn(context) }) }
             state.loading && state.team == null -> item {
                 Row(modifier = Modifier.fillMaxWidth().padding(top = 24.dp), horizontalArrangement = Arrangement.Center) {
                     CircularProgressIndicator()
@@ -90,7 +86,7 @@ fun TeamScreen(
                     TeamTodoRow(
                         todo = todo,
                         members = state.team.members,
-                        myId = state.account.id,
+                        myId = state.accountId,
                         onSetDone = { onSetDone(todo, it) },
                         onAssign = { onAssign(todo, it) },
                         onDelete = { onDelete(todo) },
@@ -121,22 +117,6 @@ fun TeamScreen(
             .putExtra(Intent.EXTRA_TEXT, "Ayo gabung Tugas Rumah di Habitflow: $url")
         context.startActivity(Intent.createChooser(send, "Bagikan undangan"))
         onInviteShared()
-    }
-}
-
-@Composable
-private fun SignInPrompt(busy: Boolean, onSignIn: () -> Unit) {
-    AppCard(modifier = Modifier.fillMaxWidth()) {
-        Text(
-            "Masuk dengan Google untuk membuat atau bergabung ke tim tugas rumah.",
-            style = MaterialTheme.typography.bodyMedium,
-        )
-        TonalButton(
-            text = "Masuk dengan Google",
-            enabled = !busy,
-            onClick = onSignIn,
-            modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
-        )
     }
 }
 
@@ -225,7 +205,7 @@ private fun AddTodoField(busy: Boolean, onAdd: (String) -> Unit) {
 private fun TeamTodoRow(
     todo: RemoteTeamTodo,
     members: List<TeamMember>,
-    myId: Long,
+    myId: Long?,
     onSetDone: (Boolean) -> Unit,
     onAssign: (Long?) -> Unit,
     onDelete: () -> Unit,
@@ -269,42 +249,31 @@ internal fun extractInviteToken(pasted: String): String {
     return if (index >= 0) trimmed.substring(index + marker.length).trim('/', ' ') else trimmed
 }
 
-/** Dialog join tim dari deep link (tahap 26 langkah 2). */
+/** Dialog join tim dari deep link (tahap 26 langkah 2). Muncul di dalam gerbang masuk, jadi sesi selalu ada. */
 @Composable
 fun JoinTeamDialog(
     joinState: JoinInviteState?,
-    account: Account?,
-    onSignIn: (Context) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val context = LocalContext.current
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Undangan tim") },
         text = {
             when (joinState) {
-                null, JoinInviteState.InProgress -> {
-                    if (account == null) {
-                        Text("Masuk dengan Google dulu untuk bisa bergabung ke tim.")
-                    } else {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            CircularProgressIndicator(modifier = Modifier.padding(end = 12.dp))
-                            Text("Memproses undangan...")
-                        }
-                    }
+                null, JoinInviteState.InProgress -> Row(verticalAlignment = Alignment.CenterVertically) {
+                    CircularProgressIndicator(modifier = Modifier.padding(end = 12.dp))
+                    Text("Memproses undangan...")
                 }
                 is JoinInviteState.Success -> Text("Berhasil gabung ke tim \"${joinState.teamName}\".")
                 is JoinInviteState.Failed -> Text(joinState.message)
             }
         },
         confirmButton = {
-            if (account == null && (joinState == null || joinState is JoinInviteState.Failed)) {
-                TextButton(onClick = { onSignIn(context) }) { Text("Masuk dengan Google") }
-            } else {
+            if (joinState is JoinInviteState.Success || joinState is JoinInviteState.Failed) {
                 TextButton(onClick = onDismiss) { Text("Tutup") }
             }
         },
-        dismissButton = if (account != null) {
+        dismissButton = if (joinState == null || joinState == JoinInviteState.InProgress) {
             { TextButton(onClick = onDismiss) { Text("Nanti") } }
         } else {
             null

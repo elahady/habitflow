@@ -34,7 +34,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /**
- * Bagian Tentang untuk Kalender HP (tahap 22). Tanpa izin `READ_CALENDAR`: satu kalimat dan tombol izin. Dengan izin: satu baris
+ * Isi dialog Kalender HP di Pengaturan (tahap 22). Tanpa izin `READ_CALENDAR`: satu kalimat dan tombol izin. Dengan izin: satu baris
  * per kalender dengan `Switch`, dan kalau menyala dua `FilterChip` label Kerja dan Pribadi.
  */
 @OptIn(ExperimentalLayoutApi::class)

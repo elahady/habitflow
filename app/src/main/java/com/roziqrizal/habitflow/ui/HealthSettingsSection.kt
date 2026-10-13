@@ -49,24 +49,31 @@ private val BpFrequency.label: String
         BpFrequency.OFF -> "Mati"
     }
 
-/** Bagian Tentang untuk Kesehatan (tinggi, target berat) dan Pengingat kesehatan (tahap 21). */
+/**
+ * Kartu "Data tubuh" di Profil (tahap 31I, sebelumnya bagian Kesehatan di Tentang): tinggi badan dan target berat.
+ * Tinggi dipakai menghitung BMI; target berat kosong berarti otomatis dari batas atas BMI normal.
+ */
 @Composable
-fun HealthSettingsSection(settings: HealthSettings) {
+fun BodyDataCard(settings: HealthSettings) {
     val height by settings.heightCm.collectAsState()
     val target by settings.targetKg.collectAsState()
     var editing by remember { mutableStateOf<HealthField?>(null) }
 
-    ValueRow(
-        title = "Tinggi badan",
-        value = height?.let { "${formatDecimal1(it)} cm" } ?: "Belum diisi",
-        onClick = { editing = HealthField.HEIGHT },
-    )
-    Spacer(Modifier.height(4.dp))
-    ValueRow(
-        title = "Target berat",
-        value = target?.let { "${formatDecimal1(it)} kg" } ?: "Otomatis (BMI ${formatDecimal1(BMI_NORMAL_MAX)})",
-        onClick = { editing = HealthField.TARGET },
-    )
+    SettingsCard {
+        ChevronRow(
+            title = "Tinggi badan",
+            description = "Untuk menghitung BMI",
+            value = height?.let { "${formatDecimal1(it)} cm" } ?: "Belum diisi",
+            onClick = { editing = HealthField.HEIGHT },
+        )
+        SettingsDivider()
+        ChevronRow(
+            title = "Target berat",
+            description = "Kosong berarti otomatis (BMI ${formatDecimal1(BMI_NORMAL_MAX)})",
+            value = target?.let { "${formatDecimal1(it)} kg" } ?: "Otomatis",
+            onClick = { editing = HealthField.TARGET },
+        )
+    }
 
     editing?.let { field ->
         NumberDialog(
@@ -97,14 +104,14 @@ fun HealthSettingsSection(settings: HealthSettings) {
     }
 }
 
-/** Pengingat kesehatan: switch timbang dan pilihan frekuensi tensi. Dipisah dari bagian Kesehatan supaya punya label sendiri. */
+/** Pengingat kesehatan: switch timbang dan pilihan frekuensi tensi. Isi dialog "Berat dan tensi" di Pengaturan. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HealthReminderSection(settings: HealthSettings) {
     val weightReminder by settings.weightReminder.collectAsState()
     val bpFrequency by settings.bpFrequency.collectAsState()
 
-    SettingSwitchRow(
+    SwitchRow(
         title = "Timbang berat",
         description = "Setiap Senin pagi, sebelum aktivitas.",
         checked = weightReminder,
@@ -129,17 +136,6 @@ fun HealthReminderSection(settings: HealthSettings) {
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun ValueRow(title: String, value: String, onClick: () -> Unit) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 48.dp).clickable(onClick = onClick),
-    ) {
-        Text(title, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
-        Text(value, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 

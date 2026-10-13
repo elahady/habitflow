@@ -209,7 +209,7 @@ private fun SavedResult(result: HealthSaveResult, onDone: () -> Unit) {
             Text(headline, style = MaterialTheme.typography.titleMedium)
             val detail = when {
                 result.remainingKg != null -> describeRemaining(result.remainingKg)
-                else -> "Isi tinggi badan di Tentang untuk melihat BMI."
+                else -> "Isi tinggi badan di Profil untuk melihat BMI."
             }
             Text(detail, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }

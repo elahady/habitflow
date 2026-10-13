@@ -42,7 +42,7 @@ enum class Tab(val label: String, val icon: ImageVector) {
     TEAM("Tugas Rumah", AppIcons.Users),
     CONTRIBUTION("Progres", AppIcons.BarChart),
     HABITS("Habit", AppIcons.CheckSquare),
-    ABOUT("Tentang", AppIcons.Info),
+    SETTINGS("Setelan", AppIcons.Settings),
 }
 
 /** Layar penuh di atas tab Kerja. */
@@ -98,6 +98,8 @@ fun HabitFlowApp(
     ) { mutableStateListOf(Tab.TODAY) }
     val current = history.last()
     var showSchedule by rememberSaveable { mutableStateOf(false) }
+    // Layar Profil (31I): layar penuh di atas tab, dibuka dari lingkaran inisial di Hari ini.
+    var showProfile by rememberSaveable { mutableStateOf(false) }
     var sessionName by rememberSaveable { mutableStateOf<String?>(null) }
     var showCapture by rememberSaveable { mutableStateOf(false) }
     // Sheet catat berat atau tensi (tahap 21). Null = tertutup.
@@ -139,15 +141,16 @@ fun HabitFlowApp(
     }
 
     BackHandler(enabled = showCapture) { showCapture = false }
+    BackHandler(enabled = showProfile) { showProfile = false }
     BackHandler(enabled = showSchedule) { showSchedule = false }
     BackHandler(enabled = session != null) { sessionName = null }
-    BackHandler(enabled = !showSchedule && session == null && history.size > 1) {
+    BackHandler(enabled = !showProfile && !showSchedule && session == null && history.size > 1) {
         history.removeAt(history.lastIndex)
     }
 
     val workState by work.state.collectAsState()
     val healthState by health.state.collectAsState()
-    val fullScreen = showSchedule || session != null
+    val fullScreen = showProfile || showSchedule || session != null
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -177,6 +180,33 @@ fun HabitFlowApp(
         },
     ) { padding ->
         Box(modifier = Modifier.padding(padding)) {
+            if (showProfile) {
+                val profileState by accountViewModel.state.collectAsState()
+                ProfileScreen(
+                    state = profileState,
+                    actions = AccountActions(
+                        onLoadMe = accountViewModel::loadMe,
+                        onRequestSignOut = accountViewModel::requestSignOut,
+                        onRequestSignOutAllDevices = accountViewModel::requestSignOutAllDevices,
+                        onConfirmSignOut = accountViewModel::confirmSignOut,
+                        onDismissSignOut = accountViewModel::dismissSignOut,
+                        onRequestDelete = accountViewModel::requestDeleteAccount,
+                        onDeleteWithPassword = accountViewModel::deleteWithPassword,
+                        onDeleteWithGoogle = accountViewModel::deleteWithGoogle,
+                        onDismissDelete = accountViewModel::dismissDelete,
+                        onOpenChangePassword = accountViewModel::openChangePassword,
+                        onChangePassword = accountViewModel::changePassword,
+                        onDismissChangePassword = accountViewModel::dismissChangePassword,
+                        onSyncHabitsNow = accountViewModel::syncHabitsNow,
+                    ),
+                    healthSettings = healthSettings,
+                    onClose = {
+                        accountViewModel.clearMessage()
+                        showProfile = false
+                    },
+                )
+                return@Box
+            }
             if (showSchedule) {
                 val editor by schedule.editor.collectAsState()
                 ScheduleScreen(
@@ -257,6 +287,7 @@ fun HabitFlowApp(
                         onToggleTodo = today::toggleTodo,
                         onDeleteTodo = today::deleteTodo,
                         accountName = accountStateForInvite.account?.name,
+                        onOpenProfile = { showProfile = true },
                     )
                 }
                 Tab.WORK -> WorkScreen(
@@ -282,7 +313,6 @@ fun HabitFlowApp(
                         onSetDone = team::setDone,
                         onAssign = team::assign,
                         onDelete = team::deleteTodo,
-                        onSignIn = accountViewModel::signIn,
                     )
                 }
                 Tab.CONTRIBUTION -> {
@@ -299,27 +329,16 @@ fun HabitFlowApp(
                         onDelete = manage::deleteHabit,
                     )
                 }
-                Tab.ABOUT -> {
+                Tab.SETTINGS -> {
                     val nextAlarm by schedule.nextAlarm.collectAsState()
                     val syncState by syncViewModel.state.collectAsState()
-                    val accountState by accountViewModel.state.collectAsState()
-                    AboutScreen(
+                    SettingsScreen(
                         versionName = versionName,
                         themeMode = themeMode,
+                        onThemeModeChange = onThemeModeChange,
                         location = location,
                         onLocationChange = onLocationChange,
                         persistentNotification = persistentNotification,
-                        nextAlarm = nextAlarm,
-                        alarmSettings = alarmSettings,
-                        sync = syncState,
-                        syncActions = SyncActions(
-                            onSetEnabled = syncViewModel::setEnabled,
-                            onTest = syncViewModel::testConnection,
-                            onSync = syncViewModel::syncNow,
-                            onPrepareRestore = syncViewModel::prepareRestore,
-                            onDismissRestore = syncViewModel::dismissRestore,
-                            onConfirmRestore = syncViewModel::confirmRestore,
-                        ),
                         onPersistentNotificationChange = onPersistentNotificationChange,
                         waterReminders = waterReminders,
                         onWaterRemindersChange = onWaterRemindersChange,
@@ -330,18 +349,15 @@ fun HabitFlowApp(
                         healthSettings = healthSettings,
                         phoneCalendar = phoneCalendar,
                         calendarSettings = calendarSettings,
-                        onThemeModeChange = onThemeModeChange,
-                        account = accountState,
-                        accountActions = AccountActions(
-                            onSignIn = accountViewModel::signIn,
-                            onRequestSignOut = accountViewModel::requestSignOut,
-                            onConfirmSignOut = accountViewModel::confirmSignOut,
-                            onDismissSignOut = accountViewModel::dismissSignOut,
-                            onRequestDelete = accountViewModel::requestDeleteAccount,
-                            onDeleteWithPassword = accountViewModel::deleteWithPassword,
-                            onDeleteWithGoogle = accountViewModel::deleteWithGoogle,
-                            onDismissDelete = accountViewModel::dismissDelete,
-                            onSyncHabitsNow = accountViewModel::syncHabitsNow,
+                        nextAlarm = nextAlarm,
+                        alarmSettings = alarmSettings,
+                        sync = syncState,
+                        syncActions = SyncActions(
+                            onSetEnabled = syncViewModel::setEnabled,
+                            onSync = syncViewModel::syncNow,
+                            onPrepareRestore = syncViewModel::prepareRestore,
+                            onDismissRestore = syncViewModel::dismissRestore,
+                            onConfirmRestore = syncViewModel::confirmRestore,
                         ),
                     )
                 }
@@ -361,8 +377,6 @@ fun HabitFlowApp(
     if (pendingInviteToken != null) {
         JoinTeamDialog(
             joinState = joinState,
-            account = accountStateForInvite.account,
-            onSignIn = accountViewModel::signIn,
             onDismiss = {
                 if (joinState is JoinInviteState.Success) {
                     history.remove(Tab.TEAM)

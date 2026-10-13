@@ -146,7 +146,7 @@ class ScheduleViewModel(
         initialValue = ScheduleUiState(date = clock.date.value),
     )
 
-    /** Alarm berikutnya tanpa memandang tanggal yang dimatikan, supaya tanggal itu bisa dinyalakan lagi dari Tentang. */
+    /** Alarm berikutnya tanpa memandang tanggal yang dimatikan, supaya tanggal itu bisa dinyalakan lagi dari Pengaturan. */
     val nextAlarm: StateFlow<AlarmTime?> = combine(
         repo.observeBlocks(),
         locationSettings.location,

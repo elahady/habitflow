@@ -2,7 +2,6 @@ package com.roziqrizal.habitflow.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.roziqrizal.habitflow.data.account.AccountSettings
 import com.roziqrizal.habitflow.data.sync.RestorePreview
 import com.roziqrizal.habitflow.data.sync.RestoreResult
 import com.roziqrizal.habitflow.data.sync.SyncManager
@@ -20,8 +19,6 @@ import kotlinx.coroutines.launch
 data class SyncUiState(
     /** Sinkron otomatis menyala. */
     val enabled: Boolean,
-    /** Ada sesi masuk. Cadangan memakai token akun, jadi tanpa ini semua aksi mati. */
-    val signedIn: Boolean,
     val status: SyncStatus,
     val busy: Boolean = false,
     /** Hasil operasi terakhir yang dipicu pengguna, untuk ditampilkan di bawah tombol. */
@@ -30,10 +27,10 @@ data class SyncUiState(
     val restore: RestorePreview.Ready? = null,
 )
 
+/** Cadangan snapshot di Pengaturan. Selalu memakai sesi akun; layar ini baru bisa dibuka setelah masuk (gerbang 31G). */
 class SyncViewModel(
     private val manager: SyncManager,
     private val settings: SyncSettings,
-    private val accountSettings: AccountSettings,
     private val scheduler: SyncScheduler,
 ) : ViewModel() {
 
@@ -41,8 +38,8 @@ class SyncViewModel(
     private val message = MutableStateFlow<String?>(null)
     private val restore = MutableStateFlow<RestorePreview.Ready?>(null)
 
-    private val persisted = combine(settings.enabled, accountSettings.account, settings.status) { enabled, account, status ->
-        SyncUiState(enabled = enabled, signedIn = account != null, status = status)
+    private val persisted = combine(settings.enabled, settings.status) { enabled, status ->
+        SyncUiState(enabled = enabled, status = status)
     }
 
     val state: StateFlow<SyncUiState> = combine(persisted, busy, message, restore) { base, busy, message, restore ->
@@ -50,22 +47,15 @@ class SyncViewModel(
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = SyncUiState(
-            enabled = settings.enabled.value,
-            signedIn = accountSettings.account.value != null,
-            status = settings.status.value,
-        ),
+        initialValue = SyncUiState(enabled = settings.enabled.value, status = settings.status.value),
     )
 
     fun setEnabled(enabled: Boolean) {
-        if (enabled && accountSettings.account.value == null) return
         settings.setEnabled(enabled)
         scheduler.onConfigChanged()
         // Begitu dinyalakan, kirim cadangan pertama tanpa menunggu perubahan atau jadwal harian.
         if (enabled) syncNow()
     }
-
-    fun testConnection() = launchBusy { message.value = manager.testConnection().message() }
 
     fun syncNow() = launchBusy { message.value = manager.syncNow().message() }
 
@@ -86,7 +76,7 @@ class SyncViewModel(
         restore.value = null
         launchBusy {
             message.value = when (val result = manager.applyRestore(preview.snapshot)) {
-                RestoreResult.Done -> "Data dipulihkan dari server."
+                RestoreResult.Done -> "Data dipulihkan dari cadangan akun."
                 is RestoreResult.Failed -> result.message
             }
         }

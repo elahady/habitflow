@@ -2,7 +2,6 @@ package com.roziqrizal.habitflow.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.roziqrizal.habitflow.data.account.Account
 import com.roziqrizal.habitflow.data.account.AccountSettings
 import com.roziqrizal.habitflow.data.account.UnauthorizedListener
 import com.roziqrizal.habitflow.data.team.RemoteTeam
@@ -18,7 +17,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class TeamUiState(
-    val account: Account?,
+    /** Id akun yang sedang masuk, untuk menandai tugas "Anda". */
+    val accountId: Long? = null,
     val loading: Boolean = false,
     val team: RemoteTeam? = null,
     val todos: List<RemoteTeamTodo> = emptyList(),
@@ -33,14 +33,14 @@ sealed interface JoinInviteState {
     data class Failed(val message: String) : JoinInviteState
 }
 
-/** Tab "Tugas Rumah" (tahap 26): to-do tim dengan polling, bukan snapshot. Butuh login Google dulu. */
+/** Tab "Tugas Rumah" (tahap 26): to-do tim dengan polling, bukan snapshot. Tab ini baru bisa dibuka setelah masuk (gerbang 31G). */
 class TeamViewModel(
     private val accountSettings: AccountSettings,
     private val teamSettings: TeamSettings,
     private val unauthorized: UnauthorizedListener,
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(TeamUiState(account = accountSettings.account.value))
+    private val _state = MutableStateFlow(TeamUiState(accountId = accountSettings.account.value?.id))
     val state: StateFlow<TeamUiState> = _state.asStateFlow()
 
     private val _joinState = MutableStateFlow<JoinInviteState?>(null)
@@ -48,9 +48,10 @@ class TeamViewModel(
 
     init {
         viewModelScope.launch {
+            // Sesi ditutup (Keluar) lalu proses dimulai ulang: sisa tim akun lama tidak boleh sempat tampil.
             accountSettings.account.collectLatest { account ->
-                _state.update { it.copy(account = account) }
-                if (account != null) refresh() else _state.update { it.copy(team = null, todos = emptyList()) }
+                _state.update { it.copy(accountId = account?.id, team = null, todos = emptyList()) }
+                account?.let { refresh() }
             }
         }
     }
@@ -159,11 +160,13 @@ class TeamViewModel(
         }
     }
 
-    /** Terima undangan dari deep link (tahap 26 langkah 2). Butuh sudah login - panggilan dari UI menunggu akun ada. */
+    /**
+     * Terima undangan dari deep link (tahap 26 langkah 2). Dipanggil dari dalam gerbang masuk, jadi sesi selalu ada; token
+     * undangan yang tiba sebelum masuk disimpan dan dipakai begitu masuk selesai.
+     */
     fun acceptInvite(token: String) {
-        val account = accountSettings.account.value
-        if (account == null) {
-            val message = "Masuk dengan Google dulu untuk bisa bergabung ke tim."
+        val account = accountSettings.account.value ?: run {
+            val message = "Sesi berakhir. Masuk lagi, lalu buka link undangannya sekali lagi."
             _joinState.value = JoinInviteState.Failed(message)
             _state.update { it.copy(error = message) }
             return

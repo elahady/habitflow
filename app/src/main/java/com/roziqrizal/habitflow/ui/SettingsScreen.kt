@@ -11,10 +11,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -35,11 +33,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.roziqrizal.habitflow.data.AlarmSettings
 import com.roziqrizal.habitflow.data.DeviceLocation
@@ -47,8 +45,10 @@ import com.roziqrizal.habitflow.data.HealthSettings
 import com.roziqrizal.habitflow.data.LocationSettings
 import com.roziqrizal.habitflow.data.PlaceLocation
 import com.roziqrizal.habitflow.data.ThemeMode
+import com.roziqrizal.habitflow.data.account.AccountClient
 import com.roziqrizal.habitflow.data.calendar.CalendarSettings
 import com.roziqrizal.habitflow.data.calendar.PhoneCalendarSource
+import com.roziqrizal.habitflow.domain.health.BpFrequency
 import com.roziqrizal.habitflow.domain.prayer.PrayerName
 import com.roziqrizal.habitflow.domain.schedule.AlarmTime
 import com.roziqrizal.habitflow.ui.theme.tokens
@@ -63,8 +63,39 @@ private val ThemeMode.label: String
         ThemeMode.DARK -> "Gelap"
     }
 
+/** Sub-pengaturan yang dibuka dari baris chevron. Disimpan sebagai nama supaya selamat dari putar layar. */
+private enum class SettingsDialogKind { LOCATION, ALARM, ADZAN, HEALTH_REMINDER, CALENDAR }
+
+/** Alamat halaman kebijakan privasi di server (versi bernomor, URL tetap). */
+internal val PRIVACY_POLICY_URL: String = AccountClient.BASE_URL.trimEnd('/') + "/kebijakan-privasi"
+
+private val NEXT_ALARM_FORMAT = DateTimeFormatter.ofPattern("EEE d MMM HH.mm", Locale("id", "ID"))
+
+/** Keterangan baris Alarm: alarm berikutnya, atau penjelasan kalau belum ada. */
+internal fun alarmSummary(nextAlarm: AlarmTime?): String =
+    if (nextAlarm == null) "Belum ada alarm" else "Berikutnya ${nextAlarm.dateTime.format(NEXT_ALARM_FORMAT)} · ${nextAlarm.block.name}"
+
+/** Keterangan baris Pengingat adzan: "N dari 5 waktu aktif". */
+internal fun adzanSummary(enabled: Map<PrayerName, Boolean>): String =
+    "${PrayerName.entries.count { enabled[it] ?: true }} dari ${PrayerName.entries.size} waktu aktif"
+
+/** Keterangan baris "Berat dan tensi", mis. "Berat Senin · tensi setiap hari". */
+internal fun healthReminderSummary(weightReminder: Boolean, bpFrequency: BpFrequency): String {
+    val weight = if (weightReminder) "Berat Senin" else "Berat mati"
+    val bp = when (bpFrequency) {
+        BpFrequency.DAILY -> "tensi setiap hari"
+        BpFrequency.WEEKLY -> "tensi setiap Senin"
+        BpFrequency.OFF -> "tensi mati"
+    }
+    return "$weight · $bp"
+}
+
+/**
+ * Tab Pengaturan (tahap 31I, pengganti Tentang). Bagiannya berkartu: Tampilan, Waktu dan sholat, Pengingat, Kalender, Data dan
+ * sinkron, Tentang. Data tubuh dan semua tindakan akun ada di layar Profil, bukan di sini.
+ */
 @Composable
-fun AboutScreen(
+fun SettingsScreen(
     versionName: String,
     themeMode: ThemeMode,
     onThemeModeChange: (ThemeMode) -> Unit,
@@ -85,118 +116,142 @@ fun AboutScreen(
     alarmSettings: AlarmSettings,
     sync: SyncUiState,
     syncActions: SyncActions,
-    account: AccountUiState,
-    accountActions: AccountActions,
 ) {
+    val context = LocalContext.current
+    var dialogName by rememberSaveable { mutableStateOf<String?>(null) }
+    val dialog = dialogName?.let { SettingsDialogKind.valueOf(it) }
+
+    val adzan by alarmSettings.adzan.collectAsState()
+    val weightReminder by healthSettings.weightReminder.collectAsState()
+    val bpFrequency by healthSettings.bpFrequency.collectAsState()
+    val calendarSelection by calendarSettings.selection.collectAsState()
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(24.dp)
-            .padding(bottom = 72.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
+            .padding(horizontal = 16.dp)
+            .padding(top = 20.dp, bottom = 96.dp),
     ) {
         Text(
-            text = "HabitFlow",
+            text = "Pengaturan",
             style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.SemiBold,
-        )
-        Text(
-            text = "Versi $versionName",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Text(
-            text = "Dibuat oleh Roziq Rizal",
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.padding(top = 16.dp),
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.padding(start = 4.dp),
         )
 
-        SettingLabel("Tampilan")
-        ThemeModeSelector(selected = themeMode, onSelect = onThemeModeChange)
+        SectionLabel("Tampilan")
+        SettingsCard {
+            Column(modifier = Modifier.padding(12.dp)) { ThemeModeSelector(selected = themeMode, onSelect = onThemeModeChange) }
+        }
 
-        SettingLabel("Lokasi untuk waktu sholat")
-        LocationSection(location = location, onLocationChange = onLocationChange)
-
-        SettingLabel("Notifikasi")
-        SettingSwitchRow(
-            title = "Notifikasi tetap",
-            description = "Sekarang dan berikutnya, dari blok pertama sampai batas tidur.",
-            checked = persistentNotification,
-            onCheckedChange = onPersistentNotificationChange,
-        )
-
-        SettingLabel("Pengingat kerja")
-        SettingSwitchRow(
-            title = "Minum air",
-            description = "Setiap 60 menit di jam kerja.",
-            checked = waterReminders,
-            onCheckedChange = onWaterRemindersChange,
-        )
-        Spacer(Modifier.height(12.dp))
-        SettingSwitchRow(
-            title = "Break",
-            description = "Setiap 90 menit di jam kerja.",
-            checked = breakReminders,
-            onCheckedChange = onBreakRemindersChange,
-        )
-
-        SettingLabel("Kesehatan")
-        HealthSettingsSection(settings = healthSettings)
-
-        SettingLabel("Pengingat kesehatan")
-        HealthReminderSection(settings = healthSettings)
-
-        SettingLabel("Catatan makan")
-        SettingSwitchRow(
-            title = "Pengingat catatan makan",
-            description = "Satu jam sebelum batas tidur, kalau ada waktu makan yang belum dicatat.",
-            checked = mealReminder,
-            onCheckedChange = onMealReminderChange,
-        )
-
-        SettingLabel("Kalender HP")
-        CalendarSettingsSection(phone = phoneCalendar, settings = calendarSettings)
-
-        SettingLabel("Alarm")
-        AlarmSection(nextAlarm = nextAlarm, settings = alarmSettings)
-
-        SettingLabel("Pengingat adzan")
-        AdzanSection(settings = alarmSettings)
-
-        SettingLabel("Sinkron ke server")
-        SyncSection(state = sync, actions = syncActions)
-
-        SettingLabel("Akun")
-        AccountSection(state = account, actions = accountActions)
-    }
-}
-
-/** Satu baris pengaturan: judul dan keterangan di kiri, `Switch` di kanan. */
-@Composable
-internal fun SettingSwitchRow(title: String, description: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
-    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.bodyLarge)
-            Text(
-                description,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+        SectionLabel("Waktu dan sholat")
+        SettingsCard {
+            ChevronRow(
+                title = "Lokasi untuk waktu sholat",
+                description = location.name,
+                onClick = { dialogName = SettingsDialogKind.LOCATION.name },
+            )
+            SettingsDivider()
+            ChevronRow(
+                title = "Alarm",
+                description = alarmSummary(nextAlarm),
+                onClick = { dialogName = SettingsDialogKind.ALARM.name },
+            )
+            SettingsDivider()
+            ChevronRow(
+                title = "Pengingat adzan",
+                description = adzanSummary(adzan),
+                onClick = { dialogName = SettingsDialogKind.ADZAN.name },
             )
         }
-        Switch(checked = checked, onCheckedChange = onCheckedChange)
-    }
-}
 
-@Composable
-private fun SettingLabel(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.labelMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(top = 32.dp, bottom = 8.dp),
-    )
+        SectionLabel("Pengingat")
+        SettingsCard {
+            SwitchRow(
+                title = "Notifikasi tetap",
+                description = "Sekarang dan berikutnya, dari blok pertama sampai batas tidur.",
+                checked = persistentNotification,
+                onCheckedChange = onPersistentNotificationChange,
+            )
+            SettingsDivider()
+            SwitchRow(
+                title = "Minum air",
+                description = "Setiap 60 menit di jam kerja.",
+                checked = waterReminders,
+                onCheckedChange = onWaterRemindersChange,
+            )
+            SettingsDivider()
+            SwitchRow(
+                title = "Istirahat",
+                description = "Setiap 90 menit di jam kerja.",
+                checked = breakReminders,
+                onCheckedChange = onBreakRemindersChange,
+            )
+            SettingsDivider()
+            SwitchRow(
+                title = "Catatan makan",
+                description = "Satu jam sebelum batas tidur, kalau ada waktu makan yang belum dicatat.",
+                checked = mealReminder,
+                onCheckedChange = onMealReminderChange,
+            )
+            SettingsDivider()
+            ChevronRow(
+                title = "Berat dan tensi",
+                description = healthReminderSummary(weightReminder, bpFrequency),
+                onClick = { dialogName = SettingsDialogKind.HEALTH_REMINDER.name },
+            )
+        }
+
+        SectionLabel("Kalender")
+        SettingsCard {
+            ChevronRow(
+                title = "Kalender HP",
+                description = when {
+                    !phoneCalendar.hasPermission() -> "Belum diizinkan"
+                    calendarSelection.isEmpty() -> "Belum ada kalender dipilih"
+                    else -> "${calendarSelection.size} kalender dipilih"
+                },
+                onClick = { dialogName = SettingsDialogKind.CALENDAR.name },
+            )
+        }
+
+        SectionLabel("Data dan sinkron")
+        DataSyncSection(state = sync, actions = syncActions)
+
+        SectionLabel("Tentang")
+        SettingsCard {
+            ChevronRow(title = "Habitflow", description = "Versi $versionName · Dibuat oleh Roziq Rizal")
+            SettingsDivider()
+            ChevronRow(
+                title = "Kebijakan privasi",
+                onClick = {
+                    runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(PRIVACY_POLICY_URL))) }.onFailure {
+                        Toast.makeText(context, "Tidak ada aplikasi untuk membuka tautan.", Toast.LENGTH_LONG).show()
+                    }
+                },
+            )
+        }
+    }
+
+    when (dialog) {
+        null -> Unit
+        SettingsDialogKind.LOCATION -> SettingsDialog("Lokasi untuk waktu sholat", onDismiss = { dialogName = null }) {
+            LocationSection(location = location, onLocationChange = onLocationChange)
+        }
+        SettingsDialogKind.ALARM -> SettingsDialog("Alarm", onDismiss = { dialogName = null }) {
+            AlarmSection(nextAlarm = nextAlarm, settings = alarmSettings)
+        }
+        SettingsDialogKind.ADZAN -> SettingsDialog("Pengingat adzan", onDismiss = { dialogName = null }) {
+            AdzanSection(settings = alarmSettings)
+        }
+        SettingsDialogKind.HEALTH_REMINDER -> SettingsDialog("Berat dan tensi", onDismiss = { dialogName = null }) {
+            HealthReminderSection(settings = healthSettings)
+        }
+        SettingsDialogKind.CALENDAR -> SettingsDialog("Kalender HP", onDismiss = { dialogName = null }) {
+            CalendarSettingsSection(phone = phoneCalendar, settings = calendarSettings)
+        }
+    }
 }
 
 @Composable
@@ -303,7 +358,7 @@ private fun ManualLocationDialog(initial: PlaceLocation, onDismiss: () -> Unit, 
 @Composable
 private fun ThemeModeSelector(selected: ThemeMode, onSelect: (ThemeMode) -> Unit) {
     val modes = ThemeMode.entries
-    SingleChoiceSegmentedButtonRow {
+    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
         modes.forEachIndexed { index, mode ->
             SegmentedButton(
                 selected = mode == selected,

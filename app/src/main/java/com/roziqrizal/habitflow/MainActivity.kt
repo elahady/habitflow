@@ -189,7 +189,7 @@ class MainActivity : ComponentActivity() {
                     val workRequest by pendingWork.collectAsState()
                     val syncViewModel: SyncViewModel = viewModel(
                         factory = viewModelFactory {
-                            initializer { SyncViewModel(graph.syncManager, graph.syncSettings, graph.accountSettings, graph.syncScheduler) }
+                            initializer { SyncViewModel(graph.syncManager, graph.syncSettings, graph.syncScheduler) }
                         },
                     )
                     val accountViewModel: AccountViewModel = viewModel(

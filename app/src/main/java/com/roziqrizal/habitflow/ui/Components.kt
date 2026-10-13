@@ -122,7 +122,7 @@ fun appFilterChipColors() = FilterChipDefaults.filterChipColors(
     selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
 )
 
-/** Warna tombol segmen mengikuti palet sage, sama dengan pemilih tampilan di Tentang. */
+/** Warna tombol segmen mengikuti palet sage, sama dengan pemilih tampilan di Pengaturan. */
 @Composable
 fun appSegmentedColors() = SegmentedButtonDefaults.colors(
     activeContainerColor = MaterialTheme.tokens.primaryFixed,

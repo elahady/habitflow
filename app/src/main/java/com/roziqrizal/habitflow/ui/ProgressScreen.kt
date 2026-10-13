@@ -192,7 +192,7 @@ private fun WeightSummaryCard(state: HealthUiState) {
         if (weight.bmi != null && weight.category != null) {
             Text("BMI ${formatDecimal1(weight.bmi)} · ${weight.category.label}", style = MaterialTheme.typography.titleMedium)
         } else {
-            Muted("Isi tinggi badan di Tentang untuk melihat BMI.")
+            Muted("Isi tinggi badan di Profil untuk melihat BMI.")
         }
         if (weight.targetKg != null && weight.remainingKg != null) {
             Muted("Target ${formatDecimal1(weight.targetKg)} kg · ${describeRemaining(weight.remainingKg)}")

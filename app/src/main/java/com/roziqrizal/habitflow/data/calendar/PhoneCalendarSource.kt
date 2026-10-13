@@ -18,7 +18,7 @@ import kotlinx.coroutines.flow.callbackFlow
 import java.time.LocalDate
 import java.time.ZoneId
 
-/** Satu kalender di HP, untuk daftar pilihan di Tentang. */
+/** Satu kalender di HP, untuk daftar pilihan di Pengaturan. */
 data class PhoneCalendarInfo(val id: Long, val name: String, val account: String)
 
 /**

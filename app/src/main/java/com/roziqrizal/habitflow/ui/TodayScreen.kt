@@ -35,6 +35,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -82,6 +85,7 @@ fun TodayScreen(
     onToggleTodo: (Todo) -> Unit,
     onDeleteTodo: (Todo) -> Unit,
     accountName: String? = null,
+    onOpenProfile: () -> Unit = {},
 ) {
     var showAddDialog by rememberSaveable { mutableStateOf(false) }
     val now = LocalTime.now()
@@ -101,7 +105,7 @@ fun TodayScreen(
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 96.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        item { DayGreeting(date = state.date, hour = now.hour, accountName = accountName) }
+        item { DayGreeting(date = state.date, hour = now.hour, accountName = accountName, onOpenProfile = onOpenProfile) }
 
         item { FocusCard(focus = focus, health = health, coffee = state.coffee, sweet = state.sweet) }
 
@@ -207,7 +211,7 @@ private fun greetingFor(hour: Int): String = when (hour) {
 
 /** Kepala layar: tanggal, sapaan serif dengan nama depan akun, dan lingkaran inisial di kanan. */
 @Composable
-private fun DayGreeting(date: LocalDate, hour: Int, accountName: String?) {
+private fun DayGreeting(date: LocalDate, hour: Int, accountName: String?, onOpenProfile: () -> Unit) {
     val dateText = date.format(DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy", Locale("id", "ID")))
     val firstName = accountName?.trim()?.substringBefore(' ')?.takeIf { it.isNotEmpty() }
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -221,8 +225,14 @@ private fun DayGreeting(date: LocalDate, hour: Int, accountName: String?) {
             )
         }
         if (firstName != null) {
+            // Lingkaran inisial membuka layar Profil (31I). Area sentuh 48dp lewat padding di luar lingkaran 36dp.
             Box(
-                modifier = Modifier.size(36.dp).background(MaterialTheme.tokens.primaryFixed, CircleShape),
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .clickable(role = Role.Button, onClickLabel = "Buka profil", onClick = onOpenProfile)
+                    .padding(6.dp)
+                    .background(MaterialTheme.tokens.primaryFixed, CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(

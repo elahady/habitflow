@@ -20,7 +20,7 @@ data class PlaceLocation(val name: String, val latitude: Double, val longitude: 
 
 /**
  * Lokasi tersimpan di SharedPreferences. Awalnya Surabaya, supaya waktu sholat langsung masuk
- * akal sebelum izin lokasi diberikan; ganti lewat layar Tentang (GPS atau manual).
+ * akal sebelum izin lokasi diberikan; ganti lewat layar Pengaturan (GPS atau manual).
  */
 class LocationSettings(context: Context) {
     private val prefs = PrefFile.SETTINGS.open(context)
