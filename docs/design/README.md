@@ -285,6 +285,13 @@ menutupnya. Dicatat dari mockup mobile `Profile.dc.html`, 11 Oktober 2026. Tidak
      mensyaratkannya (`DELETE account` butuh `password` atau `id_token` Google). Field kata sandi perlu ditambah ke
      dialog ini saat mockup diperbarui.*
 
+**Varian dialog yang dikodekan di 31H (13 Oktober 2026, perkiraan pola, bukan hasil gambar; sementara di bagian Akun di Tentang sampai 31I memindahkannya ke Profil):**
+- **Keluar** (`AlertDialog`): lebih dulu dialog tanpa tombol "Memeriksa perubahan..." selagi perubahan dikirim. Lalu judul "Keluar dari akun?" dan isi yang disusun dari keadaan: kalimat dasar "Semua data di HP ini akan dihapus (habit, to-do, jadwal, kesehatan, pengaturan).", lalu paragraf tambahan **hanya yang berlaku**:
+  tanpa internet ("tidak tersambung ke internet, jadi perubahan terbaru belum bisa dikirim"), atau gagal kirim beserta alasannya, jumlah perubahan belum terkirim, dan keadaan cadangan snapshot (mati: "Sinkron otomatis mati, jadi jadwal, data kesehatan, dan pengaturan hanya ada di HP ini dan ikut terhapus"; berbeda dari cadangan terakhir). Bersih sepenuhnya: "Semua perubahan sudah tersinkron."
+  Tombol utama `Button` "Keluar"; **kalau ada yang perlu diperingatkan** tombolnya `error` dengan label "Keluar dan hapus". `TextButton` "Batal".
+- **Hapus akun** (sesuai catatan di atas, kini ada kolom konfirmasi): `OutlinedTextField` kata sandi (tersamarkan, galat server tampil di bawahnya dengan warna `error`) untuk akun bersandi; untuk akun Google tanpa sandi, tombol "Pilih akun Google dan hapus". Tombol utama `error`, "Hapus akun permanen".
+- **Ganti akun** (di layar Masuk/Daftar/Verifikasi): judul "Data akun lain masih di HP ini", isi menyebut bahwa data itu dihapus dari HP ini, bahwa perubahan akun itu yang belum sempat tersinkron ikut hilang, dan bahwa yang sudah tersinkron aman di server. Tombol utama "Hapus dan masuk" (warna `primary`, bukan `error`, karena yang dihapus bukan data pengguna yang sedang masuk), "Batal".
+
 ### Masuk, Daftar, Lupa kata sandi
 *(Baru, tahap 31. Tiga layar penuh berurutan, dibuka sebelum tab manapun — gerbang di depan app. Dicatat dari mockup
 mobile `Login.dc.html`, `Register.dc.html`, `Forgot.dc.html`, 11 Oktober 2026.)*

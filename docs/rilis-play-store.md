@@ -44,9 +44,11 @@ dihapus. Kalau salah satu dari ketiganya berbeda dari tabel ini, tabel ini yang 
 | Lokasi | Isi | Dihapus saat Keluar |
 |---|---|---|
 | Room `habitflow.db` (18 entitas, versi 10) | semua data di atas dalam bentuk lokal, termasuk berat, tensi, makan, kalender | Ya |
-| `settings.xml` | tema, lokasi (nama dan koordinat), pengingat, tinggi dan target berat | Ya |
+| `settings.xml` | tema, lokasi (nama dan koordinat), pengingat, tinggi dan target berat | Ya, **kecuali tema** (`theme_mode`: preferensi perangkat). Semua berkas dibuka lewat `PrefFile`; tes memastikan tidak ada yang terlewat |
 | `account.xml` | token sesi, profil akun, penanda sesi berakhir, dan `owner_account_id` (akun pemilik data lokal) | Sesi: ya. `owner_account_id`: dihapus bersama data lokal (31H) |
-| `sync.xml` | pilihan sinkron otomatis, status terakhir, id perangkat. Alamat dan token 19B dihapus otomatis saat app dibuka sejak 31F | Ya (31H) |
+| `sync.xml` | pilihan sinkron otomatis, status terakhir, id perangkat, sidik jari cadangan terakhir (31H). Alamat dan token 19B dihapus otomatis saat app dibuka sejak 31F | Ya |
+| `calendar.xml`, `team.xml`, `pending_invite.xml`, `schedule_notifier_state.xml` | pilihan kalender, tim aktif dan notifikasi tim, undangan tim yang menunggu, keadaan pengingat | Ya |
+| `no_backup/pending_wipe.json` | penanda "hapus semua data" (31H); untuk ganti akun membawa akun baru beserta tokennya, dihapus bersama penghapusan. Tidak ikut cadangan awan | Dihapus setelah penghapusan selesai |
 | Izin yang diminta | lokasi perkiraan, kalender (baca), notifikasi, Health Connect (langkah, baca di latar belakang), alarm pasti, layar penuh | Izin tetap ada di sistem, tapi app berhenti memakainya |
 
 ## 2. Keputusan yang mengikat dokumen ini
