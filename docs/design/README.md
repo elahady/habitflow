@@ -345,6 +345,7 @@ Per layar:
   kalimat tenang tanpa tanda seru. Kegagalan jaringan memakai warna `onSurfaceVariant`, bukan `error` (bukan salah pengguna).
 - **Kepala Masuk dan Daftar** menambah satu baris bodySmall `onSurfaceVariant`: "Masuk dan daftar butuh internet." (hari pertama tanpa
   koneksi tidak membuat pengguna mengira app rusak).
+- **Persetujuan Google di Masuk** (ditambah saat 31G dikoding): di bawah tombol "Masuk dengan Google", bodySmall `onSurfaceVariant`, "Dengan masuk memakai Google, kamu menyetujui Kebijakan Privasi, termasuk penyimpanan data kesehatanmu di server." dengan "Kebijakan Privasi" sebagai tautan. Di Daftar, tombol Google menolak sebelum kotak persetujuan dicentang.
 - **Undangan tim tertunda**: kartu status di atas judul, "Kamu diundang bergabung ke tim. Masuk atau daftar dulu, undangannya tetap
   tersimpan."
 

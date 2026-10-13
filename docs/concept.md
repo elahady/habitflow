@@ -2197,20 +2197,34 @@ perbaikannya ada di `AccountClient.call`. Jalur peningkatan dari versi sebelum 3
 
 #### 31G. Android: gerbang dan layar auth
 
-Status: **sedang dikerjakan (13 Oktober 2026).** Bergantung pada 31F (✅). Selesai: nilai desain layar tanpa mockup (`docs/design/README.md`), mesin keadaan `AuthStateMachine` dan `AuthValidation` beserta 46 tesnya. Belum: layar Compose, `AuthGate`, penyimpanan undangan tim.
+Status: **selesai di kode, tes, dan emulator (13 Oktober 2026); belum diuji di HP fisik dengan email sungguhan.** Bergantung pada 31F (✅). Nilai desain layar yang belum punya mockup ditulis lebih dulu di `docs/design/README.md`.
 
-- [ ] `AuthGate` di `MainActivity` sebelum `HabitFlowApp`: `Loading` (membaca sesi), `SignedOut`, `Expired` (layar Masuk dengan banner "Sesi berakhir, masuk lagi" dan email terisi), `SignedIn`.
-  Tidak ada satu pun layar app, alarm, notifikasi, atau worker yang hidup selagi bukan `SignedIn` (diselesaikan bersama 31H).
-- [ ] Layar **Masuk**, **Daftar** (dengan centang kebijakan privasi yang menyebut data kesehatan dan menautkan `/kebijakan-privasi`), **Verifikasi kode** (6 kotak, tempel kode, kirim ulang dengan hitung mundur
-  60 detik, teks masa berlaku), **Lupa kata sandi** (email, lalu kode dan sandi baru), dan tombol **Google**. Sesuai mockup.
-- [ ] `AuthViewModel` sebagai mesin keadaan murni yang bisa diuji: validasi lokal (format email, sandi minimal 8, konfirmasi sama), tombol tidak bisa ditekan dua kali, pemetaan galat
-  (422, 403 `email_not_verified`, 429, tanpa internet) ke kalimat tenang dalam bahasa Indonesia.
-- [ ] **Link undangan tim** (`pendingInviteToken`) disimpan melewati gerbang (termasuk saat proses dimatikan) dan diproses setelah login.
-- [ ] Hari pertama tanpa internet: layar Masuk menjelaskan bahwa login butuh internet, tanpa membuat pengguna mengira app rusak.
-- [ ] Aksesibilitas: area sentuh minimal 48dp, label untuk pembaca layar, urutan fokus keyboard, kolom kode mendukung isi otomatis.
-- [ ] Unit test `AuthViewModel` untuk setiap jalur: daftar sampai verifikasi, login belum terverifikasi, kode salah dan kedaluwarsa, kirim ulang, lupa dan reset, tanpa internet, Google batal.
+- [x] **`AuthGate`** (`ui/auth/AuthGate.kt`) membungkus seluruh isi app di `MainActivity`: isi app (dan semua `ViewModel`-nya) baru dibuat setelah `SignedIn`; selain itu hanya layar auth. `Expired` membuka Masuk dengan banner "Sesi berakhir, masuk lagi." dan email terisi.
+  **Keputusan:** tidak ada keadaan `Loading`. `AccountSettings` membaca sesinya secara sinkron saat dibuat, jadi sesi sudah diketahui sebelum layar pertama digambar. **Gerbang baru menahan layar**: alarm, notifikasi, dan pekerja latar belakang masih hidup
+  selagi belum masuk, dan dialog izin notifikasi masih muncul di atas layar Masuk pada instalasi baru. Itu bagian `SessionManager` di 31H.
+- [x] Layar **Masuk**, **Daftar**, **Verifikasi kode**, **Lupa kata sandi**, dan **Reset kata sandi**, plus tombol **Google** (`ui/auth/AuthScreens.kt`, `AuthComponents.kt`). Verifikasi memakai 6 kotak di atas satu kolom teks sungguhan (bisa ditempel), kirim otomatis begitu 6 angka terisi,
+  hitung mundur kirim ulang 60 detik dan masa berlaku 10 menit. **Keputusan:** Lupa dan Reset kata sandi dua layar (email, lalu kode dan sandi baru dalam satu layar), bukan tiga. Login yang ditolak `email_not_verified` membuka Verifikasi dan **meminta kode baru otomatis**, karena
+  server tidak mengirim kode saat login. Nilai desain: lihat `docs/design/README.md`.
+- [x] **`AuthStateMachine`** (mesin keadaan murni, tanpa Android) dan `AuthViewModel` sebagai pembungkus tipisnya: validasi lokal, tombol ditekan dua kali hanya mengirim satu permintaan, galat server dipetakan ke kalimat tenang (galat server 5xx tidak menampilkan kode HTTP, galat jaringan memakai warna netral).
+- [x] **Link undangan tim** disimpan di `PendingInviteStore` (`pending_invite.xml`, tidak ikut backup), jadi bertahan melewati gerbang dan proses yang dimatikan, lalu diproses begitu masuk. Layar Masuk dan Daftar menyebut undangan yang menunggu.
+- [x] Hari pertama tanpa internet: Masuk dan Daftar bilang "Masuk dan daftar butuh internet.", dan galat jaringan tidak berwarna merah.
+- [x] **Persetujuan kebijakan privasi untuk Google (keputusan saya, mohon dikoreksi).** Server hanya mencatat persetujuan kalau `privacy_policy_version` dikirim saat akun Google **dibuat**. Karena tombol Google di layar Masuk bisa membuat akun baru, Android kini selalu mengirim versi
+  itu untuk Google, dan layar Masuk menulis di bawah tombolnya "Dengan masuk memakai Google, kamu menyetujui Kebijakan Privasi, termasuk penyimpanan data kesehatanmu di server." (tertaut). Di layar Daftar, tombol Google menolak kalau kotak persetujuan belum dicentang.
+  Ini persetujuan lewat kalimat "dengan melanjutkan", bukan kotak centang; untuk data kesehatan pemilik mungkin mau kotak centang di layar Masuk juga, **perlu keputusan sebelum Gerbang C**.
+- [x] Aksesibilitas yang dikerjakan: tinggi sentuh minimal 48dp (tombol) dan 44dp (tautan, baris centang), ikon mata berlabel "Tampilkan/Sembunyikan kata sandi", galat dan banner `liveRegion`, jenis keyboard dan aksi IME (Next/Done) per kolom, kolom kode satu kolom sungguhan berlabel.
+  **Yang tidak jadi:** isi otomatis lewat `ContentType` (email, kata sandi, kode SMS). API itu `internal` di Compose 1.7.0 yang dipakai proyek ini (publik di 1.8); tanpa menaikkan Compose, isi otomatis bergantung pada heuristik sistem dari jenis keyboard. Dicatat di sini supaya dinilai saat Compose dinaikkan.
+- [x] Tes: `AuthStateMachineTest` (48 tes: tiap jalur di spesifikasi, plus tombol dobel, Google di Daftar tanpa persetujuan, sesi berakhir yang tidak mereset isian yang sedang diketik), `PendingInviteStoreTest` (5). Seluruh suite Android lulus.
+- [x] **Diuji di emulator** (Pixel 6 API 34) dengan **server tiruan PHP lokal** (bukan server produksi, bukan Laravel sungguhan): Masuk, Daftar (validasi dan pengiriman), Verifikasi (kode salah lalu benar), Lupa lalu Reset, banner Sesi berakhir, dan masuk sampai layar Hari ini. Permintaan ke server diperiksa di log mock (nama dipangkas,
+  email huruf kecil, `privacy_policy_version` ikut). Bukti tambahan: sesi uji palsu mendapat 401 dari sinkron habit di dalam app, dan `SessionGuard` mengembalikan ke Masuk dengan banner (31F dibuktikan dari ujung ke ujung).
 
-**Selesai jika:** di HP fisik pengguna bisa daftar, verifikasi lewat email sungguhan, keluar, masuk lagi, dan reset kata sandi, dan tidak ada jalan masuk ke app tanpa sesi.
+**Cacat lama yang ditemukan lewat uji ini dan diperbaiki (commit terpisah):** instalasi **baru** langsung crash saat membuat database (`NOT NULL constraint failed: habits.dirty`), karena `SeedCallback` tidak mengisi kolom `dirty` yang sejak tahap 28 `NOT NULL` tanpa nilai bawaan pada database yang dibuat baru (nilai bawaan hanya ada di jalur migrasi).
+Berlaku bagi setiap pengguna baru, termasuk Play Store; tidak terlihat sebelumnya karena HP pemilik dan istri memakai database hasil migrasi. Diperbaiki dengan mengisi `dirty = 1`. **Belum ada tes otomatis untuk pembuatan database baru** (Room butuh instrumented test); disarankan masuk ke 31J.
+Dua temuan UX juga diperbaiki: keyboard menutup setelah kode salah (kolom kehilangan fokus saat dinonaktifkan), dan tangkapan layar menunjukkan judul tertimpa status bar saat layar digulir dengan keyboard terbuka (kosmetik, dibiarkan).
+
+**Belum:** uji dengan email sungguhan dan Google sungguhan di HP fisik (butuh 31B email hidup dan Client ID); layar Masuk dengan banner dan layar Reset belum dicoba dengan pembaca layar; tidak ada tes UI otomatis (hanya mesin keadaan). Menginstal build debug ke HP pemilik sekarang menampilkan layar Masuk kalau sesinya hilang.
+Sesi lama dari tahap 25 (`account.xml` tanpa penanda `expired`) tetap terbaca sebagai `SignedIn` (ada tesnya), jadi HP yang sudah masuk dengan Google tidak diminta masuk lagi.
+
+**Selesai jika:** di HP fisik pengguna bisa daftar, verifikasi lewat email sungguhan, keluar, masuk lagi, dan reset kata sandi (di emulator dengan server tiruan ✅, di HP fisik belum), dan tidak ada jalan masuk ke app tanpa sesi (✅ untuk layar; alarm dan latar belakang di 31H).
 
 #### 31H. Android: siklus hidup sesi, Keluar, data lama, ganti akun
 
