@@ -2197,7 +2197,7 @@ perbaikannya ada di `AccountClient.call`. Jalur peningkatan dari versi sebelum 3
 
 #### 31G. Android: gerbang dan layar auth
 
-Status: belum dikerjakan. Bergantung pada 31F. Catatan desain ditulis di `docs/design/README.md` lebih dulu (31A).
+Status: **sedang dikerjakan (13 Oktober 2026).** Bergantung pada 31F (✅). Selesai: nilai desain layar tanpa mockup (`docs/design/README.md`), mesin keadaan `AuthStateMachine` dan `AuthValidation` beserta 46 tesnya. Belum: layar Compose, `AuthGate`, penyimpanan undangan tim.
 
 - [ ] `AuthGate` di `MainActivity` sebelum `HabitFlowApp`: `Loading` (membaca sesi), `SignedOut`, `Expired` (layar Masuk dengan banner "Sesi berakhir, masuk lagi" dan email terisi), `SignedIn`.
   Tidak ada satu pun layar app, alarm, notifikasi, atau worker yang hidup selagi bukan `SignedIn` (diselesaikan bersama 31H).

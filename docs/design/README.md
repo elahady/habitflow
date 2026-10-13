@@ -328,6 +328,26 @@ Per layar:
 - Dialog **Keluar dengan perubahan belum terkirim**: varian dialog Keluar yang menyebut jumlah perubahan yang belum
   tersinkron, dengan peringatan lebih keras kalau tanpa internet.
 
+**Nilai untuk layar yang belum ada mockup (ditulis 13 Oktober 2026 sebelum 31G dikoding, perkiraan pola, bukan hasil gambar):**
+- **Latar** semua layar auth: `background`. Tidak ada kartu pembungkus form; kolom isian langsung di atas latar, padding samping 24dp,
+  isi digulir dan naik bersama keyboard.
+- **Kartu status** ("Cek email kamu" di Reset kata sandi, dan banner "Sesi berakhir, masuk lagi" di Masuk): latar `primaryFixed`, teks
+  `onPrimaryContainer` bodyMedium, sudut 12dp, padding 12dp, tanpa garis. Banner Sesi berakhir ada di atas judul, email terisi otomatis.
+- **Verifikasi kode**: judul "Cek email kamu", kalimat "Kami mengirim kode 6 angka ke {email}. Kode berlaku {m}:{ss}." Satu kolom teks
+  sungguhan (bisa ditempel dan diisi otomatis) yang digambar sebagai **6 kotak**: lebar 44dp, tinggi 52dp, jarak 8dp (total 304dp, muat di
+  layar 360dp), sudut 12dp, garis 1dp `outlineVariant` (kotak yang sedang diisi 2dp `primary`), angka Manrope 22sp SemiBold (bukan Caslon,
+  aturan angka). Otomatis dikirim begitu 6 angka terisi; tombol "Verifikasi" tetap ada. Di bawahnya `TextButton` "Kirim ulang kode" yang
+  nonaktif dengan hitung mundur "Kirim ulang kode (45)" selama 60 detik, dan tautan "Ganti email" kembali ke Daftar.
+- **Reset kata sandi** (lanjutan Lupa kata sandi, satu layar, bukan dua): kartu status "Cek email kamu" di atas, lalu kolom kode (6 kotak
+  yang sama), kata sandi baru dengan keterangan "Minimal 8 karakter", ulangi kata sandi, tombol "Ganti kata sandi", dan tautan
+  "Kirim ulang atau ganti email". Berhasil kembali ke Masuk dengan kartu status "Kata sandi sudah diganti. Masuk dengan kata sandi baru."
+- **Galat** (kata sandi tidak cocok, kode salah, server menolak): teks bodySmall warna `error` tepat di bawah kolom atau tombol terkait,
+  kalimat tenang tanpa tanda seru. Kegagalan jaringan memakai warna `onSurfaceVariant`, bukan `error` (bukan salah pengguna).
+- **Kepala Masuk dan Daftar** menambah satu baris bodySmall `onSurfaceVariant`: "Masuk dan daftar butuh internet." (hari pertama tanpa
+  koneksi tidak membuat pengguna mengira app rusak).
+- **Undangan tim tertunda**: kartu status di atas judul, "Kamu diundang bergabung ke tim. Masuk atau daftar dulu, undangannya tetap
+  tersimpan."
+
 Nilai-nilai di atas untuk ketiga mockup yang sudah ada (Masuk/Daftar/Lupa kata sandi) dan untuk Pengaturan/Profil cukup
 dipakai langsung sebagai acuan 31G/31I. Empat butir terakhir (belum ada mockup) adalah **perkiraan pola dari layar
 sejenis**, bukan hasil gambar — dibuatkan artboard dulu sebelum dikoding kalau pemilik mau nilai yang pasti.
@@ -605,6 +625,7 @@ Latar di belakang kartu memakai `surfaceContainerLow`, bukan `background`, supay
 | Komponen bersama | `ui/Components.kt` |
 | Kotak dan grid heatmap | `ui/HeatmapGrid.kt` |
 | Navigasi dan latar layar | `ui/HabitFlowApp.kt` |
+| Gerbang dan layar auth (Masuk, Daftar, Verifikasi, Lupa dan Reset) | `ui/auth/` |
 | System bar (edge-to-edge) | `MainActivity.kt` |
 | Splash dan latar jendela | `res/values/themes.xml`, `res/values-night/themes.xml`, `data/ThemeSettings.kt` |
 

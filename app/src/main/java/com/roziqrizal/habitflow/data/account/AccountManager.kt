@@ -25,7 +25,7 @@ class AccountManager(
     private val api: AccountApi = AccountClient(),
     /** Nama perangkat yang dikirim ke server dan tampil di daftar sesi. */
     private val deviceName: () -> String = { "android" },
-) {
+) : AuthOperations {
     private val mutex = Mutex()
 
     /** Masuk dengan Google: minta ID token (tampil pemilih akun), lalu tukar ke token API. */
@@ -35,7 +35,7 @@ class AccountManager(
         is GoogleIdTokenResult.Failed -> SignInResult.Failed(idToken.detail)
     }
 
-    suspend fun signInWithGoogleToken(idToken: String): SignInResult = mutex.withLock {
+    override suspend fun signInWithGoogleToken(idToken: String): SignInResult = mutex.withLock {
         when (val result = api.loginWithGoogle(idToken, deviceName())) {
             is AccountResult.Success -> {
                 settings.save(result.value)
@@ -48,7 +48,7 @@ class AccountManager(
     }
 
     /** Mendaftar. Berhasil berarti kode verifikasi dikirim ke email, belum ada sesi. */
-    suspend fun register(
+    override suspend fun register(
         name: String,
         email: String,
         password: String,
@@ -59,24 +59,24 @@ class AccountManager(
     }
 
     /** Memverifikasi kode email. Berhasil berarti langsung masuk. */
-    suspend fun verifyEmail(email: String, code: String): AccountResult<Account> = mutex.withLock {
+    override suspend fun verifyEmail(email: String, code: String): AccountResult<Account> = mutex.withLock {
         startSession(api.verifyEmail(email, code, deviceName()))
     }
 
-    suspend fun resendVerification(email: String): AccountResult<Unit> = mutex.withLock { api.resendVerification(email) }
+    override suspend fun resendVerification(email: String): AccountResult<Unit> = mutex.withLock { api.resendVerification(email) }
 
     /** Masuk dengan email. Email belum terverifikasi menghasilkan [AccountResult.Failed] berkode [AccountErrors.EMAIL_NOT_VERIFIED]. */
-    suspend fun login(email: String, password: String): AccountResult<Account> = mutex.withLock {
+    override suspend fun login(email: String, password: String): AccountResult<Account> = mutex.withLock {
         startSession(api.login(email, password, deviceName()))
     }
 
-    suspend fun forgotPassword(email: String): AccountResult<Unit> = mutex.withLock { api.forgotPassword(email) }
+    override suspend fun forgotPassword(email: String): AccountResult<Unit> = mutex.withLock { api.forgotPassword(email) }
 
     /**
      * Menyetel kata sandi baru. Berhasil mencabut semua sesi akun di server, jadi sesi yang masih tercatat di HP ini
      * ditutup (sesi yang sudah berakhir dibiarkan supaya layar Masuk tetap tahu emailnya).
      */
-    suspend fun resetPassword(
+    override suspend fun resetPassword(
         email: String,
         code: String,
         password: String,
