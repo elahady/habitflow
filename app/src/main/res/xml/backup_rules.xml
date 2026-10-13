@@ -1,6 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Android 11 ke bawah: Auto Backup menyimpan database dan pengaturan. Pengaman sementara sampai sinkron server (tahap 19B). -->
+<!--
+    Android 11 ke bawah. Database dan semua berkas pengaturan (termasuk token akun) dikecualikan dari Auto Backup (tahap 31I):
+    cadangannya sekarang di server per akun. Kalau tidak, data akun lama bisa dipulihkan ke HP lain lalu diambil alih akun lain.
+    Daftar berkas pengaturan harus sama dengan PrefFile; BackupRulesTest menjaganya.
+-->
 <full-backup-content>
-    <include domain="database" path="habitflow.db" />
-    <include domain="sharedpref" path="settings.xml" />
+    <exclude domain="database" path="habitflow.db" />
+    <exclude domain="database" path="habitflow.db-wal" />
+    <exclude domain="database" path="habitflow.db-shm" />
+    <exclude domain="database" path="habitflow.db-journal" />
+    <exclude domain="sharedpref" path="settings.xml" />
+    <exclude domain="sharedpref" path="calendar.xml" />
+    <exclude domain="sharedpref" path="sync.xml" />
+    <exclude domain="sharedpref" path="team.xml" />
+    <exclude domain="sharedpref" path="account.xml" />
+    <exclude domain="sharedpref" path="pending_invite.xml" />
+    <exclude domain="sharedpref" path="schedule_notifier_state.xml" />
 </full-backup-content>
