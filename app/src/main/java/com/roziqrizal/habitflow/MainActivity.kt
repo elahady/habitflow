@@ -194,7 +194,11 @@ class MainActivity : ComponentActivity() {
                     )
                     val accountViewModel: AccountViewModel = viewModel(
                         factory = viewModelFactory {
-                            initializer { AccountViewModel(graph.accountManager, graph.accountSettings, graph.habitSyncManager) }
+                            initializer {
+                            AccountViewModel(
+                                graph.accountManager, graph.accountSettings, graph.habitSyncManager, graph.signOutCoordinator, graph.googleSignIn,
+                            )
+                        }
                         },
                     )
                     val manage: ManageHabitsViewModel = viewModel(

@@ -87,7 +87,11 @@ class AuthStateMachine(
         when (val result = ops.login(email, s.password)) {
             is AccountResult.Success -> _state.update { it.copy(password = "") }
             is AccountResult.Failed ->
-                if (result.code == AccountErrors.EMAIL_NOT_VERIFIED) askForVerification(email) else fail(result)
+                when (result.code) {
+                    AccountErrors.EMAIL_NOT_VERIFIED -> askForVerification(email)
+                    AccountErrors.OWNER_MISMATCH -> holdForOwnerConflict()
+                    else -> fail(result)
+                }
             AccountResult.Unauthorized -> failWith(AuthMessages.SESSION_GONE)
             AccountResult.Offline -> offline()
         }
@@ -131,7 +135,11 @@ class AuthStateMachine(
             is AccountResult.Success -> Unit
             is AccountResult.Failed -> {
                 _state.update { it.copy(code = "") }
-                if (result.code == AccountErrors.CODE_INVALID) failWith(AuthMessages.CODE_WRONG) else fail(result)
+                when (result.code) {
+                    AccountErrors.CODE_INVALID -> failWith(AuthMessages.CODE_WRONG)
+                    AccountErrors.OWNER_MISMATCH -> holdForOwnerConflict()
+                    else -> fail(result)
+                }
             }
             AccountResult.Unauthorized -> failWith(AuthMessages.SESSION_GONE)
             AccountResult.Offline -> offline()
@@ -234,12 +242,29 @@ class AuthStateMachine(
             is GoogleIdTokenResult.Success -> when (val result = ops.signInWithGoogleToken(token.idToken, privacyPolicyVersion)) {
                 is SignInResult.Success, SignInResult.Cancelled -> Unit
                 is SignInResult.Failed -> failWith(result.message)
+                SignInResult.OwnerConflict -> holdForOwnerConflict()
                 SignInResult.Offline -> offline()
             }
         }
     }
 
-    // --- bantuan -------------------------------------------------------------------------------
+    /**
+     * Pengguna setuju data akun lain di HP ini dihapus. Proses app dimulai ulang dan penghapusan terjadi di awal proses berikutnya,
+     * jadi pemanggilan ini biasanya tidak kembali; kalau tidak ada login yang ditahan, dialog ditutup.
+     */
+    suspend fun confirmReplace() = guarded {
+        if (!ops.confirmReplaceLocalData()) _state.update { it.copy(ownerConflict = false) }
+    }
+
+    /** Pengguna membatalkan: login yang ditahan dicabut dan data di HP dibiarkan. */
+    suspend fun cancelReplace() = guarded {
+        ops.cancelReplaceLocalData()
+        _state.update { it.copy(ownerConflict = false, password = "", code = "") }
+    }
+
+    // --- bantuan ---------------------------------------------------------------------------------
+
+    private fun holdForOwnerConflict() = _state.update { it.copy(ownerConflict = true, password = "") }
 
     /** Login ditolak karena email belum terverifikasi: buka Verifikasi dan minta kode baru, karena login tidak mengirimnya. */
     private suspend fun askForVerification(email: String) {

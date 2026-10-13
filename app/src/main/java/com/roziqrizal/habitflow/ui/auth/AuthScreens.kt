@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
@@ -335,3 +336,24 @@ fun ResetScreen(state: AuthUiState, vm: AuthViewModel) {
 
 private const val INVITE_NOTICE =
     "Kamu diundang bergabung ke tim. Masuk atau daftar dulu, undangannya tetap tersimpan."
+
+/**
+ * Login diterima server, tapi HP ini masih menyimpan data akun lain (tahap 31H): tahan sampai pengguna memutuskan. Teksnya
+ * tidak menyebut email akun lain karena tidak disimpan di HP selain sebagai pemilik data (id), dan jujur soal akibatnya.
+ */
+@Composable
+fun OwnerConflictDialog(busy: Boolean, onConfirm: () -> Unit, onCancel: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = { if (!busy) onCancel() },
+        title = { Text("Data akun lain masih di HP ini") },
+        text = {
+            Text(
+                "HP ini masih menyimpan data akun lain. Kalau kamu lanjut masuk, semua data itu dihapus dari HP ini (habit, to-do, " +
+                    "jadwal, kesehatan, pengaturan). Perubahan akun itu yang belum sempat tersinkron ikut hilang; data yang sudah " +
+                    "tersinkron tetap aman di server.",
+            )
+        },
+        confirmButton = { Button(onClick = onConfirm, enabled = !busy) { Text(if (busy) "Memproses..." else "Hapus dan masuk") } },
+        dismissButton = { TextButton(onClick = onCancel, enabled = !busy) { Text("Batal") } },
+    )
+}

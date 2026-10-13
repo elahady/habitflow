@@ -34,6 +34,9 @@ object AccountErrors {
     const val CODE_EXPIRED = "code_expired"
     const val TOO_MANY_ATTEMPTS = "too_many_attempts"
 
+    /** Bukan dari server: akun yang masuk bukan pemilik data di HP ini (tahap 31H). Penahanan ada di [AccountManager]. */
+    const val OWNER_MISMATCH = "owner_mismatch"
+
     /** Bukan dari server: dipakai klien untuk 422 validasi Laravel (field `errors`). */
     const val VALIDATION = "validation"
 }

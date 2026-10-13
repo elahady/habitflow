@@ -68,6 +68,17 @@ private class FakeOps : AuthOperations {
         calls += "reset $email $code $password"
         return reset
     }
+
+    var confirmReplace = true
+
+    override suspend fun confirmReplaceLocalData(): Boolean {
+        calls += "confirmReplace"
+        return confirmReplace
+    }
+
+    override suspend fun cancelReplaceLocalData() {
+        calls += "cancelReplace"
+    }
 }
 
 class AuthStateMachineTest {
@@ -604,6 +615,81 @@ class AuthStateMachineTest {
         machine.signInWithGoogle { GoogleIdTokenResult.Success("id-token") }
 
         assertTrue(s.networkProblem)
+    }
+
+    // --- ganti akun (data akun lain masih di HP) ------------------------------------------------
+
+    private val mismatch = rejected(409, AccountErrors.OWNER_MISMATCH, "HP ini masih menyimpan data akun lain.")
+
+    @Test
+    fun masukDenganAkunLainMembukaDialogBukanGalat() = runBlocking {
+        ops.login = mismatch
+        fillLogin()
+
+        machine.submitLogin()
+
+        assertTrue(s.ownerConflict)
+        assertNull("bukan galat merah: pengguna diminta memutuskan", s.error)
+        assertEquals("kata sandi tidak dipertahankan di memori selama dialog", "", s.password)
+    }
+
+    @Test
+    fun verifikasiDenganAkunLainJugaMembukaDialog() = runBlocking {
+        ops.verify = mismatch
+        machine.go(AuthScreen.VERIFY)
+        machine.onEmail("budi@contoh.com")
+        machine.onCode("123456")
+
+        machine.submitVerify()
+
+        assertTrue(s.ownerConflict)
+    }
+
+    @Test
+    fun googleDenganAkunLainMembukaDialog() = runBlocking {
+        ops.google = SignInResult.OwnerConflict
+
+        machine.signInWithGoogle { GoogleIdTokenResult.Success("id-token") }
+
+        assertTrue(s.ownerConflict)
+        assertNull(s.error)
+    }
+
+    @Test
+    fun konfirmasiMeneruskanKeOperasiHapusDanMulaiUlang() = runBlocking {
+        ops.login = mismatch
+        fillLogin()
+        machine.submitLogin()
+
+        machine.confirmReplace()
+
+        assertEquals(listOf("login ani@contoh.com rahasia123", "confirmReplace"), ops.calls)
+        assertFalse(s.busy)
+    }
+
+    @Test
+    fun konfirmasiTanpaLoginYangDitahanMenutupDialog() = runBlocking {
+        ops.login = mismatch
+        fillLogin()
+        machine.submitLogin()
+        ops.confirmReplace = false
+
+        machine.confirmReplace()
+
+        assertFalse(s.ownerConflict)
+    }
+
+    @Test
+    fun batalMencabutLoginYangDitahanDanMenutupDialog() = runBlocking {
+        ops.login = mismatch
+        fillLogin()
+        machine.submitLogin()
+
+        machine.cancelReplace()
+
+        assertEquals(listOf("login ani@contoh.com rahasia123", "cancelReplace"), ops.calls)
+        assertFalse(s.ownerConflict)
+        assertEquals(AuthScreen.LOGIN, s.screen)
     }
 
     // --- navigasi dan sesi ---------------------------------------------------------------------

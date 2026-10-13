@@ -9,6 +9,9 @@ sealed interface SignInResult {
     data object Cancelled : SignInResult
     data class Failed(val message: String) : SignInResult
     data object Offline : SignInResult
+
+    /** Akun ini bukan pemilik data di HP ini: login ditahan sampai pengguna mengonfirmasi penghapusan (31H). */
+    data object OwnerConflict : SignInResult
 }
 
 /**
@@ -22,11 +25,21 @@ sealed interface SignInResult {
 class AccountManager(
     private val settings: AccountSettings,
     private val googleSignIn: GoogleSignIn,
+    private val reset: LocalDataReset,
     private val api: AccountApi = AccountClient(),
     /** Nama perangkat yang dikirim ke server dan tampil di daftar sesi. */
     private val deviceName: () -> String = { "android" },
-) : AuthOperations {
+) : AuthOperations, SessionEnding {
     private val mutex = Mutex()
+
+    /**
+     * Login yang sudah diterima server tapi ditahan karena akunnya bukan pemilik data di HP ini (31H). Tokennya hanya di memori:
+     * kalau proses mati sebelum pengguna memutuskan, login hilang dan token itu kedaluwarsa sendiri di server.
+     */
+    private var held: Account? = null
+
+    /** Boleh masuk kalau HP belum punya pemilik data, atau pemiliknya akun yang sama. */
+    private fun admits(account: Account): Boolean = settings.ownerAccountId.let { it == null || it == account.id }
 
     /** Masuk dengan Google: minta ID token (tampil pemilih akun), lalu tukar ke token API. */
     suspend fun signIn(context: Context): SignInResult = when (val idToken = googleSignIn.requestIdToken(context)) {
@@ -37,7 +50,11 @@ class AccountManager(
 
     override suspend fun signInWithGoogleToken(idToken: String, privacyPolicyVersion: String?): SignInResult = mutex.withLock {
         when (val result = api.loginWithGoogle(idToken, deviceName(), privacyPolicyVersion)) {
-            is AccountResult.Success -> {
+            is AccountResult.Success -> if (!admits(result.value)) {
+                held = result.value
+                SignInResult.OwnerConflict
+            } else {
+                held = null
                 settings.save(result.value)
                 SignInResult.Success(result.value)
             }
@@ -97,7 +114,7 @@ class AccountManager(
         return revokeAndClear()
     }
 
-    suspend fun revokeAndClear(): AccountResult<Unit> = mutex.withLock {
+    override suspend fun revokeAndClear(): AccountResult<Unit> = mutex.withLock {
         val token = (settings.session.value as? SessionState.SignedIn)?.account?.token
         val result = if (token == null) AccountResult.Success(Unit) else api.logout(token)
         settings.clear()
@@ -126,14 +143,14 @@ class AccountManager(
      * Menghapus akun dan semua datanya di server. Berhasil berarti sesi di HP ditutup. Data lokal dan
      * [AccountSettings.ownerAccountId] tidak disentuh di sini (penghapusan data di HP ada di alur Keluar, 31H).
      */
-    suspend fun deleteAccount(password: String?, googleIdToken: String?): AccountResult<Unit> = mutex.withLock {
+    override suspend fun deleteAccount(password: String?, googleIdToken: String?): AccountResult<Unit> = mutex.withLock {
         val token = signedInToken() ?: return@withLock AccountResult.Unauthorized
         val result = api.deleteAccount(token, password, googleIdToken)
         if (result is AccountResult.Success) settings.clear()
         result
     }
 
-    suspend fun me(): AccountResult<MeInfo> = mutex.withLock {
+    override suspend fun me(): AccountResult<MeInfo> = mutex.withLock {
         val token = signedInToken() ?: return@withLock AccountResult.Unauthorized
         api.me(token)
     }
@@ -141,7 +158,35 @@ class AccountManager(
     private fun signedInToken(): String? = (settings.session.value as? SessionState.SignedIn)?.account?.token
 
     private fun startSession(result: AccountResult<Account>): AccountResult<Account> {
-        if (result is AccountResult.Success) settings.save(result.value)
+        if (result !is AccountResult.Success) return result
+        if (!admits(result.value)) {
+            held = result.value
+            return AccountResult.Failed(409, AccountErrors.OWNER_MISMATCH, "HP ini masih menyimpan data akun lain.")
+        }
+        held = null
+        settings.save(result.value)
         return result
+    }
+
+    /**
+     * Pengguna setuju data akun lain di HP ini dihapus: menandai penghapusan beserta login yang ditahan, lalu memulai ulang
+     * proses. Data baru terhapus di awal proses berikutnya, yang lalu memulihkan sesi akun baru ([LocalDataReset]).
+     * Mengembalikan false kalau tidak ada login yang ditahan.
+     */
+    override suspend fun confirmReplaceLocalData(): Boolean = mutex.withLock {
+        val account = held ?: return@withLock false
+        held = null
+        reset.scheduleWipe(account)
+        reset.restartProcess()
+        true
+    }
+
+    /** Pengguna membatalkan: login yang ditahan dicabut di server supaya tidak ada sesi yang menggantung. Data di HP tidak berubah. */
+    override suspend fun cancelReplaceLocalData() {
+        mutex.withLock {
+            val account = held ?: return@withLock
+            held = null
+            api.logout(account.token)
+        }
     }
 }

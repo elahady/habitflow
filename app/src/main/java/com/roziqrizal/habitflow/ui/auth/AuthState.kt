@@ -44,6 +44,8 @@ data class AuthUiState(
     val resendAvailableAt: Long = 0,
     /** Waktu kode terakhir yang dikirim kedaluwarsa. 0 = tidak diketahui. */
     val codeExpiresAt: Long = 0,
+    /** Login diterima server tapi HP berisi data akun lain: menunggu pengguna memilih hapus-dan-masuk atau batal (31H). */
+    val ownerConflict: Boolean = false,
 ) {
     fun resendSecondsLeft(now: Long): Int = secondsUntil(resendAvailableAt, now)
 

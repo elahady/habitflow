@@ -50,11 +50,19 @@ private class FakeAccountApi : AccountApi {
     override suspend fun me(token: String) = answer<MeInfo>("me $token")
 }
 
+/** Penghapusan data palsu: hanya mencatat urutan panggilan. */
+private class RecordingReset : LocalDataReset {
+    val calls = mutableListOf<String>()
+    override fun scheduleWipe(thenSignIn: Account?) { calls += "wipe ${thenSignIn?.email}" }
+    override fun restartProcess() { calls += "restart" }
+}
+
 class AccountManagerTest {
 
     private val api = FakeAccountApi()
     private val settings = AccountSettings(FakeSharedPreferences())
-    private val manager = AccountManager(settings, GoogleSignIn(""), api, deviceName = { "Pixel 7" })
+    private val reset = RecordingReset()
+    private val manager = AccountManager(settings, GoogleSignIn(""), reset, api, deviceName = { "Pixel 7" })
 
     private val ani = Account(7, "ani@contoh.com", "Ani", null, "tok-ani")
     private val failed = AccountResult.Failed(422, AccountErrors.INVALID_CREDENTIALS, "Email atau kata sandi salah.")

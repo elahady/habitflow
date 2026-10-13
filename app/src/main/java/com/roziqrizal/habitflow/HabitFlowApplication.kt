@@ -2,6 +2,7 @@ package com.roziqrizal.habitflow
 
 import android.app.Application
 import android.os.Build
+import android.util.Log
 import com.roziqrizal.habitflow.data.AlarmSettings
 import com.roziqrizal.habitflow.data.account.AccountClient
 import com.roziqrizal.habitflow.data.account.AccountManager
@@ -35,6 +36,15 @@ import com.roziqrizal.habitflow.data.team.TeamSettings
 import com.roziqrizal.habitflow.domain.health.BpFrequency
 import com.roziqrizal.habitflow.domain.prayer.PrayerName
 import com.roziqrizal.habitflow.session.AndroidBackgroundWork
+import com.roziqrizal.habitflow.session.AndroidLocalDataReset
+import com.roziqrizal.habitflow.data.sync.HabitApiResult
+import com.roziqrizal.habitflow.data.sync.SyncResult
+import com.roziqrizal.habitflow.data.sync.message
+import com.roziqrizal.habitflow.session.AppDataWipe
+import com.roziqrizal.habitflow.session.BackupState
+import com.roziqrizal.habitflow.session.RoomPendingChangeSource
+import com.roziqrizal.habitflow.session.SignOutCoordinator
+import com.roziqrizal.habitflow.session.SyncOutcome
 import com.roziqrizal.habitflow.session.SessionManager
 
 class HabitFlowApplication : Application() {
@@ -43,6 +53,9 @@ class HabitFlowApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        // Penghapusan data yang tertunda (Keluar, hapus akun, ganti akun) harus jalan sebelum apa pun membuka database atau pengaturan (31H).
+        runCatching { AppDataWipe.pendingWipe(this).runIfPending() }
+            .onFailure { Log.e("HabitFlow", "Penghapusan data tertunda gagal, dicoba lagi saat app dibuka berikutnya", it) }
         // Pantau perubahan data di proses mana pun untuk sinkron tertunda. Pengamat ini pasif: ia hanya menjadwalkan kalau
         // sesi masuk (lihat `isActive` di masing-masing penjadwal).
         graph.syncScheduler.observeChanges(graph.db, SyncScheduler.newScope())
@@ -75,9 +88,11 @@ class AppGraph(app: Application) {
     val sessionGuard = SessionGuard(accountSettings)
     val syncScheduler = SyncScheduler(app, syncSettings, accountSettings)
     val googleSignIn = GoogleSignIn(BuildConfig.GOOGLE_SERVER_CLIENT_ID)
+    private val localDataReset = AndroidLocalDataReset(app)
     val accountManager = AccountManager(
         accountSettings,
         googleSignIn,
+        localDataReset,
         AccountClient(unauthorized = sessionGuard),
         deviceName = { "${Build.MANUFACTURER} ${Build.MODEL}".trim().take(100) },
     )
@@ -95,6 +110,36 @@ class AppGraph(app: Application) {
         AndroidBackgroundWork(app, syncScheduler, habitSyncScheduler, teamPollScheduler, SyncScheduler.newScope()),
     )
     val stepsTracker: StepsTracker by lazy { StepsTracker(HealthConnectStepsSource(app), db, healthSettings) }
+
+    /** Alur Keluar dan Hapus akun (tahap 31H). */
+    val signOutCoordinator: SignOutCoordinator by lazy {
+        SignOutCoordinator(
+            changes = RoomPendingChangeSource(db) { backupState() },
+            syncEverything = { syncEverythingBeforeSignOut() },
+            session = accountManager,
+            reset = localDataReset,
+        )
+    }
+
+    private suspend fun backupState(): BackupState = when {
+        !syncSettings.enabled.value -> BackupState.Off
+        syncManager.backupIsStale() -> BackupState.Stale
+        else -> BackupState.Saved
+    }
+
+    /** Mengirim semua yang punya antrean kirim sebelum Keluar. Cadangan snapshot hanya diunggah kalau pengguna menyalakannya (opt-in). */
+    private suspend fun syncEverythingBeforeSignOut(): SyncOutcome {
+        val habits = habitSyncManager.syncNow()
+        val backup = if (syncSettings.enabled.value) syncManager.syncNow() else null
+        return when {
+            habits is HabitApiResult.NetworkError || backup is SyncResult.NetworkError -> SyncOutcome.Offline
+            habits is HabitApiResult.Unauthorized || backup is SyncResult.Unauthorized ->
+                SyncOutcome.Failed("sesi berakhir, masuk lagi dulu untuk mengirimnya.")
+            habits !is HabitApiResult.Success -> SyncOutcome.Failed("server belum bisa menerimanya sekarang.")
+            backup != null && !backup.isSuccess -> SyncOutcome.Failed(backup.message())
+            else -> SyncOutcome.Done
+        }
+    }
 
     private val versionName: String =
         runCatching { app.packageManager.getPackageInfo(app.packageName, 0).versionName.orEmpty() }.getOrDefault("")

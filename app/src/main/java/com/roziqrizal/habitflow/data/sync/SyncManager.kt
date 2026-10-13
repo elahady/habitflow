@@ -55,8 +55,17 @@ class SyncManager(
             appSettings.read(), settings.deviceId(), appVersion, now(), includeFollowUps = !followUpsOnAccount(),
         )
         val result = client.upload(SnapshotCodec.encode(snapshot))
+        if (result.isSuccess) settings.recordBackupFingerprint(SnapshotFingerprint.of(snapshot))
         if (result.isSuccess) settings.recordSuccess(now(), result.message()) else settings.recordFailure(result.message())
         result
+    }
+
+    /** True kalau isi HP berbeda dari cadangan terakhir yang berhasil terkirim (atau belum pernah ada cadangan). Dipakai peringatan Keluar. */
+    suspend fun backupIsStale(): Boolean = mutex.withLock {
+        val snapshot = snapshots.export(
+            appSettings.read(), settings.deviceId(), appVersion, now(), includeFollowUps = !followUpsOnAccount(),
+        )
+        SnapshotFingerprint.of(snapshot) != settings.backupFingerprint
     }
 
     /** Mengunduh snapshot terakhir untuk ditampilkan di konfirmasi pulihkan. Belum mengubah data apa pun. */

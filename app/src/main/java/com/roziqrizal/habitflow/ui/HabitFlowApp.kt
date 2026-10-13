@@ -334,7 +334,13 @@ fun HabitFlowApp(
                         account = accountState,
                         accountActions = AccountActions(
                             onSignIn = accountViewModel::signIn,
-                            onSignOut = accountViewModel::signOut,
+                            onRequestSignOut = accountViewModel::requestSignOut,
+                            onConfirmSignOut = accountViewModel::confirmSignOut,
+                            onDismissSignOut = accountViewModel::dismissSignOut,
+                            onRequestDelete = accountViewModel::requestDeleteAccount,
+                            onDeleteWithPassword = accountViewModel::deleteWithPassword,
+                            onDeleteWithGoogle = accountViewModel::deleteWithGoogle,
+                            onDismissDelete = accountViewModel::dismissDelete,
                             onSyncHabitsNow = accountViewModel::syncHabitsNow,
                         ),
                     )

@@ -41,6 +41,12 @@ abstract class HabitDatabase : RoomDatabase() {
         @Volatile
         private var instance: HabitDatabase? = null
 
+        /** Menghapus berkas database (dan WAL). Hanya aman dipanggil sebelum database dibuka di proses ini (lihat `PendingWipe`). */
+        fun deleteFiles(context: Context) {
+            check(instance == null) { "Database sudah terbuka di proses ini" }
+            context.applicationContext.deleteDatabase(NAME)
+        }
+
         fun get(context: Context): HabitDatabase =
             instance ?: synchronized(this) {
                 instance ?: Room.databaseBuilder(

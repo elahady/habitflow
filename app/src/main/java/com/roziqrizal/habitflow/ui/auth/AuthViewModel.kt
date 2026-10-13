@@ -52,6 +52,14 @@ class AuthViewModel(
         viewModelScope.launch { machine.submitReset() }
     }
 
+    fun confirmReplaceLocalData() {
+        viewModelScope.launch { machine.confirmReplace() }
+    }
+
+    fun cancelReplaceLocalData() {
+        viewModelScope.launch { machine.cancelReplace() }
+    }
+
     /** [context] harus Activity: Credential Manager menampilkan pemilih akun di atasnya. */
     fun signInWithGoogle(context: Context) {
         viewModelScope.launch { machine.signInWithGoogle { googleSignIn.requestIdToken(context) } }

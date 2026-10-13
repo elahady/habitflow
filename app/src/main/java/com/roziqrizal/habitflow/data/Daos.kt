@@ -39,6 +39,10 @@ interface HabitDao {
     @Query("SELECT * FROM habits WHERE remoteId IS NULL")
     suspend fun newForSync(): List<Habit>
 
+    /** Habit yang belum sampai ke server: belum pernah dikirim, atau ada perubahan yang belum dikirim (31H, untuk peringatan Keluar). */
+    @Query("SELECT COUNT(*) FROM habits WHERE remoteId IS NULL OR dirty = 1")
+    suspend fun unsyncedCount(): Int
+
     @Query("SELECT * FROM habits WHERE remoteId IS NOT NULL AND dirty = 1")
     suspend fun dirtyForSync(): List<Habit>
 
@@ -137,6 +141,9 @@ interface TodoDao {
     @Query("SELECT * FROM todos WHERE remoteId IS NULL")
     suspend fun newForSync(): List<Todo>
 
+    @Query("SELECT COUNT(*) FROM todos WHERE remoteId IS NULL OR dirty = 1")
+    suspend fun unsyncedCount(): Int
+
     @Query("SELECT * FROM todos WHERE remoteId IS NOT NULL AND dirty = 1")
     suspend fun dirtyForSync(): List<Todo>
 
@@ -165,6 +172,12 @@ interface HabitSyncOutboxDao {
 
     @Query("SELECT * FROM habit_entry_outbox ORDER BY id ASC")
     suspend fun entryOutbox(): List<HabitEntryOutbox>
+
+    @Query("SELECT COUNT(*) FROM habit_entry_outbox")
+    suspend fun entryOutboxCount(): Int
+
+    @Query("SELECT COUNT(*) FROM pending_deletes")
+    suspend fun pendingDeleteCount(): Int
 
     @Query("DELETE FROM habit_entry_outbox WHERE id = :id")
     suspend fun deleteEntryOutbox(id: Long)
@@ -275,6 +288,10 @@ interface FollowUpDao {
 
     @Query("SELECT * FROM follow_ups WHERE remoteId IS NULL")
     suspend fun newForSync(): List<FollowUpEntity>
+
+    /** Termasuk yang sedang bentrok: perubahan itu juga belum sampai ke server. */
+    @Query("SELECT COUNT(*) FROM follow_ups WHERE remoteId IS NULL OR dirty = 1")
+    suspend fun unsyncedCount(): Int
 
     /** Perlu di-push sebagai update. Yang sedang bentrok menunggu pilihan pengguna dulu, jadi dilewati. */
     @Query("SELECT * FROM follow_ups WHERE remoteId IS NOT NULL AND dirty = 1 AND conflictJson IS NULL")

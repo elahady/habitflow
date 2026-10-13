@@ -30,4 +30,13 @@ interface AuthOperations {
         password: String,
         passwordConfirmation: String,
     ): AccountResult<Unit>
+
+    /**
+     * Setelah login ditahan karena HP berisi data akun lain ([AccountErrors.OWNER_MISMATCH] atau [SignInResult.OwnerConflict]):
+     * hapus data itu dan lanjutkan masuk. Memulai ulang proses, jadi biasanya tidak kembali. False kalau tidak ada yang ditahan.
+     */
+    suspend fun confirmReplaceLocalData(): Boolean
+
+    /** Batal: login yang ditahan dicabut dan data di HP dibiarkan. */
+    suspend fun cancelReplaceLocalData()
 }

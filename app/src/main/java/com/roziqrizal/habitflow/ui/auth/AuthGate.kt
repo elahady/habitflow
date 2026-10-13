@@ -29,6 +29,13 @@ fun AuthGate(
         content()
     } else {
         val state by auth.state.collectAsState()
+        if (state.ownerConflict) {
+            OwnerConflictDialog(
+                busy = state.busy,
+                onConfirm = auth::confirmReplaceLocalData,
+                onCancel = auth::cancelReplaceLocalData,
+            )
+        }
         when (state.screen) {
             AuthScreen.LOGIN -> LoginScreen(state, auth, pendingInvite)
             AuthScreen.REGISTER -> RegisterScreen(state, auth, pendingInvite)
