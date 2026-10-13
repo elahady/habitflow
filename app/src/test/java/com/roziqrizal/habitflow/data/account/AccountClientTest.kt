@@ -165,6 +165,17 @@ class AccountClientTest {
     }
 
     @Test
+    fun masukGoogleMengirimVersiKebijakanPrivasiHanyaKalauAda() = runBlocking {
+        reply(200, sessionBody)
+
+        client().loginWithGoogle("id-token", "Pixel 7", "1")
+        assertEquals("1", sentBody().getString("privacy_policy_version"))
+
+        client().loginWithGoogle("id-token", "Pixel 7")
+        assertTrue(!sentBody().has("privacy_policy_version"))
+    }
+
+    @Test
     fun kirimUlangLupaDanResetMemakaiJalurKontrak() = runBlocking {
         reply(202, """{"status":"accepted"}""")
         assertEquals(AccountResult.Success(Unit), client().resendVerification("ani@contoh.com"))

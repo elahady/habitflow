@@ -52,6 +52,9 @@ import com.roziqrizal.habitflow.ui.AgendaViewModel
 import com.roziqrizal.habitflow.ui.ContributionViewModel
 import com.roziqrizal.habitflow.ui.DayClock
 import com.roziqrizal.habitflow.ui.AccountViewModel
+import com.roziqrizal.habitflow.ui.auth.AuthGate
+import com.roziqrizal.habitflow.ui.auth.AuthStateMachine
+import com.roziqrizal.habitflow.ui.auth.AuthViewModel
 import com.roziqrizal.habitflow.ui.HabitFlowApp
 import com.roziqrizal.habitflow.ui.HealthViewModel
 import com.roziqrizal.habitflow.ui.ManageHabitsViewModel
@@ -79,6 +82,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         readWorkRequest(intent)
+        // Undangan yang dibuka sebelum proses ini dimatikan tetap menunggu (tahap 31G).
+        (application as HabitFlowApplication).graph.pendingInviteStore.read()?.let { pendingInviteToken.value = it }
         readTeamIntent(intent)
         val graph = (application as HabitFlowApplication).graph
         val themeSettings = graph.themeSettings
@@ -111,124 +116,140 @@ class MainActivity : ComponentActivity() {
                 onDispose {}
             }
             HabitFlowTheme(darkTheme = darkTheme) {
-                val repo = remember { HabitRepository(HabitDatabase.get(applicationContext)) }
-                val drinkRepo = remember { DrinkRepository(HabitDatabase.get(applicationContext)) }
-                val today: TodayViewModel = viewModel(
-                    factory = viewModelFactory { initializer { TodayViewModel(repo, drinkRepo, MealRepository(HabitDatabase.get(applicationContext)), clock) } },
-                )
-                val contribution: ContributionViewModel = viewModel(
-                    factory = viewModelFactory { initializer { ContributionViewModel(repo, WorkRepository(HabitDatabase.get(applicationContext)), clock) } },
-                )
-                val scheduleRepo = remember { ScheduleRepository(HabitDatabase.get(applicationContext), HolidayAssets.get(applicationContext)) }
-                val eventRepo = remember { EventRepository(HabitDatabase.get(applicationContext)) }
-                val schedule: ScheduleViewModel = viewModel(
+                val session by graph.accountSettings.session.collectAsState()
+                val auth: AuthViewModel = viewModel(
                     factory = viewModelFactory {
                         initializer {
-                            ScheduleViewModel(
-                                scheduleRepo, repo, locationSettings, eventRepo, graph.phoneCalendar, graph.calendarSettings, clock,
-                            )
+                            AuthViewModel(AuthStateMachine(graph.accountManager), graph.googleSignIn)
+                                .also { it.applySession(graph.accountSettings.session.value) }
                         }
                     },
                 )
-                val agenda: AgendaViewModel = viewModel(
-                    factory = viewModelFactory {
-                        initializer {
-                            AgendaViewModel(eventRepo, scheduleRepo, graph.phoneCalendar, graph.calendarSettings, clock)
-                        }
-                    },
-                )
-                val workRepo = remember { WorkRepository(HabitDatabase.get(applicationContext)) }
-                val work: WorkViewModel = viewModel(
-                    factory = viewModelFactory { initializer { WorkViewModel(workRepo, clock) } },
-                )
-                val healthRepo = remember { HealthRepository(HabitDatabase.get(applicationContext)) }
-                val health: HealthViewModel = viewModel(
-                    factory = viewModelFactory {
-                        initializer {
-                            HealthViewModel(
-                                healthRepo, graph.healthSettings, graph.stepsTracker,
-                                MealRepository(HabitDatabase.get(applicationContext)), drinkRepo, clock,
-                            )
-                        }
-                    },
-                )
-                healthViewModel = health
-                // Langkah dibaca saat app dibuka dan tiap 5 menit selama app tampil (dan mencentang habit kalau tercapai).
-                LaunchedEffect(health) {
-                    this@MainActivity.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                        while (true) {
-                            health.refreshSteps()
-                            delay(STEPS_REFRESH_MILLIS)
+                val hasPendingInvite by pendingInviteToken.collectAsState()
+                // Gerbang (tahap 31G): isi app baru digambar setelah masuk. Selain itu hanya layar auth.
+                AuthGate(session = session, auth = auth, pendingInvite = hasPendingInvite != null) {
+                    val repo = remember { HabitRepository(HabitDatabase.get(applicationContext)) }
+                    val drinkRepo = remember { DrinkRepository(HabitDatabase.get(applicationContext)) }
+                    val today: TodayViewModel = viewModel(
+                        factory = viewModelFactory { initializer { TodayViewModel(repo, drinkRepo, MealRepository(HabitDatabase.get(applicationContext)), clock) } },
+                    )
+                    val contribution: ContributionViewModel = viewModel(
+                        factory = viewModelFactory { initializer { ContributionViewModel(repo, WorkRepository(HabitDatabase.get(applicationContext)), clock) } },
+                    )
+                    val scheduleRepo = remember { ScheduleRepository(HabitDatabase.get(applicationContext), HolidayAssets.get(applicationContext)) }
+                    val eventRepo = remember { EventRepository(HabitDatabase.get(applicationContext)) }
+                    val schedule: ScheduleViewModel = viewModel(
+                        factory = viewModelFactory {
+                            initializer {
+                                ScheduleViewModel(
+                                    scheduleRepo, repo, locationSettings, eventRepo, graph.phoneCalendar, graph.calendarSettings, clock,
+                                )
+                            }
+                        },
+                    )
+                    val agenda: AgendaViewModel = viewModel(
+                        factory = viewModelFactory {
+                            initializer {
+                                AgendaViewModel(eventRepo, scheduleRepo, graph.phoneCalendar, graph.calendarSettings, clock)
+                            }
+                        },
+                    )
+                    val workRepo = remember { WorkRepository(HabitDatabase.get(applicationContext)) }
+                    val work: WorkViewModel = viewModel(
+                        factory = viewModelFactory { initializer { WorkViewModel(workRepo, clock) } },
+                    )
+                    val healthRepo = remember { HealthRepository(HabitDatabase.get(applicationContext)) }
+                    val health: HealthViewModel = viewModel(
+                        factory = viewModelFactory {
+                            initializer {
+                                HealthViewModel(
+                                    healthRepo, graph.healthSettings, graph.stepsTracker,
+                                    MealRepository(HabitDatabase.get(applicationContext)), drinkRepo, clock,
+                                )
+                            }
+                        },
+                    )
+                    healthViewModel = health
+                    // Langkah dibaca saat app dibuka dan tiap 5 menit selama app tampil (dan mencentang habit kalau tercapai).
+                    LaunchedEffect(health) {
+                        this@MainActivity.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                            while (true) {
+                                health.refreshSteps()
+                                delay(STEPS_REFRESH_MILLIS)
+                            }
                         }
                     }
-                }
-                val workRequest by pendingWork.collectAsState()
-                val syncViewModel: SyncViewModel = viewModel(
-                    factory = viewModelFactory {
-                        initializer { SyncViewModel(graph.syncManager, graph.syncSettings, graph.accountSettings, graph.syncScheduler) }
-                    },
-                )
-                val accountViewModel: AccountViewModel = viewModel(
-                    factory = viewModelFactory {
-                        initializer { AccountViewModel(graph.accountManager, graph.accountSettings, graph.habitSyncManager) }
-                    },
-                )
-                val manage: ManageHabitsViewModel = viewModel(
-                    factory = viewModelFactory { initializer { ManageHabitsViewModel(repo, graph.habitSyncManager) } },
-                )
-                val team: TeamViewModel = viewModel(
-                    factory = viewModelFactory { initializer { TeamViewModel(graph.accountSettings, graph.teamSettings, graph.sessionGuard) } },
-                )
-                val inviteToken by pendingInviteToken.collectAsState()
-                val openTeamRequest by pendingOpenTeam.collectAsState()
-                // Sinkron habit/todo sekali saat app dibuka (tahap 28 langkah 5): push dulu baru
-                // pull, supaya perubahan lokal (termasuk penghapusan) yang belum terkirim tidak
-                // "dihidupkan lagi" oleh pull kalau proses sempat di-restart sebelum sempat push.
-                // Gagal diam-diam (mis. belum login atau offline) - worker latar belakang tetap jalan.
-                LaunchedEffect(Unit) { graph.habitSyncManager.syncNow() }
-                val versionName = remember {
-                    packageManager.getPackageInfo(packageName, 0).versionName.orEmpty()
-                }
+                    val workRequest by pendingWork.collectAsState()
+                    val syncViewModel: SyncViewModel = viewModel(
+                        factory = viewModelFactory {
+                            initializer { SyncViewModel(graph.syncManager, graph.syncSettings, graph.accountSettings, graph.syncScheduler) }
+                        },
+                    )
+                    val accountViewModel: AccountViewModel = viewModel(
+                        factory = viewModelFactory {
+                            initializer { AccountViewModel(graph.accountManager, graph.accountSettings, graph.habitSyncManager) }
+                        },
+                    )
+                    val manage: ManageHabitsViewModel = viewModel(
+                        factory = viewModelFactory { initializer { ManageHabitsViewModel(repo, graph.habitSyncManager) } },
+                    )
+                    val team: TeamViewModel = viewModel(
+                        factory = viewModelFactory { initializer { TeamViewModel(graph.accountSettings, graph.teamSettings, graph.sessionGuard) } },
+                    )
+                    val inviteToken by pendingInviteToken.collectAsState()
+                    val openTeamRequest by pendingOpenTeam.collectAsState()
+                    // Sinkron habit/todo sekali saat app dibuka (tahap 28 langkah 5): push dulu baru
+                    // pull, supaya perubahan lokal (termasuk penghapusan) yang belum terkirim tidak
+                    // "dihidupkan lagi" oleh pull kalau proses sempat di-restart sebelum sempat push.
+                    // Gagal diam-diam (mis. belum login atau offline) - worker latar belakang tetap jalan.
+                    LaunchedEffect(Unit) { graph.habitSyncManager.syncNow() }
+                    val versionName = remember {
+                        packageManager.getPackageInfo(packageName, 0).versionName.orEmpty()
+                    }
 
-                HabitFlowApp(
-                    today = today,
-                    contribution = contribution,
-                    manage = manage,
-                    schedule = schedule,
-                    agenda = agenda,
-                    work = work,
-                    syncViewModel = syncViewModel,
-                    accountViewModel = accountViewModel,
-                    team = team,
-                    pendingInviteToken = inviteToken,
-                    onInviteTokenHandled = { pendingInviteToken.value = null },
-                    openTeamRequest = openTeamRequest,
-                    onOpenTeamRequestHandled = { pendingOpenTeam.value = false },
-                    workRequest = workRequest,
-                    onWorkRequestHandled = { pendingWork.value = null },
-                    versionName = versionName,
-                    themeMode = themeMode,
-                    location = locationSettings.location.collectAsState().value,
-                    onLocationChange = locationSettings::set,
-                    persistentNotification = notificationSettings.persistent.collectAsState().value,
-                    alarmSettings = alarmSettings,
-                    onPersistentNotificationChange = notificationSettings::setPersistent,
-                    waterReminders = workReminderSettings.water.collectAsState().value,
-                    onWaterRemindersChange = workReminderSettings::setWater,
-                    breakReminders = workReminderSettings.breaks.collectAsState().value,
-                    onBreakRemindersChange = workReminderSettings::setBreaks,
-                    mealReminder = graph.mealSettings.reminder.collectAsState().value,
-                    onMealReminderChange = graph.mealSettings::setReminder,
-                    health = health,
-                    healthSettings = graph.healthSettings,
-                    phoneCalendar = graph.phoneCalendar,
-                    calendarSettings = graph.calendarSettings,
-                    onRequestStepsAccess = {
-                        lifecycleScope.launch { stepsPermission.launch(health.stepsPermissions()) }
-                    },
-                    onOpenHealthConnectStore = ::openHealthConnectStore,
-                    onThemeModeChange = themeSettings::setMode,
-                )
+                    HabitFlowApp(
+                        today = today,
+                        contribution = contribution,
+                        manage = manage,
+                        schedule = schedule,
+                        agenda = agenda,
+                        work = work,
+                        syncViewModel = syncViewModel,
+                        accountViewModel = accountViewModel,
+                        team = team,
+                        pendingInviteToken = inviteToken,
+                        onInviteTokenHandled = {
+                                pendingInviteToken.value = null
+                                graph.pendingInviteStore.clear()
+                            },
+                        openTeamRequest = openTeamRequest,
+                        onOpenTeamRequestHandled = { pendingOpenTeam.value = false },
+                        workRequest = workRequest,
+                        onWorkRequestHandled = { pendingWork.value = null },
+                        versionName = versionName,
+                        themeMode = themeMode,
+                        location = locationSettings.location.collectAsState().value,
+                        onLocationChange = locationSettings::set,
+                        persistentNotification = notificationSettings.persistent.collectAsState().value,
+                        alarmSettings = alarmSettings,
+                        onPersistentNotificationChange = notificationSettings::setPersistent,
+                        waterReminders = workReminderSettings.water.collectAsState().value,
+                        onWaterRemindersChange = workReminderSettings::setWater,
+                        breakReminders = workReminderSettings.breaks.collectAsState().value,
+                        onBreakRemindersChange = workReminderSettings::setBreaks,
+                        mealReminder = graph.mealSettings.reminder.collectAsState().value,
+                        onMealReminderChange = graph.mealSettings::setReminder,
+                        health = health,
+                        healthSettings = graph.healthSettings,
+                        phoneCalendar = graph.phoneCalendar,
+                        calendarSettings = graph.calendarSettings,
+                        onRequestStepsAccess = {
+                            lifecycleScope.launch { stepsPermission.launch(health.stepsPermissions()) }
+                        },
+                        onOpenHealthConnectStore = ::openHealthConnectStore,
+                        onThemeModeChange = themeSettings::setMode,
+                    )
+                }
             }
         }
     }
@@ -331,6 +352,7 @@ class MainActivity : ComponentActivity() {
         val path = intent.data?.path
         if (intent.action == Intent.ACTION_VIEW && path != null && path.startsWith("/invite/")) {
             pendingInviteToken.value = path.removePrefix("/invite/").trim('/')
+            (application as HabitFlowApplication).graph.pendingInviteStore.save(pendingInviteToken.value.orEmpty())
         }
         if (intent.getBooleanExtra(EXTRA_OPEN_TEAM, false)) {
             pendingOpenTeam.value = true

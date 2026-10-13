@@ -19,7 +19,8 @@ interface AuthOperations {
 
     suspend fun login(email: String, password: String): AccountResult<Account>
 
-    suspend fun signInWithGoogleToken(idToken: String): SignInResult
+    /** [privacyPolicyVersion] null kalau pengguna belum diminta menyetujui kebijakan privasi di layar ini. */
+    suspend fun signInWithGoogleToken(idToken: String, privacyPolicyVersion: String? = null): SignInResult
 
     suspend fun forgotPassword(email: String): AccountResult<Unit>
 

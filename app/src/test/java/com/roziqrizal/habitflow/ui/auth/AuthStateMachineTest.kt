@@ -54,8 +54,8 @@ private class FakeOps : AuthOperations {
         return login
     }
 
-    override suspend fun signInWithGoogleToken(idToken: String): SignInResult {
-        calls += "google $idToken"
+    override suspend fun signInWithGoogleToken(idToken: String, privacyPolicyVersion: String?): SignInResult {
+        calls += "google $idToken $privacyPolicyVersion"
         return google
     }
 
@@ -562,7 +562,7 @@ class AuthStateMachineTest {
     fun googleBerhasilMengirimTokenKeServer() = runBlocking {
         machine.signInWithGoogle { GoogleIdTokenResult.Success("id-token") }
 
-        assertEquals(listOf("google id-token"), ops.calls)
+        assertEquals(listOf("google id-token 1"), ops.calls)
         assertNull(s.error)
     }
 
@@ -573,6 +573,28 @@ class AuthStateMachineTest {
         machine.signInWithGoogle { GoogleIdTokenResult.Success("id-token") }
 
         assertEquals("Token Google tidak sah.", s.error)
+    }
+
+    @Test
+    fun googleDiLayarDaftarTanpaPersetujuanDitolakSebelumPemilihAkunMuncul() = runBlocking {
+        machine.go(AuthScreen.REGISTER)
+        var pickerShown = false
+
+        machine.signInWithGoogle { pickerShown = true; GoogleIdTokenResult.Success("id-token") }
+
+        assertEquals(AuthMessages.CONSENT, s.fieldErrors[AuthField.CONSENT])
+        assertFalse(pickerShown)
+        assertTrue(ops.calls.isEmpty())
+    }
+
+    @Test
+    fun googleDiLayarDaftarSetelahDicentangBerjalan() = runBlocking {
+        machine.go(AuthScreen.REGISTER)
+        machine.onConsent(true)
+
+        machine.signInWithGoogle { GoogleIdTokenResult.Success("id-token") }
+
+        assertEquals(listOf("google id-token 1"), ops.calls)
     }
 
     @Test

@@ -62,7 +62,8 @@ interface AccountApi {
 
     suspend fun login(email: String, password: String, deviceName: String): AccountResult<Account>
 
-    suspend fun loginWithGoogle(idToken: String, deviceName: String): AccountResult<Account>
+    /** [privacyPolicyVersion] hanya dikirim kalau pengguna sudah menyetujui kebijakan privasi; server mencatatnya saat akun baru dibuat. */
+    suspend fun loginWithGoogle(idToken: String, deviceName: String, privacyPolicyVersion: String? = null): AccountResult<Account>
 
     suspend fun forgotPassword(email: String): AccountResult<Unit>
 

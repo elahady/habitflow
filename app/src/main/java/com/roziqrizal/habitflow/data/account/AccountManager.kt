@@ -35,8 +35,8 @@ class AccountManager(
         is GoogleIdTokenResult.Failed -> SignInResult.Failed(idToken.detail)
     }
 
-    override suspend fun signInWithGoogleToken(idToken: String): SignInResult = mutex.withLock {
-        when (val result = api.loginWithGoogle(idToken, deviceName())) {
+    override suspend fun signInWithGoogleToken(idToken: String, privacyPolicyVersion: String?): SignInResult = mutex.withLock {
+        when (val result = api.loginWithGoogle(idToken, deviceName(), privacyPolicyVersion)) {
             is AccountResult.Success -> {
                 settings.save(result.value)
                 SignInResult.Success(result.value)

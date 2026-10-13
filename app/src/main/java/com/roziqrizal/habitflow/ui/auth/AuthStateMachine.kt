@@ -218,13 +218,20 @@ class AuthStateMachine(
 
     /**
      * Masuk atau daftar dengan Google. [requestIdToken] menampilkan pemilih akun (butuh Activity), jadi disuntikkan
-     * pemanggil. Dibatalkan pengguna tidak menampilkan galat.
+     * pemanggil. Dibatalkan pengguna tidak menampilkan galat. Versi kebijakan privasi ikut dikirim supaya server mencatat
+     * persetujuan kalau akunnya baru dibuat; layar Masuk menyebut persetujuan itu di bawah tombol Google.
      */
     suspend fun signInWithGoogle(requestIdToken: suspend () -> GoogleIdTokenResult) = guarded {
+        val s = _state.value
+        // Di layar Daftar, Google bisa membuat akun baru: persetujuan kebijakan privasi wajib dicentang dulu.
+        if (s.screen == AuthScreen.REGISTER && !s.consent) {
+            reject(mapOf(AuthField.CONSENT to AuthMessages.CONSENT))
+            return@guarded
+        }
         when (val token = requestIdToken()) {
             GoogleIdTokenResult.Cancelled -> Unit
             is GoogleIdTokenResult.Failed -> failWith(AuthMessages.GOOGLE_FAILED)
-            is GoogleIdTokenResult.Success -> when (val result = ops.signInWithGoogleToken(token.idToken)) {
+            is GoogleIdTokenResult.Success -> when (val result = ops.signInWithGoogleToken(token.idToken, privacyPolicyVersion)) {
                 is SignInResult.Success, SignInResult.Cancelled -> Unit
                 is SignInResult.Failed -> failWith(result.message)
                 SignInResult.Offline -> offline()

@@ -29,8 +29,8 @@ private class FakeAccountApi : AccountApi {
     override suspend fun login(email: String, password: String, deviceName: String) =
         answer<Account>("login $email $deviceName")
 
-    override suspend fun loginWithGoogle(idToken: String, deviceName: String) =
-        answer<Account>("google $idToken $deviceName")
+    override suspend fun loginWithGoogle(idToken: String, deviceName: String, privacyPolicyVersion: String?) =
+        answer<Account>("google $idToken $deviceName $privacyPolicyVersion")
 
     override suspend fun forgotPassword(email: String) = answer<Unit>("forgotPassword $email")
 
@@ -107,7 +107,7 @@ class AccountManagerTest {
         assertEquals(SignInResult.Success(ani), manager.signInWithGoogleToken("id-token"))
 
         assertEquals(SessionState.SignedIn(ani), settings.session.value)
-        assertEquals(listOf("google id-token Pixel 7"), api.calls)
+        assertEquals(listOf("google id-token Pixel 7 null"), api.calls)
     }
 
     @Test

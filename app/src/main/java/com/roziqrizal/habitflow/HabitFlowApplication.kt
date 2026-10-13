@@ -30,6 +30,7 @@ import com.roziqrizal.habitflow.data.sync.SnapshotSettings
 import com.roziqrizal.habitflow.data.sync.SyncManager
 import com.roziqrizal.habitflow.data.sync.SyncScheduler
 import com.roziqrizal.habitflow.data.sync.SyncSettings
+import com.roziqrizal.habitflow.data.team.PendingInviteStore
 import com.roziqrizal.habitflow.data.team.TeamPollScheduler
 import com.roziqrizal.habitflow.data.team.TeamSettings
 import com.roziqrizal.habitflow.domain.health.BpFrequency
@@ -76,15 +77,19 @@ class AppGraph(app: Application) {
     /** Satu-satunya penangan 401: semua klien melapor ke sini (tahap 31F). */
     val sessionGuard = SessionGuard(accountSettings)
     val syncScheduler = SyncScheduler(app, syncSettings, accountSettings)
+    val googleSignIn = GoogleSignIn(BuildConfig.GOOGLE_SERVER_CLIENT_ID)
     val accountManager = AccountManager(
         accountSettings,
-        GoogleSignIn(BuildConfig.GOOGLE_SERVER_CLIENT_ID),
+        googleSignIn,
         AccountClient(unauthorized = sessionGuard),
         deviceName = { "${Build.MANUFACTURER} ${Build.MODEL}".trim().take(100) },
     )
     val habitSyncManager: HabitSyncManager by lazy { HabitSyncManager(db, accountSettings, sessionGuard) }
     val habitSyncScheduler = HabitSyncScheduler(app, accountSettings)
     val teamSettings = TeamSettings(app)
+
+    /** Token undangan tim yang menunggu login (tahap 31G). */
+    val pendingInviteStore = PendingInviteStore(app)
     val teamPollScheduler = TeamPollScheduler(app, accountSettings)
     val stepsTracker: StepsTracker by lazy { StepsTracker(HealthConnectStepsSource(app), db, healthSettings) }
 

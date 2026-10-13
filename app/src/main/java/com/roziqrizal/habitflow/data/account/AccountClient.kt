@@ -56,9 +56,11 @@ class AccountClient(
         parse = ::parseSession,
     )
 
-    override suspend fun loginWithGoogle(idToken: String, deviceName: String): AccountResult<Account> = call(
+    override suspend fun loginWithGoogle(idToken: String, deviceName: String, privacyPolicyVersion: String?): AccountResult<Account> = call(
         "POST", "/api/v1/auth/google",
-        body = JSONObject().put("id_token", idToken).put("device_name", deviceName),
+        body = JSONObject().put("id_token", idToken).put("device_name", deviceName).apply {
+            if (privacyPolicyVersion != null) put("privacy_policy_version", privacyPolicyVersion)
+        },
         parse = ::parseSession,
     )
 
