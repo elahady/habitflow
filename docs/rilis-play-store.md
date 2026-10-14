@@ -100,7 +100,7 @@ sebuah tes tidak bisa ditulis, itu tandanya aturannya belum jelas, bukan alasan 
 | `usesCleartextTraffic` mati dan alamat server `https://` | Data kesehatan tidak boleh lewat HTTP |
 | Daftar izin di manifest rilis **sama persis** dengan daftar yang disetujui di bagian 5 | Izin baru yang terselip, atau izin yang tidak dideklarasikan di Play Console |
 | `targetSdk` memenuhi syarat Play saat itu | Unggahan ditolak. **Sekarang 34, hampir pasti di bawah syarat untuk rilis baru**, cek angka terbaru |
-| `backup_rules.xml` dan `data_extraction_rules.xml` tidak memuat `habitflow.db` dan `settings.xml` | Database akun lama terpulihkan ke HP lain |
+| `backup_rules.xml` dan `data_extraction_rules.xml` tidak memuat `<include>`, dan mengecualikan `habitflow.db` (beserta `-wal`, `-shm`, `-journal`) dan **setiap** berkas di `PrefFile` (termasuk `account.xml`, tempat token). Dijaga `BackupRulesTest` sejak 31I | Database atau token akun lama terpulihkan ke HP lain |
 | Client ID Google bukan nilai uji, dan tidak ada kunci rahasia di repo | Login Google gagal di rilis, atau rahasia bocor |
 | `versionCode` lebih besar dari yang terakhir diunggah | Unggahan ditolak |
 
@@ -111,8 +111,8 @@ Urutan wajib. Kolom **Bukti** diisi saat item selesai (tautan, tangkapan layar, 
 ### Gerbang A. Fondasi akun (server dan Android) - tahap 31 langkah 2-8
 - [ ] Semua tes di bagian 3 ada dan lulus. Bukti:
 - [ ] Verifikasi email dan lupa kata sandi jalan end-to-end di HP fisik dengan email sungguhan. Bukti:
-- [ ] Hapus akun di app dan di web (halaman publik yang bisa dibuka tanpa login ke app) jalan dan terbukti menghapus semua tabel. Bukti:
-- [ ] "Keluar dari semua perangkat" dan ganti kata sandi diuji dengan dua HP atau HP dan web. Bukti:
+- [ ] Hapus akun di app dan di web (halaman publik yang bisa dibuka tanpa login ke app) jalan dan terbukti menghapus semua tabel. Bukti: *(app: tombol di Profil sejak 31I, diuji di emulator dengan server tiruan; web: 31D. Belum diuji di HP fisik dengan server sungguhan.)*
+- [ ] "Keluar dari semua perangkat" dan ganti kata sandi diuji dengan dua HP atau HP dan web. Bukti: *(belum; di emulator dengan server tiruan keduanya jalan, 13 Oktober 2026, lihat concept.md 31I. Itu belum menguji sesi di perangkat lain sungguhan.)*
 
 ### Gerbang B. Email
 Email menjadi **jalur kritis**: tanpa email, orang baru tidak bisa daftar, tidak bisa verifikasi, dan tidak bisa reset kata sandi.

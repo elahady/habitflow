@@ -2073,7 +2073,7 @@ Status: **kode dan tes selesai (12 Oktober 2026), kecuali hapus akun dan teks hu
   Ganti kata sandi di web mempertahankan sesi ini dan mengeluarkan yang lain. Dua penjagaan tambahan yang tidak diminta: **Putuskan Google ditolak kalau akun belum punya kata sandi** (akan terkunci), dan
   **Hubungkan Google ditolak kalau akun Google itu sudah dipakai akun lain** (sebelumnya galat 500).
 - [x] **Hapus akun di web: dikerjakan di 31D** (halaman Akun dengan konfirmasi kata sandi, dan kode email untuk akun Google). Sengaja ditunda dari 31C supaya tidak ada penghapusan setengah data.
-- [~] Halaman publik **`/hapus-akun`**: informasi dan formulir kode email sekarang berfungsi (31D). **Masih jangan didaftarkan di Play Console sebelum 31I selesai**, karena langkah "Profil lalu Hapus akun" di app belum ada. Catatan lama: langkah
+- [~] Halaman publik **`/hapus-akun`**: informasi dan formulir kode email sekarang berfungsi (31D). **Langkah "Profil lalu Hapus akun" di app sudah ada sejak 31I (13 Oktober 2026), jadi halaman ini boleh didaftarkan di Play Console begitu versi app itu dirilis.** Catatan lama: langkah
   "halaman Akun lalu Hapus akun" yang disebutnya belum ada. Jalur "masuk lewat kode email untuk yang sudah mencopot app" juga belum ada: teks sekarang menyuruh masuk di web dengan akun yang sama
   dan memberi alamat email kontak. Kalau pemilik mau jalur kode email yang sungguhan, itu dikerjakan di 31D.
 - [~] Halaman publik **`/kebijakan-privasi`** (HTML, URL tetap, versi bernomor dari `PRIVACY_POLICY_VERSION`, tanggal dari `PRIVACY_POLICY_EFFECTIVE`, persetujuan mencatat versinya) **ditulis dari inventaris data oleh Claude, belum ditinjau pemilik.**
@@ -2081,7 +2081,7 @@ Status: **kode dan tes selesai (12 Oktober 2026), kecuali hapus akun dan teks hu
   1. **Kontak:** diambil dari `PRIVACY_CONTACT_EMAIL` (kosong di `.env.example`). Kalau kosong, halaman tidak menampilkan kontak, jadi Gerbang C belum terpenuhi sampai diisi.
   2. **Lokasi server:** ditulis "server milik pengelola di rumah pengelola di Indonesia". Betulkan kalau tidak persis begitu.
   3. **Cadangan 30 hari terenkripsi di penyimpanan terpisah (Cloudflare R2):** itu **rencana 31K, belum ada**. Kalimatnya baru benar setelah 31K selesai.
-  4. **Penghapusan langsung dan permanen:** benar di server sejak 31D; di app baru setelah 31I.
+  4. **Penghapusan langsung dan permanen:** benar di server sejak 31D; di app sejak 31I (Profil, Hapus akun).
   5. **"Tidak ditujukan untuk anak di bawah 13 tahun":** angka itu saya pilih sendiri, bukan keputusan pemilik.
   6. Pihak ketiga yang disebut: Google, Resend (Brevo cadangan), Cloudflare. Tambahkan kalau ada lagi.
   7. Rujukan UU PDP (pemberitahuan 3 x 24 jam) dari dokumen rilis, **bukan nasihat hukum**. Untuk rilis publik sebaiknya dibaca orang yang paham hukum.
@@ -2095,7 +2095,7 @@ Daftar, verifikasi, dan reset dari browser baru bisa dicoba nyata setelah email 
 
 #### 31D. Server: hapus akun menyeluruh dan penjaga skema
 
-Status: **selesai di server (12 Oktober 2026).** Bergantung pada 31B (kode ✅). Tombol di app Android menunggu 31I.
+Status: **selesai di server (12 Oktober 2026).** Bergantung pada 31B (kode ✅). Tombol di app Android ada di Profil sejak 31I.
 
 - [x] `AccountDeletionService`, dipakai API dan web, dalam **satu transaksi**: semua tabel di inventaris, `user_tokens`, `email_codes`, snapshot (baris **dan berkas**, berkas dihapus setelah transaksi berhasil),
   email yang tertahan di `jobs` dan `failed_jobs` (dicocokkan dengan alamat email), dan data tim. Tabel `sessions` tidak ada (sesi file), dan sesi browser mati sendiri begitu barisnya hilang.
@@ -2264,19 +2264,26 @@ dan alarm Subuh yang benar-benar tidak berbunyi (yang terbukti adalah **pembatal
 
 #### 31I. Android: Pengaturan, Profil, Data tubuh
 
-Status: belum dikerjakan. Bergantung pada 31G dan 31D.
+Status: **selesai di kode, tes, dan emulator (13 Oktober 2026).** Bergantung pada 31G dan 31D. Belum diuji di HP fisik dan dengan Google.
 
-- [ ] Tab **Tentang menjadi Pengaturan** (ikon roda gigi di `Icons.kt`). `AboutScreen` menjadi `SettingsScreen` dengan bagian: Tampilan, Waktu dan sholat, Pengingat, **Data tubuh** (tinggi badan dan target berat), Kalender, Data dan
-  sinkron, Tentang, sesuai mockup.
-- [ ] **Profil** (layar penuh di atas tab, tombol kembali menutupnya): foto dan nama, email, cara masuk, ubah kata sandi (atau buat kata sandi untuk akun Google), status sinkron dan "Sinkron sekarang", **Keluar**, **Keluar dari
-  semua perangkat**, **Hapus akun**. Lingkaran inisial di Hari ini membuka Profil.
-- [ ] Hapus semua UI "Atur server", token, "Uji koneksi", dan `SyncSection`. "Pulihkan dari server" menjadi "Cadangan dan pulihkan" berbasis akun dengan konfirmasi yang menyebut waktu snapshot.
-- [ ] `TeamScreen` dan `TeamViewModel`: hapus `SignInPrompt` dan semua cabang `account == null`.
-- [ ] `backup_rules.xml` dan `data_extraction_rules.xml`: keluarkan `habitflow.db` dan `settings.xml`.
-- [ ] Hapus cabang "belum login" yang tersisa: `SyncManager.followUpsOnAccount`, `Snapshot.followUpsOmitted`, dan sejenisnya. Pastikan pencarian `account == null` dan `Masuk dengan Google dulu` tidak menemukan apa pun.
-- [ ] Perbarui `docs/design/README.md` dan inventaris di [rilis-play-store.md](rilis-play-store.md).
+- [x] **Tab Tentang menjadi Setelan** (ikon roda gigi, `AppIcons.Settings`). `AboutScreen` menjadi `SettingsScreen`, judul layar "Pengaturan", bagian berkartu: Tampilan, Waktu dan sholat, Pengingat, Kalender, Data dan sinkron, Tentang. **Label tab "Setelan", bukan "Pengaturan"**: di emulator Pixel 6 (lebar item tab ±55dp) "Pengaturan" terpotong menjadi "Pengatur/an" di 11sp maupun 10sp.
+  Baris chevron (lokasi, alarm, adzan, berat dan tensi, kalender) membuka **dialog**, bukan layar baru: `SettingsDialog` berisi bagian lama (`LocationSection`, `AlarmSection`, `AdzanSection`, `HealthReminderSection`, `CalendarSettingsSection`) tanpa mengubah perilakunya. Keterangan tiap baris dirangkum dari pengaturan (`alarmSummary`, `adzanSummary`, `healthReminderSummary`).
+- [x] **Data tubuh pindah ke Profil**, bukan ke Pengaturan: diputuskan pemilik 11 Oktober 2026 mengikuti mockup (rencana lama di sini yang menyebut Pengaturan sudah usang). `BodyDataCard`: tinggi badan dan target berat, dialog angkanya dipakai ulang. Teks "Isi tinggi badan di Tentang" di Progres dan sheet kesehatan diganti "di Profil".
+- [x] **Profil** (`ProfileScreen`, layar penuh di atas tab, tombol kembali dan tombol sistem menutupnya, lingkaran inisial di Hari ini membukanya): avatar inisial, nama, email, Data tubuh, **Cara masuk** (dari `GET me`: "Email dan kata sandi, Google terhubung" dan sejenisnya; gagal dimuat berarti baris bisa diketuk untuk mencoba lagi), **Ubah kata sandi** (atau **Buat kata sandi** untuk akun Google tanpa sandi),
+  Sinkron, **Keluar**, **Keluar dari semua perangkat**, **Hapus akun**. Dialog Keluar dan Hapus akun dari 31H dipakai ulang; dialog Keluar kini punya varian semua perangkat (kalimat pembuka "Semua perangkat yang masuk dengan akun ini akan keluar, termasuk HP ini."). Dialog ubah kata sandi: kolom saat ini (hanya untuk akun bersandi), baru, dan ulangi; validasi di HP (`PasswordChangeRules`) lalu server; isian bertahan kalau server menolak.
+- [x] **Keluar dari semua perangkat**: `SignOutCoordinator.signOutAllDevices` meminta server mencabut semua sesi **lebih dulu**; hanya kalau berhasil HP menandai hapus data, menutup sesi (`SessionEnding.closeSession`, tanpa memanggil `logout` lagi karena tokennya sudah mati), dan memulai ulang proses. Tanpa internet, sesi berakhir, atau ditolak server: tidak ada yang berubah di HP. `AccountManager.signOutAllDevices` yang lama (menutup sesi sendiri) diganti `revokeAllSessions`.
+- [x] **UI server dan token dihapus**: Atur server, token, "Uji koneksi" (`SyncManager.testConnection` ikut hilang), `SyncSection`. Bagian "Data dan sinkron" (`DataSyncSection`): sakelar "Sinkron otomatis" (cadangan snapshot, opt-in sejak 31H), "Sinkron sekarang", dan **"Cadangan dan pulihkan"** yang mengunduh cadangan akun dan menampilkan dialog dengan waktu cadangan sebelum mengganti data. Tombol "Sinkron sekarang" di Profil menyinkronkan **habit dan to-do**, yang di Pengaturan mencadangkan **snapshot**; keduanya berbeda dan keterangannya menyebut apa yang dikirim.
+- [x] **`TeamScreen`, `TeamViewModel`, `JoinTeamDialog`**: `SignInPrompt` dan cabang belum masuk dihapus (`TeamUiState.account` menjadi `accountId`). Undangan yang datang sebelum masuk tetap disimpan `PendingInviteStore` dan dipakai setelah masuk.
+- [x] **`backup_rules.xml` dan `data_extraction_rules.xml`** kini hanya `<exclude>`: database (termasuk `-wal`, `-shm`, `-journal`) dan **semua** berkas di `PrefFile`, bukan hanya `settings.xml`, karena `account.xml` memuat token. `BackupRulesTest` menggagalkan build kalau ada `<include>`, atau berkas baru di `PrefFile` yang tidak dikecualikan.
+- [x] **Cabang belum login di snapshot**: `SyncManager.followUpsOnAccount`, `Snapshot.followUpsOmitted`, dan bidang `followUps` dihapus. Snapshot tidak lagi membawa follow-up; snapshot lama yang masih memuatnya tetap terbaca dan bagian itu diabaikan, dan memulihkan snapshot tidak menyentuh follow-up di HP. Pencarian `account == null`, `Masuk dengan Google dulu`, `SignInPrompt`, `Atur server`, dan `Uji koneksi` di `app/src` tidak menemukan apa pun.
+- [x] **Tes** (seluruh suite Android: **542 lulus**, dari 524): `BackupRulesTest`, `PasswordChangeRulesTest`, lima tes `signOutAllDevices` di `SignOutCoordinatorTest`, tes `AccountManager` untuk `revokeAllSessions` dan `closeSession`, dan tes snapshot lama yang masih memuat follow-up. Build rilis (`assembleRelease`) lolos.
+- [x] **Diuji di emulator** (Pixel 6 API 34, server tiruan PHP lokal, bukan server produksi): tab Setelan dan semua bagiannya tampil; Profil terbuka dari lingkaran inisial dan menampilkan identitas, Data tubuh, "Email dan kata sandi, Google terhubung"; **ubah kata sandi** dengan sandi saat ini salah menampilkan galat server dan isian bertahan, dengan sandi benar mengirim `PUT account/password`, menutup dialog, dan sesi tetap; **Keluar dari semua perangkat** dengan server gagal (500) menampilkan pesan dan **tidak mengubah apa pun** (sesi dan database utuh), dengan server berhasil memanggil `logout-all` sekali (tanpa `logout`), memulai ulang proses (PID berubah), dan mengosongkan database dan berkas akun.
+- [x] `docs/design/README.md` (bagian Pengaturan dan Profil) dan [rilis-play-store.md](rilis-play-store.md) diperbarui di commit yang sama dengan catatan ini.
 
-**Selesai jika:** tidak ada lagi UI atau kode yang meminta alamat server atau token, dan semua tindakan akun bisa dilakukan dari Profil di HP fisik.
+**Belum diuji:** HP fisik; Google (membuat kata sandi untuk akun Google tanpa sandi, dan konfirmasi Hapus akun Google); "Cadangan dan pulihkan" dengan cadangan sungguhan (server tiruan hanya menjawab 404); dialog kalender dengan izin diberikan; gulir dan tampilan di layar kecil dan font besar; tombol "Kebijakan privasi" membuka halaman sungguhan (hanya `PRIVACY_POLICY_URL` yang diperiksa dari kodenya).
+**Catatan bagi pemilik:** (1) tombol Hapus akun dan Keluar sekarang di Profil, jadi halaman publik `/hapus-akun` boleh didaftarkan di Play Console setelah 31I diterapkan di rilis; (2) dialog sub-pengaturan memakai dialog Material bawaan, bukan layar penuh, dan belum ada mockup untuknya; (3) dialog Keluar tetap panjang (teksnya menyebut tiap kemungkinan), belum dipadatkan.
+
+**Selesai jika:** tidak ada lagi UI atau kode yang meminta alamat server atau token (✅), dan semua tindakan akun bisa dilakukan dari Profil di HP fisik (✅ di emulator, HP fisik belum).
 
 #### 31J. Skrip cek rilis dan tes pelengkap
 

@@ -198,9 +198,9 @@ Nilai baru dari mockup: **angka kartu Hari ini memakai serif** (Libre Caslon Tex
 aturan "serif hanya untuk judul"; angka di tempat lain tetap Manrope. Jarak antarkartu 14dp. Batang kemajuan tipis 6dp
 (`ThinProgress`). Label kartu dengan ikon garis (`IconLabel`, ikon di `ui/Icons.kt`, gaya Feather 24dp tebal 2).
 
-**Tab bawah** memakai ikon garis di atas label (Hari ini, Kerja, Tugas Rumah, Progres, Habit, **Pengaturan**), label 11sp
+**Tab bawah** memakai ikon garis di atas label (Hari ini, Kerja, Tugas Rumah, Progres, Habit, **Setelan**), label 11sp
 dan boleh dua baris ("Tugas Rumah"). Nama dan jumlah tab tetap seperti di app, bukan lima tab tebakan di mockup.
-*(Sejak tahap 31: tab keenam berganti nama dari "Tentang" menjadi "Pengaturan", ikon roda gigi — lihat bagian
+*(Sejak tahap 31: tab keenam berganti nama dari "Tentang" menjadi "Setelan" (judul layarnya "Pengaturan"; "Pengaturan" terpotong di lebar item tab, jadi label tab memakai sinonim yang lebih pendek), ikon roda gigi — lihat bagian
 [Pengaturan](#pengaturan). Profil **bukan** tab, dibuka lewat lingkaran inisial di Kepala.)*
 
 ### Kontribusi
