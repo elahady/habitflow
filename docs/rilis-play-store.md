@@ -92,13 +92,13 @@ sebuah tes tidak bisa ditulis, itu tandanya aturannya belum jelas, bukan alasan 
 | Tes gerbang: tanpa sesi, tidak ada alarm, notifikasi, worker, atau receiver boot yang terjadwal | App berjalan di latar belakang sebelum login |
 | Tes Keluar saat ada perubahan belum terkirim: jumlahnya dihitung benar dan konfirmasi muncul | Kehilangan data tanpa peringatan |
 
-**Skrip cek rilis (`scripts/cek-rilis`, dijalankan sebelum mengunggah AAB; gagal berarti jangan unggah):**
+**Skrip cek rilis (`scripts/cek-rilis.ps1`, ada sejak 31J; dijalankan lewat `scripts/cek-semua.ps1` bersama seluruh tes unit sebelum mengunggah AAB; kode keluar bukan 0 berarti jangan unggah). `scripts/uji-cek-rilis.ps1` membuktikan tiap pemeriksaan di bawah benar-benar gagal kalau dilanggar:**
 
 | Pemeriksaan | Alasan |
 |---|---|
 | `debuggable` mati, dan `src/debug` (receiver debug) tidak ada di manifest rilis | Receiver debug membuka jalan masuk tanpa login |
 | `usesCleartextTraffic` mati dan alamat server `https://` | Data kesehatan tidak boleh lewat HTTP |
-| Daftar izin di manifest rilis **sama persis** dengan daftar yang disetujui di bagian 5 | Izin baru yang terselip, atau izin yang tidak dideklarasikan di Play Console |
+| Daftar izin di manifest rilis **sama persis** dengan `scripts/izin-disetujui.txt` (bagian 5 plus izin biasa dari pustaka: `WAKE_LOCK`, `VIBRATE`, `SCHEDULE_EXACT_ALARM`, izin receiver AndroidX) | Izin baru yang terselip, atau izin yang tidak dideklarasikan di Play Console |
 | `targetSdk` memenuhi syarat Play saat itu | Unggahan ditolak. **Sekarang 34, hampir pasti di bawah syarat untuk rilis baru**, cek angka terbaru |
 | `backup_rules.xml` dan `data_extraction_rules.xml` tidak memuat `<include>`, dan mengecualikan `habitflow.db` (beserta `-wal`, `-shm`, `-journal`) dan **setiap** berkas di `PrefFile` (termasuk `account.xml`, tempat token). Dijaga `BackupRulesTest` sejak 31I | Database atau token akun lama terpulihkan ke HP lain |
 | Client ID Google bukan nilai uji, dan tidak ada kunci rahasia di repo | Login Google gagal di rilis, atau rahasia bocor |
