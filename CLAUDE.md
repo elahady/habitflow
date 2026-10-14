@@ -50,6 +50,16 @@ kontribusi ala GitHub. Detail rancangan ada di [docs/rancangan.md](docs/rancanga
 - Build dan install debug dari terminal, bukan Android Studio:
   `JAVA_HOME=... ./gradlew.bat installDebug --console=plain`
 
+## Sebelum mengunggah AAB (wajib)
+
+- Jalankan `powershell -File scripts/cek-semua.ps1`: seluruh tes unit Android lalu `scripts/cek-rilis.ps1`
+  (manifest rilis, izin, `targetSdk`, `https`, aturan cadangan, client ID, rahasia di repo, `versionCode`).
+  **Kode keluar bukan 0 berarti jangan unggah.** Jangan mem-pipe keluarannya ke `tail`: daemon Gradle menahan pipa.
+- Berkas isian pemilik di `scripts/`: `target-sdk-minimum.txt` (cek syarat Play saat rilis), `versi-terakhir.txt`
+  (naikkan setelah unggahan berhasil), `izin-disetujui.txt` (ubah bersama inventaris izin), `client-id-uji.txt`.
+- Setelah mengubah `cek-rilis.ps1`, jalankan `scripts/uji-cek-rilis.ps1`: ia melanggar tiap pemeriksaan dengan sengaja
+  dan memastikan skrip benar-benar gagal. Skrip yang tidak pernah terbukti gagal tidak bisa dipercaya lulus.
+
 ## Konvensi
 
 - UI memakai Jetpack Compose dan Material 3.

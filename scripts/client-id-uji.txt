@@ -1,0 +1,4 @@
+# Client ID Google yang TIDAK BOLEH ada di build rilis (satu per baris; baris # diabaikan).
+# Isi dengan client ID yang hanya untuk uji (misalnya milik proyek Google Cloud uji) kalau pemilik membuatnya terpisah.
+# Pemeriksaan lain yang selalu jalan: client ID tidak kosong dan berbentuk <angka>-<teks>.apps.googleusercontent.com.
+# Kosong sekarang: Habitflow memakai satu client ID tipe Web untuk debug dan rilis (lihat app/build.gradle.kts).

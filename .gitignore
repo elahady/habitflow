@@ -7,3 +7,8 @@ local.properties
 
 # Kredensial OAuth yang didownload dari Google Cloud Console - jangan pernah di-commit.
 client_secret_*.json
+
+# Kunci penandatanganan dan sandinya (31L). Disimpan di luar repo, lihat app/build.gradle.kts.
+*.jks
+*.keystore
+keystore.properties

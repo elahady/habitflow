@@ -1,0 +1,6 @@
+# targetSdk minimum yang disyaratkan Google Play untuk unggahan baru (satu angka; baris # diabaikan).
+# DIISI PEMILIK dari syarat Play pada hari rilis: https://developer.android.com/google/play/requirements/target-sdk
+# Angka di bawah adalah syarat 31 Agustus 2025 (API 35) dan KEMUNGKINAN SUDAH KEDALUWARSA: Google menaikkannya
+# tiap tahun (syarat berikutnya diperkirakan API 36 mulai Agustus 2026). Cek angka terbaru, lalu ganti.
+# Selama app masih targetSdk 34, skrip cek rilis memang gagal di sini; itu pekerjaan 31L.
+35

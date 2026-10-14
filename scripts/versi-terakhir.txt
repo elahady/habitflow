@@ -1,0 +1,4 @@
+# versionCode terakhir yang SUDAH diunggah ke Play Console (satu angka; baris # diabaikan).
+# cek-rilis.ps1 menuntut versionCode build ini LEBIH BESAR dari angka ini, karena Play menolak versionCode yang
+# sama atau lebih kecil. Diperbarui tiap kali unggahan berhasil. 0 berarti belum pernah ada yang diunggah.
+0

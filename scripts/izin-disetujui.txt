@@ -1,0 +1,24 @@
+# Daftar izin yang disetujui di manifest rilis hasil gabungan (satu izin per baris, baris # diabaikan).
+# cek-rilis.ps1 menuntut daftar ini SAMA PERSIS dengan <uses-permission> di manifest rilis: izin yang terselip dan
+# izin yang hilang sama-sama menggagalkan. Menambah izin berarti mengubah berkas ini di commit yang sama, dan
+# memperbarui bagian 1 dan 5 di docs/rilis-play-store.md (inventaris, deklarasi Play Console).
+#
+# Dideklarasikan app (docs/rilis-play-store.md bagian 5):
+android.permission.INTERNET
+android.permission.ACCESS_NETWORK_STATE
+android.permission.ACCESS_COARSE_LOCATION
+android.permission.POST_NOTIFICATIONS
+android.permission.RECEIVE_BOOT_COMPLETED
+android.permission.USE_FULL_SCREEN_INTENT
+android.permission.FOREGROUND_SERVICE
+android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK
+android.permission.READ_CALENDAR
+android.permission.health.READ_STEPS
+android.permission.health.READ_HEALTH_DATA_IN_BACKGROUND
+android.permission.USE_EXACT_ALARM
+android.permission.SCHEDULE_EXACT_ALARM
+android.permission.VIBRATE
+#
+# Izin biasa yang masuk lewat pustaka (WorkManager dan AndroidX), tidak butuh deklarasi khusus:
+android.permission.WAKE_LOCK
+com.roziqrizal.habitflow.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
