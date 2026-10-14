@@ -53,7 +53,7 @@ class DebugStepsReceiver : BroadcastReceiver() {
                     startZoneOffset = offset,
                     endTime = now,
                     endZoneOffset = offset,
-                    metadata = Metadata(clientRecordId = CLIENT_RECORD_ID, recordingMethod = Metadata.RECORDING_METHOD_MANUAL_ENTRY),
+                    metadata = Metadata.manualEntry(clientRecordId = CLIENT_RECORD_ID),
                 )
                 HealthConnectClient.getOrCreate(context).insertRecords(listOf(record))
                 Log.i(TAG, "Menulis $steps langkah ke Health Connect")

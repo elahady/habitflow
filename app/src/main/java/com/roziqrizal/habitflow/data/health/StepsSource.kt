@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.aggregate.AggregationResult
-import androidx.health.connect.client.feature.ExperimentalFeatureAvailabilityApi
 import androidx.health.connect.client.HealthConnectFeatures
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.StepsRecord
@@ -84,9 +83,8 @@ class HealthConnectStepsSource(private val context: Context) : StepsSource {
     }
 
     /** Apakah Health Connect di HP ini mendukung izin baca di latar belakang. Belum ada di semua versi. */
-    @OptIn(ExperimentalFeatureAvailabilityApi::class)
     private fun isBackgroundReadAvailable(client: HealthConnectClient): Boolean =
-        client.features.getFeatureStatus(HealthConnectFeatures.FEATURE_HEALTH_DATA_BACKGROUND_READ) ==
+        client.features.getFeatureStatus(HealthConnectFeatures.FEATURE_READ_HEALTH_DATA_IN_BACKGROUND) ==
             HealthConnectFeatures.FEATURE_STATUS_AVAILABLE
 
     companion object {

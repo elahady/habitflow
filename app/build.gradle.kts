@@ -18,7 +18,7 @@ val productionApiBaseUrl = "https://habitflow.roziqrizal.com"
 
 android {
     namespace = "com.roziqrizal.habitflow"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.roziqrizal.habitflow"
@@ -97,7 +97,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6")
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.work:work-runtime-ktx:2.9.1")
-    implementation("androidx.health.connect:connect-client:1.1.0-alpha08")
+    implementation("androidx.health.connect:connect-client:1.1.0")
 
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
