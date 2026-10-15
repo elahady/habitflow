@@ -86,6 +86,7 @@ fun TodayScreen(
     onDeleteTodo: (Todo) -> Unit,
     accountName: String? = null,
     onOpenProfile: () -> Unit = {},
+    alarmPrompt: ExactAlarmPrompt? = null,
 ) {
     var showAddDialog by rememberSaveable { mutableStateOf(false) }
     val now = LocalTime.now()
@@ -106,6 +107,8 @@ fun TodayScreen(
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         item { DayGreeting(date = state.date, hour = now.hour, accountName = accountName, onOpenProfile = onOpenProfile) }
+
+        if (alarmPrompt != null) item { ExactAlarmPromptCard(alarmPrompt) }
 
         item { FocusCard(focus = focus, health = health, coffee = state.coffee, sweet = state.sweet) }
 

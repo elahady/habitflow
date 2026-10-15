@@ -183,7 +183,8 @@ Di HP fisik yang **bukan HP pengembangan**, dipasang dari jalur uji Play Store (
 | 4 | Masukkan kode benar | Masuk ke Hari ini; centang satu habit dan satu to-do |
 | 5 | Mode pesawat, centang dua habit lagi, tutup dan buka app | Perubahan tetap ada (offline) |
 | 6 | Matikan mode pesawat | Sinkron berhasil; di situs web (login akun yang sama) data muncul |
-| 7 | Nyalakan alarm Subuh untuk 2 menit lagi, kunci layar | Berbunyi tepat waktu (dan layar alarm sesuai keputusan 3.A dan 3.B) |
+| 7a | Pasang bersih, masuk, buka Hari ini **sebelum** memberi izin alarm | Kartu "Alarm Bangun belum bisa berbunyi tepat waktu" tampil di atas; "Nanti" menyembunyikannya; "Izinkan" membuka layar izin sistem dan kartu hilang setelah diizinkan |
+| 7b | Nyalakan alarm Subuh untuk 2 menit lagi, kunci layar | Berbunyi tepat waktu; di layar kunci tampil notifikasi heads-up dengan tombol Matikan dan Tunda (tanpa layar penuh, sesuai keputusan 3.B) |
 | 8 | Profil > Keluar | Data lokal hilang, kembali ke layar Masuk, tidak ada alarm atau notifikasi tersisa |
 | 9 | Masuk dengan **akun lain** (Google) | Tidak ada data akun pertama yang tampil |
 | 10 | Dari web ganti kata sandi akun pertama | Sesi di HP yang masih masuk ditolak (kembali ke Masuk) |

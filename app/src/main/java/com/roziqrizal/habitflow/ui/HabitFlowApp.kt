@@ -259,6 +259,7 @@ fun HabitFlowApp(
                 Tab.TODAY -> {
                     val state by today.state.collectAsState()
                     val scheduleState by schedule.state.collectAsState()
+                    val nextAlarmToday by schedule.nextAlarm.collectAsState()
                     TodayScreen(
                         state = state,
                         schedule = scheduleState,
@@ -288,6 +289,7 @@ fun HabitFlowApp(
                         onDeleteTodo = today::deleteTodo,
                         accountName = accountStateForInvite.account?.name,
                         onOpenProfile = { showProfile = true },
+                        alarmPrompt = rememberExactAlarmPrompt(nextAlarmToday, alarmSettings),
                     )
                 }
                 Tab.WORK -> WorkScreen(

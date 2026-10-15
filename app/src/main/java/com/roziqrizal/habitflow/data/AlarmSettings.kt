@@ -25,6 +25,15 @@ class AlarmSettings(context: Context) {
     /** Pengingat adzan per waktu sholat. Default semua nyala. */
     val adzan: StateFlow<Map<PrayerName, Boolean>> = _adzan.asStateFlow()
 
+    private val _exactPromptDismissedAt = MutableStateFlow(prefs.getLong(KEY_EXACT_PROMPT_DISMISSED, 0L).takeIf { it > 0L })
+    /** Kapan pengguna menekan "Nanti" di ajakan izin alarm presisi (milidetik), atau null kalau belum pernah. */
+    val exactPromptDismissedAt: StateFlow<Long?> = _exactPromptDismissedAt.asStateFlow()
+
+    fun dismissExactPrompt(nowMillis: Long) {
+        prefs.edit().putLong(KEY_EXACT_PROMPT_DISMISSED, nowMillis).apply()
+        _exactPromptDismissedAt.value = nowMillis
+    }
+
     fun ringtoneUri(): Uri =
         _ringtone.value?.let(Uri::parse) ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
 
@@ -59,5 +68,6 @@ class AlarmSettings(context: Context) {
     private companion object {
         const val KEY_RINGTONE = "alarm_ringtone"
         const val KEY_SKIPPED = "alarm_skipped"
+        const val KEY_EXACT_PROMPT_DISMISSED = "exact_alarm_prompt_dismissed_at"
     }
 }

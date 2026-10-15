@@ -414,7 +414,8 @@ private fun AlarmSection(nextAlarm: AlarmTime?, settings: AlarmSettings) {
         Text(
             "Alarm belum diizinkan berbunyi tepat waktu, jadi bisa terlambat sampai satu jam.",
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.error,
+            // Bukan warna error: warna itu hanya untuk galat sistem (docs/design/README.md), dan izin ini diminta dengan tenang.
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         TextButton(onClick = { ExactAlarmAccess.requestIntent(context)?.let { exactLauncher.launch(it) } }) {
             Text("Izinkan alarm tepat waktu")
