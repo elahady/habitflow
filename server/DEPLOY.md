@@ -20,9 +20,21 @@ dikerjakan.
   (`~/.ssh/id_ed25519`), tidak perlu password.
 - **IP VM bisa berubah** tiap VM restart (DHCP dari Hyper-V Default Switch). Cek IP
   terkini dengan masuk ke VM lewat Hyper-V Manager → Connect, login, jalankan `ip a`,
-  lihat baris `inet` di `eth0`. IP terakhir yang diketahui (10 Oktober 2026):
-  `172.23.192.247` — **jangan asumsikan ini masih benar**, selalu cek ulang kalau sudah
-  lama tidak dipakai.
+  lihat baris `inet` di `eth0`. IP terakhir yang diketahui (15 Oktober 2026):
+  `172.28.157.112` (sebelumnya `172.23.192.247` pada 10 Oktober) — **jangan asumsikan ini masih
+  benar**, selalu cek ulang kalau sudah lama tidak dipakai. Seluruh subnet Default Switch
+  ikut berganti, bukan hanya IP VM-nya.
+- **Cara menemukan IP tanpa Hyper-V Manager** (tidak perlu hak admin, hanya membaca), dari PowerShell
+  di PC ini: `Get-NetNeighbor -AddressFamily IPv4 | Where InterfaceAlias -match 'Default Switch'` menampilkan
+  tetangga di switch virtual (VM punya MAC berawalan `00-15-5D`). Sebelum login, cocokkan sidik jarinya:
+  `ssh-keyscan -t ed25519 <ip> | ssh-keygen -l -f -` harus sama dengan `ssh-keygen -l -F <ip-lama>`
+  (ED25519 VM ini: `SHA256:iM1PvGgSv/Xk98d3I7fQHsyC4xud25STtq32XoDULC8`). `Get-VM` butuh grup
+  Hyper-V Administrators dan gagal di akun biasa.
+- **Cadangan sebelum deploy** (dibuat 15 Oktober 2026, belum otomatis): `~/backups-habitflow/` di VM berisi
+  `mysqldump` database dan arsip kode sebelum tahap 32, dan image lama ditandai `habitflow:pra-tahap32`.
+  Rollback kode: ekstrak arsip kode itu ke `~/apps/habitflow` lalu `docker compose up -d --build --force-recreate`.
+  Rollback database dari dump hanya kalau migrasi merusak data (migrasi `drop_api_tokens` dan sesudahnya tidak
+  punya `down()` yang memulihkan data).
 - Kode project ada di `~/apps/habitflow/` di VM.
 - Container MySQL bersama: `shared-mysql` (network Docker `shared-db`).
 

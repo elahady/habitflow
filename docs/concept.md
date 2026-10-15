@@ -2423,7 +2423,7 @@ rute `GET`/`POST /api/v1/daily-briefs` (`user-token`), 7 tes baru (`DailyBriefAp
 dan yang dikirim `null` dikosongkan, jadi skill yang hanya mengirim `email_digest` tidak menghapus `meeting_note`.
 Batas 20.000 karakter per kolom. `GET` terbaru dulu, maksimal 31 baris, filter `date` dan `from`. Tanpa 409 (tidak ada
 penyunting manual). Tabel sudah masuk `DataInventory`, `AccountDeletionService` (+ tesnya), dan inventaris
-`rilis-play-store.md`. **Belum di-deploy.** Berikutnya: langkah 2 (tes manual lewat curl setelah deploy), langkah 4
+`rilis-play-store.md`. **Di-deploy dan dites di produksi 15 Oktober 2026 (lihat di bawah).** Berikutnya: langkah 4
 (kartu Android + web).
 
 **Langkah 3 selesai (15 Oktober 2026):** `skills/habitflow-morning-routine/SKILL.md` ditulis. **Belum pernah dijalankan
@@ -2482,11 +2482,21 @@ pisah "—", dan `<script>` tersimpan dan kembali utuh (di-escape saat tampil, l
 polos, cocok dengan pembaca Android. Pesan validasi 422 berbahasa Inggris (bawaan Laravel); skill hanya meneruskannya. Server dan
 berkas uji sudah dihapus. **Belum:** dites terhadap produksi, dan skill `habitflow-morning-routine` belum pernah dijalankan end-to-end.
 
-**Deploy ke produksi belum dilakukan (15 Oktober 2026).** Alasannya bukan teknis fitur ini, tapi isi deploy: produksi masih menjalankan
-kode sebelum 31B, jadi satu deploy membawa seluruh 31B-31L + tahap 32, dengan akibat yang sudah dicatat di 31E: app Android terpasang
-(HP pemilik dan istri) berhenti sinkron sampai app baru terpasang, migrasi `drop_api_tokens` mengharuskan `habitflow:claim-legacy`
-dijalankan dulu dari rilis lama (`b96bc51` atau sebelumnya, jadi dua kali deploy), dan email verifikasi belum bisa terkirim (DNS Resend
-belum). Sesi ini juga tidak punya jalan ke VM (IP tercatat 172.23.192.247 tidak menjawab; perlu IP terbaru dari Hyper-V).
+**Server di-deploy ke produksi dan langkah 2 lulus di produksi (15 Oktober 2026, sekitar 18.40 WIB).** Satu deploy membawa seluruh
+31B-31L + tahap 32 karena produksi masih menjalankan kode sebelum 31B. Sebelum jalan, keadaan produksi dibaca dulu (hanya membaca):
+**1 pengguna (Google, tanpa kata sandi), 2 `user_tokens`, `api_tokens` 0 baris, `snapshots` 0 baris.** Karena itu kekhawatiran di catatan
+31E tidak berlaku: tidak ada token 19B yang putus dan tidak ada snapshot yang perlu `habitflow:claim-legacy`, jadi tidak perlu deploy
+dua kali. Token akun (`user_tokens`) divalidasi lewat hash dan tidak berubah, jadi dua perangkat yang sudah masuk tetap berlaku.
+- **Pengaman:** `mysqldump` (16 tabel, selesai), arsip kode lama, dan tag image `habitflow:pra-tahap32`, semuanya di VM (lihat `server/DEPLOY.md`).
+- **Langkah:** `php artisan test` 237 lulus, arsip tanpa `.env*`, build, `up -d --force-recreate` (kini ada kontainer `habitflow-queue`), `migrate --force`:
+  8 migrasi jalan (31B sampai `daily_briefs`), semuanya DONE. Sesudahnya: 1 pengguna, 2 token, 9 habit, 2 follow-up (sama seperti sebelum), `api_tokens` tidak ada lagi.
+  Halaman publik `/login`, `/kebijakan-privasi` 200; `/api/v1/*` tanpa token 401; log tanpa galat.
+- **Langkah 2 di produksi:** token sementara untuk akun pemilik, curl dari dalam VM ke URL publik: POST 201, ulang 200 dengan `id` sama, GET 200, `date` salah 422, tanpa token 401.
+  Baris uji (`[UJI]`) dan token uji sudah dihapus dan diverifikasi (`daily_briefs` 0, `user_tokens` 2).
+- **Yang sengaja tidak diubah dan perlu diketahui:** `.env.production` di VM masih `MAIL_MAILER=log` dan `QUEUE_CONNECTION=sync`. Artinya **email
+  verifikasi dan reset kata sandi belum benar-benar terkirim** (kodenya jatuh ke log), jadi pendaftaran dengan email belum boleh dibuka. Kontainer
+  `habitflow-queue` jalan tapi menganggur sampai `QUEUE_CONNECTION=database` dan `MAIL_*` Resend diisi (butuh DNS, 31B). Login Google tidak terpengaruh.
+- **Belum:** skill `habitflow-morning-routine` belum dijalankan end-to-end (butuh token pemilik dan Gmail); kartu web dan Android belum dilihat dengan data nyata.
 
 Dengan ini seluruh langkah 4 selesai di kode (web dan Android). Sisa tahap 32: langkah 2 (tes manual dengan curl, menunggu deploy) dan
 langkah 5 (opsional, `/schedule`), serta dua butir "Belum diputuskan" di bawah.

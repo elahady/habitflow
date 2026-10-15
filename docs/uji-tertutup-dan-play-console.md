@@ -18,7 +18,7 @@ Penguji harus bisa **mendaftar sendiri dan memakai app dari Play Store** selama 
 |---|---|---|---|
 | 1 | Akun pengembang Play Console aktif dan terverifikasi | Tidak diketahui dari repo | Pemilik |
 | 2 | Kunci unggah dibuat (dua salinan), Play App Signing aktif, AAB rilis ditandatangani lulus `cek-semua.ps1` | Belum: `keystore.properties` belum ada (31L) | Pemilik membuat kunci; AAB bisa dibuat setelahnya |
-| 3 | Server menjalankan kode 31B-31E: migrasi, antrean email (`habitflow-queue`), snapshot per akun | Kode selesai, **belum di-deploy**, belum diuji `curl` ke produksi | Deploy: pemilik atau sesi dengan akses SSH |
+| 3 | Server menjalankan kode 31B-31E: migrasi, antrean email (`habitflow-queue`), snapshot per akun | **Sudah di-deploy 15 Oktober 2026** (31B-31L + tahap 32, migrasi lulus, `curl` ke produksi lulus untuk `daily-briefs`). Email masih `MAIL_MAILER=log` dan antrean `sync`, jadi antrean email belum bekerja sampai syarat 4 selesai | Deploy: pemilik atau sesi dengan akses SSH |
 | 4 | Email sungguhan sampai: domain pengirim, DNS (SPF, DKIM, DMARC), kunci Resend; uji ke Gmail dan satu penyedia lain, di kotak masuk | Belum (31B) | Pemilik (DNS dan akun Resend) |
 | 5 | Google Sign-In produksi: layar persetujuan OAuth ke status produksi, client ID Android dengan SHA-1 kunci Play App Signing | Belum (31L, Gerbang E) | Pemilik (Google Cloud Console dan Play Console) |
 | 6 | Kontak privasi terisi di kebijakan, teks hukum selesai, halaman hapus akun final | **`PRIVACY_CONTACT_EMAIL` kosong** (bagian 2) | Pemilik |
