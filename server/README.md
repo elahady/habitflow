@@ -66,19 +66,12 @@ curl -H "Authorization: Bearer <token-akun>" https://habitflow.contoh.com/api/v1
 # {"ok":true}
 ```
 
-## Klaim snapshot lama (tahap 31E)
+## Snapshot lama dan tabel api_tokens (tahap 31E dan 31L)
 
-Snapshot yang dikirim sebelum tahap 31 terikat ke token per-HP (`api_tokens`), bukan akun. Tautkan ke akun
-pemilik HP itu, satu kali per HP. Akun harus sudah ada (daftar atau masuk Google dulu).
-
-```bash
-php artisan habitflow:claim-legacy pemilik@contoh.com --token=hp --dry-run   # lihat hitungannya saja
-php artisan habitflow:claim-legacy pemilik@contoh.com --token=hp             # tautkan
-```
-
-`--token` boleh dihilangkan kalau hanya ada satu token. Aman diulang: snapshot yang sudah punya akun tidak
-disentuh, dan batas 14 salinan per akun tetap berlaku. Token lamanya tidak dihapus (API sudah menolaknya);
-tabel `api_tokens` dihapus di 31L setelah rilis stabil.
+Snapshot yang dikirim sebelum tahap 31 terikat ke token per-HP (`api_tokens`), bukan akun. Tabel dan perintah klaimnya
+(`habitflow:claim-legacy`) dihapus di 31L. Kalau produksi masih punya snapshot lama yang belum diklaim, **klaim dulu dari rilis
+server sebelum migrasi `drop_api_tokens`** (commit `b96bc51` atau sebelumnya), karena migrasi itu menolak jalan selama ada
+snapshot tanpa akun. Lihat DEPLOY.md.
 
 ## Pengembangan dan tes
 

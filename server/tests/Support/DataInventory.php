@@ -35,6 +35,5 @@ class DataInventory
         'account_deletions' => 'Catatan audit penghapusan: hanya waktu dan sumber, tanpa id, nama, atau email.',
         'jobs' => 'Antrean email. Baris yang memuat email pengguna dihapus oleh AccountDeletionService; sisanya hilang saat email terkirim.',
         'failed_jobs' => 'Email gagal kirim. Baris yang memuat email pengguna dihapus oleh AccountDeletionService; pembersihan berkala di 31K.',
-        'api_tokens' => 'Token per-HP tahap 19B tanpa pemilik akun. Sudah tidak diterima API sejak 31E (snapshot-nya diklaim ke akun lewat habitflow:claim-legacy); tabelnya dihapus di 31L.',
     ];
 }

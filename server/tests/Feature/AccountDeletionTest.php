@@ -59,11 +59,10 @@ class AccountDeletionTest extends TestCase
         DB::table('follow_ups')->insert(['user_id' => $user->id, 'title' => 'Telepon Pak Andi', 'created_at' => now(), 'updated_at' => now()]);
         DB::table('prayer_days')->insert(['user_id' => $user->id, 'date' => '2026-10-12', 'timezone' => 'Asia/Jakarta', 'created_at' => now(), 'updated_at' => now()]);
 
-        [$apiToken] = ApiToken::issue('hp-lama-'.$user->id);
-        $path = 'snapshots/'.$apiToken->id.'/uji-'.$user->id.'.enc';
+        $path = 'snapshots/'.$user->id.'/uji.enc';
         Storage::disk('local')->put($path, 'isi-terenkripsi');
         Snapshot::create([
-            'api_token_id' => $apiToken->id, 'user_id' => $user->id, 'schema_version' => 1,
+            'user_id' => $user->id, 'schema_version' => 1,
             'bytes' => 15, 'sha256' => str_repeat('b', 64), 'path' => $path,
         ]);
     }

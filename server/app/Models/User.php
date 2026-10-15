@@ -13,8 +13,8 @@ use Illuminate\Support\Str;
  * tahap 31). google_sub nullable karena tidak wajib. Akun email baru belum terverifikasi
  * (email_verified_at kosong) sampai kode 6 angka dari email dipakai; akun Google dianggap
  * terverifikasi. Kolom verifikasi dan persetujuan sengaja tidak mass-assignable: hanya
- * diisi lewat forceFill di alur yang memang berwenang. Beda dari ApiToken (token per-HP
- * tanpa akun, tahap 19B), yang dipensiunkan di 31E dan modelnya dihapus di 31L.
+ * diisi lewat forceFill di alur yang memang berwenang. Token per-HP tahap 19B
+ * (api_tokens) dipensiunkan di 31E dan dihapus di 31L.
  */
 class User extends Authenticatable
 {

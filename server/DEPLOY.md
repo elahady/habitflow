@@ -58,6 +58,13 @@ ssh elahady@<ip-vm> "cd ~/apps/habitflow && docker compose up -d --force-recreat
 ssh elahady@<ip-vm> "docker exec habitflow php artisan migrate --force"
 ```
 
+**Migrasi `drop_api_tokens` (31L) menolak jalan kalau masih ada snapshot tanpa akun.** Perintah klaim
+`habitflow:claim-legacy` sudah dihapus dari kode ini, jadi kalau produksi masih punya snapshot token 19B yang belum
+diklaim: deploy dulu rilis server `b96bc51` atau sebelumnya, jalankan
+`docker exec habitflow php artisan habitflow:claim-legacy <email> --token=<nama> --dry-run` lalu tanpa `--dry-run`
+untuk tiap HP (pemilik, istri), baru deploy rilis ini. Pesan kegagalan migrasi menyebut jumlah snapshotnya; tabel dan
+datanya tidak disentuh kalau migrasi menolak.
+
 **Kenapa belum ada script otomatis**: proses ini baru stabil setelah beberapa kali
 trial-error (lihat catatan di `docs/concept.md` tiap tahap). Layak dibuatkan
 `scripts/deploy.sh` begitu polanya benar-benar tidak berubah lagi — belum dilakukan per

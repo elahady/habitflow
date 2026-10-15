@@ -71,16 +71,6 @@ class SnapshotApiTest extends TestCase
         $this->getJson('/api/v1/ping', $this->auth('salah'))->assertStatus(401);
     }
 
-    public function test_token_19b_lama_tidak_lagi_diterima(): void
-    {
-        [, $legacy] = ApiToken::issue('hp-lama');
-
-        $this->getJson('/api/v1/ping', $this->auth($legacy))->assertStatus(401);
-        $this->putJson('/api/v1/snapshot', $this->snapshot(), $this->auth($legacy))->assertStatus(401);
-        $this->getJson('/api/v1/snapshot/latest', $this->auth($legacy))->assertStatus(401);
-        $this->assertSame(0, Snapshot::count());
-    }
-
     public function test_ping_dengan_token_sah(): void
     {
         $this->getJson('/api/v1/ping', $this->auth())->assertOk()->assertJson(['ok' => true]);
@@ -104,7 +94,6 @@ class SnapshotApiTest extends TestCase
 
         $row = Snapshot::firstOrFail();
         $this->assertSame($this->user->id, $row->user_id);
-        $this->assertNull($row->api_token_id);
         $this->assertSame('perangkat-uji', $row->device_id);
         $this->assertSame(1, $row->schema_version);
 
