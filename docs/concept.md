@@ -2682,10 +2682,26 @@ Ini beda paling besar — **bukan cuma soal gaya, tapi konsep halaman yang beda 
        dan token `--warn-fixed` (terang dan gelap) ditambahkan. Label nav tetap "Follow-up" (mockup menulis "Kerja").
      - 39 tes baru (`WorkDayApiTest` 9, `WorkRecapTest` 9, `WorkRecapPageTest` 21, ditambah penyesuaian `FollowUpsPageTest`), 311 tes server lulus. Dilihat lewat
        screenshot Edge headless dari data contoh: desktop terang dan gelap, dan lebar 500px (riwayat di atas, panel di bawah).
-   - **3c. Android mengirim `work_days` ke server** ❌ **belum dikerjakan.** Sampai selesai, catatan EOD yang diketik di HP **tidak muncul di web**, status "belum EOD" di
-     web hanya berarti belum ada baris di server, dan catatan yang diketik di web tidak muncul di HP. Perlu: migrasi Room (kolom `dirty` dan `remoteUpdatedAt` di `work_days`,
-     database 10 ke 11), klien `PUT/GET /work-days`, dorong saat `completeEod` dan `completeScrum`, tarik saat sinkron, dan penanganan 409 (server menang atau tanya, mengikuti
-     follow-up).
+   - **3c. Android mengirim dan menarik `work_days`** ✅ di kode dan tes (15 Oktober 2026), **belum dicoba di HP atau emulator** dan belum dirilis (app dipasang manual).
+     Server dan halaman web 3a dan 3b **sudah di-deploy ke produksi** pada hari yang sama (migrasi `work_days` lulus; curl ke produksi: 201, 409 tanpa `updated_at`, 200 dengan `updated_at`,
+     422, 401; data uji dihapus).
+     - **Room 10 ke 11** (`MIGRATION_10_11`): `work_days` mendapat `remoteUpdatedAt` dan `dirty` (baris lama `dirty = 1`, jadi catatan EOD yang sudah ada ikut terkirim saat login).
+       Pola sama dengan migrasi follow-up. **Belum ada tes migrasi** (proyek ini tidak mengekspor skema Room dan tidak punya tes instrumen); yang menjaganya hanya validasi Room saat
+       app dibuka. Wajib dicoba di HP yang sudah berisi data lama sebelum dirilis.
+     - **Tulis:** `completeScrum` dan `completeEod` mengubah entitas (bukan model domain) supaya `remoteUpdatedAt` tidak hilang, dan menandai `dirty`. `HabitSyncScheduler` kini ikut
+       memantau tabel `work_days`, jadi perubahan memicu dorong dengan jeda yang sama dengan follow-up. Pemulihan snapshot menghasilkan baris `dirty`, jadi terkirim ulang.
+     - **Dorong** (`pushWorkDays`): PUT per hari yang `dirty`. 201 atau 200: simpan `updated_at` server dan hapus `dirty` **hanya kalau isinya belum berubah selama permintaan jalan**
+       (`clearDirtyIfUnchanged`), jadi catatan yang diketik di sela-sela tidak dianggap terkirim.
+     - **Bentrok 409 digabung otomatis, tanpa dialog** (`mergeWorkDay`, tes murni): catatan sama atau salah satunya kosong pakai yang berisi; dua-duanya berisi dan beda,
+       **keduanya dipertahankan** (server dulu, lalu milik HP, dipisah baris kosong), jadi tidak ada tulisan yang hilang; catatan kosong di HP **tidak** menghapus catatan di server;
+       waktu daily scrum dan EOD selesai memakai yang lebih akhir. Setelah digabung dikirim sekali lagi dengan cap waktu server; kalau isinya sudah sama dengan server, tidak dikirim.
+       Ini beda dari follow-up (dialog pilih) karena catatan EOD adalah teks bebas yang mudah digabung dan jarang bentrok. Akibatnya perlu diketahui: dua perangkat yang menulis catatan
+       berbeda di hari yang sama menghasilkan catatan gabungan, bukan salah satunya.
+     - **Tarik** (`mergeWorkDays`): 60 hari terbaru dari `GET /work-days`. Hari yang `dirty` di HP tidak ditimpa; hari yang belum ada di HP dimasukkan; yang tidak `dirty` dan berubah di server
+       ditimpa. Server tidak menghapus hari, jadi tidak ada yang dibuang di HP.
+     - **Keluar:** catatan EOD yang belum terkirim kini ikut dihitung di peringatan perubahan belum terkirim (`ChangeCounts.unsyncedWorkDays`).
+     - 20 tes baru (`WorkDaySyncTest` 12, klien 8; `SignOutCoordinatorTest` disesuaikan), 593 tes unit lulus.
+     - **Belum ada** ringkasan EOD per hari (X dari Y selesai) untuk riwayat web; itu butuh kolom baru yang diisi saat EOD selesai dan masih usulan.
 4. **Kesehatan di beranda**: ini tahap 30 langkah 5, dikerjakan di jalurnya sendiri (langkah 3-4 server dan Android
    kirim data dulu sebelum web bisa menampilkan apa pun).
 

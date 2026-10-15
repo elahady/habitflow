@@ -1,11 +1,13 @@
 package com.roziqrizal.habitflow.data.sync
 
 import com.roziqrizal.habitflow.data.FollowUpEntity
+import com.roziqrizal.habitflow.data.WorkDayEntity
 import com.roziqrizal.habitflow.domain.work.DailyBrief
 import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -366,5 +368,117 @@ class FollowUpSyncClientTest {
         server.status = 200
         server.responseBody = "bukan json"
         assertEquals(HabitApiResult.ServerError(200), client().listDailyBriefs())
+    }
+
+    // --- Catatan harian kerja (tahap 33 langkah 3c) ---
+
+    private val WORK_DAY_JSON = """{"id":1,"user_id":1,"date":"2026-10-15","eod_note":"Modul supplier dipindah ke besok.",
+        "scrum_done_at":"2026-10-15T01:00:00.000000Z","eod_done_at":"2026-10-15T09:03:00.000000Z",
+        "created_at":"2026-10-15T01:00:00.000000Z","updated_at":"2026-10-15T09:03:05.000000Z"}"""
+
+    private val EXPECTED_WORK_DAY = RemoteWorkDay(
+        date = "2026-10-15",
+        eodNote = "Modul supplier dipindah ke besok.",
+        scrumDoneAt = Instant.parse("2026-10-15T01:00:00Z").toEpochMilli(),
+        eodDoneAt = Instant.parse("2026-10-15T09:03:00Z").toEpochMilli(),
+        updatedAt = "2026-10-15T09:03:05.000000Z",
+    )
+
+    @Test
+    fun daftarHariKerjaMembacaCatatanDanWaktu() = runBlocking {
+        server.responseBody = """{"work_days":[$WORK_DAY_JSON,
+            {"date":"2026-10-14","eod_note":null,"scrum_done_at":null,"eod_done_at":null,"updated_at":"2026-10-14T09:00:00.000000Z"}]}"""
+
+        val result = client().listWorkDays() as HabitApiResult.Success
+
+        assertEquals("GET", server.lastMethod)
+        assertEquals("/api/v1/work-days", server.lastPath)
+        assertEquals("Bearer token-uji", server.lastAuth)
+        assertEquals(listOf(EXPECTED_WORK_DAY, RemoteWorkDay("2026-10-14", null, null, null, "2026-10-14T09:00:00.000000Z")), result.value)
+    }
+
+    @Test
+    fun hariKerjaRusakDilewatiBukanMenggagalkanSemua() = runBlocking {
+        server.responseBody = """{"work_days":[
+            {"date":"bukan-tanggal","eod_note":"x","updated_at":"2026-10-14T09:00:00.000000Z"},
+            {"date":"2026-10-13","eod_note":"x","eod_done_at":"bukan waktu","updated_at":"2026-10-13T09:00:00.000000Z"},
+            $WORK_DAY_JSON]}"""
+
+        val result = client().listWorkDays() as HabitApiResult.Success
+
+        assertEquals(listOf("2026-10-15"), result.value.map { it.date })
+    }
+
+    @Test
+    fun daftarHariKerjaGalat() = runBlocking {
+        server.status = 401
+        assertEquals(HabitApiResult.Unauthorized, client().listWorkDays())
+        server.status = 500
+        assertEquals(HabitApiResult.ServerError(500), client().listWorkDays())
+        server.status = 200
+        server.responseBody = "bukan json"
+        assertEquals(HabitApiResult.ServerError(200), client().listWorkDays())
+    }
+
+    @Test
+    fun kirimHariBaruTanpaUpdatedAtMembacaJawaban201() = runBlocking {
+        server.status = 201
+        server.responseBody = """{"work_day":$WORK_DAY_JSON}"""
+        val entity = WorkDayEntity("2026-10-15", "Modul supplier dipindah ke besok.", 1_000L, 2_000L)
+
+        val result = client().putWorkDay(entity) as HabitApiResult.Success
+
+        assertEquals("PUT", server.lastMethod)
+        assertEquals("/api/v1/work-days/2026-10-15", server.lastPath)
+        val body = JSONObject(server.lastBody)
+        assertEquals("Modul supplier dipindah ke besok.", body.getString("eod_note"))
+        assertEquals("1970-01-01T00:00:01Z", body.getString("scrum_done_at"))
+        assertEquals("1970-01-01T00:00:02Z", body.getString("eod_done_at"))
+        assertTrue("baris yang belum pernah terkirim tidak menyertakan updated_at", !body.has("updated_at"))
+        assertEquals(EXPECTED_WORK_DAY, result.value)
+    }
+
+    @Test
+    fun kirimUbahanMenyertakanUpdatedAtDanMengosongkanCatatanKosong() = runBlocking {
+        server.responseBody = """{"work_day":$WORK_DAY_JSON}"""
+        val entity = WorkDayEntity("2026-10-15", "   ", null, null, remoteUpdatedAt = "2026-10-15T09:03:05.000000Z", dirty = true)
+
+        client().putWorkDay(entity) as HabitApiResult.Success
+
+        val body = JSONObject(server.lastBody)
+        assertEquals("2026-10-15T09:03:05.000000Z", body.getString("updated_at"))
+        assertTrue(body.isNull("eod_note"))
+        assertTrue(body.isNull("scrum_done_at"))
+        assertTrue(body.isNull("eod_done_at"))
+    }
+
+    @Test
+    fun kirimBentrok409MengembalikanVersiServer() = runBlocking {
+        server.status = 409
+        server.responseBody = """{"message":"Berubah di tempat lain.","work_day":$WORK_DAY_JSON}"""
+
+        val result = client().putWorkDay(WorkDayEntity("2026-10-15", "x", null, null))
+
+        assertEquals(EXPECTED_WORK_DAY, (result as HabitApiResult.Conflict).server)
+    }
+
+    @Test
+    fun kirimDitolakDanGalat() = runBlocking {
+        server.status = 422
+        server.responseBody = """{"message":"The eod note field must not be greater than 5000 characters."}"""
+        assertTrue(client().putWorkDay(WorkDayEntity("2026-10-15", "x", null, null)) is HabitApiResult.Rejected)
+        server.status = 401
+        assertEquals(HabitApiResult.Unauthorized, client().putWorkDay(WorkDayEntity("2026-10-15", "x", null, null)))
+        server.status = 503
+        assertEquals(HabitApiResult.ServerError(503), client().putWorkDay(WorkDayEntity("2026-10-15", "x", null, null)))
+    }
+
+    @Test
+    fun hariDariServerMenjadiEntitasBersih() {
+        val entity = EXPECTED_WORK_DAY.toEntity()
+
+        assertEquals("2026-10-15", entity.date)
+        assertEquals("2026-10-15T09:03:05.000000Z", entity.remoteUpdatedAt)
+        assertFalse(entity.dirty)
     }
 }

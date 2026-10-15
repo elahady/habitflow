@@ -104,14 +104,16 @@ class WorkRepository(private val db: HabitDatabase) {
         }
     }
 
+    // Dua fungsi di bawah mengubah entitas, bukan model domain, supaya `remoteUpdatedAt` dari server tetap ada
+    // (dibutuhkan untuk deteksi bentrok) dan baris ditandai dirty agar terkirim (tahap 33 langkah 3c).
     suspend fun completeScrum(date: LocalDate, nowMillis: Long) {
-        val current = workDays.get(date.toString())?.toDomain() ?: WorkDay(date)
-        workDays.upsert(current.copy(scrumDoneAt = nowMillis).toEntity())
+        val current = workDays.get(date.toString()) ?: WorkDayEntity(date.toString(), null, null, null)
+        workDays.upsert(current.copy(scrumDoneAt = nowMillis, dirty = true))
     }
 
     /** Menyimpan catatan EOD dan menandai EOD selesai. Catatan kosong disimpan sebagai tanpa catatan. */
     suspend fun completeEod(date: LocalDate, note: String, nowMillis: Long) {
-        val current = workDays.get(date.toString())?.toDomain() ?: WorkDay(date)
-        workDays.upsert(current.copy(eodNote = note.trim().ifEmpty { null }, eodDoneAt = nowMillis).toEntity())
+        val current = workDays.get(date.toString()) ?: WorkDayEntity(date.toString(), null, null, null)
+        workDays.upsert(current.copy(eodNote = note.trim().ifEmpty { null }, eodDoneAt = nowMillis, dirty = true))
     }
 }

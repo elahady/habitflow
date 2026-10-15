@@ -44,7 +44,7 @@ dihapus. Kalau salah satu dari ketiganya berbeda dari tabel ini, tabel ini yang 
 
 | Lokasi | Isi | Dihapus saat Keluar |
 |---|---|---|
-| Room `habitflow.db` (18 entitas, versi 10) | semua data di atas dalam bentuk lokal, termasuk berat, tensi, makan, kalender | Ya |
+| Room `habitflow.db` (18 entitas, versi 11) | semua data di atas dalam bentuk lokal, termasuk berat, tensi, makan, kalender | Ya |
 | `settings.xml` | tema, lokasi (nama dan koordinat), pengingat, tinggi dan target berat | Ya, **kecuali tema** (`theme_mode`: preferensi perangkat). Semua berkas dibuka lewat `PrefFile`; tes memastikan tidak ada yang terlewat |
 | `account.xml` | token sesi, profil akun, penanda sesi berakhir, dan `owner_account_id` (akun pemilik data lokal) | Sesi: ya. `owner_account_id`: dihapus bersama data lokal (31H) |
 | `sync.xml` | pilihan sinkron otomatis, status terakhir, id perangkat, sidik jari cadangan terakhir (31H). Alamat dan token 19B dihapus otomatis saat app dibuka sejak 31F | Ya |

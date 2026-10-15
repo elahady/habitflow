@@ -5,10 +5,14 @@ import com.roziqrizal.habitflow.data.HabitDatabase
 import com.roziqrizal.habitflow.data.HabitEntry
 import com.roziqrizal.habitflow.data.PendingDeleteEntity
 import com.roziqrizal.habitflow.data.Todo
+import com.roziqrizal.habitflow.data.WorkDayEntity
+import com.roziqrizal.habitflow.data.toDomain
 import com.roziqrizal.habitflow.data.account.AccountSettings
 import com.roziqrizal.habitflow.data.account.UnauthorizedListener
 import com.roziqrizal.habitflow.domain.sync.EntryMergeAction
 import com.roziqrizal.habitflow.domain.sync.entryMergeAction
+import com.roziqrizal.habitflow.domain.work.mergeWorkDay
+import com.roziqrizal.habitflow.domain.work.sameContentAs
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -45,6 +49,7 @@ class HabitSyncManager(
     private val todos = db.todoDao()
     private val outbox = db.habitSyncOutboxDao()
     private val followUps = db.followUpDao()
+    private val workDays = db.workDayDao()
 
     private val _status = MutableStateFlow<HabitSyncStatus>(HabitSyncStatus.Idle)
     val status: StateFlow<HabitSyncStatus> = _status.asStateFlow()
@@ -82,6 +87,8 @@ class HabitSyncManager(
         pushFollowUpCreates(client)?.let { return fail(it) }
         val followUpUpdates = pushFollowUpUpdates(client)
         followUpUpdates.error?.let { return fail(it) }
+
+        pushWorkDays(client)?.let { return fail(it) }
 
         pushEntryOutbox(client)?.let { return fail(it) }
 
@@ -227,6 +234,45 @@ class HabitSyncManager(
         return UpdateOutcome(null, conflicted)
     }
 
+    /**
+     * Kirim catatan harian kerja yang dirty (tahap 33 langkah 3c). Server menjawab 409 kalau barisnya sudah berubah di
+     * tempat lain (catatan EOD dari web, atau HP ini belum pernah mengirim tanggal itu): isinya digabung otomatis
+     * ([mergeWorkDay], tidak ada tulisan yang hilang) dan dikirim sekali lagi dengan cap waktu server. Kalau masih
+     * bentrok, baris dibiarkan dirty untuk putaran berikutnya.
+     */
+    private suspend fun pushWorkDays(client: HabitSyncClient): HabitApiResult<Unit>? {
+        workDays.dirtyForSync().forEach { item ->
+            when (val result = client.putWorkDay(item)) {
+                is HabitApiResult.Success -> markWorkDaySent(item, result.value)
+                is HabitApiResult.Conflict -> {
+                    val server = result.server
+                    val merged = mergeWorkDay(item.toDomain() ?: return@forEach, server.toDomain())
+                    if (merged.sameContentAs(server.toDomain())) {
+                        // Server sudah punya semuanya: cukup ikuti, tidak perlu mengirim.
+                        workDays.upsert(WorkDayEntity(item.date, merged.eodNote, merged.scrumDoneAt, merged.eodDoneAt, server.updatedAt, dirty = false))
+                    } else {
+                        val retry = WorkDayEntity(item.date, merged.eodNote, merged.scrumDoneAt, merged.eodDoneAt, server.updatedAt, dirty = true)
+                        workDays.upsert(retry)
+                        when (val second = client.putWorkDay(retry)) {
+                            is HabitApiResult.Success -> markWorkDaySent(retry, second.value)
+                            is HabitApiResult.Conflict -> Unit // berubah lagi di sela-sela: putaran berikutnya
+                            is HabitApiResult.Rejected -> Unit
+                            else -> return second.asUnit()
+                        }
+                    }
+                }
+                is HabitApiResult.Rejected -> Unit // ditolak server (mis. catatan terlalu panjang): dibiarkan, tidak menahan yang lain
+                else -> return result.asUnit()
+            }
+        }
+        return null
+    }
+
+    private suspend fun markWorkDaySent(sent: WorkDayEntity, remote: RemoteWorkDay) {
+        workDays.setRemoteStamp(sent.date, remote.updatedAt)
+        workDays.clearDirtyIfUnchanged(sent.date, sent.eodNote, sent.scrumDoneAt, sent.eodDoneAt)
+    }
+
     private suspend fun pushEntryOutbox(client: HabitSyncClient): HabitApiResult<Unit>? {
         outbox.entryOutbox().forEach { pending ->
             val remoteHabitId = habits.getByIdForSync(pending.habitId)?.remoteId ?: return@forEach // habit belum tersinkron, coba lagi nanti
@@ -254,9 +300,13 @@ class HabitSyncManager(
         val followUpsResult = client.listFollowUps()
         if (followUpsResult !is HabitApiResult.Success) return fail(followUpsResult.asUnit())
 
+        val workDaysResult = client.listWorkDays()
+        if (workDaysResult !is HabitApiResult.Success) return fail(workDaysResult.asUnit())
+
         mergeHabits(habitsResult.value, today)
         mergeTodos(todosResult.value)
         mergeFollowUps(followUpsResult.value)
+        mergeWorkDays(workDaysResult.value)
 
         _status.value = HabitSyncStatus.Success(System.currentTimeMillis(), hadConflict = false)
         return HabitApiResult.Success(Unit)
@@ -306,6 +356,19 @@ class HabitSyncManager(
         followUps.sentToServer()
             .filter { it.remoteId !in onServer && !it.dirty }
             .forEach { followUps.delete(it.id) }
+    }
+
+    /**
+     * Hari yang dirty di HP tidak ditimpa (push yang menggabungkannya). Server tidak pernah menghapus hari, jadi tidak ada
+     * yang dibuang di HP. Hari yang tidak berubah sejak terakhir dilihat dilewati supaya tidak menulis ulang tanpa perlu.
+     */
+    private suspend fun mergeWorkDays(remoteItems: List<RemoteWorkDay>) {
+        remoteItems.forEach { remote ->
+            val local = workDays.get(remote.date)
+            if (local == null || (!local.dirty && local.remoteUpdatedAt != remote.updatedAt)) {
+                workDays.upsert(remote.toEntity())
+            }
+        }
     }
 
     private suspend fun mergeTodos(remoteTodos: List<RemoteTodo>) {

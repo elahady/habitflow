@@ -39,13 +39,20 @@ data class FollowUpEntity(
     val conflictJson: String? = null,
 )
 
-/** Catatan harian kerja: catatan EOD dan kapan daily scrum dan EOD diselesaikan. Satu baris per tanggal. */
+/**
+ * Catatan harian kerja: catatan EOD dan kapan daily scrum dan EOD diselesaikan. Satu baris per tanggal.
+ * Sinkron server (tahap 33 langkah 3c): [remoteUpdatedAt] adalah `updated_at` terakhir dari server (null berarti belum
+ * pernah terkirim), [dirty] true berarti ada perubahan lokal yang belum terkirim. Baris baru, hasil pemulihan snapshot,
+ * dan baris lama dari migrasi semuanya dirty, jadi terkirim begitu pengguna login.
+ */
 @Entity(tableName = "work_days")
 data class WorkDayEntity(
     @PrimaryKey val date: String,
     val eodNote: String?,
     val scrumDoneAt: Long?,
     val eodDoneAt: Long?,
+    val remoteUpdatedAt: String? = null,
+    val dirty: Boolean = true,
 )
 
 fun FollowUpEntity.toDomain(): FollowUp = FollowUp(
@@ -83,5 +90,3 @@ fun FollowUp.toEntity(): FollowUpEntity = FollowUpEntity(
 fun WorkDayEntity.toDomain(): WorkDay? = runCatching {
     WorkDay(LocalDate.parse(date), eodNote, scrumDoneAt, eodDoneAt)
 }.getOrNull()
-
-fun WorkDay.toEntity(): WorkDayEntity = WorkDayEntity(date.toString(), eodNote, scrumDoneAt, eodDoneAt)

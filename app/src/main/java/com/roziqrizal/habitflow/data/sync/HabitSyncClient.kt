@@ -1,6 +1,7 @@
 package com.roziqrizal.habitflow.data.sync
 
 import com.roziqrizal.habitflow.data.FollowUpEntity
+import com.roziqrizal.habitflow.data.WorkDayEntity
 import com.roziqrizal.habitflow.data.account.AccountClient
 import com.roziqrizal.habitflow.data.account.UnauthorizedListener
 import com.roziqrizal.habitflow.domain.work.DailyBrief
@@ -190,6 +191,34 @@ class HabitSyncClient(
         when (val raw = request("DELETE", "/api/v1/follow-ups/$remoteId")) {
             is Raw.Failed -> HabitApiResult.NetworkError(raw.detail)
             is Raw.Response -> if (raw.code == 204) HabitApiResult.Success(Unit) else failure(raw)
+        }
+
+    // --- Catatan harian kerja (tahap 33 langkah 3c) ---
+
+    /** Sampai 60 hari terbaru milik akun ini, terbaru dulu. */
+    suspend fun listWorkDays(): HabitApiResult<List<RemoteWorkDay>> =
+        when (val raw = request("GET", "/api/v1/work-days")) {
+            is Raw.Failed -> HabitApiResult.NetworkError(raw.detail)
+            is Raw.Response -> if (raw.code == 200) {
+                val parsed = parseList(raw.body, "work_days", RemoteWorkDay::fromJsonOrNull)
+                if (parsed is HabitApiResult.Success) HabitApiResult.Success(parsed.value.filterNotNull()) else HabitApiResult.ServerError(200)
+            } else {
+                failure(raw)
+            }
+        }
+
+    /**
+     * Upsert satu hari: 201 baris baru, 200 diubah. Kalau baris sudah ada di server, `updated_at` ([WorkDayEntity.remoteUpdatedAt])
+     * wajib dan harus sama; kalau tidak server menjawab 409 berisi versi terbarunya ([HabitApiResult.Conflict]).
+     */
+    suspend fun putWorkDay(item: WorkDayEntity): HabitApiResult<RemoteWorkDay> =
+        when (val raw = request("PUT", "/api/v1/work-days/${item.date}", item.toRequestJson().toString())) {
+            is Raw.Failed -> HabitApiResult.NetworkError(raw.detail)
+            is Raw.Response -> when (raw.code) {
+                200, 201 -> parseSingle(raw.body, "work_day", RemoteWorkDay::fromJson)
+                409 -> parseConflict(raw.body, "work_day", RemoteWorkDay::fromJson)
+                else -> failure(raw)
+            }
         }
 
     // --- Ringkasan harian dari Claude (tahap 32): hanya dibaca, ditulis skill di server ---

@@ -11,8 +11,10 @@ data class ChangeCounts(
     val unsyncedHabits: Int = 0,
     val unsyncedTodos: Int = 0,
     val unsyncedFollowUps: Int = 0,
+    /** Catatan harian kerja (EOD dan daily scrum) yang belum terkirim (tahap 33 langkah 3c). */
+    val unsyncedWorkDays: Int = 0,
 ) {
-    val total: Int get() = habitEntryOutbox + pendingDeletes + unsyncedHabits + unsyncedTodos + unsyncedFollowUps
+    val total: Int get() = habitEntryOutbox + pendingDeletes + unsyncedHabits + unsyncedTodos + unsyncedFollowUps + unsyncedWorkDays
 }
 
 /**
@@ -57,6 +59,7 @@ class RoomPendingChangeSource(
         unsyncedHabits = db.habitDao().unsyncedCount(),
         unsyncedTodos = db.todoDao().unsyncedCount(),
         unsyncedFollowUps = db.followUpDao().unsyncedCount(),
+        unsyncedWorkDays = db.workDayDao().unsyncedCount(),
     )
 
     override suspend fun backupState() = backupState.invoke()

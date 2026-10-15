@@ -81,7 +81,7 @@ class HabitSyncScheduler(context: Context, private val accountSettings: AccountS
         const val PERIODIC_MINUTES = 30L
         private const val PERIODIC = "habitflow-habit-sync-periodic"
         private const val AFTER_CHANGE = "habitflow-habit-sync-after-change"
-        private val TABLES = arrayOf("habits", "habit_entries", "todos", "follow_ups", "habit_entry_outbox", "pending_deletes")
+        private val TABLES = arrayOf("habits", "habit_entries", "todos", "follow_ups", "work_days", "habit_entry_outbox", "pending_deletes")
 
         fun newScope(): CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     }

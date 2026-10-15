@@ -328,6 +328,27 @@ interface WorkDayDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(day: WorkDayEntity)
+
+    // --- Sinkron server (tahap 33 langkah 3c) ---
+
+    @Query("SELECT * FROM work_days WHERE dirty = 1 ORDER BY date ASC")
+    suspend fun dirtyForSync(): List<WorkDayEntity>
+
+    @Query("SELECT COUNT(*) FROM work_days WHERE dirty = 1")
+    suspend fun unsyncedCount(): Int
+
+    @Query("UPDATE work_days SET remoteUpdatedAt = :stamp WHERE date = :date")
+    suspend fun setRemoteStamp(date: String, stamp: String)
+
+    /**
+     * Menandai terkirim hanya kalau isinya belum berubah sejak dikirim: pengguna bisa menulis catatan EOD lagi saat
+     * permintaan masih di jalan, dan perubahan itu tidak boleh dianggap sudah terkirim.
+     */
+    @Query(
+        "UPDATE work_days SET dirty = 0 WHERE date = :date AND eodNote IS :eodNote " +
+            "AND scrumDoneAt IS :scrumDoneAt AND eodDoneAt IS :eodDoneAt",
+    )
+    suspend fun clearDirtyIfUnchanged(date: String, eodNote: String?, scrumDoneAt: Long?, eodDoneAt: Long?)
 }
 
 @Dao

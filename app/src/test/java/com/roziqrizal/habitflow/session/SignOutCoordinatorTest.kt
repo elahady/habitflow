@@ -58,10 +58,12 @@ class SignOutCoordinatorTest {
 
     @Test
     fun jumlahPerubahanBelumTerkirimDihitungDariSemuaSumber() {
-        val counts = ChangeCounts(habitEntryOutbox = 2, pendingDeletes = 1, unsyncedHabits = 3, unsyncedTodos = 4, unsyncedFollowUps = 5)
+        val counts = ChangeCounts(
+            habitEntryOutbox = 2, pendingDeletes = 1, unsyncedHabits = 3, unsyncedTodos = 4, unsyncedFollowUps = 5, unsyncedWorkDays = 6,
+        )
 
-        assertEquals(15, counts.total)
-        assertEquals(PendingChanges(15, BackupState.Stale), PendingChanges.of(counts, BackupState.Stale))
+        assertEquals(21, counts.total)
+        assertEquals(PendingChanges(21, BackupState.Stale), PendingChanges.of(counts, BackupState.Stale))
     }
 
     @Test
@@ -74,6 +76,7 @@ class SignOutCoordinatorTest {
         assertTrue(PendingChanges.of(ChangeCounts(habitEntryOutbox = 1), BackupState.Saved).any)
         assertTrue(PendingChanges.of(ChangeCounts(pendingDeletes = 1), BackupState.Saved).any)
         assertTrue(PendingChanges.of(ChangeCounts(unsyncedFollowUps = 1), BackupState.Saved).any)
+        assertTrue("catatan EOD yang belum terkirim ikut diperingatkan", PendingChanges.of(ChangeCounts(unsyncedWorkDays = 1), BackupState.Saved).any)
         assertTrue("cadangan mati: data hanya di HP", PendingChanges.of(ChangeCounts(), BackupState.Off).any)
         assertTrue(PendingChanges.of(ChangeCounts(), BackupState.Stale).any)
     }

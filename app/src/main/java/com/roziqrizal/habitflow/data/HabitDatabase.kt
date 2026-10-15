@@ -17,7 +17,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         MealEntity::class, HabitManualMark::class,
         HabitEntryOutbox::class, PendingDelete::class,
     ],
-    version = 10,
+    version = 11,
     exportSchema = false,
 )
 abstract class HabitDatabase : RoomDatabase() {
@@ -56,7 +56,7 @@ abstract class HabitDatabase : RoomDatabase() {
                 )
                     .addMigrations(
                         MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8,
-                        MIGRATION_8_9, MIGRATION_9_10,
+                        MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11,
                     )
                     .addCallback(SeedCallback)
                     .build()
@@ -141,5 +141,17 @@ val MIGRATION_9_10 = object : Migration(9, 10) {
         db.execSQL("ALTER TABLE `follow_ups` ADD COLUMN `remoteUpdatedAt` TEXT")
         db.execSQL("ALTER TABLE `follow_ups` ADD COLUMN `dirty` INTEGER NOT NULL DEFAULT 1")
         db.execSQL("ALTER TABLE `follow_ups` ADD COLUMN `conflictJson` TEXT")
+    }
+}
+
+/**
+ * Database versi 10 ke 11 (tahap 33 langkah 3c): kolom sinkron server di `work_days` (`remoteUpdatedAt`, `dirty`).
+ * Baris lama diberi `dirty = 1` supaya catatan EOD yang sudah ada ikut terkirim ke server begitu pengguna login
+ * (lihat `HabitSyncManager`). Isi catatan tidak disentuh.
+ */
+val MIGRATION_10_11 = object : Migration(10, 11) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `work_days` ADD COLUMN `remoteUpdatedAt` TEXT")
+        db.execSQL("ALTER TABLE `work_days` ADD COLUMN `dirty` INTEGER NOT NULL DEFAULT 1")
     }
 }
