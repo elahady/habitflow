@@ -92,6 +92,11 @@ class User extends Authenticatable
         return $this->hasMany(PrayerDay::class);
     }
 
+    public function dailyBriefs(): HasMany
+    {
+        return $this->hasMany(DailyBrief::class);
+    }
+
     public function snapshots(): HasMany
     {
         return $this->hasMany(Snapshot::class);

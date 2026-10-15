@@ -58,6 +58,7 @@ class AccountDeletionTest extends TestCase
         DB::table('todos')->insert(['user_id' => $user->id, 'title' => 'Beli susu', 'date' => '2026-10-12', 'created_at' => now(), 'updated_at' => now()]);
         DB::table('follow_ups')->insert(['user_id' => $user->id, 'title' => 'Telepon Pak Andi', 'created_at' => now(), 'updated_at' => now()]);
         DB::table('prayer_days')->insert(['user_id' => $user->id, 'date' => '2026-10-12', 'timezone' => 'Asia/Jakarta', 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('daily_briefs')->insert(['user_id' => $user->id, 'date' => '2026-10-12', 'email_digest' => '3 email belum dibaca', 'created_at' => now(), 'updated_at' => now()]);
 
         $path = 'snapshots/'.$user->id.'/uji.enc';
         Storage::disk('local')->put($path, 'isi-terenkripsi');
@@ -147,7 +148,7 @@ class AccountDeletionTest extends TestCase
 
         $this->assertSame(1, User::count());
         $this->assertSame($sari->id, User::first()->id);
-        foreach (['user_tokens', 'email_codes', 'habits', 'schedule_blocks', 'todos', 'follow_ups', 'prayer_days', 'snapshots'] as $table) {
+        foreach (['user_tokens', 'email_codes', 'habits', 'schedule_blocks', 'todos', 'follow_ups', 'prayer_days', 'daily_briefs', 'snapshots'] as $table) {
             $this->assertSame(1, DB::table($table)->where('user_id', $sari->id)->count(), "Baris $table milik pengguna lain ikut terhapus.");
         }
         $this->assertSame(1, DB::table('habit_entries')->count());

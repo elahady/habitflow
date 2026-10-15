@@ -2414,7 +2414,17 @@ Rincian tiap butir:
 - **Kapan tabel `api_tokens` dihapus.** **Disetujui pemilik 11 Oktober 2026**: di 31L, setelah semua berjalan.
 - **Urutan terhadap tahap 29, 30 (langkah 3-6), 32, dan 33.** **Diputuskan pemilik 11 Oktober 2026: kerjakan tahap 31 sampai selesai dulu**, baru lanjut ke tahap-tahap lain yang sudah antre (termasuk tahap 33 yang dicatat hari yang sama).
 
-### Tahap 32: Rekap kerja otomatis dari Claude (diputuskan garis besar 11 Oktober 2026, belum dikoding)
+### Tahap 32: Rekap kerja otomatis dari Claude (diputuskan garis besar 11 Oktober 2026; langkah 1 selesai 15 Oktober 2026)
+
+**Status (15 Oktober 2026):** langkah 1 (server) selesai: migrasi `2026_10_15_100000_create_daily_briefs_table`
+(`user_id`, `date`, `email_digest`, `meeting_note`, unik per `user_id`+`date`), model `DailyBrief`, `DailyBriefController`,
+rute `GET`/`POST /api/v1/daily-briefs` (`user-token`), 7 tes baru (`DailyBriefApiTest`), 229 tes server lulus. Kontrak:
+`POST` adalah upsert per tanggal (201 saat baris baru, 200 saat menimpa); kolom yang **tidak dikirim tidak disentuh**
+dan yang dikirim `null` dikosongkan, jadi skill yang hanya mengirim `email_digest` tidak menghapus `meeting_note`.
+Batas 20.000 karakter per kolom. `GET` terbaru dulu, maksimal 31 baris, filter `date` dan `from`. Tanpa 409 (tidak ada
+penyunting manual). Tabel sudah masuk `DataInventory`, `AccountDeletionService` (+ tesnya), dan inventaris
+`rilis-play-store.md`. **Belum di-deploy.** Berikutnya: langkah 2 (tes manual lewat curl setelah deploy), langkah 3
+(`SKILL.md`), langkah 4 (kartu Android + web).
 
 Dibahas 11 Oktober 2026, lanjutan tahap 19 dan 27. Sumbernya: skill `morning-routine` yang dipakai pemilik tiap pagi
 di `C:\Project\MasuyaLab\masuya-context` untuk bikin jurnal harian di Notion ("Ruang Kerja : I am a Leader") —
