@@ -43,7 +43,8 @@
         .hf-bar { height: 6px; border-radius: 999px; background: var(--outline-variant); overflow: hidden; }
         .hf-bar-fill { height: 100%; background: var(--primary); border-radius: 999px; }
         .hf-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 16px; }
-        a.hf-stat { display: block; padding: 20px; color: inherit; text-decoration: none; min-width: 0; }
+        .hf-stat { display: block; padding: 20px; min-width: 0; }
+        a.hf-stat { color: inherit; text-decoration: none; }
         a.hf-stat:hover { border-color: var(--primary); }
         a.hf-stat:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
         .hf-stat-head { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; font-size: 13px; font-weight: 600; color: var(--on-surface-variant); }
@@ -52,6 +53,16 @@
         .hf-stat-rows { display: flex; flex-direction: column; gap: 8px; }
         .hf-stat-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 13px; color: var(--on-surface-variant); }
         .hf-stat-row .hf-serif { font-size: 20px; color: inherit; }
+        .hf-heat { display: grid; grid-auto-flow: column; grid-template-rows: repeat(7, auto); gap: 2px; }
+        .hf-heat > i { display: block; aspect-ratio: 1; border-radius: 2px; }
+        .hf-heat-mini { max-width: 240px; }
+        .hf-heat-none { background: transparent; }
+        .hf-heat-0 { background: var(--heat-0); } .hf-heat-1 { background: var(--heat-1); } .hf-heat-2 { background: var(--heat-2); }
+        .hf-heat-3 { background: var(--heat-3); } .hf-heat-4 { background: var(--heat-4); }
+        .hf-legend { display: flex; align-items: center; justify-content: flex-end; gap: 4px; font-size: 12px; color: var(--on-surface-variant); }
+        .hf-legend i { width: 12px; height: 12px; border-radius: 2px; display: block; }
+        .hf-section-title { font-family: 'Libre Caslon Text', serif; font-weight: 400; margin: 0; }
+        .hf-chip { display: inline-flex; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; background: var(--primary-fixed); color: var(--on-primary-container); }
         .error-text { color: var(--error); font-size: 13px; margin-top: 6px; }
         .notice { background: var(--primary-fixed); color: var(--on-primary-container); padding: 12px 16px; border-radius: 12px; font-size: 14px; line-height: 1.5; margin-bottom: 16px; }
         .notice.error { background: transparent; color: var(--error); border: 1px solid var(--error); }

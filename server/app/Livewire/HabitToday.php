@@ -4,13 +4,14 @@ namespace App\Livewire;
 
 use App\Models\Habit;
 use App\Models\Todo;
+use App\Support\HabitStats;
 use App\Support\UserDay;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
 
 /**
- * Halaman web untuk habit + to-do harian (tahap 28, versi sederhana - tanpa heatmap/level,
- * itu menyusul). Satu halaman: checklist habit hari ini + to-do, dan kelola habit di bawahnya.
+ * Halaman web untuk habit + to-do harian (tahap 28), kartu ringkas, streak, dan heatmap (tahap 33 langkah 2,
+ * lihat [HabitStats]). Satu halaman: checklist habit hari ini + to-do, kontribusi, dan kelola habit.
  */
 class HabitToday extends Component
 {
@@ -53,9 +54,10 @@ class HabitToday extends Component
         $this->newHabitName = '';
     }
 
-    public function startEditing(int $habitId, string $currentName): void
+    public function startEditing(int $habitId): void
     {
-        $this->editingName[$habitId] = $currentName;
+        // Nama dibaca di server, bukan dikirim dari view: nama berisi tanda kutip merusak ekspresi wire:click.
+        $this->editingName[$habitId] = $this->habit($habitId)->name;
     }
 
     public function saveName(int $habitId): void
@@ -127,9 +129,17 @@ class HabitToday extends Component
 
         $todos = auth()->user()->todos()->whereDate('date', $this->today())->orderBy('id')->get();
 
+        $user = auth()->user();
+        $today = $this->today();
+
         return view('livewire.habit-today', [
             'habits' => $habits,
             'todos' => $todos,
+            'today' => $today,
+            'dateLabel' => UserDay::now($user)->locale('id')->translatedFormat('l, j F Y'),
+            'doneHabits' => $habits->filter(fn ($habit) => $habit->entries->isNotEmpty())->count(),
+            'stats' => HabitStats::for($user, $today),
+            'miniStart' => HabitStats::heatmapStart($today, HabitStats::MINI_WEEKS),
         ])->layout('components.layout', ['title' => 'Habit']);
     }
 }

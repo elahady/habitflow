@@ -4,36 +4,18 @@
 
     <livewire:schedule-card />
 
-    @php
-        $habitPct = $summary['habits']['total'] > 0 ? round($summary['habits']['done'] / $summary['habits']['total'] * 100) : 0;
-        $todoPct = $summary['todos']['total'] > 0 ? round($summary['todos']['done'] / $summary['todos']['total'] * 100) : 0;
-    @endphp
     <div class="hf-strip" style="margin-bottom: 16px;">
-        <a href="{{ route('habit') }}" class="hf-card hf-stat" aria-label="Habit hari ini: {{ $summary['habits']['done'] }} dari {{ $summary['habits']['total'] }}">
-            <div class="hf-stat-head">
+        <x-progress-card title="Habit hari ini" :href="route('habit')" :done="$summary['habits']['done']" :total="$summary['habits']['total']" empty="Belum ada habit.">
+            <x-slot:icon>
                 <svg class="hf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M8 12l2.5 2.5L16 9"></path></svg>
-                <span>Habit hari ini</span>
-            </div>
-            @if ($summary['habits']['total'] > 0)
-                <div class="hf-serif hf-stat-value">{{ $summary['habits']['done'] }} / {{ $summary['habits']['total'] }}</div>
-                <div class="hf-bar" aria-hidden="true"><div class="hf-bar-fill" style="width: {{ $habitPct }}%;"></div></div>
-            @else
-                <div class="hf-stat-note">Belum ada habit.</div>
-            @endif
-        </a>
+            </x-slot:icon>
+        </x-progress-card>
 
-        <a href="{{ route('habit') }}" class="hf-card hf-stat" aria-label="To-do hari ini: {{ $summary['todos']['done'] }} dari {{ $summary['todos']['total'] }}">
-            <div class="hf-stat-head">
+        <x-progress-card title="To-do hari ini" :href="route('habit')" :done="$summary['todos']['done']" :total="$summary['todos']['total']" empty="Belum ada to-do hari ini.">
+            <x-slot:icon>
                 <svg class="hf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
-                <span>To-do hari ini</span>
-            </div>
-            @if ($summary['todos']['total'] > 0)
-                <div class="hf-serif hf-stat-value">{{ $summary['todos']['done'] }} / {{ $summary['todos']['total'] }}</div>
-                <div class="hf-bar" aria-hidden="true"><div class="hf-bar-fill" style="width: {{ $todoPct }}%;"></div></div>
-            @else
-                <div class="hf-stat-note">Belum ada to-do hari ini.</div>
-            @endif
-        </a>
+            </x-slot:icon>
+        </x-progress-card>
 
         <a href="{{ route('follow-ups') }}" class="hf-card hf-stat" aria-label="Follow-up kerja">
             <div class="hf-stat-head">

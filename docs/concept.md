@@ -2638,7 +2638,26 @@ Ini beda paling besar — **bukan cuma soal gaya, tapi konsep halaman yang beda 
      **Belum:** dilihat di produksi dengan data nyata.
    - **Belum dari baris Beranda di tabel audit:** kartu hero "Fokus kesehatan" dan section Kesehatan (tahap 30 langkah 5), dan judul kartu
      jadwal "Jadwal hari ini" vs "Jadwal sekarang".
-2. **Habit**: bungkus ulang jadi kartu stat + gaya `hf-card`, lalu endpoint heatmap web (baru) dan komponen heatmap.
+2. ✅ **Habit** (kode dan tes selesai 15 Oktober 2026, **belum di-deploy**; langkah 1 sudah di-deploy 15 Oktober 2026 sore): baris tanggal, 3 kartu
+   (Habit hari ini, To-do hari ini, Streak + terpanjang), kartu "Hari ini" bergaya `hf-card` dengan keterangan habit wajib, bagian
+   **Kontribusi** (heatmap gabungan + heatmap per habit), dan kartu Kelola Habit.
+   - **Tanpa endpoint API baru:** audit menduga perlu endpoint heatmap, tapi halaman Livewire membaca database langsung lewat
+     `App\Support\HabitStats`, jadi tidak ada API yang ditambah. Android tidak terpengaruh.
+   - **`HabitStats` adalah salinan PHP** dari `dayLevel`, `isDayComplete`, `currentStreak`, `longestStreak`, `heatmapStart`
+     (`domain/HabitRules.kt`, `Contribution.kt`, `Heatmap.kt`, `DayScore.kt`). Level: 0 tak ada centang, 1 kurang dari 50%, 2 sedikitnya 50%,
+     3 semua habit, 4 semua habit dan minimal 2 to-do selesai. Streak: hari ini belum lengkap tidak memutus. Kalau satu sisi berubah, ubah keduanya.
+   - **Satu beda yang disengaja:** server tidak tahu tanggal habit dibuat di HP (`habits.created_at` = saat pertama tersinkron). Tanggal "dibuat"
+     di web = yang lebih awal antara `created_at` (zona waktu pengguna) dan centang tertua habit itu, supaya riwayat sebelum sinkron tidak
+     hilang dan hari sebelum habit ada tidak dihitung gagal.
+   - **Beda dari mockup, disengaja:** heatmap gabungan **53 minggu** (mockup 66), mengikuti batas atas di `docs/rancangan.md`; label legenda
+     "Sedikit/Banyak" (mockup "Less/More"); kartu To-do `selesai / jumlah` (sama dengan Beranda). Lebar halaman tetap 56rem, bukan 72rem
+     seperti mockup, jadi di layar sempit heatmap gabungan bisa digulir ke samping (awalnya terbuka di minggu terbaru).
+   - Token warna `--heat-0..4` ditambahkan ke tema (terang dan gelap, nilai dari mockup). Komponen Blade baru: `x-progress-card` (dipakai Beranda dan
+     Habit) dan `x-heatmap`. Kelas `hf-*` di `layout.blade.php`. Halaman Follow-up dan Tugas Rumah belum dipindah ke gaya ini.
+   - **Perbaikan sampingan:** tombol "Ubah" nama habit mengirim nama lewat ekspresi `wire:click`, jadi nama berisi tanda kutip (misalnya
+     "Baca Qur'an") merusak tombolnya. Kini hanya id yang dikirim dan nama dibaca di server (tes memakai nama berkutip).
+   - 23 tes baru (`HabitStatsTest`, `HabitPageTest`), 272 tes server lulus. Dilihat lewat screenshot Edge headless dari data contoh (9 habit,
+     riwayat 300 hari): desktop terang dan gelap, lebar 500px. **Belum:** produksi dengan data nyata, dan heatmap di lebar 390px.
 3. **Kerja/Follow-up**: migrasi daily scrum/EOD ke web (tabel + endpoint baru, pola sama seperti tahap 27/29), baru
    susun ulang jadi halaman "Rekap hari ini" dengan filter chip. Bagian Meeting & briefing dan Ringkasan Claude
    menunggu tahap 32.
