@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+printf 'Use%%\n %s%%\n' "${FAKE_DISK:-40}"

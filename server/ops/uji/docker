@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# Tiruan `docker` untuk uji-ops.sh. Memakai FAKE_* dari lingkungan; semua keadaan ada di $FAKE_STATE.
+echo "docker $*" >> "$FAKE_STATE/docker.log"
+cmd="$1"; shift
+case "$cmd" in
+  inspect)
+    c="${@: -1}"
+    case " ${FAKE_DOWN:-} " in *" $c "*) echo false ;; *) echo true ;; esac ;;
+  run|rm) exit 0 ;;
+  exec)
+    stdin_mode=0
+    while true; do
+      case "${1:-}" in -i) stdin_mode=1; shift ;; -e) shift 2 ;; *) break ;; esac
+    done
+    container="$1"; shift
+    prog="$1"; shift
+    case "$container" in
+      habitflow)
+        case "$prog" in
+          printenv) case "$1" in DB_DATABASE) echo habitflow ;; DB_USERNAME) echo hf ;; DB_PASSWORD) echo rahasia ;; esac ;;
+          sh) tar -cf - -C "$FAKE_STORAGE" snapshots ;;
+        esac ;;
+      shared-mysql)
+        case "$prog" in
+          mysqldump)
+            [ "${FAKE_DUMP_FAIL:-0}" = 1 ] && { echo "mysqldump: akses ditolak" >&2; exit 2; }
+            echo "-- MySQL dump fake"
+            while IFS=' ' read -r t n; do echo "-- fake-table $t $n"; done < "$FAKE_TABLES"
+            [ "${FAKE_DUMP_TRUNCATE:-0}" = 1 ] || echo "-- Dump completed on 2026-10-15 03:00:00" ;;
+          mysql)
+            sql="${@: -1}"
+            case "$sql" in
+              *information_schema*) cut -d' ' -f1 "$FAKE_TABLES" ;;
+              *"FROM jobs WHERE"*) echo "${FAKE_STUCK:-0}" ;;
+              *"FROM failed_jobs"*) echo "${FAKE_FAILED:-0}" ;;
+              *"COUNT(*) FROM"*)
+                t="$(echo "$sql" | sed -E 's/.*FROM `([^`]+)`.*/\1/')"
+                awk -v t="$t" '$1==t{print $2}' "$FAKE_TABLES" ;;
+            esac ;;
+        esac ;;
+      habitflow-restore-drill)
+        case "$prog" in
+          mysqladmin) exit 0 ;;
+          mysql)
+            if [ "$stdin_mode" = 1 ]; then cat > "$FAKE_STATE/restored"; exit 0; fi
+            sql="${@: -1}"
+            t="$(echo "$sql" | sed -E 's/.*FROM `([^`]+)`.*/\1/')"
+            case " ${FAKE_RESTORE_DROP:-} " in *" $t "*) echo "ERROR 1146: tabel $t tidak ada" >&2; exit 1 ;; esac
+            if [ -n "${FAKE_RESTORE_ALTER:-}" ] && [ "${FAKE_RESTORE_ALTER%%:*}" = "$t" ]; then echo "${FAKE_RESTORE_ALTER##*:}"; exit 0; fi
+            grep "^-- fake-table $t " "$FAKE_STATE/restored" | awk '{print $4}' ;;
+        esac ;;
+    esac ;;
+esac

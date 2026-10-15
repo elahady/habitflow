@@ -1,0 +1,9 @@
+# Salin ke /etc/logrotate.d/habitflow di VM (sudo cp, pemilik root). Log cron skrip operasional: pemantau menulis tiap 10 menit.
+/home/elahady/backups/habitflow/*.log {
+    weekly
+    rotate 8
+    compress
+    missingok
+    notifempty
+    copytruncate
+}

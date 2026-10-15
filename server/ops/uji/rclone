@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# Tiruan `rclone`: remote "fake:" dipetakan ke folder $FAKE_REMOTE.
+echo "rclone $*" >> "$FAKE_STATE/rclone.log"
+map() { echo "$FAKE_REMOTE/${1#*:}"; }
+cmd="$1"; shift
+case "$cmd" in
+  copyto)
+    [ "${FAKE_RCLONE_FAIL:-0}" = 1 ] && { echo "rclone: koneksi putus" >&2; exit 1; }
+    src="$1"; dst="$2"
+    case "$src" in fake:*) src="$(map "$src")" ;; esac
+    case "$dst" in fake:*) dst="$(map "$dst")" ;; esac
+    mkdir -p "$(dirname "$dst")"; cp "$src" "$dst" ;;
+  lsf)
+    fmt="" pat="" path=""
+    while [ $# -gt 0 ]; do case "$1" in --format) fmt="$2"; shift ;; --include) pat="$2"; shift ;; *) path="$1" ;; esac; shift; done
+    p="$(map "$path")"
+    if [ -f "$p" ]; then
+      [ "$fmt" = s ] && { [ "${FAKE_LSF_WRONG:-0}" = 1 ] && echo 1 || wc -c < "$p" | tr -d ' '; } || basename "$p"
+    elif [ -d "$p" ]; then
+      ( cd "$p" && for f in $pat; do [ -e "$f" ] && echo "$f"; done ) 2>/dev/null
+    fi ;;
+  delete)
+    path="$1"; shift; days=""; pat=""
+    while [ $# -gt 0 ]; do case "$1" in --min-age) days="${2%d}"; shift ;; --include) pat="$2"; shift ;; esac; shift; done
+    find "$(map "$path")" -maxdepth 1 -type f -name "$pat" -mtime "+$days" -delete ;;
+esac
