@@ -163,7 +163,7 @@ class MainActivity : ComponentActivity() {
                     )
                     val workRepo = remember { WorkRepository(HabitDatabase.get(applicationContext)) }
                     val work: WorkViewModel = viewModel(
-                        factory = viewModelFactory { initializer { WorkViewModel(workRepo, clock) } },
+                        factory = viewModelFactory { initializer { WorkViewModel(workRepo, clock, graph.dailyBriefRepository) } },
                     )
                     val healthRepo = remember { HealthRepository(HabitDatabase.get(applicationContext)) }
                     val health: HealthViewModel = viewModel(

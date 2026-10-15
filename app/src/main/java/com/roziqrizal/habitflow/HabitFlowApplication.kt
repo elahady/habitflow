@@ -23,6 +23,8 @@ import com.roziqrizal.habitflow.data.health.HealthConnectStepsSource
 import com.roziqrizal.habitflow.data.health.StepsTracker
 import com.roziqrizal.habitflow.data.WorkReminderSettings
 import com.roziqrizal.habitflow.data.sync.AppSettingsGateway
+import com.roziqrizal.habitflow.data.sync.DailyBriefRepository
+import com.roziqrizal.habitflow.data.sync.DailyBriefStore
 import com.roziqrizal.habitflow.data.sync.HabitSyncManager
 import com.roziqrizal.habitflow.data.sync.HabitSyncScheduler
 import com.roziqrizal.habitflow.data.sync.SnapshotRepository
@@ -98,6 +100,9 @@ class AppGraph(app: Application) {
     )
     val habitSyncManager: HabitSyncManager by lazy { HabitSyncManager(db, accountSettings, sessionGuard) }
     val habitSyncScheduler = HabitSyncScheduler(app, accountSettings)
+
+    /** Ringkasan harian dari Claude untuk kartu di tab Kerja (tahap 32). */
+    val dailyBriefRepository = DailyBriefRepository(accountSettings, DailyBriefStore(app), sessionGuard)
     val teamSettings = TeamSettings(app)
 
     /** Token undangan tim yang menunggu login (tahap 31G). */

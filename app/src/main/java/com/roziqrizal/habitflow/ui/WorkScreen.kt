@@ -30,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.roziqrizal.habitflow.domain.work.DailyBriefCard
 import com.roziqrizal.habitflow.domain.work.EventSource
 import com.roziqrizal.habitflow.domain.work.FollowUp
 import com.roziqrizal.habitflow.domain.work.FollowUpConflict
@@ -93,6 +94,7 @@ fun FollowUpCard(item: FollowUp, today: LocalDate, onDone: () -> Unit, onClick: 
 @Composable
 fun WorkScreen(
     state: WorkUiState,
+    brief: DailyBriefCard,
     onOpenScrum: () -> Unit,
     onOpenEod: () -> Unit,
     onOpenAgenda: () -> Unit,
@@ -112,6 +114,7 @@ fun WorkScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item { Text("Kerja", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(start = 4.dp)) }
+        item(key = "daily-brief") { DailyBriefCardView(brief) }
         item {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
                 // Tiga tombol berbagi lebar, jadi padding dalamnya dipersempit supaya "Daily scrum" tetap satu baris.

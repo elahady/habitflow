@@ -149,6 +149,9 @@ fun HabitFlowApp(
     }
 
     val workState by work.state.collectAsState()
+    val briefCard by work.brief.collectAsState()
+    // Ringkasan dari Claude ditarik tiap tab Kerja dibuka. Gagal tanpa suara, kartu memakai salinan di HP.
+    LaunchedEffect(current) { if (current == Tab.WORK) work.refreshBrief() }
     val healthState by health.state.collectAsState()
     val fullScreen = showProfile || showSchedule || session != null
 
@@ -294,6 +297,7 @@ fun HabitFlowApp(
                 }
                 Tab.WORK -> WorkScreen(
                     state = workState,
+                    brief = briefCard,
                     onOpenScrum = { sessionName = WorkSession.SCRUM.name },
                     onOpenEod = { sessionName = WorkSession.EOD.name },
                     onOpenAgenda = { sessionName = WorkSession.AGENDA.name },

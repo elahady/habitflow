@@ -3,6 +3,7 @@ package com.roziqrizal.habitflow.data.sync
 import com.roziqrizal.habitflow.data.FollowUpEntity
 import com.roziqrizal.habitflow.data.account.AccountClient
 import com.roziqrizal.habitflow.data.account.UnauthorizedListener
+import com.roziqrizal.habitflow.domain.work.DailyBrief
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -11,6 +12,8 @@ import org.json.JSONObject
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
+import java.time.Instant
+import java.time.LocalDate
 
 /** Habit seperti dikembalikan server (tahap 28 langkah 5). [done] hanya terisi dari `GET habits?date=`. */
 data class RemoteHabit(
@@ -57,7 +60,7 @@ class HabitSyncClient(
     private val readTimeoutMs: Int = 30_000,
     /** Dilapori token yang ditolak saat server menjawab 401 (lihat [SessionGuard]). */
     private val unauthorized: UnauthorizedListener = UnauthorizedListener.None,
-) {
+) : DailyBriefSource {
     suspend fun listHabits(date: String): HabitApiResult<List<RemoteHabit>> =
         when (val raw = request("GET", "/api/v1/habits?date=$date")) {
             is Raw.Failed -> HabitApiResult.NetworkError(raw.detail)
@@ -188,6 +191,29 @@ class HabitSyncClient(
             is Raw.Failed -> HabitApiResult.NetworkError(raw.detail)
             is Raw.Response -> if (raw.code == 204) HabitApiResult.Success(Unit) else failure(raw)
         }
+
+    // --- Ringkasan harian dari Claude (tahap 32): hanya dibaca, ditulis skill di server ---
+
+    /** Sampai 31 ringkasan terbaru milik akun ini, terbaru dulu. Yang tidak berisi email (`email_digest` null) tidak ikut. */
+    override suspend fun listDailyBriefs(): HabitApiResult<List<DailyBrief>> =
+        when (val raw = request("GET", "/api/v1/daily-briefs")) {
+            is Raw.Failed -> HabitApiResult.NetworkError(raw.detail)
+            is Raw.Response -> if (raw.code == 200) {
+                // parseList hanya menghasilkan Success atau ServerError(200) untuk badan yang bukan JSON.
+                val parsed = parseList(raw.body, "daily_briefs", ::parseDailyBrief)
+                if (parsed is HabitApiResult.Success) HabitApiResult.Success(parsed.value.filterNotNull()) else HabitApiResult.ServerError(200)
+            } else {
+                failure(raw)
+            }
+        }
+
+    /** Null untuk baris yang tidak berisi email atau tanggalnya tidak terbaca, supaya satu baris rusak tidak menggagalkan semuanya. */
+    private fun parseDailyBrief(o: JSONObject): DailyBrief? {
+        val digest = if (o.isNull("email_digest")) null else o.optString("email_digest").takeIf { it.isNotBlank() }
+        val date = runCatching { LocalDate.parse(o.getString("date").take(10)) }.getOrNull()
+        val updatedAt = runCatching { Instant.parse(o.getString("updated_at")).toEpochMilli() }.getOrDefault(0L)
+        return if (digest != null && date != null) DailyBrief(date, digest, updatedAt) else null
+    }
 
     private fun parseHabit(o: JSONObject) = RemoteHabit(
         id = o.getLong("id"),

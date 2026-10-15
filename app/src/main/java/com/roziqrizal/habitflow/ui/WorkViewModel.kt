@@ -3,7 +3,9 @@ package com.roziqrizal.habitflow.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.roziqrizal.habitflow.data.WorkRepository
+import com.roziqrizal.habitflow.data.sync.DailyBriefRepository
 import com.roziqrizal.habitflow.domain.calendar.EventOccurrence
+import com.roziqrizal.habitflow.domain.work.DailyBriefCard
 import com.roziqrizal.habitflow.domain.work.EodAction
 import com.roziqrizal.habitflow.domain.work.EventSource
 import com.roziqrizal.habitflow.domain.work.FollowUp
@@ -18,6 +20,7 @@ import com.roziqrizal.habitflow.domain.work.eodItems
 import com.roziqrizal.habitflow.domain.work.forPerson
 import com.roziqrizal.habitflow.domain.work.groupedBySection
 import com.roziqrizal.habitflow.domain.work.markDone
+import com.roziqrizal.habitflow.domain.work.pickDailyBrief
 import com.roziqrizal.habitflow.domain.work.pickedForToday
 import com.roziqrizal.habitflow.domain.work.scrumCandidates
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -53,10 +56,23 @@ data class WorkUiState(
 class WorkViewModel(
     private val repo: WorkRepository,
     private val clock: DayClock,
+    private val dailyBrief: DailyBriefRepository,
     private val nowMillis: () -> Long = System::currentTimeMillis,
 ) : ViewModel() {
 
     private val selectedPerson = MutableStateFlow<String?>(null)
+
+    /** Kartu "Ringkasan dari Claude" (tahap 32), dari salinan di HP. Berubah saat salinan atau tanggal berganti. */
+    val brief: StateFlow<DailyBriefCard> = combine(dailyBrief.briefs, clock.date, ::pickDailyBrief).stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = pickDailyBrief(dailyBrief.briefs.value, clock.date.value),
+    )
+
+    /** Tarik ringkasan terbaru dari server. Gagal (tanpa internet dan sebagainya) diam: kartu tetap memakai salinan HP. */
+    fun refreshBrief() {
+        viewModelScope.launch { dailyBrief.refresh(clock.date.value) }
+    }
 
     val state: StateFlow<WorkUiState> = combine(
         repo.observeFollowUps(),

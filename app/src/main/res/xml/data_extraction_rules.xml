@@ -17,6 +17,7 @@
         <exclude domain="sharedpref" path="account.xml" />
         <exclude domain="sharedpref" path="pending_invite.xml" />
         <exclude domain="sharedpref" path="schedule_notifier_state.xml" />
+        <exclude domain="sharedpref" path="daily_brief.xml" />
     </cloud-backup>
     <device-transfer>
         <exclude domain="database" path="habitflow.db" />
@@ -30,5 +31,6 @@
         <exclude domain="sharedpref" path="account.xml" />
         <exclude domain="sharedpref" path="pending_invite.xml" />
         <exclude domain="sharedpref" path="schedule_notifier_state.xml" />
+        <exclude domain="sharedpref" path="daily_brief.xml" />
     </device-transfer>
 </data-extraction-rules>

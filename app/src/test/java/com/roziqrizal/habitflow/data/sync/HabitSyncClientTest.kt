@@ -1,6 +1,7 @@
 package com.roziqrizal.habitflow.data.sync
 
 import com.roziqrizal.habitflow.data.FollowUpEntity
+import com.roziqrizal.habitflow.domain.work.DailyBrief
 import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 import org.junit.After
@@ -12,6 +13,8 @@ import java.io.IOException
 import java.net.InetAddress
 import java.net.ServerSocket
 import java.net.Socket
+import java.time.Instant
+import java.time.LocalDate
 
 /**
  * Server HTTP mini di soket sungguhan, sama pola dengan `TinyServer` di `SyncClientTest.kt` (tanpa
@@ -318,5 +321,50 @@ class FollowUpSyncClientTest {
         assertEquals("/api/v1/follow-ups/7", server.lastPath)
         server.status = 404
         assertEquals(HabitApiResult.NotFound, client().deleteFollowUp(7))
+    }
+
+    @Test
+    fun daftarRingkasanHarianMembacaTanggalIsiDanWaktuUbah() = runBlocking {
+        server.responseBody = """{"daily_briefs":[
+            {"id":2,"user_id":1,"date":"2026-10-15","email_digest":"3 email belum dibaca","meeting_note":null,"created_at":"2026-10-15T00:00:00.000000Z","updated_at":"2026-10-15T00:05:00.000000Z"},
+            {"id":1,"user_id":1,"date":"2026-10-14T00:00:00.000000Z","email_digest":"kemarin","meeting_note":"rapat","created_at":"2026-10-14T00:00:00.000000Z","updated_at":"2026-10-14T00:05:00.000000Z"}
+        ]}"""
+        val result = client().listDailyBriefs() as HabitApiResult.Success
+        assertEquals("GET", server.lastMethod)
+        assertEquals("/api/v1/daily-briefs", server.lastPath)
+        assertEquals("Bearer token-uji", server.lastAuth)
+        assertEquals(
+            listOf(
+                DailyBrief(LocalDate.of(2026, 10, 15), "3 email belum dibaca", Instant.parse("2026-10-15T00:05:00Z").toEpochMilli()),
+                DailyBrief(LocalDate.of(2026, 10, 14), "kemarin", Instant.parse("2026-10-14T00:05:00Z").toEpochMilli()),
+            ),
+            result.value,
+        )
+    }
+
+    @Test
+    fun ringkasanTanpaIsiEmailAtauRusakDilewatiBukanMenggagalkanSemua() = runBlocking {
+        server.responseBody = """{"daily_briefs":[
+            {"date":"2026-10-15","email_digest":null,"meeting_note":"hanya catatan","updated_at":"2026-10-15T00:05:00.000000Z"},
+            {"date":"bukan-tanggal","email_digest":"rusak","updated_at":"2026-10-15T00:05:00.000000Z"},
+            {"date":"2026-10-13","email_digest":"   ","updated_at":"2026-10-13T00:05:00.000000Z"},
+            {"date":"2026-10-12","email_digest":"sehat","updated_at":"2026-10-12T00:05:00.000000Z"}
+        ]}"""
+        val result = client().listDailyBriefs() as HabitApiResult.Success
+        assertEquals(listOf("sehat"), result.value.map { it.emailDigest })
+    }
+
+    @Test
+    fun ringkasanKosongDanGalat() = runBlocking {
+        server.responseBody = """{"daily_briefs":[]}"""
+        assertEquals(HabitApiResult.Success(emptyList<DailyBrief>()), client().listDailyBriefs())
+
+        server.status = 401
+        assertEquals(HabitApiResult.Unauthorized, client().listDailyBriefs())
+        server.status = 500
+        assertEquals(HabitApiResult.ServerError(500), client().listDailyBriefs())
+        server.status = 200
+        server.responseBody = "bukan json"
+        assertEquals(HabitApiResult.ServerError(200), client().listDailyBriefs())
     }
 }

@@ -2456,7 +2456,26 @@ kontrak `POST /api/v1/daily-briefs` dan `GET /api/v1/ping`. Keputusan di dalamny
 dari Claude". Yang ada hanya hero "Ringkasan hari ini" (statistik follow-up), panel Meeting & briefing, Rencana besok, dan
 Catatan EOD. Kartu ini dirancang mengikuti keputusan garis besar di atas (kartu terpisah di tab Kerja) dan gaya halaman
 yang ada, bukan menyalin artboard. Kalau mau ditaruh di tempat lain atau dibuatkan artboard dulu, tinggal dipindah.
-Masih tersisa dari langkah 4: kartu di Android.
+**Langkah 4, bagian Android selesai di kode (15 Oktober 2026; belum dilihat di HP):** kartu "Ringkasan dari Claude" (`DailyBriefCardView`)
+di paling atas tab Kerja, di bawah judul. Read-only, berlabel "Ditulis otomatis, hanya dibaca", tanpa tombol ubah.
+- **Alur data:** `HabitSyncClient.listDailyBriefs()` (`GET /api/v1/daily-briefs`) → `DailyBriefRepository.refresh()` → salinan satu
+  ringkasan di `DailyBriefStore`. Ditarik tiap tab Kerja dibuka; gagal (tanpa internet, 5xx, 401) **diam** dan kartu memakai salinan
+  terakhir, jadi tidak berkedip kosong saat sinyal jelek. Server tanpa ringkasan berisi mengosongkan salinan.
+- **Tanpa tabel Room baru** (database tetap versi 10, 18 entitas): server sumber kebenaran, HP hanya cache. Disimpan di berkas pengaturan
+  baru `daily_brief.xml` (`PrefFile.DAILY_BRIEF`), jadi **otomatis terhapus saat Keluar** (`PrefWiper`) dan dikecualikan dari Auto
+  Backup dan pemindahan perangkat (`backup_rules.xml`, `data_extraction_rules.xml`, dijaga `BackupRulesTest`). Inventaris Android di
+  `rilis-play-store.md` sudah memuatnya.
+- **Aturan pilihan sama dengan web** (`pickDailyBrief`): hari ini kalau ada; kalau belum, yang terakhir dengan tulisan "Belum ada ringkasan
+  hari ini. Terakhir: <tanggal>"; tanggal di depan dan isi kosong diabaikan. "Hari ini" mengikuti `DayClock` (tanggal perangkat), jadi
+  ikut berganti saat tengah malam tanpa menunggu tarikan baru. Jam "diperbarui" memakai zona perangkat.
+- Teks polos; lebih dari 6 baris dilipat dengan tombol "Selengkapnya". Hanya memakai `AppCard` dan gaya teks yang sudah ada.
+- 22 tes baru (551 menjadi 573 tes unit lulus): pemilihan ringkasan, cache (termasuk tanggal rusak), repository (gagal tidak menimpa
+  salinan, 401 tidak menghapus), klien (baris rusak atau tanpa isi dilewati), keterangan kartu.
+- **Belum:** dilihat di emulator/HP (tata letak, lipatan "Selengkapnya", tema gelap) dan diuji terhadap server sungguhan (belum di-deploy).
+  Yang berubah di `WorkViewModel`: konstruktornya kini menerima `DailyBriefRepository` (satu-satunya pemanggil: `MainActivity`).
+
+Dengan ini seluruh langkah 4 selesai di kode (web dan Android). Sisa tahap 32: langkah 2 (tes manual dengan curl, menunggu deploy) dan
+langkah 5 (opsional, `/schedule`), serta dua butir "Belum diputuskan" di bawah.
 
 Dibahas 11 Oktober 2026, lanjutan tahap 19 dan 27. Sumbernya: skill `morning-routine` yang dipakai pemilik tiap pagi
 di `C:\Project\MasuyaLab\masuya-context` untuk bikin jurnal harian di Notion ("Ruang Kerja : I am a Leader") —

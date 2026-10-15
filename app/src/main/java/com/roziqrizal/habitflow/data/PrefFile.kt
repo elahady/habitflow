@@ -20,6 +20,9 @@ enum class PrefFile(val fileName: String, val preservedKeys: Set<String> = empty
     ACCOUNT("account"),
     PENDING_INVITE("pending_invite"),
     NOTIFIER_STATE("schedule_notifier_state"),
+
+    /** Salinan ringkasan harian dari Claude untuk kartu di tab Kerja (tahap 32). */
+    DAILY_BRIEF("daily_brief"),
     ;
 
     fun open(context: Context): SharedPreferences =
