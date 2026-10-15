@@ -32,7 +32,7 @@ class FollowUpsPageTest extends TestCase
     {
         $this->user->followUps()->create(['title' => 'Tanya Budi', 'status' => 'ACTIVE']);
 
-        $this->get('/follow-up')->assertOk()->assertSee('Tanya Budi')->assertSee('Aktif (1)');
+        $this->get('/follow-up')->assertOk()->assertSee('Tanya Budi')->assertSee('Aktif 1');
     }
 
     public function test_catat_cepat_masuk_inbox(): void

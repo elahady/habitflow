@@ -43,20 +43,12 @@ class DaySummary
         $counts = ['overdue' => 0, 'today' => 0, 'inbox' => 0];
 
         foreach ($user->followUps()->where('status', '!=', 'DONE')->get() as $item) {
-            if ($item->status === 'INBOX') {
-                $counts['inbox']++;
-
-                continue;
-            }
-
-            $date = $item->date?->toDateString();
-            $picked = $item->picked_date?->toDateString() === $today;
-
-            if ($picked || $date === $today) {
-                $counts['today']++;
-            } elseif ($date !== null && $date < $today) {
-                $counts['overdue']++;
-            }
+            match (FollowUpSections::for($item, $today)) {
+                FollowUpSections::INBOX => $counts['inbox']++,
+                FollowUpSections::TODAY => $counts['today']++,
+                FollowUpSections::OVERDUE => $counts['overdue']++,
+                default => null,
+            };
         }
 
         return $counts;

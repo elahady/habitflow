@@ -2552,8 +2552,8 @@ berikutnya tanpa disalin ulang. Jadi skill versi Habitflow seharusnya lebih ramp
   disalin ulang tiap hari.
 
 **Belum diputuskan:**
-- Apakah "Meeting & briefing" (section terpisah di mockup) juga ditulis lewat skill ini, atau tetap manual dari
-  app/web — mockup sudah menyediakan tempatnya, tapi isinya saat ini masih contoh.
+- ~~Apakah "Meeting & briefing" juga ditulis lewat skill ini, atau tetap manual~~ **Diputuskan Claude saat tahap 33 langkah 3 (15 Oktober 2026), boleh diubah pemilik:**
+  tetap manual di web (satu catatan per hari di `daily_briefs.meeting_note`); skill tidak menulisnya.
 - ~~Nama dan lokasi pasti skill~~ **Diputuskan Claude saat langkah 3 (15 Oktober 2026), boleh diubah pemilik:** `habitflow-morning-routine`, di `skills/` repo ini.
 - Hubungan dengan tahap 31 (Login Wajib): `user-token` sudah ada sejak tahap 27 jadi kemungkinan tidak
   terpengaruh, tapi perlu dicek ulang setelah tahap 31 selesai.
@@ -2658,9 +2658,34 @@ Ini beda paling besar — **bukan cuma soal gaya, tapi konsep halaman yang beda 
      "Baca Qur'an") merusak tombolnya. Kini hanya id yang dikirim dan nama dibaca di server (tes memakai nama berkutip).
    - 23 tes baru (`HabitStatsTest`, `HabitPageTest`), 272 tes server lulus. Dilihat lewat screenshot Edge headless dari data contoh (9 habit,
      riwayat 300 hari): desktop terang dan gelap, lebar 500px. **Belum:** produksi dengan data nyata, dan heatmap di lebar 390px.
-3. **Kerja/Follow-up**: migrasi daily scrum/EOD ke web (tabel + endpoint baru, pola sama seperti tahap 27/29), baru
-   susun ulang jadi halaman "Rekap hari ini" dengan filter chip. Bagian Meeting & briefing dan Ringkasan Claude
-   menunggu tahap 32.
+3. **Kerja/Follow-up** (server dan web selesai di kode 15 Oktober 2026, **belum di-deploy**; **Android belum**): dikerjakan dalam tiga bagian.
+   - **3a. Server `work_days`** ✅ (commit `f5e26d8`, sudah di-push): tabel `work_days` (`date`, `eod_note`, `scrum_done_at`, `eod_done_at`, satu baris per user per
+     tanggal) dan `GET /api/v1/work-days` + `PUT /api/v1/work-days/{date}`. PUT adalah upsert; baris yang sudah ada **wajib** menyertakan `updated_at` yang
+     terakhir dilihat client, kalau tidak atau berbeda dijawab 409 berisi versi terbaru (pola follow-up). Masuk hapus akun dan inventaris data.
+   - **3b. Halaman web "Rekap hari ini"** ✅ (`/follow-up`, komponen `FollowUps` ditulis ulang di atas mesin edit tahap 27, semua tes follow-up lama tetap lulus):
+     - **Riwayat rekap** di kiri (hari ini, lalu tanggal yang punya follow-up selesai atau catatan; "Muat lebih lama"), dipilih lewat `?tanggal=Y-m-d`
+       (tidak sah atau masa depan jatuh ke hari ini). **Kartu ringkasan** ("N dari M follow-up selesai", tingkat selesai %, Inbox belum dirapikan, dipilih untuk besok),
+       kartu **Ringkasan dari Claude**, daftar follow-up dengan **chip filter** (Semua, Inbox, Aktif, Menunggu, Selesai; angka per chip), panel **Meeting & briefing**,
+       **Rencana besok**, **Catatan EOD**, dan tombol **Bagikan ringkasan** (Web Share atau salin ke papan klip, teks sama dengan `buildEodSummary` Android).
+     - **Daftar "Semua"** memuat seluruh follow-up terbuka (yang dikerjakan hari ini di atas) ditambah yang selesai hari ini, jadi item Aktif tanpa tanggal tidak hilang.
+       Angka "M" hanya menghitung yang dikerjakan hari ini (bagian Hari ini dan Lewat tanggal + selesai hari ini), tanpa Inbox. Aturan bagian adalah salinan `sectionFor`
+       Android (`FollowUpSections`), dipakai juga oleh Beranda.
+     - **Tanggal lampau hanya menampilkan yang selesai pada hari itu** dan catatannya. Server tidak menyimpan daftar hari itu sebelum EOD memindahkan item (Lanjut besok
+       mengubah `picked_date`, Pindah tanggal mengubah `date`), jadi angka "7 / 9 selesai" di mockup **tidak bisa direkonstruksi**; web menulis "N selesai" saja. Untuk angka
+       penuh, EOD di HP perlu menyimpan ringkasannya saat selesai (belum ada; usulan kolom `eod_summary` di `work_days`).
+     - **Rencana besok** = follow-up dengan `picked_date` besok (sama dengan "Lanjut besok" di EOD Android). Centang dilepas membatalkan pilihan; "Tambah dari daftar"
+       memilih follow-up (Inbox sekalian jadi Aktif tanpa tanggal). Hanya untuk hari ini. **Catatan EOD** disimpan di `work_days` dan memakai deteksi bentrok (timpa atau
+       pakai yang terbaru) kalau HP mengubahnya lebih dulu. **Meeting & briefing: satu catatan per hari** (bukan per meeting seperti di mockup), disimpan di
+       `daily_briefs.meeting_note`, kolom yang tidak pernah ditulis skill, jadi tidak bisa bentrok. Ini mengisi butir "Belum diputuskan" tahap 32 dengan: ditulis manual
+       di web, skill tidak menulisnya.
+     - Lebar halaman Kerja 78rem (layout menerima parameter `width`); halaman lain tetap 56rem. Kelas gaya `hf-*` bertambah (chip, filter, tombol, baris, tanggal riwayat)
+       dan token `--warn-fixed` (terang dan gelap) ditambahkan. Label nav tetap "Follow-up" (mockup menulis "Kerja").
+     - 39 tes baru (`WorkDayApiTest` 9, `WorkRecapTest` 9, `WorkRecapPageTest` 21, ditambah penyesuaian `FollowUpsPageTest`), 311 tes server lulus. Dilihat lewat
+       screenshot Edge headless dari data contoh: desktop terang dan gelap, dan lebar 500px (riwayat di atas, panel di bawah).
+   - **3c. Android mengirim `work_days` ke server** ❌ **belum dikerjakan.** Sampai selesai, catatan EOD yang diketik di HP **tidak muncul di web**, status "belum EOD" di
+     web hanya berarti belum ada baris di server, dan catatan yang diketik di web tidak muncul di HP. Perlu: migrasi Room (kolom `dirty` dan `remoteUpdatedAt` di `work_days`,
+     database 10 ke 11), klien `PUT/GET /work-days`, dorong saat `completeEod` dan `completeScrum`, tarik saat sinkron, dan penanganan 409 (server menang atau tanya, mengikuti
+     follow-up).
 4. **Kesehatan di beranda**: ini tahap 30 langkah 5, dikerjakan di jalurnya sendiri (langkah 3-4 server dan Android
    kirim data dulu sebelum web bisa menampilkan apa pun).
 

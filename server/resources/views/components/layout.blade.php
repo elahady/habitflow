@@ -22,7 +22,7 @@
         nav a.active { color: var(--primary); }
         header .user { display: flex; align-items: center; gap: 0.75rem; font-size: 0.875rem; }
         header img.avatar { width: 28px; height: 28px; border-radius: 9999px; }
-        main { max-width: 56rem; margin: 2rem auto; padding: 0 1.5rem; }
+        main { max-width: {{ $width ?? '56rem' }}; margin: 2rem auto; padding: 0 1.5rem; }
         form { display: inline; }
         button[type="submit"]:not(.primary) { background: none; border: none; color: var(--on-surface-variant); cursor: pointer; font-size: 0.875rem; font-family: 'Manrope', sans-serif; }
         h1 { font-family: 'Libre Caslon Text', serif; font-weight: 400; }
@@ -63,6 +63,28 @@
         .hf-legend i { width: 12px; height: 12px; border-radius: 2px; display: block; }
         .hf-section-title { font-family: 'Libre Caslon Text', serif; font-weight: 400; margin: 0; }
         .hf-chip { display: inline-flex; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; background: var(--primary-fixed); color: var(--on-primary-container); }
+        .hf-chip.neutral { background: var(--surface-container-low); border: 1px solid var(--outline-variant); color: var(--on-surface-variant); }
+        .hf-chip.warn { background: var(--warn-fixed); color: var(--on-warn-fixed); }
+        .hf-chip.on { background: var(--surface-lowest); color: var(--on-primary-container); padding: 4px 10px; font-size: 12px; }
+        .hf-focus { background: var(--primary-fixed); color: var(--on-primary-container); border-radius: 20px; }
+        .hf-focus .hf-bar { background: var(--surface-lowest); }
+        .hf-focus .hf-stat-row .hf-serif { font-size: 18px; }
+        .hf-eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--on-surface-variant); }
+        .hf-label { font-size: 12px; color: var(--on-surface-variant); }
+        .hf-row { display: flex; align-items: flex-start; gap: 14px; padding: 13px 0; border-bottom: 1px solid var(--outline-variant); }
+        .hf-row:last-child { border-bottom: none; }
+        .hf-check-sm { width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer; flex-shrink: 0; margin-top: 2px; }
+        .hf-filter { background: none; border: 1px solid var(--outline-variant); border-radius: 999px; padding: 6px 14px; font-family: 'Manrope', system-ui, sans-serif; font-size: 13px; font-weight: 600; color: var(--on-surface-variant); cursor: pointer; }
+        .hf-filter.active { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
+        .hf-btn-tonal { display: inline-flex; align-items: center; gap: 8px; background: var(--primary-fixed); color: var(--on-primary-container); border: none; border-radius: 999px; padding: 10px 18px; font-family: 'Manrope', system-ui, sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+        button[type="submit"].hf-btn-tonal { background: var(--primary-fixed); color: var(--on-primary-container); font-size: 14px; }
+        .hf-btn-text { background: none; border: none; padding: 0 2px; color: var(--primary); font-family: 'Manrope', system-ui, sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; }
+        .hf-textarea { width: 100%; resize: vertical; line-height: 1.55; font-size: 13px; }
+        .hf-date-btn { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; padding: 10px 12px; border: none; border-radius: 12px; background: none; color: var(--on-surface); text-align: left; cursor: pointer; font-family: 'Manrope', system-ui, sans-serif; }
+        .hf-date-btn:hover { background: var(--surface-container-low); }
+        .hf-date-btn.active { background: var(--primary-fixed); color: var(--on-primary-container); }
+        .hf-date-btn .d { font-size: 14px; font-weight: 600; }
+        .hf-date-btn .m { font-size: 12px; opacity: 0.8; }
         .error-text { color: var(--error); font-size: 13px; margin-top: 6px; }
         .notice { background: var(--primary-fixed); color: var(--on-primary-container); padding: 12px 16px; border-radius: 12px; font-size: 14px; line-height: 1.5; margin-bottom: 16px; }
         .notice.error { background: transparent; color: var(--error); border: 1px solid var(--error); }
