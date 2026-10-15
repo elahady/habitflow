@@ -2133,7 +2133,7 @@ plus tes regresi `test_tebakan_salah_tidak_mengubah_waktu_kedaluwarsa_kode`.
 
 #### 31E. Server: snapshot ke akun, pensiunkan token 19B
 
-Status: **selesai di kode dan tes (12 Oktober 2026), belum di-deploy.** Bergantung pada 31B (kode ✅).
+Status: **selesai di kode dan tes (12 Oktober 2026); di-deploy ke produksi 15 Oktober 2026** (produksi ternyata tidak punya snapshot lama, jadi `habitflow:claim-legacy` tidak diperlukan; lihat tahap 32). Bergantung pada 31B (kode ✅).
 
 - [x] Migrasi `2026_10_12_130000_move_snapshots_to_accounts`: `snapshots.api_token_id` jadi nullable (snapshot baru tidak punya token). Kolom `user_id` sudah ada dari 31D. Kolom dan tabel `api_tokens` **sengaja
   dibiarkan sampai 31L** supaya rilis server sebelumnya masih bisa dipakai kalau harus jalan mundur. Diuji naik, turun, dan naik lagi di MariaDB 10.4.
@@ -2332,14 +2332,14 @@ Status: **sedang dikerjakan (15 Oktober 2026).** Bergantung pada 31I. Sudah di k
 - [ ] **Google Sign-In produksi:** layar persetujuan OAuth dipindah dari uji ke **produksi** (nama app, logo, tautan kebijakan privasi, domain resmi); client ID Android memakai **SHA-1 dari kunci Play App Signing**
   selain kunci unggah dan debug; `GOOGLE_ANDROID_CLIENT_ID` di server diperbarui. Diuji dari build yang **dipasang lewat jalur uji Play Store**, bukan adb.
 - [~] **Akun peninjau:** perintah artisan `habitflow:make-reviewer-account` membuat akun permanen yang sudah terverifikasi dengan data contoh, untuk kolom App access di Play Console. **Perintah dan 4 tesnya selesai (15 Oktober 2026).** Belum dijalankan di produksi: akunnya dibuat saat mengisi App access di 31M, dengan email yang sungguh dikelola pemilik.
-- [x] **Hapus tabel `api_tokens` (kode dan tes, 15 Oktober 2026; belum di-deploy):** migrasi `2026_10_14_100000_drop_api_tokens` menghapus tabel dan `snapshots.api_token_id`, dan **menolak jalan kalau masih ada snapshot tanpa akun** (3 tes). `habitflow:claim-legacy`, model `ApiToken`, dan tes klaimnya dihapus. **Urutan deploy:** klaim dulu dari rilis `b96bc51` atau sebelumnya, baru deploy rilis ini (lihat `server/DEPLOY.md`). Inventaris data (`DataInventory`, `rilis-play-store.md`) sudah diperbarui.
+- [x] **Hapus tabel `api_tokens` (kode dan tes 15 Oktober 2026; **di-deploy 15 Oktober 2026**, tabelnya kosong di produksi):** migrasi `2026_10_14_100000_drop_api_tokens` menghapus tabel dan `snapshots.api_token_id`, dan **menolak jalan kalau masih ada snapshot tanpa akun** (3 tes). `habitflow:claim-legacy`, model `ApiToken`, dan tes klaimnya dihapus. **Urutan deploy:** klaim dulu dari rilis `b96bc51` atau sebelumnya, baru deploy rilis ini (lihat `server/DEPLOY.md`). Inventaris data (`DataInventory`, `rilis-play-store.md`) sudah diperbarui.
 - [x] **Temuan saat memeriksa 31L: pembatas laju per token tidak pernah jalan sejak 31E.** `AppServiceProvider` membaca atribut `api_token` yang sudah tidak diisi siapa pun, dan sesudahnya (diperbaiki ke `user_token`) tetap tidak jalan karena Laravel menjalankan `throttle` sebelum middleware `user-token`. Akibatnya semua permintaan dibatasi per alamat IP, jadi dua akun di jaringan yang sama (pemilik dan istri) berbagi satu jatah 60 per menit. Kini kuncinya hash token dari header `Authorization`; tes baru membuktikan akun lain dari IP yang sama tidak ikut terblokir (dan gagal tanpa perbaikan).
 
 **Selesai jika:** AAB rilis ditandatangani dan lulus 31J, login Google dan email berhasil dari build jalur uji Play Store, dan semua fitur latar belakang diuji di HP fisik pada `targetSdk` baru.
 
 #### 31M. Uji tertutup 14 hari, Play Console, dan produksi
 
-Status: **belum bisa dimulai; bahan persiapannya siap (15 Oktober 2026).** Bergantung pada 31C, 31D, 31J, 31K, 31L. Penahan jalur kritis (hitungan 14 hari tidak bisa jalan sebelum ini): kunci unggah dan AAB ditandatangani (31L), server 31B-31E belum di-deploy, email sungguhan belum (DNS dan Resend), Google Sign-In produksi belum, backup 31K belum dipasang, kontak privasi kosong, dan belum ada 15-25 penguji. Detail, siapa yang mengerjakan, draf formulir Play Console, pesan undangan, skrip uji akhir, dan tabel pantau: [uji-tertutup-dan-play-console.md](uji-tertutup-dan-play-console.md). Tiga keputusan pemilik yang harus diambil **sebelum build uji pertama** (karena biner uji harus sama dengan biner rilis): `USE_EXACT_ALARM` atau `SCHEDULE_EXACT_ALARM` saja, `USE_FULL_SCREEN_INTENT`, dan target usia (bagian 3 dokumen itu).
+Status: **belum bisa dimulai; bahan persiapannya siap (15 Oktober 2026).** Bergantung pada 31C, 31D, 31J, 31K, 31L. Penahan jalur kritis (hitungan 14 hari tidak bisa jalan sebelum ini): kunci unggah dan AAB ditandatangani (31L), server 31B-31E **sudah di-deploy (15 Oktober 2026)**, email sungguhan belum (DNS dan Resend), Google Sign-In produksi belum, backup 31K belum dipasang, kontak privasi kosong, dan belum ada 15-25 penguji. Detail, siapa yang mengerjakan, draf formulir Play Console, pesan undangan, skrip uji akhir, dan tabel pantau: [uji-tertutup-dan-play-console.md](uji-tertutup-dan-play-console.md). Tiga keputusan pemilik yang harus diambil **sebelum build uji pertama** (karena biner uji harus sama dengan biner rilis): `USE_EXACT_ALARM` atau `SCHEDULE_EXACT_ALARM` saja, `USE_FULL_SCREEN_INTENT`, dan target usia (bagian 3 dokumen itu).
 
 - [ ] **Undang penguji:** 15 sampai 25 orang nyata (minimal 12 harus tetap bergabung setiap hari selama 14 hari **berturut-turut**; kalau turun di bawah 12 hitungan mengulang dari nol, dan Google memeriksa bahwa
   penguji benar-benar memakai app). Beri petunjuk pemasangan dan cara melapor.
@@ -2414,7 +2414,49 @@ Rincian tiap butir:
 - **Kapan tabel `api_tokens` dihapus.** **Disetujui pemilik 11 Oktober 2026**: di 31L, setelah semua berjalan.
 - **Urutan terhadap tahap 29, 30 (langkah 3-6), 32, dan 33.** **Diputuskan pemilik 11 Oktober 2026: kerjakan tahap 31 sampai selesai dulu**, baru lanjut ke tahap-tahap lain yang sudah antre (termasuk tahap 33 yang dicatat hari yang sama).
 
-### Tahap 32: Rekap kerja otomatis dari Claude (diputuskan garis besar 11 Oktober 2026; langkah 1 selesai 15 Oktober 2026)
+### Status terkini dan serah terima (15 Oktober 2026, saat pindah PC)
+
+Bagian ini merangkum keadaan setelah sesi 15 Oktober 2026 supaya sesi mana pun (di PC lain, atau setelah `/clear`) bisa lanjut tanpa menebak. Rincian per tahap ada di
+tahap 31, 32, dan 33 di bawah. Kalau bagian ini bertentangan dengan rincian tahap, rincian tahap yang menang dan bagian ini diperbarui.
+
+**Sudah live di produksi (`https://habitflow.roziqrizal.com`, di-deploy 15 Oktober 2026 dalam tiga putaran):** seluruh server tahap 31B-31L, endpoint `daily-briefs` (tahap 32),
+Beranda dengan strip 4 kartu, halaman Habit dengan streak dan heatmap, halaman Kerja "Rekap hari ini", dan endpoint `work-days` (tahap 33 langkah 1-3). Dites dengan curl ke produksi:
+`daily-briefs` dan `work-days` (data uji sudah dihapus). Produksi saat itu: 1 pengguna (Google), 9 habit, 2 follow-up. Tes otomatis: server **311**, Android **593**, semuanya lulus.
+
+**Ada di kode tapi belum pernah dijalankan di perangkat nyata (semuanya Android, belum dirilis):**
+1. Migrasi Room **10 ke 11** (`work_days` mendapat `remoteUpdatedAt` dan `dirty`). Tidak ada tes migrasi. **Coba di HP yang berisi data lama sebelum apa pun dirilis.**
+2. Sinkron catatan EOD dua arah HP dan web (tahap 33 langkah 3c), termasuk penggabungan otomatis saat bentrok.
+3. Kartu "Ringkasan dari Claude" di tab Kerja (tahap 32 langkah 4).
+4. Skill `skills/habitflow-morning-routine/SKILL.md` belum pernah dijalankan dari awal sampai akhir (butuh token pemilik dan Gmail).
+
+**Yang perlu dikerjakan berikutnya, urut yang disarankan:**
+1. Pasang debug build ke HP (atau emulator) dan uji: migrasi 10 ke 11 pada data lama; tulis EOD di HP lalu lihat di web; ubah catatan di web lalu lihat di HP; kartu Ringkasan dari Claude;
+   tema gelap dan lipatan "Selengkapnya". Catat hasilnya di tahap 33 3c dan tahap 32 langkah 4.
+2. Tahap 32 langkah 5 (opsional): token **khusus tulis ringkasan** (token sekarang setara akses penuh ke data akun), lalu jalankan skill sungguhan, lalu pasang `/schedule`.
+3. Angka "X dari Y selesai" per hari di riwayat web (usulan kolom `eod_summary` di `work_days`, diisi HP saat EOD selesai; web kini hanya bisa menulis "N selesai").
+4. Sisa tahap 33: bagian Kesehatan di Beranda (menunggu tahap 30 langkah 3-6), judul dan gaya kartu "Jadwal sekarang", halaman Tugas Rumah (belum ada mockup web).
+5. Sisa tahap 31 yang menunggu pemilik: kunci unggah dan AAB ditandatangani, Google Sign-In produksi, DNS dan Resend untuk email, backup ke Cloudflare R2, kontak privasi, penguji (lihat
+   `docs/uji-tertutup-dan-play-console.md`). **Email belum jalan:** `.env.production` di VM masih `MAIL_MAILER=log` dan `QUEUE_CONNECTION=sync`, jadi pendaftaran dengan email belum boleh dibuka.
+   Login Google tidak terpengaruh.
+6. Tahap 29 langkah 4 (Android mengirim jadwal dan waktu sholat) dan tahap 30 langkah 3-6 tidak disentuh sesi ini.
+
+**Keputusan yang diambil Claude di sesi ini, boleh diubah pemilik** (semuanya sudah dicatat di tempatnya, ini daftar cepat): skill di `skills/` repo (bukan `.claude/skills/`) dan token dari
+`HABITFLOW_TOKEN`; Meeting & briefing satu catatan per hari di `daily_briefs.meeting_note`, ditulis manual; heatmap 53 minggu (mockup 66); kartu To-do `selesai / jumlah`; "Semua" di halaman
+Kerja memuat semua follow-up terbuka; bentrok catatan EOD digabung otomatis (dua catatan dipertahankan), bukan dialog; "hari ini" di web mengikuti zona waktu HP (dulu UTC, jadi antara 00.00
+dan 07.00 WIB halaman menampilkan kemarin); tanggal habit dibuat di web = yang lebih awal antara `created_at` dan centang tertua; label menu tetap "Follow-up".
+
+**Menyiapkan PC baru (hal yang tidak ada di git):**
+- `server/.env.production` (gitignored): `scp elahady@<ip-vm>:~/apps/habitflow/.env.production server/.env.production`. Jangan membuat `APP_KEY` baru.
+- Kunci SSH `~/.ssh/id_ed25519` yang sudah terdaftar di VM. **IP VM berubah** (Default Switch Hyper-V, terakhir `172.28.157.112`, sebelumnya `172.23.192.247`) dan alamat itu hanya terjangkau dari
+  **PC yang menjadi host Hyper-V**. Dari PC lain jalur SSH ke VM belum ada (Cloudflare Tunnel hanya meneruskan HTTP): deploy dan akses VM harus dari PC host, atau siapkan jalur lain dulu.
+  Cara menemukan IP tanpa hak admin ada di `server/DEPLOY.md`.
+- PHP: `C:\xampp\php` (tes server: `php artisan test` di `server/`). Android: JDK 17 dan `C:/Android/Sdk` di `local.properties`; tes unit: `./gradlew.bat testDebugUnitTest --console=plain`,
+  keluaran diarahkan ke berkas, jangan di-pipe (daemon Gradle menahan pipa). Python tidak terpasang di PC lama; Edge headless dipakai untuk screenshot.
+- Skill: salin `skills/habitflow-morning-routine/` ke `~/.claude/skills/`. Token skill belum dibuat (lihat `SKILL.md`).
+- Memori dan `~/.claude/CLAUDE.md` Claude Code ada di komputer, bukan di repo; semua yang penting sudah ada di dokumen ini.
+- Cadangan di VM: `~/backups-habitflow/` (dump database dan arsip kode sebelum tahap 32, 33 langkah 1, dan 33 langkah 3b) dan tag image `habitflow:pra-tahap32`, `pra-tahap33`, `pra-3b`.
+
+### Tahap 32: Rekap kerja otomatis dari Claude (langkah 1-4 selesai dan di-deploy 15 Oktober 2026; skill belum dijalankan sungguhan; langkah 5 belum)
 
 **Status (15 Oktober 2026):** langkah 1 (server) selesai: migrasi `2026_10_15_100000_create_daily_briefs_table`
 (`user_id`, `date`, `email_digest`, `meeting_note`, unik per `user_id`+`date`), model `DailyBrief`, `DailyBriefController`,
@@ -2427,7 +2469,7 @@ penyunting manual). Tabel sudah masuk `DataInventory`, `AccountDeletionService` 
 (kartu Android + web).
 
 **Langkah 3 selesai (15 Oktober 2026):** `skills/habitflow-morning-routine/SKILL.md` ditulis. **Belum pernah dijalankan
-terhadap server sungguhan** (server belum di-deploy, jadi langkah 2 belum ada); yang sudah cocok dengan kode adalah
+terhadap server sungguhan** (waktu itu server belum di-deploy; sudah kemudian, lihat di bawah); yang sudah cocok dengan kode adalah
 kontrak `POST /api/v1/daily-briefs` dan `GET /api/v1/ping`. Keputusan di dalamnya:
 - **Lokasi:** `skills/habitflow-morning-routine/` di repo Habitflow (bukan `.claude/skills/`, supaya tidak otomatis aktif
   di setiap sesi kerja repo ini); dipasang dengan menyalin foldernya ke `~/.claude/skills/`. Nama tetap `habitflow-morning-routine`.
@@ -2450,7 +2492,7 @@ kontrak `POST /api/v1/daily-briefs` dan `GET /api/v1/ping`. Keputusan di dalamny
 - Belum pernah ada: pesan kosong yang menyebut skill `habitflow-morning-routine`.
 - Teks di-escape dan ditampilkan polos (`white-space: pre-line`), jadi isi email tidak bisa menyisipkan HTML. Segar tiap 5 menit.
 - Hanya memakai token warna dan gaya kartu yang sudah ada di halaman Kerja; tidak ada nilai desain baru.
-- 8 tes (`DailyBriefCardTest`); 237 tes server lulus. **Belum dilihat di browser** dan **belum di-deploy.**
+- 8 tes (`DailyBriefCardTest`); 237 tes server lulus. **Sudah di-deploy 15 Oktober 2026**; belum dilihat di produksi dengan data nyata.
 
 **Penyimpangan dari mockup yang perlu diketahui:** artboard `KerjaWeb.dc.html` ternyata **tidak punya** kartu "Ringkasan
 dari Claude". Yang ada hanya hero "Ringkasan hari ini" (statistik follow-up), panel Meeting & briefing, Rencana besok, dan
@@ -2471,7 +2513,7 @@ di paling atas tab Kerja, di bawah judul. Read-only, berlabel "Ditulis otomatis,
 - Teks polos; lebih dari 6 baris dilipat dengan tombol "Selengkapnya". Hanya memakai `AppCard` dan gaya teks yang sudah ada.
 - 22 tes baru (551 menjadi 573 tes unit lulus): pemilihan ringkasan, cache (termasuk tanggal rusak), repository (gagal tidak menimpa
   salinan, 401 tidak menghapus), klien (baris rusak atau tanpa isi dilewati), keterangan kartu.
-- **Belum:** dilihat di emulator/HP (tata letak, lipatan "Selengkapnya", tema gelap) dan diuji terhadap server sungguhan (belum di-deploy).
+- **Belum:** dilihat di emulator/HP (tata letak, lipatan "Selengkapnya", tema gelap) dan diuji terhadap server sungguhan (server sudah di-deploy; tinggal dicoba dari HP).
   Yang berubah di `WorkViewModel`: konstruktornya kini menerima `DailyBriefRepository` (satu-satunya pemanggil: `MainActivity`).
 
 **Langkah 2 sebagian selesai (15 Oktober 2026): dites dengan curl terhadap server LOKAL, bukan produksi.** `php artisan serve` dengan
@@ -2558,7 +2600,7 @@ berikutnya tanpa disalin ulang. Jadi skill versi Habitflow seharusnya lebih ramp
 - Hubungan dengan tahap 31 (Login Wajib): `user-token` sudah ada sejak tahap 27 jadi kemungkinan tidak
   terpengaruh, tapi perlu dicek ulang setelah tahap 31 selesai.
 
-### Tahap 33: Web disamakan dengan mockup Design canvas (dicatat 11 Oktober 2026; langkah 1 Beranda selesai di kode 15 Oktober 2026)
+### Tahap 33: Web disamakan dengan mockup Design canvas (langkah 1-3 selesai dan di-deploy 15 Oktober 2026; Android 3c belum dicoba di HP; sisa: bagian Kesehatan menunggu tahap 30)
 
 **Kenapa tahap ini ada.** Di sesi 11 Oktober 2026, setelah deploy tahap 29 langkah 1-3, pemilik menunjukkan
 bahwa beranda web (`https://habitflow.roziqrizal.com/`) tidak terlihat seperti mockup di
@@ -2619,7 +2661,7 @@ Ini beda paling besar — **bukan cuma soal gaya, tapi konsep halaman yang beda 
 
 #### Rencana langkah (urutan diusulkan; langkah 1 selesai di kode 15 Oktober 2026)
 
-1. ✅ **Beranda** (kode dan tes selesai 15 Oktober 2026, **belum di-deploy**): baris tanggal ("Kamis, 15 Oktober 2026") di atas
+1. ✅ **Beranda** (kode dan tes selesai 15 Oktober 2026, **sudah di-deploy 15 Oktober 2026**): baris tanggal ("Kamis, 15 Oktober 2026") di atas
    sapaan dan strip 4 kartu ringkasan sesuai `Main.dc.html`. Tiap kartu menaut ke halamannya.
    - **Habit hari ini** `X / total` + bar; **To-do hari ini** `selesai / jumlah` + bar (mockup menulis "2 / 5", yang dibaca sebagai
      selesai dari to-do yang ada, bukan dari batas 5); **Follow-up kerja**: Lewat tanggal (merah kalau > 0), Jatuh tempo hari ini,
@@ -2638,7 +2680,7 @@ Ini beda paling besar — **bukan cuma soal gaya, tapi konsep halaman yang beda 
      **Belum:** dilihat di produksi dengan data nyata.
    - **Belum dari baris Beranda di tabel audit:** kartu hero "Fokus kesehatan" dan section Kesehatan (tahap 30 langkah 5), dan judul kartu
      jadwal "Jadwal hari ini" vs "Jadwal sekarang".
-2. ✅ **Habit** (kode dan tes selesai 15 Oktober 2026, **belum di-deploy**; langkah 1 sudah di-deploy 15 Oktober 2026 sore): baris tanggal, 3 kartu
+2. ✅ **Habit** (kode dan tes selesai 15 Oktober 2026, **sudah di-deploy 15 Oktober 2026**): baris tanggal, 3 kartu
    (Habit hari ini, To-do hari ini, Streak + terpanjang), kartu "Hari ini" bergaya `hf-card` dengan keterangan habit wajib, bagian
    **Kontribusi** (heatmap gabungan + heatmap per habit), dan kartu Kelola Habit.
    - **Tanpa endpoint API baru:** audit menduga perlu endpoint heatmap, tapi halaman Livewire membaca database langsung lewat
@@ -2658,7 +2700,7 @@ Ini beda paling besar — **bukan cuma soal gaya, tapi konsep halaman yang beda 
      "Baca Qur'an") merusak tombolnya. Kini hanya id yang dikirim dan nama dibaca di server (tes memakai nama berkutip).
    - 23 tes baru (`HabitStatsTest`, `HabitPageTest`), 272 tes server lulus. Dilihat lewat screenshot Edge headless dari data contoh (9 habit,
      riwayat 300 hari): desktop terang dan gelap, lebar 500px. **Belum:** produksi dengan data nyata, dan heatmap di lebar 390px.
-3. **Kerja/Follow-up** (server dan web selesai di kode 15 Oktober 2026, **belum di-deploy**; **Android belum**): dikerjakan dalam tiga bagian.
+3. **Kerja/Follow-up** (server, web, dan Android selesai di kode 15 Oktober 2026; server dan web **sudah di-deploy 15 Oktober 2026**, Android **belum dicoba di HP**): dikerjakan dalam tiga bagian.
    - **3a. Server `work_days`** ✅ (commit `f5e26d8`, sudah di-push): tabel `work_days` (`date`, `eod_note`, `scrum_done_at`, `eod_done_at`, satu baris per user per
      tanggal) dan `GET /api/v1/work-days` + `PUT /api/v1/work-days/{date}`. PUT adalah upsert; baris yang sudah ada **wajib** menyertakan `updated_at` yang
      terakhir dilihat client, kalau tidak atau berbeda dijawab 409 berisi versi terbaru (pola follow-up). Masuk hapus akun dan inventaris data.

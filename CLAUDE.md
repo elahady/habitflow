@@ -6,7 +6,9 @@ kontribusi ala GitHub. Detail rancangan ada di [docs/rancangan.md](docs/rancanga
 ## Baca dulu sebelum mengerjakan apa pun
 
 - [docs/concept.md](docs/concept.md): tahapan pembangunan, kriteria selesai per
-  tahap, dan edge case. Ikuti urutan tahapnya, jangan melompat.
+  tahap, dan edge case. Ikuti urutan tahapnya, jangan melompat. **Sesi baru: mulai dari
+  bagian "Status terkini dan serah terima"** (cari judulnya di berkas itu): apa yang sudah
+  live, apa yang belum dicoba di perangkat, langkah berikutnya, dan cara menyiapkan PC baru.
 - [docs/visi-super-app.md](docs/visi-super-app.md): arah besar Habitflow sebagai asisten
   harian pribadi (jadwal, waktu sholat, follow-up kerja, kesehatan). Dibaca sebelum
   membahas tahap 17 ke atas.
