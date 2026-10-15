@@ -2423,8 +2423,22 @@ rute `GET`/`POST /api/v1/daily-briefs` (`user-token`), 7 tes baru (`DailyBriefAp
 dan yang dikirim `null` dikosongkan, jadi skill yang hanya mengirim `email_digest` tidak menghapus `meeting_note`.
 Batas 20.000 karakter per kolom. `GET` terbaru dulu, maksimal 31 baris, filter `date` dan `from`. Tanpa 409 (tidak ada
 penyunting manual). Tabel sudah masuk `DataInventory`, `AccountDeletionService` (+ tesnya), dan inventaris
-`rilis-play-store.md`. **Belum di-deploy.** Berikutnya: langkah 2 (tes manual lewat curl setelah deploy), langkah 3
-(`SKILL.md`), langkah 4 (kartu Android + web).
+`rilis-play-store.md`. **Belum di-deploy.** Berikutnya: langkah 2 (tes manual lewat curl setelah deploy), langkah 4
+(kartu Android + web).
+
+**Langkah 3 selesai (15 Oktober 2026):** `skills/habitflow-morning-routine/SKILL.md` ditulis. **Belum pernah dijalankan
+terhadap server sungguhan** (server belum di-deploy, jadi langkah 2 belum ada); yang sudah cocok dengan kode adalah
+kontrak `POST /api/v1/daily-briefs` dan `GET /api/v1/ping`. Keputusan di dalamnya:
+- **Lokasi:** `skills/habitflow-morning-routine/` di repo Habitflow (bukan `.claude/skills/`, supaya tidak otomatis aktif
+  di setiap sesi kerja repo ini); dipasang dengan menyalin foldernya ke `~/.claude/skills/`. Nama tetap `habitflow-morning-routine`.
+- **Token:** dari `HABITFLOW_TOKEN` atau `~/.habitflow/claude-token`, dibuat sekali oleh pemilik lewat `POST /api/v1/auth/login`
+  dengan `device_name` `claude-morning-routine`. Skill tidak pernah memegang kata sandi. Token itu setara akses penuh ke data
+  akun, dan mati kalau "Keluar dari semua perangkat" atau ganti kata sandi, jadi skill berhenti dengan pesan jelas saat 401.
+  Alternatif yang lebih sempit (token khusus tulis ringkasan saja) belum ada; layak dipertimbangkan sebelum dijadwalkan di awan.
+- **Hanya `email_digest` yang dikirim**, `meeting_note` tidak (butir "Meeting & briefing" di bawah tetap belum diputuskan).
+- **Gmail tidak terhubung atau token tidak ada: tidak menulis apa pun**, supaya ringkasan benar sebelumnya tidak tertimpa "kosong".
+- Kode verifikasi, tautan reset, dan data kartu/rekening dari email tidak disalin ke ringkasan, karena disimpan di server dan terbaca di web.
+- Tanpa email belum dibaca tetap menulis "0 email belum dibaca" supaya kartu membedakan "dicek, kosong" dari "belum dicek".
 
 Dibahas 11 Oktober 2026, lanjutan tahap 19 dan 27. Sumbernya: skill `morning-routine` yang dipakai pemilik tiap pagi
 di `C:\Project\MasuyaLab\masuya-context` untuk bikin jurnal harian di Notion ("Ruang Kerja : I am a Leader") —
@@ -2479,7 +2493,7 @@ berikutnya tanpa disalin ulang. Jadi skill versi Habitflow seharusnya lebih ramp
 **Belum diputuskan:**
 - Apakah "Meeting & briefing" (section terpisah di mockup) juga ditulis lewat skill ini, atau tetap manual dari
   app/web — mockup sudah menyediakan tempatnya, tapi isinya saat ini masih contoh.
-- Nama dan lokasi pasti skill (`habitflow-morning-routine` masih usulan nama).
+- ~~Nama dan lokasi pasti skill~~ **Diputuskan Claude saat langkah 3 (15 Oktober 2026), boleh diubah pemilik:** `habitflow-morning-routine`, di `skills/` repo ini.
 - Hubungan dengan tahap 31 (Login Wajib): `user-token` sudah ada sejak tahap 27 jadi kemungkinan tidak
   terpengaruh, tapi perlu dicek ulang setelah tahap 31 selesai.
 
