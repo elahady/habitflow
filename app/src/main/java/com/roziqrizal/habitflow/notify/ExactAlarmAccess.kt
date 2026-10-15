@@ -12,8 +12,9 @@ import android.provider.Settings
  * `SecurityException` dan alarm Subuh jatuh ke alarm tidak presisi yang bisa terlambat sampai satu jam
  * (perilaku yang didokumentasikan Android; belum diuji di perangkat, lihat concept.md 31L).
  *
- * Jalur normal: `USE_EXACT_ALARM` diberikan otomatis pada Android 13 ke atas. Jalur cadangan kalau Google menolak
- * deklarasinya dan izin itu dicabut dari manifest: `SCHEDULE_EXACT_ALARM`, yang harus diberikan pengguna di pengaturan sistem.
+ * Satu-satunya izin yang dideklarasikan adalah `SCHEDULE_EXACT_ALARM` (diputuskan pemilik 15 Oktober 2026): `USE_EXACT_ALARM`
+ * dibatasi Play untuk app yang fungsi intinya alarm, jadi tidak dipakai. Akibatnya izin ini **harus diberikan pengguna** di
+ * pengaturan sistem (Android 14 ke atas menolaknya secara bawaan untuk app baru), dan Pengaturan menawarkannya.
  */
 object ExactAlarmAccess {
 

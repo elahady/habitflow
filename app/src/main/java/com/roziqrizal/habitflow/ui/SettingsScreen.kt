@@ -404,8 +404,8 @@ private fun AlarmSection(nextAlarm: AlarmTime?, settings: AlarmSettings) {
         }
     }
 
-    // Izin alarm presisi: normalnya sudah diberikan otomatis (USE_EXACT_ALARM). Kalau tidak, alarm Subuh bisa terlambat
-    // sampai satu jam, jadi pengguna diarahkan memberikannya. Dicek ulang setiap kali layar izin sistem ditutup.
+    // Izin alarm presisi (SCHEDULE_EXACT_ALARM, satu-satunya yang dideklarasikan): diberikan pengguna sendiri. Tanpanya alarm
+    // Subuh bisa terlambat sampai satu jam, jadi pengguna diarahkan memberikannya. Dicek ulang setiap kali layar izin sistem ditutup.
     var exactGranted by remember { mutableStateOf(ExactAlarmAccess.isGranted(context)) }
     val exactLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         exactGranted = ExactAlarmAccess.isGranted(context)

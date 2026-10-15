@@ -55,11 +55,12 @@ Jadi putuskan ini **sebelum** AAB pertama diunggah.
 Play hanya mengizinkan `USE_EXACT_ALARM` untuk app yang fungsi intinya alarm, timer, atau kalender. Habitflow fungsi intinya pelacak habit; alarm Subuh dan adzan adalah fitur di dalamnya. Deklarasi bisa ditolak, dan
 penolakan setelah uji 14 hari berarti manifest berubah dan uji diulang. Sekarang ada jalan cadangan (31L: `ExactAlarmAccess`, tombol "Izinkan alarm tepat waktu" di Pengaturan).
 **Rekomendasi: kirim build uji tanpa `USE_EXACT_ALARM`, hanya `SCHEDULE_EXACT_ALARM`** (pengguna memberi izin sekali lewat Pengaturan). Harganya satu langkah tambahan bagi pengguna untuk alarm Subuh; keuntungannya tidak ada risiko
-penolakan deklarasi di tengah jalan. Kalau tetap memilih `USE_EXACT_ALARM`, ubah `scripts/izin-disetujui.txt` dan isi alasan di bagian 4.5 dengan jujur. ☐ Pilihan pemilik: ______
+penolakan deklarasi di tengah jalan. Kalau tetap memilih `USE_EXACT_ALARM`, ubah `scripts/izin-disetujui.txt` dan isi alasan di bagian 4.5 dengan jujur. **✔ Diputuskan pemilik 15 Oktober 2026: `SCHEDULE_EXACT_ALARM` saja; `USE_EXACT_ALARM` dihapus dari manifest.**
 
 **B. `USE_FULL_SCREEN_INTENT` (layar alarm di atas layar kunci).**
 Di Android 14 ke atas hanya untuk app panggilan dan alarm, dan butuh deklarasi. **Jalan cadangannya sudah ada di kode (15 Oktober 2026)**: tanpa izin ini alarm tetap berbunyi penuh dan tampil sebagai notifikasi heads-up dengan tombol Matikan dan Tunda;
-yang belum adalah ujinya di perangkat. Dua pilihan: (1) hapus izin ini dari build uji (dua baris: manifest dan `scripts/izin-disetujui.txt`, plus inventaris), atau (2) pertahankan dan deklarasikan. **Rekomendasi: (1)**, alasan yang sama dengan A, dan uji di HP fisik dulu bahwa notifikasi heads-up cukup di layar kunci. ☐ Pilihan pemilik: ______
+yang belum adalah ujinya di perangkat. Dua pilihan: (1) hapus izin ini dari build uji (dua baris: manifest dan `scripts/izin-disetujui.txt`, plus inventaris), atau (2) pertahankan dan deklarasikan. **Rekomendasi: (1)**, alasan yang sama dengan A, dan uji di HP fisik dulu bahwa notifikasi heads-up cukup di layar kunci.
+**✔ Diputuskan pemilik 15 Oktober 2026: dihapus dari manifest.** ☐ Tinggal membuktikan di HP fisik (bagian 6, langkah 7) bahwa heads-up cukup membangunkan.
 
 **C. Usia dan kebijakan** (bagian 2 poin 5). ☐ Pilihan pemilik: ______
 
@@ -117,7 +118,7 @@ Isi **hanya izin yang tersisa setelah keputusan 3.A dan 3.B**. Alasan jujur per 
 
 | Izin | Alasan yang boleh ditulis |
 |---|---|
-| `SCHEDULE_EXACT_ALARM` (atau `USE_EXACT_ALARM` kalau dipilih) | "Pengguna menyalakan alarm Subuh dan pengingat adzan sendiri; alarm harus berbunyi tepat waktu, dan terlambat sampai satu jam membuatnya tidak berguna." Jangan menulis "fungsi inti app adalah alarm" kalau bukan. |
+| `SCHEDULE_EXACT_ALARM` (satu-satunya izin alarm; `USE_EXACT_ALARM` dan `USE_FULL_SCREEN_INTENT` tidak dideklarasikan) | "Pengguna menyalakan alarm Subuh dan pengingat adzan sendiri; alarm harus berbunyi tepat waktu, dan terlambat sampai satu jam membuatnya tidak berguna." Jangan menulis "fungsi inti app adalah alarm" kalau bukan. |
 | Layanan foreground tipe `mediaPlayback` | "Memutar suara alarm Subuh atau adzan yang dinyalakan pengguna, sampai dimatikan." |
 | `POST_NOTIFICATIONS` | Pengingat habit, jadwal, dan alarm. Minta saat pengguna menyalakan fitur terkait. |
 | `ACCESS_COARSE_LOCATION` | Menentukan kota untuk waktu sholat; hanya perkiraan, sekali, tidak berkelanjutan. |

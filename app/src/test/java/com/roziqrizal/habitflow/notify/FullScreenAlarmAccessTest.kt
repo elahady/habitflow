@@ -27,6 +27,16 @@ class FullScreenAlarmAccessTest {
     }
 
     @Test
+    fun tawaranIzinHanyaKalauSistemBisaMemberikannya() {
+        assertTrue(FullScreenAlarmAccess.canOfferSettings(sdk = 34, permissionDeclared = true))
+        // Izin tidak dideklarasikan (build uji dan rilis pertama): layar sistem tidak bisa memberi apa-apa.
+        assertFalse(FullScreenAlarmAccess.canOfferSettings(sdk = 34, permissionDeclared = false))
+        assertFalse(FullScreenAlarmAccess.canOfferSettings(sdk = 36, permissionDeclared = false))
+        // Android 13 ke bawah tidak punya layar izinnya.
+        assertFalse(FullScreenAlarmAccess.canOfferSettings(sdk = 33, permissionDeclared = true))
+    }
+
+    @Test
     fun hanyaCabangYangDipakaiYangDievaluasi() {
         var api34Dipanggil = false
         var manifestDipanggil = false

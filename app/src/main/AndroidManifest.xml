@@ -6,15 +6,16 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.READ_CALENDAR" />
     <uses-permission android:name="android.permission.health.READ_STEPS" />
     <uses-permission android:name="android.permission.health.READ_HEALTH_DATA_IN_BACKGROUND" />
-    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
-    <!-- Cadangan kalau USE_EXACT_ALARM ditolak Google dan dicabut dari manifest: pengguna memberikannya sendiri (ExactAlarmAccess). -->
+    <!-- Alarm presisi: hanya SCHEDULE_EXACT_ALARM, yang diberikan pengguna sendiri (ExactAlarmAccess, tombol di Pengaturan).
+         USE_EXACT_ALARM dan USE_FULL_SCREEN_INTENT sengaja tidak dideklarasikan: Play membatasinya untuk app yang fungsi
+         intinya alarm atau panggilan, dan penolakan di tengah uji tertutup berarti manifest berubah dan uji 14 hari diulang.
+         Alarm tetap berbunyi penuh tanpa layar penuh (FullScreenAlarmAccess). Diputuskan pemilik 15 Oktober 2026. -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
 
     <!-- Android 13 ke bawah: Health Connect adalah app terpisah yang harus bisa dikenali. -->

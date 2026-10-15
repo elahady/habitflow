@@ -48,7 +48,7 @@ dihapus. Kalau salah satu dari ketiganya berbeda dari tabel ini, tabel ini yang 
 | `sync.xml` | pilihan sinkron otomatis, status terakhir, id perangkat, sidik jari cadangan terakhir (31H). Alamat dan token 19B dihapus otomatis saat app dibuka sejak 31F | Ya |
 | `calendar.xml`, `team.xml`, `pending_invite.xml`, `schedule_notifier_state.xml` | pilihan kalender, tim aktif dan notifikasi tim, undangan tim yang menunggu, keadaan pengingat | Ya |
 | `no_backup/pending_wipe.json` | penanda "hapus semua data" (31H); untuk ganti akun membawa akun baru beserta tokennya, dihapus bersama penghapusan. Tidak ikut cadangan awan | Dihapus setelah penghapusan selesai |
-| Izin yang diminta | lokasi perkiraan, kalender (baca), notifikasi, Health Connect (langkah, baca di latar belakang), alarm pasti, layar penuh | Izin tetap ada di sistem, tapi app berhenti memakainya |
+| Izin yang diminta | lokasi perkiraan, kalender (baca), notifikasi, Health Connect (langkah, baca di latar belakang), alarm pasti (`SCHEDULE_EXACT_ALARM`, diberikan pengguna). Layar penuh dan `USE_EXACT_ALARM` tidak dideklarasikan sejak 15 Oktober 2026 | Izin tetap ada di sistem, tapi app berhenti memakainya |
 
 ## 2. Keputusan yang mengikat dokumen ini
 
@@ -182,8 +182,9 @@ Hasil pemeriksaan manifest 11 Oktober 2026. Kolom terakhir adalah risiko penolak
 | `ACCESS_COARSE_LOCATION` | Waktu sholat dari lokasi | Data safety: lokasi perkiraan. Disimpan di pengaturan dan ikut snapshot ke server, jadi **dikumpulkan**, bukan hanya diproses di HP |
 | `READ_CALENDAR` | Acara kalender HP di jadwal | Data safety: kalender. Minta izin hanya saat fitur dinyalakan, dengan penjelasan sebelum dialog sistem |
 | `POST_NOTIFICATIONS` | Pengingat | Biasa |
-| `USE_EXACT_ALARM` | Alarm Subuh dan adzan | **Dibatasi Google** untuk app yang fungsi utamanya alarm atau kalender. Perlu deklarasi dan pembenaran. Kalau ditolak, ganti `SCHEDULE_EXACT_ALARM` dengan izin yang diminta pengguna |
-| `USE_FULL_SCREEN_INTENT` | Layar alarm di atas layar kunci | **Dibatasi** untuk app alarm dan panggilan. Perlu deklarasi. Risiko penolakan sedang |
+| `SCHEDULE_EXACT_ALARM` | Alarm Subuh dan adzan tepat waktu | Diberikan **pengguna** lewat Pengaturan app (Android 14 ke atas menolaknya secara bawaan untuk app baru), jadi tanpa deklarasi khusus di Play Console. Tanpa izin, alarm jatuh ke alarm tidak presisi (bisa terlambat sampai satu jam) dan Pengaturan menawarkan izinnya |
+| ~~`USE_EXACT_ALARM`~~ | (tidak dipakai) | **Diputuskan pemilik 15 Oktober 2026 tidak dideklarasikan.** Play membatasinya untuk app yang fungsi utamanya alarm atau kalender; Habitflow pelacak habit, dan penolakan di tengah uji tertutup mengubah manifest dan mengulang uji 14 hari |
+| ~~`USE_FULL_SCREEN_INTENT`~~ | (tidak dipakai) | **Diputuskan pemilik 15 Oktober 2026 tidak dideklarasikan**, alasan sama. Alarm tetap berbunyi penuh; tampilannya notifikasi heads-up publik dengan tombol Matikan dan Tunda (`FullScreenAlarmAccess`). Belum diuji di HP fisik |
 | `FOREGROUND_SERVICE` dan `..._MEDIA_PLAYBACK` | Bunyi alarm | Tipe layanan foreground perlu dideklarasikan di Play Console |
 | `RECEIVE_BOOT_COMPLETED` | Menjadwalkan ulang alarm setelah restart | Setelah tahap 31, hanya boleh bekerja kalau ada sesi |
 | `health.READ_STEPS` dan `health.READ_HEALTH_DATA_IN_BACKGROUND` | Langkah untuk habit dan fokus | Deklarasi Health Connect. Data **dikirim ke server** (tahap 30), jadi harus tertulis di kebijakan privasi dan Data safety. Dilarang dipakai untuk iklan atau dijual |

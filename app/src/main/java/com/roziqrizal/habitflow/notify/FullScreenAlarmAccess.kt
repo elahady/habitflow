@@ -27,10 +27,23 @@ object FullScreenAlarmAccess {
         },
     )
 
-    /** Layar sistem tempat pengguna memberikan izin, atau null kalau tidak ada yang bisa diberikan pengguna (Android 13 ke bawah). */
+    /**
+     * Layar sistem tempat pengguna memberikan izin, atau null kalau tidak ada yang bisa diberikan pengguna: Android 13 ke
+     * bawah, atau izinnya tidak dideklarasikan di manifest (build uji dan rilis pertama tidak mendeklarasikannya, jadi
+     * layar sistem itu tidak bisa memberikan apa-apa dan tawarannya tidak boleh muncul).
+     */
     fun requestIntent(context: Context): Intent? =
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) null
+        if (!canOfferSettings(Build.VERSION.SDK_INT, declaresPermission(context))) null
         else Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT, Uri.parse("package:${context.packageName}"))
+
+    @Suppress("DEPRECATION")
+    private fun declaresPermission(context: Context): Boolean = runCatching {
+        context.packageManager.getPackageInfo(context.packageName, PackageManager.GET_PERMISSIONS)
+            .requestedPermissions.orEmpty().contains(Manifest.permission.USE_FULL_SCREEN_INTENT)
+    }.getOrDefault(false)
+
+    internal fun canOfferSettings(sdk: Int, permissionDeclared: Boolean): Boolean =
+        sdk >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE && permissionDeclared
 
     /**
      * Android 14 ke atas: `canUseFullScreenIntent()` yang menentukan (izin bisa dicabut pengguna atau ditolak Google).
