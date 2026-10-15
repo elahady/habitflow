@@ -2338,7 +2338,7 @@ Status: **sedang dikerjakan (15 Oktober 2026).** Bergantung pada 31I. Sudah di k
 
 #### 31M. Uji tertutup 14 hari, Play Console, dan produksi
 
-Status: belum dikerjakan. Bergantung pada 31C, 31D, 31J, 31K, 31L.
+Status: **belum bisa dimulai; bahan persiapannya siap (15 Oktober 2026).** Bergantung pada 31C, 31D, 31J, 31K, 31L. Penahan jalur kritis (hitungan 14 hari tidak bisa jalan sebelum ini): kunci unggah dan AAB ditandatangani (31L), server 31B-31E belum di-deploy, email sungguhan belum (DNS dan Resend), Google Sign-In produksi belum, backup 31K belum dipasang, kontak privasi kosong, dan belum ada 15-25 penguji. Detail, siapa yang mengerjakan, draf formulir Play Console, pesan undangan, skrip uji akhir, dan tabel pantau: [uji-tertutup-dan-play-console.md](uji-tertutup-dan-play-console.md). Tiga keputusan pemilik yang harus diambil **sebelum build uji pertama** (karena biner uji harus sama dengan biner rilis): `USE_EXACT_ALARM` atau `SCHEDULE_EXACT_ALARM` saja, `USE_FULL_SCREEN_INTENT`, dan target usia (bagian 3 dokumen itu).
 
 - [ ] **Undang penguji:** 15 sampai 25 orang nyata (minimal 12 harus tetap bergabung setiap hari selama 14 hari **berturut-turut**; kalau turun di bawah 12 hitungan mengulang dari nol, dan Google memeriksa bahwa
   penguji benar-benar memakai app). Beri petunjuk pemasangan dan cara melapor.

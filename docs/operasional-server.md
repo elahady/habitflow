@@ -20,7 +20,7 @@ nyata, peringatan uji yang sampai ke ponsel) harus ada di sini atau di `concept.
 | `server/ops/uji-ops.sh` | Uji ketiga skrip dengan tiruan Docker, rclone, dan curl; 62 pemeriksaan, tiap pelanggaran dicoba. Jalankan setiap kali skrip diubah: `bash server/ops/uji-ops.sh`. |
 | `php artisan habitflow:revoke-all-sessions` | Cabut semua token app dan putuskan semua sesi web (menahan insiden). |
 | `php artisan habitflow:reencrypt-snapshots` | Tulis ulang snapshot dengan `APP_KEY` baru (memutar kunci, bagian 5). |
-| `CountSentMail` (di aplikasi) | Email ke pemilik saat email terkirim mencapai 80% batas harian (`MAIL_DAILY_LIMIT`). Tidak diduplikasi di `monitor.sh`. |
+| `CountSentMail` (di aplikasi) | Email ke pemilik saat email terkirim mencapai 80% batas harian (`MAIL_DAILY_LIMIT`). Tidak diduplikasi di `monitor.sh`. **Hanya jalan kalau `OWNER_EMAIL` terisi; di `.env.production` lokal 15 Oktober 2026 kosong, jadi periksa juga di VM dan isi.** |
 
 Yang dibackup: seluruh database `habitflow` di `shared-mysql` (~210 MB) dan berkas `storage/app/private/snapshots` di container
 `habitflow` (snapshot terenkripsi dengan `APP_KEY`). **Backup tanpa `APP_KEY` yang sama tidak berguna untuk snapshot** (bagian 4).
