@@ -568,11 +568,16 @@ object ScheduleNotifier {
     }
 
     /**
-     * Alarm jam presisi yang menembus Doze. Kalau izin alarm presisi dicabut pengguna (Android 12),
-     * jangan jatuhkan app: pakai alarm tidak presisi sebagai gantinya.
+     * Alarm jam presisi yang menembus Doze. `setAlarmClock` butuh izin alarm presisi (lihat [ExactAlarmAccess]); kalau
+     * izinnya tidak ada atau dicabut pengguna, jangan jatuhkan app: pakai alarm tidak presisi sebagai gantinya, dan
+     * layar Pengaturan menawarkan izinnya.
      */
     fun setClockAlarm(context: Context, triggerAtMillis: Long, pending: PendingIntent) {
         val manager = context.getSystemService(AlarmManager::class.java)
+        if (!ExactAlarmAccess.isGranted(context)) {
+            manager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pending)
+            return
+        }
         try {
             manager.setAlarmClock(AlarmManager.AlarmClockInfo(triggerAtMillis, openAppIntent(context)), pending)
         } catch (e: SecurityException) {

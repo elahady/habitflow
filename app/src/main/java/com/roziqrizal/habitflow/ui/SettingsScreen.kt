@@ -51,6 +51,7 @@ import com.roziqrizal.habitflow.data.calendar.PhoneCalendarSource
 import com.roziqrizal.habitflow.domain.health.BpFrequency
 import com.roziqrizal.habitflow.domain.prayer.PrayerName
 import com.roziqrizal.habitflow.domain.schedule.AlarmTime
+import com.roziqrizal.habitflow.notify.ExactAlarmAccess
 import com.roziqrizal.habitflow.ui.theme.tokens
 import kotlinx.coroutines.launch
 import java.time.format.DateTimeFormatter
@@ -399,6 +400,23 @@ private fun AlarmSection(nextAlarm: AlarmTime?, settings: AlarmSettings) {
         )
         TextButton(onClick = { settings.setSkipped(nextAlarm.date, !off) }) {
             Text(if (off) "Nyalakan lagi" else "Matikan untuk tanggal itu")
+        }
+    }
+
+    // Izin alarm presisi: normalnya sudah diberikan otomatis (USE_EXACT_ALARM). Kalau tidak, alarm Subuh bisa terlambat
+    // sampai satu jam, jadi pengguna diarahkan memberikannya. Dicek ulang setiap kali layar izin sistem ditutup.
+    var exactGranted by remember { mutableStateOf(ExactAlarmAccess.isGranted(context)) }
+    val exactLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+        exactGranted = ExactAlarmAccess.isGranted(context)
+    }
+    if (nextAlarm != null && !exactGranted) {
+        Text(
+            "Alarm belum diizinkan berbunyi tepat waktu, jadi bisa terlambat sampai satu jam.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.error,
+        )
+        TextButton(onClick = { ExactAlarmAccess.requestIntent(context)?.let { exactLauncher.launch(it) } }) {
+            Text("Izinkan alarm tepat waktu")
         }
     }
 
