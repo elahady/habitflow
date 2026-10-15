@@ -2300,17 +2300,17 @@ Status: **selesai (14 Oktober 2026).** Bergantung pada 31I. Skrip berjalan dan t
 
 #### 31K. Operasional server: backup, pemantauan, prosedur insiden
 
-Status: belum dikerjakan. Bisa paralel setelah 31B. **Wajib selesai sebelum penguji diundang di 31M** (penguji adalah pengguna sungguhan dengan data sungguhan).
+Status: **skrip, perintah, dan dokumen selesai di repo dan teruji dengan tiruan (15 Oktober 2026); BELUM dipasang di VM, jadi belum ada satu pun bukti operasional.** Bisa paralel setelah 31B. **Wajib selesai sebelum penguji diundang di 31M** (penguji adalah pengguna sungguhan dengan data sungguhan). Panduan pemasangan, pemulihan, dan keputusan: [operasional-server.md](operasional-server.md); prosedur kebocoran: [insiden-data.md](insiden-data.md). Sisa yang butuh pemilik: tujuan backup di luar VM, akun ntfy dan Healthchecks, kata sandi backup beserta salinannya, dan persetujuan dua keputusan tertulis.
 
-- [ ] **Backup MySQL harian** (`mysqldump --single-transaction`), dikompres, **terenkripsi**, dikirim ke lokasi **di luar VM**, ditambah berkas snapshot di storage. Rotasi 30 hari. Sinyal "backup berhasil" ke layanan
+- [~] **Backup MySQL harian** (kode selesai: `server/ops/backup.sh`; belum dipasang di VM, belum pernah jalan dengan MySQL dan rclone sungguhan) (`mysqldump --single-transaction`), dikompres, **terenkripsi**, dikirim ke lokasi **di luar VM**, ditambah berkas snapshot di storage. Rotasi 30 hari. Sinyal "backup berhasil" ke layanan
   pemantau supaya kegagalan diam-diam ketahuan.
-- [ ] **Latihan pemulihan:** skrip yang memulihkan backup terbaru ke database kosong lalu memeriksa jumlah baris. Dijalankan sekali sebelum 31M, dan seterusnya sebulan sekali.
-- [ ] **Pemantauan:** pengecekan situs dari luar (uptime), peringatan disk hampir penuh, backup gagal, dan email terkirim mencapai 80% batas harian. Pemberitahuan sampai ke ponsel pemilik.
-- [ ] **Rahasia:** `.env.production` dan kunci app yang mengenkripsi snapshot disalin ke tempat aman terpisah (kunci hilang berarti semua snapshot tidak terbaca). Catat cara memutar kunci tanpa kehilangan
+- [~] **Latihan pemulihan** (kode selesai: `server/ops/restore-drill.sh`, memakai container MySQL sementara berbatas memori 450 MB karena VM hanya 2 GB; **belum pernah dijalankan sungguhan, dan itulah buktinya yang dibutuhkan**): skrip yang memulihkan backup terbaru ke database kosong lalu memeriksa jumlah baris. Dijalankan sekali sebelum 31M, dan seterusnya sebulan sekali.
+- [~] **Pemantauan** (kode selesai: `server/ops/monitor.sh`; peringatan 80% email sudah ada di aplikasi sejak 31B; belum dipasang, peringatan uji belum sampai ke ponsel): pengecekan situs dari luar (uptime), peringatan disk hampir penuh, backup gagal, dan email terkirim mencapai 80% batas harian. Pemberitahuan sampai ke ponsel pemilik.
+- [~] **Rahasia** (daftar, tempat, dan cara memutar kunci ada di operasional-server.md bagian 4 dan 5; perintah `habitflow:reencrypt-snapshots` selesai dan teruji; **salinan belum dibuat**): `.env.production` dan kunci app yang mengenkripsi snapshot disalin ke tempat aman terpisah (kunci hilang berarti semua snapshot tidak terbaca). Catat cara memutar kunci tanpa kehilangan
   snapshot (perintah enkripsi ulang).
-- [ ] Putusan tertulis soal **enkripsi disk VM** (data kesehatan di tabel MySQL berupa teks biasa) dan pembatasan akses admin database (tidak terbuka ke internet).
-- [ ] Jadwal pembaruan keamanan PHP, Laravel, dan image Docker.
-- [ ] **`docs/insiden-data.md`:** prosedur kebocoran data. Siapa menilai, cara menahan (`habitflow:revoke-all-sessions`, memutar kunci), cara memastikan cakupan, dan templat pemberitahuan ke pengguna dan lembaga
+- [~] Putusan tertulis soal **enkripsi disk VM** (ditulis sebagai usulan di operasional-server.md bagian 6, **menunggu persetujuan pemilik**; ditinjau ulang saat tahap 30 membuat tabel kesehatan) (data kesehatan di tabel MySQL berupa teks biasa) dan pembatasan akses admin database (tidak terbuka ke internet).
+- [~] Jadwal pembaruan keamanan PHP, Laravel, dan image Docker (usulan di operasional-server.md bagian 7, menunggu persetujuan pemilik).
+- [~] **`docs/insiden-data.md`** (ditulis, **perintah `habitflow:revoke-all-sessions` kini ada dan teruji**; menunggu verifikasi hukum Pasal 46 dan lembaga penerima laporan, dan latihan di atas kertas): prosedur kebocoran data. Siapa menilai, cara menahan (`habitflow:revoke-all-sessions`, memutar kunci), cara memastikan cakupan, dan templat pemberitahuan ke pengguna dan lembaga
   pengawas. UU PDP mewajibkan pemberitahuan paling lambat 3x24 jam, jadi prosedurnya ditulis **sebelum** dibutuhkan.
 
 **Selesai jika:** backup dipulihkan dengan sukses di latihan, peringatan uji sampai ke ponsel pemilik, dan prosedur insiden bisa dijalankan tanpa membaca kode.

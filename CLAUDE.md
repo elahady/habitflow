@@ -11,6 +11,7 @@ kontribusi ala GitHub. Detail rancangan ada di [docs/rancangan.md](docs/rancanga
   harian pribadi (jadwal, waktu sholat, follow-up kerja, kesehatan). Dibaca sebelum
   membahas tahap 17 ke atas.
 - [docs/rilis-play-store.md](docs/rilis-play-store.md): gerbang rilis Play Store, inventaris data, dan tes penjaga. Dibaca sebelum menyentuh login, skema database, izin manifest, atau persiapan rilis. Inventaris data diperbarui di commit yang sama dengan perubahan tabel atau izin.
+- [docs/operasional-server.md](docs/operasional-server.md) dan [docs/insiden-data.md](docs/insiden-data.md): backup, pemantauan, memutar kunci, dan prosedur kebocoran data. Dibaca sebelum menyentuh server, backup, `APP_KEY`, atau penanganan insiden. Skrip di `server/ops/` diuji dengan `bash server/ops/uji-ops.sh` setiap kali diubah.
 - [docs/rancangan.md](docs/rancangan.md): aturan fitur (habit, to-do, level,
   streak, layar). Kalau ada konflik dengan `concept.md`, `rancangan.md` yang menang
   dan `concept.md` diperbarui.

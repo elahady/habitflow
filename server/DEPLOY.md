@@ -70,6 +70,12 @@ trial-error (lihat catatan di `docs/concept.md` tiap tahap). Layak dibuatkan
 `scripts/deploy.sh` begitu polanya benar-benar tidak berubah lagi — belum dilakukan per
 10 Oktober 2026.
 
+## Backup, pemantauan, dan insiden (tahap 31K)
+
+Skrip di `ops/` (backup, latihan pemulihan, pemantau) ikut terkirim bersama deploy karena ada di dalam `server/`. Cara memasang, memulihkan,
+memutar `APP_KEY`, dan prosedur kebocoran data ada di [docs/operasional-server.md](../docs/operasional-server.md) dan
+[docs/insiden-data.md](../docs/insiden-data.md). Setelah mengubah skrip: `bash ops/uji-ops.sh`.
+
 ## Email dan antrean (tahap 31B)
 
 Verifikasi email dan lupa kata sandi mengirim kode 6 angka. Email dikirim lewat **antrean
