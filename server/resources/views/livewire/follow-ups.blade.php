@@ -1,6 +1,8 @@
 <div>
     <h1>Follow-up Kerja</h1>
 
+    <livewire:daily-brief-card />
+
     <form wire:submit="add" style="display: flex; gap: 8px; margin-bottom: 16px;">
         <input type="text" wire:model="newTitle" placeholder="Catat cepat ke Inbox..." style="flex: 1;">
         <button type="submit" class="primary" style="width: auto; white-space: nowrap;">Catat</button>

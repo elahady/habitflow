@@ -2440,6 +2440,24 @@ kontrak `POST /api/v1/daily-briefs` dan `GET /api/v1/ping`. Keputusan di dalamny
 - Kode verifikasi, tautan reset, dan data kartu/rekening dari email tidak disalin ke ringkasan, karena disimpan di server dan terbaca di web.
 - Tanpa email belum dibaca tetap menulis "0 email belum dibaca" supaya kartu membedakan "dicek, kosong" dari "belum dicek".
 
+**Langkah 4, bagian web selesai (15 Oktober 2026; Android belum):** komponen Livewire `DailyBriefCard`
+(`resources/views/livewire/daily-brief-card.blade.php`) dipasang di atas halaman `/follow-up`. Read-only, berlabel
+"Ditulis otomatis, hanya dibaca", dan tidak punya form, jadi jelas beda dari Catatan EOD yang ditulis manual. Perilaku:
+- Menampilkan `email_digest` hari ini (dengan "Hari ini · diperbarui HH.MM"). "Hari ini" dihitung di zona waktu terakhir
+  yang dikirim HP (`prayer_days`, sama dengan kartu jadwal), cadangan Asia/Jakarta, bukan zona server.
+- Belum ada ringkasan hari ini: menampilkan yang terakhir beserta tanggalnya dan tulisan "Belum ada ringkasan hari ini",
+  supaya kartu tidak kosong tapi juga tidak berpura-pura itu ringkasan hari ini. Ringkasan bertanggal di depan diabaikan.
+- Belum pernah ada: pesan kosong yang menyebut skill `habitflow-morning-routine`.
+- Teks di-escape dan ditampilkan polos (`white-space: pre-line`), jadi isi email tidak bisa menyisipkan HTML. Segar tiap 5 menit.
+- Hanya memakai token warna dan gaya kartu yang sudah ada di halaman Kerja; tidak ada nilai desain baru.
+- 8 tes (`DailyBriefCardTest`); 237 tes server lulus. **Belum dilihat di browser** dan **belum di-deploy.**
+
+**Penyimpangan dari mockup yang perlu diketahui:** artboard `KerjaWeb.dc.html` ternyata **tidak punya** kartu "Ringkasan
+dari Claude". Yang ada hanya hero "Ringkasan hari ini" (statistik follow-up), panel Meeting & briefing, Rencana besok, dan
+Catatan EOD. Kartu ini dirancang mengikuti keputusan garis besar di atas (kartu terpisah di tab Kerja) dan gaya halaman
+yang ada, bukan menyalin artboard. Kalau mau ditaruh di tempat lain atau dibuatkan artboard dulu, tinggal dipindah.
+Masih tersisa dari langkah 4: kartu di Android.
+
 Dibahas 11 Oktober 2026, lanjutan tahap 19 dan 27. Sumbernya: skill `morning-routine` yang dipakai pemilik tiap pagi
 di `C:\Project\MasuyaLab\masuya-context` untuk bikin jurnal harian di Notion ("Ruang Kerja : I am a Leader") —
 ringkasan email unread, migrasi task belum selesai, dan rencana besok. Pertanyaannya: bisa dibuat versi yang sama
