@@ -2558,7 +2558,7 @@ berikutnya tanpa disalin ulang. Jadi skill versi Habitflow seharusnya lebih ramp
 - Hubungan dengan tahap 31 (Login Wajib): `user-token` sudah ada sejak tahap 27 jadi kemungkinan tidak
   terpengaruh, tapi perlu dicek ulang setelah tahap 31 selesai.
 
-### Tahap 33: Web disamakan dengan mockup Design canvas (dicatat 11 Oktober 2026, belum dikoding)
+### Tahap 33: Web disamakan dengan mockup Design canvas (dicatat 11 Oktober 2026; langkah 1 Beranda selesai di kode 15 Oktober 2026)
 
 **Kenapa tahap ini ada.** Di sesi 11 Oktober 2026, setelah deploy tahap 29 langkah 1-3, pemilik menunjukkan
 bahwa beranda web (`https://habitflow.roziqrizal.com/`) tidak terlihat seperti mockup di
@@ -2617,10 +2617,27 @@ Ini beda paling besar — **bukan cuma soal gaya, tapi konsep halaman yang beda 
 - **Bagian yang murni baru** (tidak tercakup tahap manapun): filter chip per status di atas daftar, kartu hero rekap
   harian dengan statistik ringkas, dan tombol Bagikan ringkasan.
 
-#### Rencana langkah (belum dikerjakan, urutan diusulkan)
+#### Rencana langkah (urutan diusulkan; langkah 1 selesai di kode 15 Oktober 2026)
 
-1. **Beranda**: tambah strip 4 kartu ringkasan (Habit/To-do/Follow-up/Tugas Rumah) — ini yang paling murah karena
-   datanya sudah ada semua lewat model yang sudah dipakai `HabitToday`, `FollowUps`, `Teams`.
+1. ✅ **Beranda** (kode dan tes selesai 15 Oktober 2026, **belum di-deploy**): baris tanggal ("Kamis, 15 Oktober 2026") di atas
+   sapaan dan strip 4 kartu ringkasan sesuai `Main.dc.html`. Tiap kartu menaut ke halamannya.
+   - **Habit hari ini** `X / total` + bar; **To-do hari ini** `selesai / jumlah` + bar (mockup menulis "2 / 5", yang dibaca sebagai
+     selesai dari to-do yang ada, bukan dari batas 5); **Follow-up kerja**: Lewat tanggal (merah kalau > 0), Jatuh tempo hari ini,
+     Inbox belum dirapikan; **Tugas Rumah**: tugas yang ditugaskan ke saya, belum selesai, di tim yang masih saya ikuti.
+   - Angka dihitung di `App\Support\DaySummary`. Aturan follow-up adalah **salinan `sectionFor` di Android** (Inbox menang atas Lewat
+     tanggal; "hari ini" = dipilih hari ini atau jatuh tempo hari ini; yang dipilih hari ini tidak dihitung lewat tanggal), jadi angka web
+     sama dengan HP. Kalau satu berubah, ubah keduanya (sudah dicatat di komentar kelasnya).
+   - Belum ada habit atau to-do: kartu menulis pesan, bukan "0 / 0".
+   - **Perbaikan sampingan yang perlu diketahui:** zona waktu aplikasi UTC, jadi `Carbon::today()` baru berganti hari pukul 07.00 WIB. Antara
+     00.00 dan 07.00 halaman Habit dan Follow-up menampilkan **kemarin**. Kini semua halaman bergantung tanggal memakai `App\Support\UserDay`
+     (zona waktu terakhir dari HP, cadangan Asia/Jakarta): Beranda, Habit, Follow-up, kartu Jadwal, dan kartu Ringkasan dari Claude.
+   - Kelas gaya `hf-serif`, `hf-card`, `hf-bar`, `hf-icon`, `hf-strip` ditambahkan ke `components/layout.blade.php` (dari mockup). Hanya
+     Beranda yang memakainya; halaman lain dipindah di langkah 2 dan 3. Kartu "Jadwal sekarang" belum bergaya `hf-card` (langkah sisa).
+   - 12 tes baru (`DashboardSummaryTest`, 249 tes server lulus). Dilihat lewat screenshot Edge headless dari data contoh: desktop 1100px
+     sesuai mockup, lebar 500px jadi 2 kolom tanpa meluber (terang vs gelap hanya diperiksa gelap, mengikuti preferensi sistem).
+     **Belum:** dilihat di produksi dengan data nyata.
+   - **Belum dari baris Beranda di tabel audit:** kartu hero "Fokus kesehatan" dan section Kesehatan (tahap 30 langkah 5), dan judul kartu
+     jadwal "Jadwal hari ini" vs "Jadwal sekarang".
 2. **Habit**: bungkus ulang jadi kartu stat + gaya `hf-card`, lalu endpoint heatmap web (baru) dan komponen heatmap.
 3. **Kerja/Follow-up**: migrasi daily scrum/EOD ke web (tabel + endpoint baru, pola sama seperti tahap 27/29), baru
    susun ulang jadi halaman "Rekap hari ini" dengan filter chip. Bagian Meeting & briefing dan Ringkasan Claude

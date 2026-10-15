@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\FollowUp;
+use App\Support\UserDay;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
@@ -165,7 +166,7 @@ class FollowUps extends Component
             ->get();
 
         return view('livewire.follow-ups', [
-            'today' => Carbon::today()->toDateString(),
+            'today' => UserDay::today(auth()->user()),
             'sections' => [
                 'INBOX' => ['Inbox', $all->where('status', 'INBOX')],
                 'ACTIVE' => ['Aktif', $all->where('status', 'ACTIVE')],

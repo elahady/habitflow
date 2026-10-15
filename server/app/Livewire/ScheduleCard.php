@@ -3,8 +3,8 @@
 namespace App\Livewire;
 
 use App\Support\Schedule\ScheduleResolver;
+use App\Support\UserDay;
 use Illuminate\Contracts\View\View;
-use Illuminate\Support\Carbon;
 use Livewire\Component;
 
 /**
@@ -14,14 +14,11 @@ use Livewire\Component;
  */
 class ScheduleCard extends Component
 {
-    /** Dipakai sebelum HP pernah mengirim zona waktu. */
-    public const FALLBACK_TIMEZONE = 'Asia/Jakarta';
-
     public function render(): View
     {
         $user = auth()->user();
         $latest = $user->prayerDays()->latest('updated_at')->first();
-        $now = Carbon::now($latest?->timezone ?? self::FALLBACK_TIMEZONE);
+        $now = UserDay::now($user);
         $today = $user->prayerDays()->where('date', $now->toDateString())->first();
 
         $blocks = $user->scheduleBlocks()->orderBy('sort_order')->orderBy('id')->get();

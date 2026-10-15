@@ -4,8 +4,8 @@ namespace App\Livewire;
 
 use App\Models\Habit;
 use App\Models\Todo;
+use App\Support\UserDay;
 use Illuminate\Contracts\View\View;
-use Illuminate\Support\Carbon;
 use Livewire\Component;
 
 /**
@@ -22,7 +22,7 @@ class HabitToday extends Component
 
     private function today(): string
     {
-        return Carbon::today()->toDateString();
+        return UserDay::today(auth()->user());
     }
 
     private function habit(int $habitId): Habit

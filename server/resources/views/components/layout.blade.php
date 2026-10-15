@@ -36,6 +36,22 @@
             background: var(--primary); color: var(--on-primary); border: none; padding: 11px 22px;
             border-radius: 999px; font-family: 'Manrope', sans-serif; font-weight: 600; font-size: 14px; cursor: pointer;
         }
+        /* Gaya kartu dari mockup Design canvas (tahap 33). Halaman lain dipindah ke sini bertahap. */
+        .hf-serif { font-family: 'Libre Caslon Text', serif; font-weight: 400; }
+        .hf-card { background: var(--surface-lowest); border: 1px solid var(--outline-variant); border-radius: 16px; }
+        .hf-icon { width: 20px; height: 20px; color: var(--primary); flex-shrink: 0; }
+        .hf-bar { height: 6px; border-radius: 999px; background: var(--outline-variant); overflow: hidden; }
+        .hf-bar-fill { height: 100%; background: var(--primary); border-radius: 999px; }
+        .hf-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 16px; }
+        a.hf-stat { display: block; padding: 20px; color: inherit; text-decoration: none; min-width: 0; }
+        a.hf-stat:hover { border-color: var(--primary); }
+        a.hf-stat:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+        .hf-stat-head { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; font-size: 13px; font-weight: 600; color: var(--on-surface-variant); }
+        .hf-stat-value { font-size: 30px; margin-bottom: 10px; }
+        .hf-stat-note { font-size: 13px; color: var(--on-surface-variant); }
+        .hf-stat-rows { display: flex; flex-direction: column; gap: 8px; }
+        .hf-stat-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 13px; color: var(--on-surface-variant); }
+        .hf-stat-row .hf-serif { font-size: 20px; color: inherit; }
         .error-text { color: var(--error); font-size: 13px; margin-top: 6px; }
         .notice { background: var(--primary-fixed); color: var(--on-primary-container); padding: 12px 16px; border-radius: 12px; font-size: 14px; line-height: 1.5; margin-bottom: 16px; }
         .notice.error { background: transparent; color: var(--error); border: 1px solid var(--error); }

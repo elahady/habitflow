@@ -2,8 +2,8 @@
 
 namespace App\Livewire;
 
+use App\Support\UserDay;
 use Illuminate\Contracts\View\View;
-use Illuminate\Support\Carbon;
 use Livewire\Component;
 
 /**
@@ -17,8 +17,8 @@ class DailyBriefCard extends Component
     public function render(): View
     {
         $user = auth()->user();
-        $timezone = $user->prayerDays()->latest('updated_at')->value('timezone') ?? ScheduleCard::FALLBACK_TIMEZONE;
-        $today = Carbon::now($timezone)->toDateString();
+        $timezone = UserDay::timezone($user);
+        $today = UserDay::today($user);
 
         // Ringkasan hari ini kalau ada; kalau belum, yang terakhir dengan tanggalnya, supaya kartu
         // tidak kosong sebelum skill jalan tapi juga tidak berpura-pura itu ringkasan hari ini.
