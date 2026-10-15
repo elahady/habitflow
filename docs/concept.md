@@ -2474,6 +2474,20 @@ di paling atas tab Kerja, di bawah judul. Read-only, berlabel "Ditulis otomatis,
 - **Belum:** dilihat di emulator/HP (tata letak, lipatan "Selengkapnya", tema gelap) dan diuji terhadap server sungguhan (belum di-deploy).
   Yang berubah di `WorkViewModel`: konstruktornya kini menerima `DailyBriefRepository` (satu-satunya pemanggil: `MainActivity`).
 
+**Langkah 2 sebagian selesai (15 Oktober 2026): dites dengan curl terhadap server LOKAL, bukan produksi.** `php artisan serve` dengan
+database SQLite sementara (seluruh migrasi jalan, termasuk `daily_briefs`) dan satu akun uji. Hasil: `POST` pertama 201; kirim ulang
+200 dengan `id` yang sama (tidak dobel); `POST` hanya `meeting_note` 200 dan `email_digest` tetap; tanggal lain 201 (id baru); `GET` terbaru
+dulu dan filter `date` benar; `date` salah format 422; tanpa token dan token salah 401. Isi dengan baris baru, tanda kutip, tanda
+pisah "—", dan `<script>` tersimpan dan kembali utuh (di-escape saat tampil, lihat tes web). Tanggal di JSON berupa `2026-10-15`
+polos, cocok dengan pembaca Android. Pesan validasi 422 berbahasa Inggris (bawaan Laravel); skill hanya meneruskannya. Server dan
+berkas uji sudah dihapus. **Belum:** dites terhadap produksi, dan skill `habitflow-morning-routine` belum pernah dijalankan end-to-end.
+
+**Deploy ke produksi belum dilakukan (15 Oktober 2026).** Alasannya bukan teknis fitur ini, tapi isi deploy: produksi masih menjalankan
+kode sebelum 31B, jadi satu deploy membawa seluruh 31B-31L + tahap 32, dengan akibat yang sudah dicatat di 31E: app Android terpasang
+(HP pemilik dan istri) berhenti sinkron sampai app baru terpasang, migrasi `drop_api_tokens` mengharuskan `habitflow:claim-legacy`
+dijalankan dulu dari rilis lama (`b96bc51` atau sebelumnya, jadi dua kali deploy), dan email verifikasi belum bisa terkirim (DNS Resend
+belum). Sesi ini juga tidak punya jalan ke VM (IP tercatat 172.23.192.247 tidak menjawab; perlu IP terbaru dari Hyper-V).
+
 Dengan ini seluruh langkah 4 selesai di kode (web dan Android). Sisa tahap 32: langkah 2 (tes manual dengan curl, menunggu deploy) dan
 langkah 5 (opsional, `/schedule`), serta dua butir "Belum diputuskan" di bawah.
 
