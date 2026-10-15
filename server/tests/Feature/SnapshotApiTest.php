@@ -216,6 +216,18 @@ class SnapshotApiTest extends TestCase
         $this->getJson('/api/v1/ping', $this->auth())->assertStatus(429);
     }
 
+    public function test_batas_60_dihitung_per_token_bukan_per_alamat_ip(): void
+    {
+        [, $plainLain] = $this->otherUser();
+
+        for ($i = 0; $i < 60; $i++) {
+            $this->getJson('/api/v1/ping', $this->auth())->assertOk();
+        }
+        $this->getJson('/api/v1/ping', $this->auth())->assertStatus(429);
+        // Akun lain dari alamat IP yang sama tidak ikut terblokir.
+        $this->getJson('/api/v1/ping', $this->auth($plainLain))->assertOk();
+    }
+
     public function test_isi_data_sama_tapi_waktu_kirim_beda_dianggap_tidak_berubah(): void
     {
         $this->unggah($this->snapshot(['createdAt' => 1000]))->assertOk()->assertJson(['unchanged' => false]);

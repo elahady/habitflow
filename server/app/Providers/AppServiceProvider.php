@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\UserToken;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -22,11 +23,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // 60 permintaan per menit per token (atau per alamat IP kalau belum ada token yang sah).
+        // 60 permintaan per menit per token (atau per alamat IP kalau tidak ada token). Kuncinya diambil dari header,
+        // bukan dari atribut yang diisi middleware `user-token`: Laravel menaruh throttle lebih awal dari middleware
+        // itu, jadi saat limiter dihitung atributnya belum ada. Token palsu tetap dibatasi oleh `user-token` per IP.
         RateLimiter::for('habitflow', function (Request $request) {
-            $token = $request->attributes->get('api_token');
+            $plain = $request->bearerToken();
 
-            return Limit::perMinute(60)->by($token ? 'token:'.$token->id : 'ip:'.$request->ip());
+            return Limit::perMinute(60)->by($plain ? 'token:'.UserToken::hash($plain) : 'ip:'.$request->ip());
         });
     }
 }
