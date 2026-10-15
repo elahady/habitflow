@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\ScheduleBlockController;
 use App\Http\Controllers\Api\TeamController;
 use App\Http\Controllers\Api\TeamTodoController;
 use App\Http\Controllers\Api\TodoController;
+use App\Http\Controllers\Api\WorkDayController;
 use App\Http\Controllers\SnapshotController;
 use Illuminate\Support\Facades\Route;
 
@@ -100,4 +101,10 @@ Route::prefix('v1')->middleware(['user-token', 'throttle:habitflow'])->group(fun
 Route::prefix('v1')->middleware(['user-token', 'throttle:habitflow'])->group(function () {
     Route::get('daily-briefs', [DailyBriefController::class, 'index']);
     Route::post('daily-briefs', [DailyBriefController::class, 'upsert']);
+});
+
+// Catatan harian kerja (tahap 33 langkah 3) - EOD dan daily scrum per tanggal, PUT dicek konfliknya (409).
+Route::prefix('v1')->middleware(['user-token', 'throttle:habitflow'])->group(function () {
+    Route::get('work-days', [WorkDayController::class, 'index']);
+    Route::put('work-days/{date}', [WorkDayController::class, 'upsert']);
 });

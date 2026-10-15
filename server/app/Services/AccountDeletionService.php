@@ -47,7 +47,7 @@ class AccountDeletionService
             DB::table('schedule_block_habits')->whereIn('schedule_block_id', $blockIds)->orWhereIn('habit_id', $habitIds)->delete();
             DB::table('schedule_blocks')->where('user_id', $user->id)->delete();
             DB::table('habits')->where('user_id', $user->id)->delete();
-            foreach (['todos', 'follow_ups', 'prayer_days', 'daily_briefs', 'snapshots', 'email_codes', 'user_tokens'] as $table) {
+            foreach (['todos', 'follow_ups', 'prayer_days', 'daily_briefs', 'work_days', 'snapshots', 'email_codes', 'user_tokens'] as $table) {
                 DB::table($table)->where('user_id', $user->id)->delete();
             }
 

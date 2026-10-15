@@ -23,6 +23,7 @@ class DataInventory
         'follow_ups',
         'prayer_days',
         'daily_briefs',
+        'work_days',
         'snapshots',
         'teams',
         'team_members',

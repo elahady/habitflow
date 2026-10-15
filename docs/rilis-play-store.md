@@ -35,6 +35,7 @@ dihapus. Kalau salah satu dari ketiganya berbeda dari tabel ini, tabel ini yang 
 | `account_deletions` | waktu dan sumber penghapusan akun (`app`, `web`, `web-code`), tanpa id, nama, atau email | Bukan data pengguna | Tidak (bukti penghapusan) |
 | `habits`, `habit_entries`, `todos` | habit, riwayat centang, to-do harian | Aktivitas | Ya |
 | `follow_ups` | follow-up kerja (judul, orang, catatan) | Aktivitas, nama orang lain | Ya |
+| `work_days` | catatan EOD per tanggal (bisa memuat isi pekerjaan dan nama orang lain) dan waktu daily scrum dan EOD selesai (tahap 33 langkah 3) | Aktivitas, nama orang lain | Ya |
 | `daily_briefs` | ringkasan harian dari Claude (ringkasan email: pengirim dan subjek, catatan meeting), satu baris per tanggal (tahap 32) | Aktivitas, nama orang lain | Ya |
 | `teams`, `team_members`, `team_invites`, `team_todos` | tim tugas rumah dan isinya | Aktivitas, melibatkan orang lain | **Aturan khusus, lihat Keputusan** |
 | Rencana tahap 29 dan 30: `weight_entries`, `blood_pressure_entries`, `step_days`, `health_focus`, jadwal, `work_days`, makan, acara | berat, tensi, langkah, jadwal | **Kesehatan** | Ya. Wajib masuk daftar hapus **sebelum** tabelnya dibuat |
