@@ -27,10 +27,8 @@ Yang dibackup: seluruh database `habitflow` di `shared-mysql` (~210 MB) dan berk
 
 ## 2. Memasang di VM (sekali)
 
-☐ **Keputusan 1, tujuan backup di luar VM.** VM dan PC host satu rumah, satu listrik, satu kemungkinan pencurian atau banjir, jadi
-folder di PC host **bukan** "di luar VM" yang dimaksud gerbang D. Pilih layanan di luar rumah yang didukung rclone (Google Drive
-pribadi, Backblaze B2, Cloudflare R2, dan lain-lain). Data di sana sudah terenkripsi gpg sebelum keluar dari VM, jadi layanan
-tidak perlu dipercaya. Usulan: yang gratis atau murah dan bisa Anda akses dari ponsel untuk memeriksa.
+**Tujuan backup di luar VM: Cloudflare R2 (sudah diputuskan pemilik 11 Oktober 2026, lihat `concept.md` tahap 31 "Keputusan enam butir terbuka").** Alasannya: satu ekosistem dengan Cloudflare Tunnel, kompatibel S3, 10 GB gratis dan tanpa biaya egress (penting untuk latihan pemulihan bulanan). Folder di PC host **bukan** pengganti, karena VM dan PC satu rumah. Enkripsi dilakukan di VM sebelum unggah (`backup.sh` memakai gpg AES256), jadi kredensial R2 yang bocor tidak membuka isi backup; kunci dipegang pemilik di pengelola kata sandi plus satu salinan offline, terpisah dari VM dan repo. Rotasi 30 hari.
+☐ Yang tersisa: buat bucket dan token API R2 (izin baca-tulis hanya untuk bucket itu), lalu `rclone config` di VM dengan tipe S3, provider Cloudflare, dan isi `BACKUP_REMOTE="r2:<nama-bucket>"`.
 
 ☐ **Keputusan 2, pemberitahuan.** Skrip memakai dua jalur berbasis URL, jadi tidak terikat satu vendor:
 - **ntfy** (`ALERT_URL=https://ntfy.sh/<topik-acak-panjang>`): peringatan sampai ke ponsel lewat aplikasi ntfy. Topik acak berfungsi sebagai kata sandi.
