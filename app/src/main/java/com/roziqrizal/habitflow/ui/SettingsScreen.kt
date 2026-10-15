@@ -52,6 +52,7 @@ import com.roziqrizal.habitflow.domain.health.BpFrequency
 import com.roziqrizal.habitflow.domain.prayer.PrayerName
 import com.roziqrizal.habitflow.domain.schedule.AlarmTime
 import com.roziqrizal.habitflow.notify.ExactAlarmAccess
+import com.roziqrizal.habitflow.notify.FullScreenAlarmAccess
 import com.roziqrizal.habitflow.ui.theme.tokens
 import kotlinx.coroutines.launch
 import java.time.format.DateTimeFormatter
@@ -417,6 +418,24 @@ private fun AlarmSection(nextAlarm: AlarmTime?, settings: AlarmSettings) {
         )
         TextButton(onClick = { ExactAlarmAccess.requestIntent(context)?.let { exactLauncher.launch(it) } }) {
             Text("Izinkan alarm tepat waktu")
+        }
+    }
+
+    // Layar alarm penuh di atas layar kunci: bisa ditolak Google atau dicabut pengguna (Android 14). Alarm tetap berbunyi
+    // tanpanya, jadi ini tawaran, bukan peringatan; hanya muncul kalau sistem punya layar izin untuk dibuka.
+    var fullScreenGranted by remember { mutableStateOf(FullScreenAlarmAccess.isGranted(context)) }
+    val fullScreenLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+        fullScreenGranted = FullScreenAlarmAccess.isGranted(context)
+    }
+    val fullScreenIntent = remember { FullScreenAlarmAccess.requestIntent(context) }
+    if (nextAlarm != null && !fullScreenGranted && fullScreenIntent != null) {
+        Text(
+            "Layar alarm penuh di atas layar kunci belum diizinkan. Alarm tetap berbunyi dan muncul sebagai notifikasi dengan tombol Matikan dan Tunda.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        TextButton(onClick = { fullScreenLauncher.launch(fullScreenIntent) }) {
+            Text("Izinkan layar alarm penuh")
         }
     }
 

@@ -178,9 +178,13 @@ class AlarmService : Service() {
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setOngoing(true)
-            .setFullScreenIntent(fullScreen, true)
+            // Isi alarm (nama dan jam) tidak sensitif, dan tanpa layar penuh notifikasi inilah satu-satunya yang terlihat di layar kunci.
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setContentIntent(fullScreen)
             .addAction(0, "Matikan", servicePending(ACTION_STOP, 1))
+        // Layar alarm penuh hanya kalau diizinkan (lihat FullScreenAlarmAccess). Tanpa izin, alarm tetap berbunyi dan
+        // muncul sebagai notifikasi heads-up dengan tombol Matikan dan Tunda; mengetuknya membuka layar alarm.
+        if (FullScreenAlarmAccess.isGranted(this)) builder.setFullScreenIntent(fullScreen, true)
         if (snoozeCount < MAX_SNOOZES) builder.addAction(0, "Tunda $SNOOZE_MINUTES menit", servicePending(ACTION_SNOOZE, 2))
         return builder.build()
     }
