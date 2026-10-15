@@ -58,8 +58,8 @@ penolakan setelah uji 14 hari berarti manifest berubah dan uji diulang. Sekarang
 penolakan deklarasi di tengah jalan. Kalau tetap memilih `USE_EXACT_ALARM`, ubah `scripts/izin-disetujui.txt` dan isi alasan di bagian 4.5 dengan jujur. ☐ Pilihan pemilik: ______
 
 **B. `USE_FULL_SCREEN_INTENT` (layar alarm di atas layar kunci).**
-Di Android 14 ke atas hanya untuk app panggilan dan alarm, dan butuh deklarasi; jalan cadangan (notifikasi heads-up) **belum dikerjakan** (31L). Dua pilihan: (1) kerjakan jalan cadangannya lalu hapus izin ini dari build uji,
-atau (2) pertahankan dan deklarasikan. **Rekomendasi: (1)**, alasan yang sama dengan A. ☐ Pilihan pemilik: ______
+Di Android 14 ke atas hanya untuk app panggilan dan alarm, dan butuh deklarasi. **Jalan cadangannya sudah ada di kode (15 Oktober 2026)**: tanpa izin ini alarm tetap berbunyi penuh dan tampil sebagai notifikasi heads-up dengan tombol Matikan dan Tunda;
+yang belum adalah ujinya di perangkat. Dua pilihan: (1) hapus izin ini dari build uji (dua baris: manifest dan `scripts/izin-disetujui.txt`, plus inventaris), atau (2) pertahankan dan deklarasikan. **Rekomendasi: (1)**, alasan yang sama dengan A, dan uji di HP fisik dulu bahwa notifikasi heads-up cukup di layar kunci. ☐ Pilihan pemilik: ______
 
 **C. Usia dan kebijakan** (bagian 2 poin 5). ☐ Pilihan pemilik: ______
 
