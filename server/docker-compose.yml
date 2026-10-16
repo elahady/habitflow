@@ -20,6 +20,10 @@ services:
     image: habitflow:latest
     container_name: habitflow-queue
     command: ["php", "/var/www/html/artisan", "queue:work", "--tries=3", "--sleep=3", "--max-time=3600"]
+    # Image dasar memeriksa curl localhost:8080, padahal worker tidak menjalankan web server,
+    # jadi container ini selalu tampil unhealthy walau prosesnya berjalan. Pemeriksaan dimatikan.
+    healthcheck:
+      disable: true
     volumes:
       - storage:/var/www/html/storage
     env_file:
