@@ -52,6 +52,11 @@ kontribusi ala GitHub. Detail rancangan ada di [docs/rancangan.md](docs/rancanga
 - Android SDK di `C:/Android/Sdk` (ada di `local.properties`, tidak di-commit).
 - Build dan install debug dari terminal, bukan Android Studio:
   `JAVA_HOME=... ./gradlew.bat installDebug --console=plain`
+- **Kalau user minta "build dan taruh di folder personal"** (atau sejenisnya): jalankan
+  `./gradlew.bat :app:assembleDebug --console=plain -q`, lalu salin `app/build/outputs/apk/debug/app-debug.apk` ke
+  Google Drive `G:/My Drive/01-Personal/` (di Git Bash: `/g/My Drive/01-Personal/`) dengan nama
+  `habitflow-debug-YYYY-MM-DD.apk`. Kalau berkas bernama itu sudah ada hari itu, pakai akhiran `-b`, `-c`, `-d`, dst.
+  (cek `ls` folder itu dulu), jangan menimpa APK lama.
 
 ## Sebelum mengunggah AAB (wajib)
 
