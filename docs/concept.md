@@ -1470,12 +1470,12 @@ pindah, baru dipertimbangkan apakah 19B dipensiunkan total.
 | To-do tim | `team_todos`, `teams`, `team_invites` | baru | **Selesai (web+API+Android) — tahap 26** |
 | Habit + to-do harian | `habits`, `habit_entries`, `todos` | 1-9 | **Selesai (web+API+Android)** — tahap 28 |
 | Jadwal harian & libur | `schedule_blocks`, `schedule_block_habits`, `days_off`, `holiday_cancellations` | 17, 22 | Sebagian: server `schedule_blocks`, API, cache waktu sholat, dan kartu web selesai (tahap 29 langkah 1-3); sinkron Android, `days_off`, dan libur belum |
-| Daily scrum/EOD | `work_days` | 19 | Belum dimulai |
-| Kesehatan (berat, tensi) | `weight_entries`, `blood_pressure_entries` | 21 | **Tahap 30 (satu arah, web hanya membaca, belum dikoding)**. Beda dari pola penuh: input hanya di Android, tanpa deteksi konflik |
+| Daily scrum/EOD | `work_days` | 19 | **Catatan EOD selesai dua arah (tahap 33 langkah 3a-3c: server, web, Android; di-deploy dan dicoba di HP 16 Oktober 2026)**. Sisa: angka "X dari Y selesai" per hari (usulan kolom `eod_summary`); rencana besok dan scrum belum dimigrasi |
+| Kesehatan (berat, tensi) | `weight_entries`, `blood_pressure_entries` | 21 | **Tahap 30: langkah 1-5 selesai dan di-deploy (satu arah, web hanya membaca); langkah 6 verifikasi di HP sebagian** (fokus, grafik, tema gelap lulus; catat berat/tensi baru belum dicoba). Beda dari pola penuh: input hanya di Android, tanpa deteksi konflik |
 | Asupan makan | `meals`, `drink_counts`, `habit_manual_marks` | 20, 23 | Belum dimulai |
 | Kalender & acara | `events`, `event_exceptions` | 22 | Belum dimulai |
 | Pengaturan (lokasi, adzan, tema, pengingat) | `settings` per user | berbagai | Belum dimulai |
-| Langkah (steps) | Sumbernya sensor Health Connect di HP, web tidak punya akses, jadi **tidak ada migrasi dua arah**. Revisi (tahap 30): Android mengirim **total langkah per hari** (7 hari terakhir) ke server hanya untuk ditampilkan di web, tabel `step_days`. Habit yang tercentang otomatis dari langkah tetap ikut sinkron lewat `habit_entries` | 21, 30 | Tahap 30, belum dikoding |
+| Langkah (steps) | Sumbernya sensor Health Connect di HP, web tidak punya akses, jadi **tidak ada migrasi dua arah**. Revisi (tahap 30): Android mengirim **total langkah per hari** (7 hari terakhir) ke server hanya untuk ditampilkan di web, tabel `step_days`. Habit yang tercentang otomatis dari langkah tetap ikut sinkron lewat `habit_entries` | 21, 30 | **Tahap 30: selesai dan di-deploy; tabel `step_days` terisi 7 hari dari HP (16 Oktober 2026)** |
 | Asisten AI | Belum diputuskan skemanya — ini fitur interaktif (chat), beda sifat dari data yang disinkron biasa. Didiskusikan terpisah saat gilirannya tiba | 24 | Belum diputuskan |
 
 **Setiap tahap migrasi mengikuti pola yang sama** (sudah terbukti di tahap 26-27):
@@ -2738,7 +2738,8 @@ Ini beda paling besar — **bukan cuma soal gaya, tapi konsep halaman yang beda 
   selesai", narasi, chip status, tingkat selesai %), daftar follow-up dengan filter chip (Semua/Inbox/Aktif/
   Menunggu/Selesai), lalu panel samping: **Meeting & briefing** (catatan rapat per meeting), **Rencana besok**
   (checklist, bisa tambah dari Inbox), **Catatan EOD**, dan tombol **Bagikan ringkasan**.
-- Potongan mockup yang **sudah** punya rencana di tahap lain:
+- Potongan mockup yang **sudah** punya rencana di tahap lain (**hasil audit awal tahap 33, 15 Oktober 2026; sudah usang**:
+  catatan EOD kini selesai di langkah 3a-3c di bawah, dan tahap 32 sudah dikoding dan di-deploy):
   - Catatan EOD dan rencana besok: data modelnya sudah ada di Android sejak tahap 19 (`daily_scrums` table:
     `yesterday`/`today`/`blockers`, field `eodNote`), tapi **belum pernah dimigrasi ke web** — tidak ada endpoint
     atau tabel server untuk daily scrum/EOD di `routes/api.php` setahu audit ini. Ini gap yang belum tercatat di
