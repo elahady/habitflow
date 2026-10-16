@@ -46,6 +46,8 @@ data class HealthSyncPayload(
     val timezone: String,
     val heightCm: Double?,
     val targetKg: Double?,
+    /** Target langkah per hari (konstanta aturan di HP), supaya web menggambar batang tanpa menyalin angkanya. */
+    val stepsTarget: Int?,
     val weights: List<WeightEntry>,
     val bloodPressures: List<BloodPressureEntry>,
     val stepDays: List<Pair<LocalDate, Long>>,
@@ -53,7 +55,13 @@ data class HealthSyncPayload(
 ) {
     fun toJson(): JSONObject = JSONObject().apply {
         put("timezone", timezone)
-        put("profile", JSONObject().put("height_cm", heightCm ?: JSONObject.NULL).put("target_kg", targetKg ?: JSONObject.NULL))
+        put(
+            "profile",
+            JSONObject()
+                .put("height_cm", heightCm ?: JSONObject.NULL)
+                .put("target_kg", targetKg ?: JSONObject.NULL)
+                .put("steps_target", stepsTarget ?: JSONObject.NULL),
+        )
         put(
             "weights",
             JSONArray().apply { weights.forEach { put(JSONObject().put("time_millis", it.timeMillis).put("kg", it.kg)) } },
@@ -113,6 +121,7 @@ fun healthSyncPayload(
     timezone: String,
     heightCm: Double?,
     targetKg: Double?,
+    stepsTarget: Int?,
     weights: List<WeightEntry>,
     bloodPressures: List<BloodPressureEntry>,
     stepDays: List<Pair<LocalDate, Long>>,
@@ -122,6 +131,7 @@ fun healthSyncPayload(
     timezone = timezone,
     heightCm = heightCm,
     targetKg = targetKg ?: heightCm?.let(defaultTarget),
+    stepsTarget = stepsTarget,
     weights = weights.sortedWith(compareBy({ it.timeMillis }, { it.id })).takeLast(HEALTH_SYNC_MAX_ENTRIES),
     bloodPressures = bloodPressures.sortedWith(compareBy({ it.timeMillis }, { it.id })).takeLast(HEALTH_SYNC_MAX_ENTRIES),
     stepDays = stepDays.sortedBy { it.first }.takeLast(HEALTH_SYNC_STEP_DAYS),

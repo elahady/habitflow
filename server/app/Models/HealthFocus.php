@@ -14,7 +14,7 @@ class HealthFocus extends Model
     protected $table = 'health_focus';
 
     protected $fillable = [
-        'user_id', 'timezone', 'height_cm', 'target_kg',
+        'user_id', 'timezone', 'height_cm', 'target_kg', 'steps_target',
         'rule', 'walk_minutes', 'title', 'sentence', 'note', 'reasons', 'computed_at',
     ];
 
@@ -23,6 +23,7 @@ class HealthFocus extends Model
         return [
             'height_cm' => 'float',
             'target_kg' => 'float',
+            'steps_target' => 'integer',
             'walk_minutes' => 'integer',
             'reasons' => 'array',
             'computed_at' => 'datetime',

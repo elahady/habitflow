@@ -10,6 +10,7 @@ import com.roziqrizal.habitflow.data.toDomain
 import com.roziqrizal.habitflow.data.account.AccountSettings
 import com.roziqrizal.habitflow.data.account.UnauthorizedListener
 import com.roziqrizal.habitflow.data.health.readRecentSteps
+import com.roziqrizal.habitflow.domain.health.STEPS_TARGET
 import com.roziqrizal.habitflow.domain.health.defaultTargetKg
 import com.roziqrizal.habitflow.domain.sync.EntryMergeAction
 import com.roziqrizal.habitflow.domain.sync.SyncThrottle
@@ -137,6 +138,7 @@ class HabitSyncManager(
             timezone = zone.id,
             heightCm = inputs.settings.heightCm.value,
             targetKg = inputs.settings.targetKg.value,
+            stepsTarget = STEPS_TARGET,
             weights = healthDao.weightsSince(from, HEALTH_SYNC_MAX_ENTRIES),
             bloodPressures = healthDao.bloodPressuresSince(from, HEALTH_SYNC_MAX_ENTRIES),
             stepDays = readRecentSteps(inputs.steps, today, zone, HEALTH_SYNC_STEP_DAYS),

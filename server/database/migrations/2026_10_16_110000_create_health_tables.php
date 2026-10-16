@@ -57,6 +57,8 @@ return new class extends Migration
             $table->string('timezone', 64);
             $table->decimal('height_cm', 4, 1)->nullable();
             $table->decimal('target_kg', 4, 1)->nullable();
+            // Target langkah per hari. Konstanta aturan di Android (STEPS_TARGET); dikirim HP supaya web tidak menyalinnya.
+            $table->unsignedMediumInteger('steps_target')->nullable();
             $table->string('rule', 40)->nullable();
             $table->unsignedTinyInteger('walk_minutes')->nullable();
             $table->string('title', 200)->nullable();

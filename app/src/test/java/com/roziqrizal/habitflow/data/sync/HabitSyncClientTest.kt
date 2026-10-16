@@ -486,6 +486,7 @@ class FollowUpSyncClientTest {
         timezone = "Asia/Jakarta",
         heightCm = 170.0,
         targetKg = 65.0,
+        stepsTarget = 8000,
         weights = listOf(com.roziqrizal.habitflow.data.WeightEntry(1, 1_792_000_000_000, 70.4)),
         bloodPressures = emptyList(),
         stepDays = listOf(LocalDate.parse("2026-10-16") to 2_400L),

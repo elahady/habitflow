@@ -2,6 +2,8 @@
     <div style="font-size: 13px; color: var(--on-surface-variant); margin-bottom: 4px;">{{ $dateLabel }}</div>
     <h1 style="margin: 0 0 24px;">Selamat datang, {{ auth()->user()->name }}</h1>
 
+    <livewire:health-focus-card />
+
     <livewire:schedule-card />
 
     <div class="hf-strip" style="margin-bottom: 16px;">
@@ -40,4 +42,6 @@
             <div class="hf-stat-note">punyaku belum selesai</div>
         </a>
     </div>
+
+    <livewire:health-section />
 </div>

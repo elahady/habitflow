@@ -9,6 +9,7 @@ use App\Models\StepDay;
 use App\Models\WeightEntry;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -37,6 +38,7 @@ class HealthController extends Controller
             'profile' => ['sometimes', 'nullable', 'array'],
             'profile.height_cm' => ['nullable', 'numeric', 'between:100,250'],
             'profile.target_kg' => ['nullable', 'numeric', 'between:20,300'],
+            'profile.steps_target' => ['nullable', 'integer', 'between:1000,100000'],
 
             'weights' => ['sometimes', 'array', 'max:'.self::MAX_ENTRIES],
             'weights.*.time_millis' => ['required', 'integer', 'between:'.self::MIN_TIME_MILLIS.','.self::MAX_TIME_MILLIS, 'distinct'],
@@ -107,7 +109,7 @@ class HealthController extends Controller
             // Baris profil dan fokus: kolom yang tidak dikirim tidak disentuh, `null` yang dikirim mengosongkan.
             $row = ['timezone' => $data['timezone']];
             if (array_key_exists('profile', $data) && is_array($data['profile'])) {
-                foreach (['height_cm', 'target_kg'] as $key) {
+                foreach (['height_cm', 'target_kg', 'steps_target'] as $key) {
                     if (array_key_exists($key, $data['profile'])) {
                         $row[$key] = $data['profile'][$key];
                     }
@@ -122,7 +124,9 @@ class HealthController extends Controller
                     'sentence' => $focus['sentence'],
                     'note' => $focus['note'] ?? null,
                     'reasons' => $focus['reasons'] ?? [],
-                    'computed_at' => $focus['computed_at'],
+                    // Eloquent menyimpan jam dinding apa adanya tanpa mengonversi zona, jadi tanda waktu ber-offset
+                    // (mis. +07:00) harus dijadikan UTC dulu atau tersimpan salah beberapa jam.
+                    'computed_at' => Carbon::parse($focus['computed_at'])->utc(),
                 ];
             }
             HealthFocus::updateOrCreate(['user_id' => $user->id], $row);

@@ -36,7 +36,7 @@ class HealthApiTest extends TestCase
     {
         return $override + [
             'timezone' => 'Asia/Jakarta',
-            'profile' => ['height_cm' => 170, 'target_kg' => 65],
+            'profile' => ['height_cm' => 170, 'target_kg' => 65, 'steps_target' => 8000],
             'weights' => [
                 ['time_millis' => 1792000000000, 'kg' => 70.4],
                 ['time_millis' => 1792086400000, 'kg' => 70.1],
@@ -82,6 +82,7 @@ class HealthApiTest extends TestCase
         $this->assertSame(30, $focus->walk_minutes);
         $this->assertSame('Asia/Jakarta', $focus->timezone);
         $this->assertSame(170.0, $focus->height_cm);
+        $this->assertSame(8000, $focus->steps_target);
         $this->assertSame('Berat', $focus->reasons[0]['label']);
     }
 
@@ -97,6 +98,17 @@ class HealthApiTest extends TestCase
         $this->assertSame(2, StepDay::count());
         $this->assertSame(5100, StepDay::where('date', '2026-10-16')->first()->steps);
         $this->assertSame(1, HealthFocus::count());
+    }
+
+    public function test_waktu_hitung_fokus_dengan_offset_disimpan_sebagai_utc(): void
+    {
+        $focus = $this->payload()['focus'];
+        $focus['computed_at'] = '2026-10-16T15:00:00+07:00';
+
+        $this->putJson('/api/v1/health', $this->payload(['focus' => $focus]), $this->auth())->assertOk();
+
+        $this->assertSame('2026-10-16 08:00:00', HealthFocus::first()->computed_at->utc()->format('Y-m-d H:i:s'));
+        $this->assertSame('2026-10-16 08:00:00', \Illuminate\Support\Facades\DB::table('health_focus')->value('computed_at'));
     }
 
     public function test_berat_yang_sama_waktunya_diperbarui_bukan_digandakan(): void
@@ -126,6 +138,7 @@ class HealthApiTest extends TestCase
         $this->assertSame('Asia/Makassar', $focus->timezone);
         $this->assertSame('LOW_STEPS', $focus->rule);
         $this->assertSame(170.0, $focus->height_cm);
+        $this->assertSame(8000, $focus->steps_target);
     }
 
     public function test_hanya_zona_waktu_membuat_baris_tanpa_fokus(): void
@@ -139,10 +152,11 @@ class HealthApiTest extends TestCase
     public function test_profil_null_mengosongkan_tinggi_dan_target(): void
     {
         $this->putJson('/api/v1/health', $this->payload(), $this->auth())->assertOk();
-        $this->putJson('/api/v1/health', ['timezone' => 'Asia/Jakarta', 'profile' => ['height_cm' => null, 'target_kg' => null]], $this->auth())->assertOk();
+        $this->putJson('/api/v1/health', ['timezone' => 'Asia/Jakarta', 'profile' => ['height_cm' => null, 'target_kg' => null, 'steps_target' => null]], $this->auth())->assertOk();
 
         $this->assertNull(HealthFocus::first()->height_cm);
         $this->assertNull(HealthFocus::first()->target_kg);
+        $this->assertNull(HealthFocus::first()->steps_target);
     }
 
     public function test_data_pengguna_lain_tidak_tersentuh(): void
@@ -175,6 +189,7 @@ class HealthApiTest extends TestCase
             'kode aturan huruf kecil' => $this->payload(['focus' => ['rule' => 'low steps', 'title' => 'x', 'sentence' => 'y', 'computed_at' => '2026-10-16T08:00:00Z']]),
             'fokus tanpa judul' => $this->payload(['focus' => ['rule' => 'ON_TRACK', 'sentence' => 'y', 'computed_at' => '2026-10-16T08:00:00Z']]),
             'tinggi 50 cm' => $this->payload(['profile' => ['height_cm' => 50]]),
+            'target langkah 10' => $this->payload(['profile' => ['steps_target' => 10]]),
         ];
 
         foreach ($bad as $name => $body) {

@@ -1743,7 +1743,7 @@ blok. Yang belum ada cuma versi web/server-nya.
   blok awal untuk user baru di server juga belum ada; sampai langkah 4 jalan, kartu di web kosong ("Belum ada jadwal di
   server").
 
-### Tahap 30: Fokus Kesehatan Harian (langkah 1-2 selesai di Android 11 Oktober 2026; langkah 3 server dan 4 Android selesai di kode 16 Oktober 2026; langkah 5-6 belum)
+### Tahap 30: Fokus Kesehatan Harian (langkah 1-2 selesai di Android 11 Oktober 2026; langkah 3 server, 4 Android, dan 5 web selesai di kode 16 Oktober 2026, belum di-deploy; langkah 6 verifikasi di HP belum)
 
 Aturan fitur di `docs/rancangan.md` bagian Fokus kesehatan harian. Mockup web dan mobile:
 https://claude.ai/artifact/TWJ8Uus2hKtQQa81wKujG5
@@ -1809,7 +1809,21 @@ menampilkan angka. Android menampilkannya di dashboard Hari ini, web di `/dashbo
      (tidak menebak). Kunci "sudah terkirim" hanya di memori, jadi proses baru mengirim sekali lagi (aman).
    - **Tes:** `HealthSyncPayloadTest` (bentuk JSON, batas jumlah dan panjang teks, urutan, target bawaan, sidik jari, `HealthFocusStore`), `StepHistoryTest`, dua tes klien `putHealth` di
      `HabitSyncClientTest`, dan di server tes bentuk kiriman Android pengguna baru. **622 tes Android dan 335 tes server lulus.**
-5. **Web.** Kartu fokus dan bagian Kesehatan di `/dashboard`.
+5. ✅ **Web (16 Oktober 2026, kode, tes, dan dilihat lewat screenshot; belum di-deploy).** Dua komponen Livewire hanya-baca di Beranda `/`: `HealthFocusCard` (hero, di atas "Jadwal sekarang") dan
+   `HealthSection` (bagian "Kesehatan", di bawah strip 4 kartu). Logika di `App\Support\Health\HealthSummary` dan `WeightChart` (geometri SVG di PHP, tanpa JavaScript).
+   - **Kartu fokus:** judul, kalimat, dan "Kenapa ini?" (`<details>`, alasan dan catatan "Dipilih karena") **persis teks dari HP**; batang langkah hari ini memakai `steps_target` dari HP. Keterangan "Dihitung di HP ...";
+     fokus yang dihitung kemarin atau lebih dari 24 jam diberi keterangan agar menyinkron ulang (nada netral, tanpa merah, sama dengan Android). Tanpa fokus: pesan cara mengisinya.
+   - **Bagian Kesehatan:** kartu Berat (angka terakhir, "N hari lalu", BMI sebagai angka, target dan sisa, grafik garis 6 minggu dengan garis target putus-putus), kartu Langkah 7 hari (batang + garis target; hari
+     tanpa data tampil "–"), dan kartu Tensi (terakhir + 4 sebelumnya, dengan nadi). Keterangan "Terakhir dikirim" dan zona waktu. Sumber zona waktu: `health_focus.timezone`, cadangan zona dari `UserDay`.
+   - **Aturan tidak disalin ke web (sesuai keputusan tahap 30):** web tidak menghitung kategori BMI atau tensi dan tidak memberi saran; hanya angka dan aritmetika (BMI = kg / m², sisa = berat - target). Kategori
+     hanya muncul kalau Android memasukkannya ke teks fokus. **Konsekuensi yang perlu diketahui:** kartu Berat dan Tensi di web tidak menampilkan chip kategori seperti di Android.
+   - **Perubahan kontrak kecil:** HP juga mengirim `profile.steps_target` (konstanta `STEPS_TARGET` = 8.000 di Android) supaya web menggambar garis target tanpa menyalin angkanya. Ditambahkan ke migrasi langkah 3
+     (belum di-deploy, jadi migrasinya diubah langsung) dan ke payload Android.
+   - **Cacat yang ketemu dan diperbaiki saat ini:** (1) `computed_at` ber-offset (`+07:00`) tersimpan salah 7 jam karena Eloquent menyimpan jam dinding tanpa konversi; server kini menormalkan ke UTC (tes baru),
+     Android memang selalu mengirim `...Z`; (2) `@if` yang menempel di belakang huruf tidak dikenali Blade (`Android@if`).
+   - **Dilihat lewat screenshot Edge headless** dari data contoh (DB sementara, sudah dihapus): desktop terang dan gelap, dan lebar 500 px (tidak meluber). Label nilai di batang dan sumbu grafik diperbesar setelah
+     terlihat terlalu kecil di ponsel. **Belum dilihat di produksi dengan data nyata dari HP.**
+   - 30 tes baru (`HealthWebTest`: kartu, bagian Kesehatan, zona waktu, data pengguna lain, tanpa form, geometri grafik) dan 1 tes API; **365 tes server lulus**.
 6. **Verifikasi di HP fisik** dan catat hasilnya di sini.
 
 **Selesai jika:**
@@ -2459,7 +2473,8 @@ sinkron catatan EOD dua arah HP dan web termasuk penggabungan saat bentrok (sete
 2. ~~Tahap 32 langkah 5~~ selesai 16 Oktober 2026: token terbatas `daily-briefs`, skill dijalankan sungguhan, routine 07.00 WIB Senin-Jumat dibuat. Sisa: pastikan ia **berjalan terjadwal** (jalan pertama
    Senin 19 Oktober 2026; PC harus menyala), dan pengingat pemeriksaannya hanya hidup selama sesi Claude Code itu terbuka.
 3. Angka "X dari Y selesai" per hari di riwayat web (usulan kolom `eod_summary` di `work_days`, diisi HP saat EOD selesai; web kini hanya bisa menulis "N selesai").
-4. Sisa tahap 33: bagian Kesehatan di Beranda (menunggu tahap 30 langkah 3-6), judul dan gaya kartu "Jadwal sekarang", halaman Tugas Rumah (belum ada mockup web).
+4. Sisa tahap 33: ~~bagian Kesehatan di Beranda~~ (selesai di kode 16 Oktober 2026 lewat tahap 30 langkah 5, **belum di-deploy**), judul dan gaya kartu "Jadwal sekarang", halaman Tugas Rumah (belum ada mockup web).
+   **Tahap 30 langkah 3-5 ada di kode tapi belum di-deploy dan belum dicoba di HP (langkah 6):** deploy server, pasang build Android baru, buka layar Hari ini, sinkron, lalu cek web.
 5. Sisa tahap 31 yang menunggu pemilik: kunci unggah dan AAB ditandatangani, Google Sign-In produksi, DNS dan Resend untuk email, backup ke Cloudflare R2, kontak privasi, penguji (lihat
    `docs/uji-tertutup-dan-play-console.md`). **Email belum jalan:** `.env.production` di VM masih `MAIL_MAILER=log` dan `QUEUE_CONNECTION=sync`, jadi pendaftaran dengan email belum boleh dibuka.
    Login Google tidak terpengaruh.
@@ -2689,10 +2704,10 @@ menunjuk hal yang sama; cuma perlu disamakan kalau pemilik mau ikut mockup persi
 | Elemen di mockup | Status live (11 Okt 2026) | Tahap yang menanggung |
 |---|---|---|
 | Header tanggal ("Minggu, 11 Oktober 2026") di atas judul sapaan | Tidak ada — `dashboard.blade.php` langsung `<h1>Selamat datang, {nama}</h1>` tanpa baris tanggal | Baru, bagian tahap ini |
-| Kartu hero "Fokus kesehatan hari ini" (judul, narasi, chip, panel "Dasar rekomendasi") | Tidak ada sama sekali di web | Tahap 30 langkah 5 (belum dikerjakan) |
+| Kartu hero "Fokus kesehatan hari ini" (judul, narasi, chip, panel "Dasar rekomendasi") | Tidak ada sama sekali di web *(16 Oktober 2026: ada di kode, `HealthFocusCard`, belum di-deploy; tanpa chip kategori)* | Tahap 30 langkah 5 (selesai di kode) |
 | Kartu "Jadwal hari ini" (Sekarang/Berikutnya) | **Sudah ada** lewat `<livewire:schedule-card />`, strukturnya (kartu terisi warna untuk Sekarang, border untuk Berikutnya, teks "sisa N menit") sudah dekat dengan mockup. Bedanya cuma judul ("Jadwal sekarang" vs "Jadwal hari ini") dan belum dibungkus gaya `hf-card` yang konsisten dengan kartu lain | Tahap 29 (sudah jalan), tinggal langkah 4 (Android kirim data) supaya tidak kosong |
 | Strip 4 kartu ringkasan: Habit hari ini (X/9 + bar), To-do hari ini (X/5 + bar), Follow-up kerja (Lewat tanggal/Jatuh tempo/Inbox), Tugas Rumah (jumlah belum selesai) | **Tidak ada sama sekali.** `dashboard.blade.php` cuma punya sapaan, kartu jadwal, dan kotak status akun Google | Baru — tidak tercakup tahap manapun yang ada. Datanya sendiri sudah tersedia dari tahap 28 (habit/to-do web), 27 (follow-up web), 26 (tugas rumah web), tinggal dirangkum jadi kartu di beranda |
-| Section "Kesehatan" penuh: grafik berat SVG 6 minggu + target, grafik batang langkah 7 hari, kartu tensi | Tidak ada di web | Tahap 30 langkah 5 (belum dikerjakan) |
+| Section "Kesehatan" penuh: grafik berat SVG 6 minggu + target, grafik batang langkah 7 hari, kartu tensi | Tidak ada di web *(16 Oktober 2026: ada di kode, `HealthSection`, belum di-deploy)* | Tahap 30 langkah 5 (selesai di kode) |
 | Gaya kartu (`hf-card`: border radius 16px, padding konsisten) dan tema terang/gelap dengan token warna sage yang sama | Tema terang/gelap **sudah ada** (`partials/theme-toggle.blade.php`, token warna di `partials/theme-styles.blade.php`) dan tampaknya sudah pakai palet sage yang sama; kartu individual belum konsisten pakai gaya `hf-card` | Baru, bagian tahap ini (perapian visual) |
 
 #### B. Habit (`/habit`, `HabitToday.php` + `habit-today.blade.php`) vs `Habit.dc.html`

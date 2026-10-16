@@ -37,6 +37,7 @@ class HealthSyncPayloadTest {
         timezone = "Asia/Jakarta",
         heightCm = height,
         targetKg = target,
+        stepsTarget = 8000,
         weights = weights,
         bloodPressures = bps,
         stepDays = steps,
@@ -55,6 +56,7 @@ class HealthSyncPayloadTest {
 
         assertEquals("Asia/Jakarta", json.getString("timezone"))
         assertEquals(170.0, json.getJSONObject("profile").getDouble("height_cm"), 0.0)
+        assertEquals(8000, json.getJSONObject("profile").getInt("steps_target"))
         val w = json.getJSONArray("weights").getJSONObject(0)
         assertEquals(1_000L, w.getLong("time_millis"))
         assertEquals(70.4, w.getDouble("kg"), 0.0)
