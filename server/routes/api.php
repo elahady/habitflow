@@ -88,6 +88,7 @@ Route::prefix('v1')->middleware(['user-token', 'throttle:habitflow'])->group(fun
 Route::prefix('v1')->middleware(['user-token', 'throttle:habitflow'])->group(function () {
     Route::get('schedule-blocks', [ScheduleBlockController::class, 'index']);
     Route::post('schedule-blocks', [ScheduleBlockController::class, 'store']);
+    Route::put('schedule-blocks', [ScheduleBlockController::class, 'replace']);
     Route::put('schedule-blocks/{scheduleBlock}', [ScheduleBlockController::class, 'update']);
     Route::delete('schedule-blocks/{scheduleBlock}', [ScheduleBlockController::class, 'destroy']);
 });

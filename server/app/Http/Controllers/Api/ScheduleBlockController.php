@@ -7,6 +7,7 @@ use App\Models\ScheduleBlock;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 /**
@@ -17,6 +18,9 @@ use Illuminate\Validation\Rule;
  */
 class ScheduleBlockController extends Controller
 {
+    /** Batas blok dalam satu kiriman [replace]; jadwal awal 16 blok. */
+    private const MAX_BLOCKS = 100;
+
     private function authorizedBlock(Request $request, int $id): ScheduleBlock
     {
         return $request->user()->scheduleBlocks()->findOrFail($id);
@@ -44,21 +48,28 @@ class ScheduleBlockController extends Controller
         ];
     }
 
-    /** Jam tetap harus 0..1439 menit dan tanpa prayer; blok sholat wajib prayer. */
-    private function checkStart(array $data, ?ScheduleBlock $current = null): ?JsonResponse
+    /** Pesan galat kalau jam tetap tidak 0..1439 menit atau membawa prayer, atau blok sholat tanpa prayer; null kalau sah. */
+    private function startError(array $data, ?ScheduleBlock $current = null): ?string
     {
         $type = (int) ($data['start_type'] ?? $current?->start_type);
         $value = (int) ($data['start_value'] ?? $current?->start_value);
         $prayer = array_key_exists('prayer', $data) ? $data['prayer'] : $current?->prayer;
 
         if ($type === ScheduleBlock::START_PRAYER && $prayer === null) {
-            return response()->json(['message' => 'Blok berpatokan sholat wajib punya prayer.'], 422);
+            return 'Blok berpatokan sholat wajib punya prayer.';
         }
         if ($type === ScheduleBlock::START_FIXED && ($prayer !== null || $value < 0 || $value > 1439)) {
-            return response()->json(['message' => 'Jam tetap harus 0-1439 menit dan tanpa prayer.'], 422);
+            return 'Jam tetap harus 0-1439 menit dan tanpa prayer.';
         }
 
         return null;
+    }
+
+    private function checkStart(array $data, ?ScheduleBlock $current = null): ?JsonResponse
+    {
+        $message = $this->startError($data, $current);
+
+        return $message === null ? null : response()->json(['message' => $message], 422);
     }
 
     /** Habit yang ditautkan harus milik user ini. Mengembalikan pesan galat, atau null kalau sah. */
@@ -139,6 +150,46 @@ class ScheduleBlockController extends Controller
         }
 
         return response()->json(['schedule_block' => $this->serialize($block->fresh()->load('habits:id'))]);
+    }
+
+    /**
+     * Android mengirim seluruh jadwalnya sekaligus (tahap 29 langkah 4). Satu arah: web hanya membaca blok, jadi HP
+     * satu-satunya yang mengubahnya dan tidak perlu deteksi konflik. Semua blok pengguna ini diganti dalam satu transaksi,
+     * jadi mengirim ulang isi yang sama aman (id blok di server berubah, tapi tidak ada yang menyimpannya). Daftar kosong
+     * mengosongkan jadwal. Satu blok yang tidak sah menggagalkan seluruh kiriman dan jadwal lama tetap utuh.
+     */
+    public function replace(Request $request): JsonResponse
+    {
+        $rules = ['blocks' => ['present', 'array', 'max:'.self::MAX_BLOCKS]];
+        foreach ($this->rules(required: true) as $field => $fieldRules) {
+            // `distinct` pada dua tanda bintang membandingkan lintas blok, padahal satu habit sah ditautkan ke banyak blok.
+            $rules["blocks.*.$field"] = $field === 'habit_ids.*' ? ['integer'] : $fieldRules;
+        }
+        $validated = $request->validate($rules);
+        $blocks = $validated['blocks'];
+
+        foreach ($blocks as $block) {
+            if ($message = $this->startError($block)) {
+                return response()->json(['message' => $message], 422);
+            }
+        }
+        $habitIds = collect($blocks)->pluck('habit_ids')->flatten()->unique()->values()->all();
+        if ($error = $this->checkHabits($request, $habitIds)) {
+            return $error;
+        }
+
+        $user = $request->user();
+        DB::transaction(function () use ($user, $blocks) {
+            $user->scheduleBlocks()->delete();
+            foreach ($blocks as $block) {
+                $created = $user->scheduleBlocks()->create(array_diff_key($block, ['habit_ids' => null]));
+                $created->habits()->sync($block['habit_ids'] ?? []);
+            }
+        });
+
+        $saved = $user->scheduleBlocks()->with('habits:id')->orderBy('sort_order')->orderBy('id')->get();
+
+        return response()->json(['schedule_blocks' => $saved->map(fn (ScheduleBlock $block) => $this->serialize($block))]);
     }
 
     public function destroy(Request $request, int $scheduleBlock): JsonResponse

@@ -210,4 +210,111 @@ class ScheduleBlockApiTest extends TestCase
         ], $this->auth())->assertStatus(404);
         $this->deleteJson('/api/v1/schedule-blocks/'.$block->id, [], $this->auth())->assertStatus(404);
     }
+
+    // --- Kirim seluruh jadwal dari Android (tahap 29 langkah 4) ---
+
+    private function sentBlock(array $extra = []): array
+    {
+        return $extra + [
+            'name' => 'Kerja pagi', 'start_type' => 0, 'start_value' => 480, 'prayer' => null,
+            'duration_minutes' => 240, 'end_minute_of_day' => null, 'active_days' => 31, 'level' => 'REMINDER',
+            'sort_order' => 0, 'work_action' => null, 'work_reminders' => true, 'habit_ids' => [],
+        ];
+    }
+
+    public function test_ganti_jadwal_tanpa_token_ditolak(): void
+    {
+        $this->putJson('/api/v1/schedule-blocks', ['blocks' => []])->assertStatus(401);
+    }
+
+    public function test_ganti_jadwal_menggantikan_semua_blok_dan_tautannya(): void
+    {
+        $h1 = $this->user->habits()->create(['name' => 'Baca']);
+        $h2 = $this->user->habits()->create(['name' => 'Jalan']);
+        $this->user->scheduleBlocks()->create(['name' => 'lama', 'start_value' => 100]);
+
+        $this->putJson('/api/v1/schedule-blocks', ['blocks' => [
+            $this->sentBlock(['name' => 'Subuh', 'start_type' => 1, 'start_value' => 0, 'prayer' => 'SUBUH', 'sort_order' => 0, 'habit_ids' => [$h1->id, $h2->id]]),
+            $this->sentBlock(['name' => 'Isya', 'start_type' => 1, 'start_value' => 0, 'prayer' => 'ISYA', 'sort_order' => 1, 'habit_ids' => [$h1->id]]),
+        ]], $this->auth())
+            ->assertOk()
+            ->assertJsonCount(2, 'schedule_blocks')
+            ->assertJsonPath('schedule_blocks.0.name', 'Subuh')
+            ->assertJsonPath('schedule_blocks.0.habit_ids', [$h1->id, $h2->id])
+            ->assertJsonPath('schedule_blocks.1.habit_ids', [$h1->id]);
+
+        $this->assertSame(['Subuh', 'Isya'], $this->user->scheduleBlocks()->orderBy('sort_order')->pluck('name')->all());
+    }
+
+    public function test_ganti_jadwal_dua_kali_dengan_isi_sama_tidak_menggandakan(): void
+    {
+        $payload = ['blocks' => [$this->sentBlock(), $this->sentBlock(['name' => 'EOD', 'sort_order' => 1, 'work_action' => 'EOD'])]];
+
+        $this->putJson('/api/v1/schedule-blocks', $payload, $this->auth())->assertOk();
+        $this->putJson('/api/v1/schedule-blocks', $payload, $this->auth())->assertOk()->assertJsonCount(2, 'schedule_blocks');
+
+        $this->assertSame(2, ScheduleBlock::count());
+    }
+
+    public function test_ganti_jadwal_daftar_kosong_mengosongkan_jadwal(): void
+    {
+        $this->user->scheduleBlocks()->create(['name' => 'lama', 'start_value' => 100]);
+
+        $this->putJson('/api/v1/schedule-blocks', ['blocks' => []], $this->auth())->assertOk()->assertJsonCount(0, 'schedule_blocks');
+
+        $this->assertSame(0, ScheduleBlock::count());
+    }
+
+    public function test_ganti_jadwal_tidak_menyentuh_blok_user_lain(): void
+    {
+        $other = User::create(['google_sub' => 'sub-2', 'email' => 'b@example.com', 'name' => 'B']);
+        $other->scheduleBlocks()->create(['name' => 'punya B', 'start_value' => 540]);
+
+        $this->putJson('/api/v1/schedule-blocks', ['blocks' => [$this->sentBlock()]], $this->auth())->assertOk();
+
+        $this->assertSame(1, $other->scheduleBlocks()->count());
+        $this->assertSame(1, $this->user->scheduleBlocks()->count());
+    }
+
+    public function test_ganti_jadwal_satu_habit_boleh_ditautkan_ke_banyak_blok(): void
+    {
+        $habit = $this->user->habits()->create(['name' => 'Sholat']);
+
+        $this->putJson('/api/v1/schedule-blocks', ['blocks' => [
+            $this->sentBlock(['name' => 'a', 'habit_ids' => [$habit->id]]),
+            $this->sentBlock(['name' => 'b', 'sort_order' => 1, 'habit_ids' => [$habit->id]]),
+        ]], $this->auth())->assertOk();
+    }
+
+    public function test_ganti_jadwal_satu_blok_tidak_sah_membatalkan_semuanya(): void
+    {
+        $this->user->scheduleBlocks()->create(['name' => 'lama', 'start_value' => 100]);
+
+        $this->putJson('/api/v1/schedule-blocks', ['blocks' => [
+            $this->sentBlock(),
+            $this->sentBlock(['name' => 'rusak', 'start_type' => 1, 'prayer' => null]),
+        ]], $this->auth())->assertStatus(422);
+        $this->putJson('/api/v1/schedule-blocks', ['blocks' => [$this->sentBlock(['start_value' => 1440])]], $this->auth())->assertStatus(422);
+
+        $this->assertSame(['lama'], $this->user->scheduleBlocks()->pluck('name')->all());
+    }
+
+    public function test_ganti_jadwal_habit_user_lain_ditolak_dan_jadwal_lama_utuh(): void
+    {
+        $other = User::create(['google_sub' => 'sub-2', 'email' => 'b@example.com', 'name' => 'B']);
+        $theirs = $other->habits()->create(['name' => 'Punya B']);
+        $this->user->scheduleBlocks()->create(['name' => 'lama', 'start_value' => 100]);
+
+        $this->putJson('/api/v1/schedule-blocks', ['blocks' => [$this->sentBlock(['habit_ids' => [$theirs->id]])]], $this->auth())
+            ->assertStatus(422);
+
+        $this->assertSame(['lama'], $this->user->scheduleBlocks()->pluck('name')->all());
+    }
+
+    public function test_ganti_jadwal_butuh_kunci_blocks_dan_ada_batasnya(): void
+    {
+        $this->putJson('/api/v1/schedule-blocks', [], $this->auth())->assertStatus(422);
+        $this->putJson('/api/v1/schedule-blocks', ['blocks' => array_fill(0, 101, $this->sentBlock())], $this->auth())->assertStatus(422);
+        $this->putJson('/api/v1/schedule-blocks', ['blocks' => array_fill(0, 100, $this->sentBlock())], $this->auth())->assertOk();
+    }
 }
