@@ -7,6 +7,9 @@ import androidx.room.Query
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 
+/** Pasangan id habit lokal dan id-nya di server, untuk habit yang sudah pernah terkirim. */
+data class HabitRemoteRef(val id: Long, val remoteId: Long)
+
 @Dao
 interface HabitDao {
 
@@ -51,6 +54,9 @@ interface HabitDao {
 
     @Query("SELECT * FROM habits WHERE remoteId = :remoteId LIMIT 1")
     suspend fun byRemoteId(remoteId: Long): Habit?
+
+    @Query("SELECT id, remoteId FROM habits WHERE remoteId IS NOT NULL")
+    suspend fun remoteRefs(): List<HabitRemoteRef>
 
     @Query("UPDATE habits SET dirty = 1 WHERE id = :id")
     suspend fun markDirty(id: Long)

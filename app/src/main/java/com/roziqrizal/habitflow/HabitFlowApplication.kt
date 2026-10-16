@@ -29,6 +29,7 @@ import com.roziqrizal.habitflow.data.sync.HabitSyncManager
 import com.roziqrizal.habitflow.data.sync.HabitSyncScheduler
 import com.roziqrizal.habitflow.data.sync.HealthFocusStore
 import com.roziqrizal.habitflow.data.sync.HealthSyncInputs
+import com.roziqrizal.habitflow.data.sync.ScheduleSyncInputs
 import com.roziqrizal.habitflow.data.sync.SnapshotRepository
 import com.roziqrizal.habitflow.data.sync.SnapshotSettings
 import com.roziqrizal.habitflow.data.sync.SyncManager
@@ -104,7 +105,11 @@ class AppGraph(app: Application) {
     val healthFocusStore = HealthFocusStore()
     private val stepsSource = HealthConnectStepsSource(app)
     val habitSyncManager: HabitSyncManager by lazy {
-        HabitSyncManager(db, accountSettings, sessionGuard, health = HealthSyncInputs(healthSettings, stepsSource, healthFocusStore))
+        HabitSyncManager(
+            db, accountSettings, sessionGuard,
+            health = HealthSyncInputs(healthSettings, stepsSource, healthFocusStore),
+            schedule = ScheduleSyncInputs(locationSettings),
+        )
     }
     val habitSyncScheduler = HabitSyncScheduler(app, accountSettings, healthFocusStore)
 

@@ -231,6 +231,23 @@ class HabitSyncClient(
             is Raw.Response -> if (raw.code == 200) HabitApiResult.Success(Unit) else failure(raw)
         }
 
+    /**
+     * Mengganti seluruh jadwal di server (tahap 29 langkah 4). Satu arah dan idempotent: HP satu-satunya yang mengubah blok,
+     * jadi tidak ada 409; 422 berarti bentuk kiriman ditolak (seluruh jadwal lama di server tetap utuh).
+     */
+    suspend fun putScheduleBlocks(payload: ScheduleSyncPayload): HabitApiResult<Unit> =
+        when (val raw = request("PUT", "/api/v1/schedule-blocks", payload.toJson().toString())) {
+            is Raw.Failed -> HabitApiResult.NetworkError(raw.detail)
+            is Raw.Response -> if (raw.code == 200) HabitApiResult.Success(Unit) else failure(raw)
+        }
+
+    /** Mengirim waktu sholat beberapa hari yang sudah dihitung HP (tahap 29 langkah 4). Idempotent: tanggal yang sama ditimpa. */
+    suspend fun putPrayerDays(payload: PrayerDaysPayload): HabitApiResult<Unit> =
+        when (val raw = request("PUT", "/api/v1/prayer-days", payload.toJson().toString())) {
+            is Raw.Failed -> HabitApiResult.NetworkError(raw.detail)
+            is Raw.Response -> if (raw.code == 200) HabitApiResult.Success(Unit) else failure(raw)
+        }
+
     // --- Ringkasan harian dari Claude (tahap 32): hanya dibaca, ditulis skill di server ---
 
     /** Sampai 31 ringkasan terbaru milik akun ini, terbaru dulu. Yang tidak berisi email (`email_digest` null) tidak ikut. */

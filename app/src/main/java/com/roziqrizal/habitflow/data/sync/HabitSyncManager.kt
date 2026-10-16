@@ -12,6 +12,7 @@ import com.roziqrizal.habitflow.data.account.UnauthorizedListener
 import com.roziqrizal.habitflow.data.health.readRecentSteps
 import com.roziqrizal.habitflow.domain.health.STEPS_TARGET
 import com.roziqrizal.habitflow.domain.health.defaultTargetKg
+import com.roziqrizal.habitflow.domain.prayer.EphemerisPrayerCalculator
 import com.roziqrizal.habitflow.domain.sync.EntryMergeAction
 import com.roziqrizal.habitflow.domain.sync.SyncThrottle
 import com.roziqrizal.habitflow.domain.sync.entryMergeAction
@@ -52,6 +53,8 @@ class HabitSyncManager(
     private val clientFor: (token: String) -> HabitSyncClient = { HabitSyncClient(it, unauthorized = unauthorized) },
     /** Bahan kiriman data kesehatan (tahap 30). Null: tidak mengirim data kesehatan. */
     private val health: HealthSyncInputs? = null,
+    /** Bahan kiriman waktu sholat (tahap 29 langkah 4). Null: waktu sholat tidak dikirim; jadwalnya tetap. */
+    private val schedule: ScheduleSyncInputs? = null,
 ) {
     private val mutex = Mutex()
     private val habits = db.habitDao()
@@ -110,7 +113,9 @@ class HabitSyncManager(
 
         pushEntryOutbox(client)?.let { return fail(it) }
 
-        // Paling akhir: data kesehatan tidak boleh menahan habit, to-do, atau follow-up.
+        // Jadwal dan kesehatan paling akhir: keduanya tidak boleh menahan habit, to-do, atau follow-up.
+        pushSchedule(client)?.let { return fail(it) }
+        pushPrayerDays(client)?.let { return fail(it) }
         pushHealth(client)?.let { return fail(it) }
 
         _status.value = HabitSyncStatus.Success(
@@ -154,6 +159,59 @@ class HabitSyncManager(
             }
             // 422 (ditolak) dan 404 (server belum punya endpoint ini, mis. app baru terpasang sebelum server di-deploy)
             // dilewati: data kesehatan tidak boleh membuat sinkron tampak gagal terus. Dicoba lagi begitu isinya berubah.
+            is HabitApiResult.Rejected, HabitApiResult.NotFound -> null
+            else -> result.asUnit()
+        }
+    }
+
+    /** Kunci kiriman jadwal dan waktu sholat terakhir yang berhasil (akun + isi), di memori. */
+    private var lastScheduleSent: String? = null
+    private var lastPrayerDaysSent: String? = null
+
+    /**
+     * Kirim seluruh jadwal (tahap 29 langkah 4). Satu arah dan idempotent: server mengganti semua blok akun ini, jadi tidak ada
+     * antrean. Tautan habit memakai id habit di server, dan habit dibuat lebih dulu di [pushLocked], jadi habit baru ikut
+     * tertaut di putaran yang sama; yang gagal dibuat tertaut di putaran berikutnya karena isi kiriman berubah.
+     * Ditolak (422) atau endpoint belum ada (404) tidak menahan sinkron lain.
+     */
+    private suspend fun pushSchedule(client: HabitSyncClient): HabitApiResult<Unit>? {
+        val scheduleDao = db.scheduleDao()
+        val payload = scheduleSyncPayload(
+            scheduleDao.getBlocks(), scheduleDao.getLinks(), habits.remoteRefs().associate { it.id to it.remoteId },
+        )
+        val key = accountSettings.account.value?.token.orEmpty() + "|" + payload.fingerprint
+        if (key == lastScheduleSent) return null
+        return when (val result = client.putScheduleBlocks(payload)) {
+            is HabitApiResult.Success -> {
+                lastScheduleSent = key
+                null
+            }
+            is HabitApiResult.Rejected, HabitApiResult.NotFound -> null
+            else -> result.asUnit()
+        }
+    }
+
+    /**
+     * Kirim waktu sholat 7 hari ke depan, dihitung mesin Ephemeris di HP dari lokasi yang sama dengan kartu Sekarang/Berikutnya.
+     * Isinya berubah tiap hari dan saat lokasi diganti, jadi terkirim lagi lewat sinkron periodik. Hisab yang gagal (tidak
+     * seharusnya terjadi) dilewati, bukan menggagalkan sinkron.
+     */
+    private suspend fun pushPrayerDays(client: HabitSyncClient): HabitApiResult<Unit>? {
+        val inputs = schedule ?: return null
+        val zone = ZoneId.systemDefault()
+        val place = inputs.location.location.value
+        val payload = runCatching {
+            prayerDaysPayload(zone.id, LocalDate.now(zone)) { date ->
+                EphemerisPrayerCalculator.calculate(date, place.latitude, place.longitude, zone)
+            }
+        }.getOrNull() ?: return null
+        val key = accountSettings.account.value?.token.orEmpty() + "|" + payload.fingerprint
+        if (key == lastPrayerDaysSent) return null
+        return when (val result = client.putPrayerDays(payload)) {
+            is HabitApiResult.Success -> {
+                lastPrayerDaysSent = key
+                null
+            }
             is HabitApiResult.Rejected, HabitApiResult.NotFound -> null
             else -> result.asUnit()
         }

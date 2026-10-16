@@ -510,6 +510,65 @@ class FollowUpSyncClientTest {
         assertFalse("tanpa fokus, kuncinya tidak dikirim", body.has("focus"))
     }
 
+    private fun schedulePayload() = ScheduleSyncPayload(
+        listOf(
+            ScheduleSyncBlock(
+                name = "Subuh", startType = 1, startValue = -15, prayer = "SUBUH", durationMinutes = 15, endMinuteOfDay = null,
+                activeDays = 127, level = "ALARM", sortOrder = 0, workAction = null, workReminders = false, habitIds = listOf(9),
+            ),
+        ),
+    )
+
+    @Test
+    fun kirimJadwalMemakaiPutKeKoleksiDanMembawaTokenSertaIsinya() = runBlocking {
+        server.responseBody = """{"schedule_blocks":[]}"""
+
+        val result = HabitSyncClient("rahasia", "http://127.0.0.1:${server.port}").putScheduleBlocks(schedulePayload())
+
+        assertEquals(HabitApiResult.Success(Unit), result)
+        assertEquals("PUT", server.lastMethod)
+        assertEquals("/api/v1/schedule-blocks", server.lastPath)
+        assertEquals("Bearer rahasia", server.lastAuth)
+        val block = JSONObject(server.lastBody).getJSONArray("blocks").getJSONObject(0)
+        assertEquals("Subuh", block.getString("name"))
+        assertEquals(9L, block.getJSONArray("habit_ids").getLong(0))
+    }
+
+    @Test
+    fun kirimWaktuSholatMemakaiPutDanMembawaTanggalSertaZonaWaktu() = runBlocking {
+        server.responseBody = """{"prayer_days":[]}"""
+        val payload = prayerDaysPayload("Asia/Jakarta", LocalDate.parse("2026-10-16")) {
+            com.roziqrizal.habitflow.domain.prayer.PrayerTimes(null, null, null, null, null, null, null, null)
+        }
+
+        val result = client().putPrayerDays(payload)
+
+        assertEquals(HabitApiResult.Success(Unit), result)
+        assertEquals("PUT", server.lastMethod)
+        assertEquals("/api/v1/prayer-days", server.lastPath)
+        val body = JSONObject(server.lastBody)
+        assertEquals("Asia/Jakarta", body.getString("timezone"))
+        assertEquals(7, body.getJSONArray("days").length())
+        assertEquals("2026-10-16", body.getJSONArray("days").getJSONObject(0).getString("date"))
+    }
+
+    @Test
+    fun kirimJadwalDanWaktuSholatDitolakDanGalat() = runBlocking {
+        val prayers = prayerDaysPayload("Asia/Jakarta", LocalDate.parse("2026-10-16")) {
+            com.roziqrizal.habitflow.domain.prayer.PrayerTimes(null, null, null, null, null, null, null, null)
+        }
+        server.status = 422
+        server.responseBody = """{"message":"The blocks.0.name field is required."}"""
+        assertTrue(client().putScheduleBlocks(schedulePayload()) is HabitApiResult.Rejected)
+        assertTrue(client().putPrayerDays(prayers) is HabitApiResult.Rejected)
+        server.status = 404
+        assertEquals(HabitApiResult.NotFound, client().putScheduleBlocks(schedulePayload()))
+        server.status = 401
+        assertEquals(HabitApiResult.Unauthorized, client().putScheduleBlocks(schedulePayload()))
+        server.status = 503
+        assertEquals(HabitApiResult.ServerError(503), client().putPrayerDays(prayers))
+    }
+
     @Test
     fun kirimKesehatanDitolakDanGalat() = runBlocking {
         server.status = 422
