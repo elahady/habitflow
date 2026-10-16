@@ -2532,7 +2532,7 @@ sinkron catatan EOD dua arah HP dan web termasuk penggabungan saat bentrok (sete
    Login Google tidak terpengaruh.
 6. Tahap 29 langkah 4 dan 5 (Android mengirim jadwal, waktu sholat, dan libur) selesai di kode dan tes 16 Oktober 2026 tapi **server belum di-deploy**
    (butuh `PUT /api/v1/schedule-blocks`, `PUT /api/v1/days-off`, dan migrasi `create_days_off_table`) dan belum dicoba di HP; deploy lewat PC host Hyper-V.
-   Setelah itu tahap 29 selesai.
+   Setelah itu tahap 29 selesai. Daftar langkah deploy dan uji HP: [uji-deploy-16-okt.md](uji-deploy-16-okt.md).
 
 **Keputusan yang diambil Claude di sesi ini, boleh diubah pemilik** (semuanya sudah dicatat di tempatnya, ini daftar cepat): skill di `skills/` repo (bukan `.claude/skills/`) dan token dari
 `HABITFLOW_TOKEN`; Meeting & briefing satu catatan per hari di `daily_briefs.meeting_note`, ditulis manual; heatmap 53 minggu (mockup 66); kartu To-do `selesai / jumlah`; "Semua" di halaman
