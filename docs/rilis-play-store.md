@@ -42,7 +42,9 @@ dihapus. Kalau salah satu dari ketiganya berbeda dari tabel ini, tabel ini yang 
 | `blood_pressure_entries` | tensi per catatan (sistolik, diastolik, nadi, catatan bebas) dari HP (tahap 30 langkah 3) | **Kesehatan** | Ya |
 | `step_days` | jumlah langkah per tanggal dari Health Connect (tahap 30 langkah 3) | **Kesehatan** | Ya |
 | `health_focus` | satu baris per pengguna: zona waktu, tinggi dan target berat, dan fokus kesehatan terakhir beserta teks dan alasannya (tahap 30 langkah 3) | **Kesehatan** | Ya |
-| Rencana tahap 29: jadwal harian, makan, acara | jadwal, makanan, kalender | **Kesehatan, lokasi** | Ya. Wajib masuk daftar hapus **sebelum** tabelnya dibuat |
+| `schedule_blocks`, `schedule_block_habits` | blok jadwal harian (nama, jam, patokan sholat, hari aktif, tingkat notifikasi) dan tautannya ke habit, diganti seluruhnya oleh HP tiap berubah (tahap 29 langkah 4) | Aktivitas | Ya |
+| `prayer_days` | waktu sholat 7 hari ke depan yang sudah dihitung HP dari lokasi pengguna, ditambah zona waktu (tahap 29 langkah 4). Koordinat lokasi **tidak** dikirim, tapi waktu sholat bisa menunjukkan perkiraan wilayah | **Lokasi (perkiraan)** | Ya |
+| Rencana: makan, acara | makanan, kalender | **Kesehatan, lokasi** | Ya. Wajib masuk daftar hapus **sebelum** tabelnya dibuat |
 
 ### Android (HP)
 
