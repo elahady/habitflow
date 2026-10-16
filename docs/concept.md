@@ -846,10 +846,11 @@ volume naik 10 detik, berhenti sendiri 2 menit, tombol "Sudah minum" (`ACTION_DR
 diam) dan "Matikan", tanpa Tunda; layar alarm penuh punya varian "Pengingat minum". Pengingat jatuh ke notifikasi senyap
 lama kalau alarm lain sedang berbunyi atau sistem menolak layanan latar belakang (`IllegalStateException`, termasuk
 `ForegroundServiceStartNotAllowedException`). Jadwal, gabung air+break, dan aturan diabaikan tiga kali tidak berubah.
-Manifest dan izin tidak berubah. Compile dan seluruh tes unit lulus. **Belum diuji di HP:** terutama apakah layanan
-foreground boleh dimulai dari alarm tak presisi (`setAndAllowWhileIdle`) di Android 12+ tanpa izin alarm presisi; kalau
-ditolak, pengingat diam-diam jatuh ke notifikasi senyap. Tidak ada tes unit untuk jalur ini (bergantung pada layanan dan
-`AlarmManager`).
+Manifest dan izin tidak berubah. Compile dan seluruh tes unit lulus. **Dicoba di HP pemilik (16 Oktober 2026): alarm minum
+berbunyi** (layanan foreground boleh dimulai dari alarm tak presisi di HP itu). Belum diuji: tombol "Sudah minum" dan
+"Matikan" pada alarm itu, berhenti sendiri setelah 2 menit, dan perilaku di HP lain atau Android versi lain (di sana sistem
+bisa menolak layanan; pengingat lalu jatuh ke notifikasi senyap). Tidak ada tes unit untuk jalur ini (bergantung pada layanan
+dan `AlarmManager`).
 
 ### Tahap 21: Kesehatan (selesai dikoding dan diuji di emulator, 9 Oktober 2026)
 
@@ -1228,8 +1229,8 @@ Perbaikan server di-deploy ke produksi 16 Oktober 2026 (hanya `TeamTodoControlle
 `~/backups-habitflow/kode-pra-todo-tim-20261016-184538.tar.gz` dan tag image `habitflow:pra-todo-tim`; sidik jari SSH VM dicocokkan
 (IP VM masih `172.28.157.112`); arsip 331 KB tanpa .dll/.exe; kode di container berisi `fresh('assignee')`; `habitflow` healthy dan
 `habitflow-queue` jalan, tanpa galat di log, `migrate:status` tanpa yang tertunda; produksi: `POST`/`GET /teams/1/todos` tanpa token 401,
-`/login` 200, `/ping` 401. **Belum dicoba:** menambah tugas dari HP terhadap server baru dengan akun nyata (sengaja tidak membuat data
-uji di produksi). Tugas yang sudah terlanjur dibuat saat galat akan tampil setelah daftar dimuat ulang.
+`/login` 200, `/ping` 401. **Dicoba di HP pemilik (16 Oktober 2026, setelah deploy): menambah tugas di Tugas Rumah berhasil.**
+(Data uji sengaja tidak dibuat di produksi; yang dipakai tugas sungguhan pemilik.)
 
 | Pertanyaan | Keputusan |
 |---|---|
