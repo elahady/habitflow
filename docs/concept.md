@@ -2539,6 +2539,8 @@ dua kali. Token akun (`user_tokens`) divalidasi lewat hash dan tidak berubah, ja
   verifikasi dan reset kata sandi belum benar-benar terkirim** (kodenya jatuh ke log), jadi pendaftaran dengan email belum boleh dibuka. Kontainer
   `habitflow-queue` jalan tapi menganggur sampai `QUEUE_CONNECTION=database` dan `MAIL_*` Resend diisi (butuh DNS, 31B). Login Google tidak terpengaruh.
 - **Belum:** skill `habitflow-morning-routine` belum dijalankan end-to-end (butuh token pemilik dan Gmail); kartu web dan Android belum dilihat dengan data nyata.
+- **Kartu Android dilihat di HP pemilik (16 Oktober 2026):** tab Kerja menampilkan kartu "Ringkasan dari Claude" dengan label "Ditulis otomatis, hanya dibaca" dan pesan kosong
+  yang menyebut skill `habitflow-morning-routine`, sesuai rancangan (belum ada ringkasan karena skill belum pernah dijalankan). Tampilan dengan isi ringkasan belum dilihat.
 
 Dengan ini seluruh langkah 4 selesai di kode (web dan Android). Sisa tahap 32: langkah 2 (tes manual dengan curl, menunggu deploy) dan
 langkah 5 (opsional, `/schedule`), serta dua butir "Belum diputuskan" di bawah.
@@ -2744,6 +2746,12 @@ Ini beda paling besar — **bukan cuma soal gaya, tapi konsep halaman yang beda 
      - **Keluar:** catatan EOD yang belum terkirim kini ikut dihitung di peringatan perubahan belum terkirim (`ChangeCounts.unsyncedWorkDays`).
      - 20 tes baru (`WorkDaySyncTest` 12, klien 8; `SignOutCoordinatorTest` disesuaikan), 593 tes unit lulus.
      - **Belum ada** ringkasan EOD per hari (X dari Y selesai) untuk riwayat web; itu butuh kolom baru yang diisi saat EOD selesai dan masih usulan.
+     - **Hasil uji di HP pemilik (16 Oktober 2026, debug build dari commit `fdd67e7`, dipasang sebagai update di atas data lama):**
+       ✅ terpasang sebagai update dan aplikasi terbuka tanpa crash (migrasi Room 10 ke 11 jalan); ✅ data lama (habit, riwayat, catatan EOD) utuh;
+       ✅ catatan EOD yang ditulis di HP muncul di web (HP ke web). ❌ **web ke HP belum berhasil** dan ❌ **bentrok dua sisi belum berhasil**: penyebab belum diketahui.
+       Dugaan yang belum dibuktikan: HP hanya menarik dari server saat aplikasi dibuka dari kondisi mati (`LaunchedEffect(Unit)` di `MainActivity`) dan lewat worker tiap
+       30 menit (`HabitSyncScheduler.PERIODIC_MINUTES`); `onResume` tidak menyinkronkan, jadi perubahan dari web tidak terlihat sampai salah satunya terjadi. Tema gelap dan
+       lipatan "Selengkapnya" belum dilaporkan. Di emulator, migrasi diuji dengan data uji tapi menunggu login (cadangan DB v10 ada di folder sementara, tidak di repo).
 4. **Kesehatan di beranda**: ini tahap 30 langkah 5, dikerjakan di jalurnya sendiri (langkah 3-4 server dan Android
    kirim data dulu sebelum web bisa menampilkan apa pun).
 
