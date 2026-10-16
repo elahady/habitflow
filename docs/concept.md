@@ -2506,7 +2506,13 @@ kontrak `POST /api/v1/daily-briefs` dan `GET /api/v1/ping`. Keputusan di dalamny
     Kalau token dicabut (`habitflow:revoke-all-sessions`, "Keluar dari semua perangkat"), terbitkan ulang dengan `habitflow:issue-token ... --replace` ke berkas yang sama; routine tidak perlu diubah.
   - **Temuan di VM, belum ditangani:** `~/apps/habitflow/` berisi ±2.400 berkas **sistem Windows** (isi `C:\Windows\System32`, ±950 MB, bertanggal 10 Oktober 2026), hasil arsip deploy lama
     yang dibuat dari direktori yang salah. Tidak merusak fungsi, tapi memboroskan disk (VM tinggal ±5,9 GB, 78% terpakai) dan membengkakkan konteks `docker compose build` serta arsip
-    cadangan kode (428 MB). Membersihkannya perlu persetujuan pemilik (menghapus di produksi). Arsip deploy hari ini sudah dicek bersih (325 KB, tanpa .dll/.exe).
+    cadangan kode (428 MB). Arsip deploy hari ini sudah dicek bersih (325 KB, tanpa .dll/.exe).
+    **Dibersihkan 16 Oktober 2026 atas izin pemilik:** entri dianggap sampah hanya kalau tidak ada di `server/` lokal **dan** ada di `C:\Windows\System32` PC ini (2.422 entri, ditambah 3 berkas
+    .dll/.exe yang jelas Windows tapi tak ada di System32 PC ini); folder sah dicek tidak tercampur (`config`, `app`, dll dibandingkan berkas demi berkas dengan lokal). Dipindah dulu ke karantina
+    di luar folder proyek, aplikasi dicek (healthy, ping 200, `docker compose build` dari folder bersih lulus 13 detik), baru karantina dihapus. Root `~/apps/habitflow/` kini 26 entri;
+    disk bebas 5,7 GB menjadi 7,0 GB (74% terpakai). Arsip cadangan kode `kode-pra-langkah5-...` dipadatkan ulang dari 428 MB menjadi 300 KB (hanya kode sah). Pengaman ditambahkan di `server/DEPLOY.md`.
+    **Sisa yang sengaja dibiarkan:** 4 berkas kode lama era token 19B di `app/` VM yang sudah tidak ada di repo (`IssueToken.php`, `GoogleConnectController.php`, `AuthenticateToken.php`, `ApiToken.php`); tidak merusak,
+    tapi bisa dihapus kalau mau (tarik ulang `app/` dari repo tidak menghapusnya karena `tar -x` hanya menimpa).
     Juga: `habitflow-queue` selalu tampil `unhealthy` karena healthcheck bawaan image memeriksa `localhost:8080` sedangkan worker tidak punya web server; worker sendiri jalan.
 - **Hanya `email_digest` yang dikirim**, `meeting_note` tidak (butir "Meeting & briefing" di bawah tetap belum diputuskan).
 - **Gmail tidak terhubung atau token tidak ada: tidak menulis apa pun**, supaya ringkasan benar sebelumnya tidak tertimpa "kosong".

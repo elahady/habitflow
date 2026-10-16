@@ -47,12 +47,18 @@ yang gagal kalau tabel baru belum diputuskan nasibnya saat hapus akun, dan kalau
 Setiap ada perubahan kode di `server/`, urutannya:
 
 ```bash
-# 1. Dari folder server/ di lokal, bikin arsip (exclude yang tidak perlu)
+# 1. Dari folder server/ di lokal, bikin arsip (exclude yang tidak perlu).
+#    PENGAMAN: pastikan cwd benar dan arsipnya kecil. Pada 10 Oktober 2026 satu arsip pernah dibuat dari
+#    direktori yang salah dan ±2.400 berkas C:\Windows\System32 (±950 MB) ikut ke VM; baru ketahuan 16 Oktober.
+test -f artisan && test -f docker-compose.yml || { echo "BUKAN folder server/"; exit 1; }
 tar -czf /tmp/habitflow-deploy.tar.gz \
   --exclude='vendor' --exclude='node_modules' \
   --exclude='database/database.sqlite' \
   --exclude='.env' --exclude='.env.production' \
   .
+
+#    Arsip normal sekitar 300 KB. Lebih dari beberapa MB, atau ada .dll/.exe di dalamnya, berarti salah:
+#    ls -la /tmp/habitflow-deploy.tar.gz && tar -tzf /tmp/habitflow-deploy.tar.gz | grep -ciE '\.(dll|exe)$'   # harus 0
 
 # 2. Kirim ke VM
 scp /tmp/habitflow-deploy.tar.gz elahady@<ip-vm>:~/apps/habitflow-deploy.tar.gz
