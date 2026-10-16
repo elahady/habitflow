@@ -213,7 +213,13 @@ class MainActivity : ComponentActivity() {
                     // pull, supaya perubahan lokal (termasuk penghapusan) yang belum terkirim tidak
                     // "dihidupkan lagi" oleh pull kalau proses sempat di-restart sebelum sempat push.
                     // Gagal diam-diam (mis. belum login atau offline) - worker latar belakang tetap jalan.
-                    LaunchedEffect(Unit) { graph.habitSyncManager.syncNow() }
+                    // Diulang tiap app kembali tampil (dibatasi satu kali per menit di `syncIfStale`), supaya perubahan
+                    // dari web terlihat tanpa menutup paksa app.
+                    LaunchedEffect(Unit) {
+                        this@MainActivity.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                            graph.habitSyncManager.syncIfStale()
+                        }
+                    }
                     val versionName = remember {
                         packageManager.getPackageInfo(packageName, 0).versionName.orEmpty()
                     }

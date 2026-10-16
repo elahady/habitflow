@@ -10,6 +10,7 @@ import com.roziqrizal.habitflow.data.toDomain
 import com.roziqrizal.habitflow.data.account.AccountSettings
 import com.roziqrizal.habitflow.data.account.UnauthorizedListener
 import com.roziqrizal.habitflow.domain.sync.EntryMergeAction
+import com.roziqrizal.habitflow.domain.sync.SyncThrottle
 import com.roziqrizal.habitflow.domain.sync.entryMergeAction
 import com.roziqrizal.habitflow.domain.work.mergeWorkDay
 import com.roziqrizal.habitflow.domain.work.sameContentAs
@@ -27,6 +28,9 @@ sealed interface HabitSyncStatus {
     data class Success(val at: Long, val hadConflict: Boolean) : HabitSyncStatus
     data class Failed(val message: String) : HabitSyncStatus
 }
+
+/** Jeda minimum antara dua sinkron otomatis saat app kembali tampil ([HabitSyncManager.syncIfStale]). */
+private const val AUTO_SYNC_MIN_INTERVAL_MILLIS = 60_000L
 
 /** Hasil satu ronde push field-update: [error] null berarti lanjut, [conflicted] dicatat untuk status UI. */
 private class UpdateOutcome(val error: HabitApiResult<Unit>?, val conflicted: Boolean)
@@ -68,6 +72,14 @@ class HabitSyncManager(
         if (pushed !is HabitApiResult.Success) return@withLock pushed
         pullLocked()
     }
+
+    private val autoSyncThrottle = SyncThrottle(AUTO_SYNC_MIN_INTERVAL_MILLIS)
+
+    /**
+     * [syncNow] saat app kembali tampil (tahap 33 langkah 3c), supaya perubahan dari web (catatan EOD, follow-up) terlihat
+     * tanpa menunggu worker 30 menit atau menutup paksa app. Dibatasi [AUTO_SYNC_MIN_INTERVAL_MILLIS]; null kalau dilewati.
+     */
+    suspend fun syncIfStale(): HabitApiResult<Unit>? = if (autoSyncThrottle.tryAcquire()) syncNow() else null
 
     private suspend fun pushLocked(): HabitApiResult<Unit> {
         val client = client() ?: return HabitApiResult.Unauthorized

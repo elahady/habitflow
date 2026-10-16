@@ -2748,10 +2748,12 @@ Ini beda paling besar — **bukan cuma soal gaya, tapi konsep halaman yang beda 
      - **Belum ada** ringkasan EOD per hari (X dari Y selesai) untuk riwayat web; itu butuh kolom baru yang diisi saat EOD selesai dan masih usulan.
      - **Hasil uji di HP pemilik (16 Oktober 2026, debug build dari commit `fdd67e7`, dipasang sebagai update di atas data lama):**
        ✅ terpasang sebagai update dan aplikasi terbuka tanpa crash (migrasi Room 10 ke 11 jalan); ✅ data lama (habit, riwayat, catatan EOD) utuh;
-       ✅ catatan EOD yang ditulis di HP muncul di web (HP ke web). ❌ **web ke HP belum berhasil** dan ❌ **bentrok dua sisi belum berhasil**: penyebab belum diketahui.
-       Dugaan yang belum dibuktikan: HP hanya menarik dari server saat aplikasi dibuka dari kondisi mati (`LaunchedEffect(Unit)` di `MainActivity`) dan lewat worker tiap
-       30 menit (`HabitSyncScheduler.PERIODIC_MINUTES`); `onResume` tidak menyinkronkan, jadi perubahan dari web tidak terlihat sampai salah satunya terjadi. Tema gelap dan
-       lipatan "Selengkapnya" belum dilaporkan. Di emulator, migrasi diuji dengan data uji tapi menunggu login (cadangan DB v10 ada di folder sementara, tidak di repo).
+       ✅ catatan EOD yang ditulis di HP muncul di web (HP ke web). ❌ **web ke HP tidak muncul selama app tetap terbuka atau di latar**, dan bentrok dua sisi ikut tidak teruji.
+       **Penyebab terbukti:** HP hanya menarik dari server saat app dibuka dari kondisi mati dan lewat worker tiap 30 menit (`HabitSyncScheduler.PERIODIC_MINUTES`); kembali ke app
+       tidak menyinkronkan. Pemilik menutup paksa app lalu membukanya lagi: catatan dari web muncul, jadi logika tarik dan gabungnya benar.
+       **Perbaikan (16 Oktober 2026):** `HabitSyncManager.syncIfStale()` dipanggil tiap app kembali tampil (`repeatOnLifecycle(STARTED)` di `MainActivity`), dibatasi satu kali per menit
+       oleh `SyncThrottle` (tes murni, 5 tes; 598 tes unit lulus). Perbaikan ini **belum dicoba di HP**. Bentrok dua sisi dan tema gelap serta lipatan "Selengkapnya" belum teruji.
+       Di emulator, migrasi diuji dengan data uji tapi menunggu login (cadangan DB v10 ada di folder sementara, tidak di repo).
 4. **Kesehatan di beranda**: ini tahap 30 langkah 5, dikerjakan di jalurnya sendiri (langkah 3-4 server dan Android
    kirim data dulu sebelum web bisa menampilkan apa pun).
 
