@@ -213,12 +213,12 @@ tampil di layar Hari ini.
 - [ ] Play Store listing, bila nanti dibutuhkan. PNG 512 untuk listing sudah ada di
   `docs/design/ikon/ikon-512.png`.
 
-## Tahap 13-16: Usulan pengembangan (diskusi dulu, belum dikoding)
+## Tahap 13-16: Usulan pengembangan (semuanya sudah diputuskan: 13, 14, dan 16 selesai, 15 dibatalkan)
 
-Keempat tahap di bawah ini dicatat 5 Oktober 2026. **Jangan dikoding sebelum dibahas
-dan diputuskan bersama.** Setelah keputusan diambil, aturan fiturnya ditulis dulu di
-`docs/rancangan.md` (dan `docs/design/README.md` untuk tampilan), lalu tahap ini diberi
-kriteria "Selesai jika" seperti tahap lain.
+Keempat tahap di bawah ini dicatat 5 Oktober 2026 sebagai usulan yang harus dibahas dan
+diputuskan bersama sebelum dikoding. Aturannya: setelah keputusan diambil, aturan fiturnya
+ditulis dulu di `docs/rancangan.md` (dan `docs/design/README.md` untuk tampilan), lalu tahap
+diberi kriteria "Selesai jika" seperti tahap lain. Status tiap tahap ada di judulnya masing-masing.
 
 ## Tahap 13: Status bar menyatu dengan warna layar (selesai, 5 Oktober 2026)
 
@@ -387,13 +387,13 @@ dan memperbesar kotak (mengurangi jumlah minggu atau harus digulir ke samping).
 - Unit test `heatmapCellAt` (kotak, celah, tepi, luar grid) lulus.
 - Getar tidak bisa dirasakan di emulator, jadi perlu dicoba di HP.
 
-## Tahap 17-24: Habitflow sebagai asisten harian (diskusi dulu, belum dikoding)
+## Tahap 17-24: Habitflow sebagai asisten harian (tahap 17-23 sudah dikoding; hanya tahap 24 yang belum dikoding)
 
 Arah besarnya ada di [visi-super-app.md](visi-super-app.md). Setiap tahap dibahas dan
 diputuskan dulu, lalu aturannya ditulis di `rancangan.md`, baru dikoding. Keputusan yang
 sudah diambil saat menyusun visi dicatat di tiap tahap.
 
-### Tahap 17: Jadwal harian, waktu sholat, dan dashboard (sebagian selesai, 7 Oktober 2026)
+### Tahap 17: Jadwal harian, waktu sholat, dan dashboard (selesai dikoding dan diuji sebagian di emulator, 7 Oktober 2026; sisa verifikasi ada di "Belum diverifikasi")
 
 **Keputusan (5 Oktober 2026).** Aturan fitur di `docs/rancangan.md` bagian Jadwal harian.
 
@@ -1848,9 +1848,9 @@ menampilkan angka. Android menampilkannya di dashboard Hari ini, web di `/dashbo
 - Label tab bawah di mockup mobile (Hari Ini, Agenda, Kerja, Kemajuan, Tentang) hanya tebakan dari nama layar di kode.
 - Urutan terhadap tahap 29 (jadwal ke web). Keduanya tidak saling bergantung.
 
-**Status (11 Oktober 2026):** langkah 1 dan 2 selesai. `domain/health/Focus.kt` dengan `FocusTest` (lulus), kartu `FocusCard` di Hari ini, dan seluruh layar Hari ini disesuaikan dengan mockup mobile (kepala sapaan, Sekarang/Berikutnya dua kolom, Berat/Tensi/Langkah bergaya baru, kemajuan Habit/To-do, ikon tab bawah; nilai desain di `docs/design/README.md`). Terpasang dan terlihat di HP fisik; **belum diuji tiap aturan lewat data nyata di HP** (hanya kondisi "di jalur" yang terlihat). Teks fokus (judul, kalimat, alasan) ada di `ui/FocusCard.kt`, belum dikirim ke server. Langkah 3-6 (server, kirim dari Android, web, verifikasi) belum dikerjakan.
+**Status (11 Oktober 2026, catatan riwayat; keadaan terkini ada di judul tahap ini dan daftar langkah di bawah, jadi kalimat "Langkah 3-6 belum dikerjakan" di akhir paragraf ini sudah usang):** langkah 1 dan 2 selesai. `domain/health/Focus.kt` dengan `FocusTest` (lulus), kartu `FocusCard` di Hari ini, dan seluruh layar Hari ini disesuaikan dengan mockup mobile (kepala sapaan, Sekarang/Berikutnya dua kolom, Berat/Tensi/Langkah bergaya baru, kemajuan Habit/To-do, ikon tab bawah; nilai desain di `docs/design/README.md`). Terpasang dan terlihat di HP fisik; **belum diuji tiap aturan lewat data nyata di HP** (hanya kondisi "di jalur" yang terlihat). Teks fokus (judul, kalimat, alasan) ada di `ui/FocusCard.kt`, belum dikirim ke server. Langkah 3-6 (server, kirim dari Android, web, verifikasi) belum dikerjakan.
 
-### Tahap 31: Login Wajib (diputuskan 11 Oktober 2026, belum dikoding)
+### Tahap 31: Login Wajib (diputuskan 11 Oktober 2026; 31A-31K selesai di kode dan tes, 31B/31K belum tuntas, 31L sedang dikerjakan, 31M belum dimulai; sisa menunggu pemilik)
 
 Keputusan pemilik (11 Oktober 2026): **untuk memakai app, pengguna harus login.** Ini membalik asumsi dasar yang dipakai sejak
 tahap 1 ("offline dan lokal, tanpa akun") dan yang masih tertulis di beberapa dokumen dan kode. Perubahannya menyentuh banyak
