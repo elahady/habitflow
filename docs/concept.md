@@ -2511,8 +2511,11 @@ kontrak `POST /api/v1/daily-briefs` dan `GET /api/v1/ping`. Keputusan di dalamny
     .dll/.exe yang jelas Windows tapi tak ada di System32 PC ini); folder sah dicek tidak tercampur (`config`, `app`, dll dibandingkan berkas demi berkas dengan lokal). Dipindah dulu ke karantina
     di luar folder proyek, aplikasi dicek (healthy, ping 200, `docker compose build` dari folder bersih lulus 13 detik), baru karantina dihapus. Root `~/apps/habitflow/` kini 26 entri;
     disk bebas 5,7 GB menjadi 7,0 GB (74% terpakai). Arsip cadangan kode `kode-pra-langkah5-...` dipadatkan ulang dari 428 MB menjadi 300 KB (hanya kode sah). Pengaman ditambahkan di `server/DEPLOY.md`.
-    **Sisa yang sengaja dibiarkan:** 4 berkas kode lama era token 19B di `app/` VM yang sudah tidak ada di repo (`IssueToken.php`, `GoogleConnectController.php`, `AuthenticateToken.php`, `ApiToken.php`); tidak merusak,
-    tapi bisa dihapus kalau mau (tarik ulang `app/` dari repo tidak menghapusnya karena `tar -x` hanya menimpa).
+    **4 berkas kode lama era token 19B juga dihapus dari `app/` VM (16 Oktober 2026, atas izin pemilik):** `IssueToken.php` (perintah `habitflow:token`, sudah rusak karena tabel `api_tokens` dihapus di 31L),
+    `GoogleConnectController.php`, `AuthenticateToken.php`, `ApiToken.php`. Tak ada rujukan aktif (rute, provider, kode); semuanya masih ada di riwayat git (`c89e861`, `2c447db`, `18e1fda`). Daftar berkas `app/` di VM kini
+    identik dengan lokal (66). Catatan: **image kontainer yang sedang jalan masih memuat berkas-berkas itu** sampai deploy berikutnya (host dihapus, kontainer tidak di-recreate); tidak berpengaruh.
+    Penyebab berkas lama bertahan: `tar -x` hanya menimpa, tidak pernah menghapus berkas yang sudah dihapus di repo. Dua tes (`AccountDeletionTest`, `SnapshotApiTest`) masih punya `use App\Models\ApiToken;`
+    yang tak terpakai (tidak membuat tes gagal; bisa dirapikan).
     Juga: `habitflow-queue` selalu tampil `unhealthy` karena healthcheck bawaan image memeriksa `localhost:8080` sedangkan worker tidak punya web server; worker sendiri jalan.
 - **Hanya `email_digest` yang dikirim**, `meeting_note` tidak (butir "Meeting & briefing" di bawah tetap belum diputuskan).
 - **Gmail tidak terhubung atau token tidak ada: tidak menulis apa pun**, supaya ringkasan benar sebelumnya tidak tertimpa "kosong".
