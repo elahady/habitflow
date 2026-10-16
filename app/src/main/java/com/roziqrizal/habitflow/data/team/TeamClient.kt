@@ -161,7 +161,8 @@ class TeamClient(
         id = o.getLong("id"),
         title = o.getString("title"),
         assignedTo = if (o.has("assigned_to") && !o.isNull("assigned_to")) o.getLong("assigned_to") else null,
-        done = o.getBoolean("done"),
+        // Server lama membalas pembuatan tugas tanpa `done` (model baru dibuat belum memuat nilai bawaan): anggap belum selesai.
+        done = o.optBoolean("done", false),
     )
 
     private fun rejectMessage(body: String): String =

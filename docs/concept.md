@@ -1216,6 +1216,16 @@ dicek `auth()->user()->google_sub` tidak null dulu.
 
 Dibahas 10 Oktober 2026. Butuh tahap 25 (akun, MySQL, Livewire) selesai lebih dulu.
 
+**Bug ditemukan di HP (16 Oktober 2026): menambah tugas di Tugas Rumah gagal "Server bermasalah (kode 200)".**
+`TeamTodoController::store` membalas model yang baru dibuat, yang hanya berisi kolom yang diisi, jadi `done` (nilai bawaan
+database) tidak ada di JSON, sedangkan `TeamClient.parseTodo` mewajibkan `done` (`getBoolean`) dan menganggap balasan itu
+rusak. Pesannya menyesatkan: `parseSingleTodo` memberi kode 200 padahal balasannya 201. Tugas tersimpan di server tapi tidak
+tampil di HP. Tidak ada tes API sama sekali untuk to-do tim (cuma halaman web), jadi tidak ada yang menangkapnya. Perbaikan:
+server membalas `$todo->fresh('assignee')` (`done` false dan data penugasan ikut), dan Android memakai `optBoolean("done", false)`
+supaya tetap jalan terhadap server lama. Tes baru: `TeamTodoApiTest` (4 tes, server 404 lulus) dan satu tes di
+`TeamClientTest`. **Perbaikan Android ada di APK `-h` (cukup dipasang, server lama tidak jadi masalah). Perbaikan server
+belum di-deploy.** Tugas yang sudah terlanjur dibuat saat galat akan tampil setelah daftar dimuat ulang.
+
 | Pertanyaan | Keputusan |
 |---|---|
 | Lingkup | **Hanya to-do rumah tangga** yang dibagi tim. Habit, follow-up kerja (tahap 27), jadwal tetap personal, tidak ikut tim |

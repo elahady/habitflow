@@ -43,7 +43,9 @@ class TeamTodoController extends Controller
             'created_by' => $request->user()->id,
         ]);
 
-        return response()->json(['todo' => $todo], 201);
+        // `fresh` memuat nilai bawaan database (`done` = false): model yang baru dibuat hanya berisi kolom yang diisi, dan
+        // Android menolak balasan tanpa `done`.
+        return response()->json(['todo' => $todo->fresh('assignee')], 201);
     }
 
     public function update(Request $request, int $todo): JsonResponse

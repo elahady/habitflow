@@ -166,6 +166,17 @@ class TeamClientTest {
     }
 
     @Test
+    fun tambahTodoDariServerLamaTanpaDoneDianggapBelumSelesai() = runBlocking {
+        // Server lama membalas 201 tanpa `done`; dulu ini jadi "Server bermasalah (kode 200)" dan tugas tidak tampil.
+        status = 201
+        responseBody = """{"todo":{"id":7,"title":"Cuci piring","assigned_to":null,"created_by":1,"team_id":1}}"""
+        val result = client().createTodo(1, "Cuci piring", null) as TeamApiResult.Success
+        assertEquals("POST", lastMethod)
+        assertEquals(7L, result.value.id)
+        assertEquals(false, result.value.done)
+    }
+
+    @Test
     fun tugaskanTodoMengirimAssignedTo() = runBlocking {
         responseBody = """{"todo":{"id":1,"title":"Cuci piring","assigned_to":10,"done":false}}"""
         val result = client().assign(1, 10) as TeamApiResult.Success
