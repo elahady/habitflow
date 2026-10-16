@@ -289,7 +289,8 @@ private fun BlockEditorDialog(
                             onClick = { level = l },
                             shape = SegmentedButtonDefaults.itemShape(index, NotificationLevel.entries.size),
                             colors = appSegmentedColors(),
-                            label = { Text(l.label) },
+                            icon = {},
+                            label = { Text(l.label, maxLines = 1, softWrap = false) },
                         )
                     }
                 }

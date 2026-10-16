@@ -181,7 +181,7 @@ Urutan dari atas:
 3. Kartu ringkasan Kerja (hanya kalau ada Inbox atau lewat tanggal).
 4. **Kartu Sekarang dan Berikutnya**: satu kartu 16dp, dua kolom dipisah garis tegak `outlineVariant`. Nama blok serif 16sp,
    keterangan "sisa N menit · rentang" atau jam mulai di bawahnya (labelMedium, `onSurfaceVariant`). Di bawah garis pemisah:
-   "Lihat jadwal hari ini ▾" (membuka timeline) dan tombol teks "Atur", lalu "Hari ini libur".
+   "Lihat jadwal hari ini ▾" (membuka timeline) dan tombol teks "Atur", lalu tombol teks "Tandai hari ini libur".
 5. **Berat dan Tensi berdampingan**, tinggi sama: ikon garis 18dp (`primary`) dengan label 13sp, angka serif 26sp (satuan "kg"
    14sp), kategori dan "kapan" (bodySmall, `onSurfaceVariant`), lalu `TonalButton` "+ Catat" selebar kartu (minimal 48dp) yang
    selalu menempel di dasar kartu.
@@ -370,8 +370,10 @@ sejenis**, bukan hasil gambar — dibuatkan artboard dulu sebelum dikoding kalau
    baris per blok (jam di kiri dengan angka tabular, lebar tetap 96dp, nama di kanan). Blok yang
    sedang berjalan memakai latar `primaryFixed` (sudut 8dp) dan nama SemiBold. Blok yang sudah
    lewat memakai `onSurfaceVariant`. Titik waktu (batas tidur) hanya menampilkan jam mulai.
-3. Tombol teks "Hari ini libur" di bawah timeline. Saat aktif, kartu menampilkan
-   "Hari libur, blok kantor dimatikan" dengan tombol "Batalkan".
+3. Tombol teks "Tandai hari ini libur" di bawah timeline (kalimat perintah, supaya tidak terbaca sebagai status hari ini
+   libur). Saat aktif, kartu menampilkan "Hari libur, blok kantor dimatikan" dengan tombol "Batalkan".
+   Segmen Notifikasi di editor blok (Info, Pengingat, Alarm) tanpa ikon centang dan label satu baris, supaya
+   "Pengingat" tidak terpotong di dialog sempit.
 4. Layar **Atur jadwal** (layar penuh di atas tab, tab tetap empat; tombol kembali menutupnya):
    judul (headlineMedium), keterangan lokasi sholat, `TonalButton` "+ Blok", lalu satu kartu per
    blok: nama, jam atau patokan sholat dan durasi, hari aktif sebagai tujuh huruf S S R K J S M

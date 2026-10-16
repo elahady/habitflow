@@ -490,7 +490,11 @@ diubah.
 - **Perbaikan tampilan (16 Oktober 2026):** di dialog editor blok, chip waktu sholat (5) dan chip hari aktif (7)
   memakai `Row`, jadi melebihi lebar dialog di HP nyata: chip terakhir terpotong jadi kotak kosong. Keduanya kini
   `FlowRow` (pola sama dengan `EventEditor`) sehingga chip turun ke baris berikutnya. Compile lolos; **belum dicek
-  ulang di layar HP**.
+  ulang di layar HP**. Hasil cek di HP (APK `-d`): chip hari sudah turun baris dengan benar. Dua temuan baru, diperbaiki
+  di APK `-e`: (1) segmen Notifikasi membungkus "Pengingat" jadi dua baris ("Penginga" / "t") karena segmen terpilih
+  memuat ikon centang di dialog sempit: ikon dibuang dan label dikunci satu baris; (2) tombol "Hari ini libur" di kartu
+  Sekarang terbaca sebagai status (pengguna mengira hari Jumat ditandai libur, padahal itu tombol aksi): labelnya
+  jadi "Tandai hari ini libur". Perilaku libur tidak berubah. **Belum dicek ulang di HP.**
 
 ### Tahap 18: Alarm Subuh dan pengingat adzan (selesai, 7 Oktober 2026)
 

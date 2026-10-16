@@ -152,7 +152,7 @@ fun ScheduleCard(
                 action = "Libur lagi",
                 onAction = { onSetHolidayCancelled(false) },
             )
-            else -> TextButton(onClick = { onSetDayOff(true) }) { Text("Hari ini libur") }
+            else -> TextButton(onClick = { onSetDayOff(true) }) { Text("Tandai hari ini libur") }
         }
     }
 }
