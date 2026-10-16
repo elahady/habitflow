@@ -16,7 +16,9 @@ import com.roziqrizal.habitflow.data.calendar.PhoneCalendarSource
 import com.roziqrizal.habitflow.data.LocationSettings
 import com.roziqrizal.habitflow.data.MealSettings
 import com.roziqrizal.habitflow.data.NotificationSettings
+import com.roziqrizal.habitflow.data.HolidayAssets
 import com.roziqrizal.habitflow.data.PlaceLocation
+import com.roziqrizal.habitflow.data.ScheduleRepository
 import com.roziqrizal.habitflow.data.ThemeMode
 import com.roziqrizal.habitflow.data.ThemeSettings
 import com.roziqrizal.habitflow.data.health.HealthConnectStepsSource
@@ -108,7 +110,7 @@ class AppGraph(app: Application) {
         HabitSyncManager(
             db, accountSettings, sessionGuard,
             health = HealthSyncInputs(healthSettings, stepsSource, healthFocusStore),
-            schedule = ScheduleSyncInputs(locationSettings),
+            schedule = ScheduleSyncInputs(locationSettings) { date -> ScheduleRepository(db, HolidayAssets.get(app)).isDayOff(date) },
         )
     }
     val habitSyncScheduler = HabitSyncScheduler(app, accountSettings, healthFocusStore)

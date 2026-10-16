@@ -570,6 +570,36 @@ class FollowUpSyncClientTest {
     }
 
     @Test
+    fun kirimLiburMemakaiPutDanMembawaJendelaSertaTanggal() = runBlocking {
+        server.responseBody = """{"days_off":["2026-10-17"]}"""
+
+        val result = client().putDaysOff(daysOffPayload(LocalDate.parse("2026-10-16"), listOf(LocalDate.parse("2026-10-17"))))
+
+        assertEquals(HabitApiResult.Success(Unit), result)
+        assertEquals("PUT", server.lastMethod)
+        assertEquals("/api/v1/days-off", server.lastPath)
+        assertEquals("Bearer token-uji", server.lastAuth)
+        val body = JSONObject(server.lastBody)
+        assertEquals("2026-10-16", body.getString("from"))
+        assertEquals("2026-10-29", body.getString("to"))
+        assertEquals("2026-10-17", body.getJSONArray("dates").getString(0))
+    }
+
+    @Test
+    fun kirimLiburDitolakDanGalat() = runBlocking {
+        val payload = daysOffPayload(LocalDate.parse("2026-10-16"), emptyList())
+        server.status = 422
+        server.responseBody = """{"message":"The dates field must be present."}"""
+        assertTrue(client().putDaysOff(payload) is HabitApiResult.Rejected)
+        server.status = 404
+        assertEquals(HabitApiResult.NotFound, client().putDaysOff(payload))
+        server.status = 401
+        assertEquals(HabitApiResult.Unauthorized, client().putDaysOff(payload))
+        server.status = 503
+        assertEquals(HabitApiResult.ServerError(503), client().putDaysOff(payload))
+    }
+
+    @Test
     fun kirimKesehatanDitolakDanGalat() = runBlocking {
         server.status = 422
         server.responseBody = """{"message":"The weights.0.kg field must be between 20 and 300."}"""

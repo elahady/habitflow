@@ -116,6 +116,7 @@ class HabitSyncManager(
         // Jadwal dan kesehatan paling akhir: keduanya tidak boleh menahan habit, to-do, atau follow-up.
         pushSchedule(client)?.let { return fail(it) }
         pushPrayerDays(client)?.let { return fail(it) }
+        pushDaysOff(client)?.let { return fail(it) }
         pushHealth(client)?.let { return fail(it) }
 
         _status.value = HabitSyncStatus.Success(
@@ -210,6 +211,30 @@ class HabitSyncManager(
         return when (val result = client.putPrayerDays(payload)) {
             is HabitApiResult.Success -> {
                 lastPrayerDaysSent = key
+                null
+            }
+            is HabitApiResult.Rejected, HabitApiResult.NotFound -> null
+            else -> result.asUnit()
+        }
+    }
+
+    private var lastDaysOffSent: String? = null
+
+    /**
+     * Kirim tanggal libur 14 hari ke depan (tahap 29 langkah 5): libur efektif di HP, jadi libur nasional ikut dan yang
+     * dibatalkan tidak. Server mengganti isi jendela itu, jadi "Hari ini libur" yang dimatikan juga sampai ke web. Isinya
+     * berubah tiap hari dan saat libur diubah; yang kedua memicu kirim lewat tabel `days_off` dan `holiday_cancellations`.
+     */
+    private suspend fun pushDaysOff(client: HabitSyncClient): HabitApiResult<Unit>? {
+        val inputs = schedule ?: return null
+        val from = LocalDate.now()
+        val off = (0 until DAYS_OFF_SYNC_DAYS).map { from.plusDays(it.toLong()) }.filter { inputs.isDayOff(it) }
+        val payload = daysOffPayload(from, off)
+        val key = accountSettings.account.value?.token.orEmpty() + "|" + payload.fingerprint
+        if (key == lastDaysOffSent) return null
+        return when (val result = client.putDaysOff(payload)) {
+            is HabitApiResult.Success -> {
+                lastDaysOffSent = key
                 null
             }
             is HabitApiResult.Rejected, HabitApiResult.NotFound -> null

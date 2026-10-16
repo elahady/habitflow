@@ -139,6 +139,48 @@ class ScheduleSyncPayloadTest {
         assertNotEquals(build(listOf(block(1))).fingerprint, build(listOf(block(1, name = "Lain"))).fingerprint)
     }
 
+    // --- Libur ---
+
+    private fun date(text: String) = LocalDate.parse(text)
+
+    @Test
+    fun liburJendelaEmpatBelasHariMulaiDariTanggalYangDiminta() {
+        val payload = daysOffPayload(date("2026-10-16"), emptyList())
+        assertEquals(date("2026-10-16"), payload.from)
+        assertEquals(date("2026-10-29"), payload.to)
+        assertEquals(DAYS_OFF_SYNC_DAYS, payload.from.until(payload.to, java.time.temporal.ChronoUnit.DAYS).toInt() + 1)
+    }
+
+    @Test
+    fun liburUrutTanpaDuplikatDanDiluarJendelaDibuang() {
+        val payload = daysOffPayload(
+            date("2026-10-16"),
+            listOf(date("2026-10-18"), date("2026-10-17"), date("2026-10-18"), date("2026-10-15"), date("2026-10-30"), date("2026-10-29")),
+        )
+        assertEquals(listOf(date("2026-10-17"), date("2026-10-18"), date("2026-10-29")), payload.dates)
+    }
+
+    @Test
+    fun liburJsonSesuaiKontrakServer() {
+        val json = daysOffPayload(date("2026-10-16"), listOf(date("2026-10-17"))).toJson()
+        assertEquals("2026-10-16", json.getString("from"))
+        assertEquals("2026-10-29", json.getString("to"))
+        assertEquals("2026-10-17", json.getJSONArray("dates").getString(0))
+    }
+
+    @Test
+    fun tanpaLiburTetapDikirimSupayaLiburYangDimatikanSampaiKeWeb() {
+        assertEquals(0, daysOffPayload(date("2026-10-16"), emptyList()).toJson().getJSONArray("dates").length())
+    }
+
+    @Test
+    fun liburBerubahJadiKirimanBerbedaDanHariBergantiJugaBerbeda() {
+        val off = daysOffPayload(date("2026-10-16"), listOf(date("2026-10-17")))
+        assertEquals(off.fingerprint, daysOffPayload(date("2026-10-16"), listOf(date("2026-10-17"))).fingerprint)
+        assertNotEquals(off.fingerprint, daysOffPayload(date("2026-10-16"), emptyList()).fingerprint)
+        assertNotEquals(off.fingerprint, daysOffPayload(date("2026-10-17"), listOf(date("2026-10-17"))).fingerprint)
+    }
+
     // --- Waktu sholat ---
 
     private fun times(subuh: LocalTime? = LocalTime.of(4, 15)) = PrayerTimes(

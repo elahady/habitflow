@@ -161,5 +161,27 @@ fun prayerDaysPayload(
     },
 )
 
-/** Yang dibutuhkan manajer sinkron untuk mengirim waktu sholat: lokasi yang dipakai kartu Sekarang/Berikutnya di HP. */
-class ScheduleSyncInputs(val location: LocationSettings)
+/** Libur dikirim untuk hari ini dan 13 hari berikutnya. Web hanya butuh hari ini, sisanya jaga-jaga kalau HP lama tidak sinkron. */
+const val DAYS_OFF_SYNC_DAYS = 14
+
+/** Jendela tanggal [from]..[to] dan tanggal libur efektif di dalamnya. Server mengganti isi jendela itu, tidak menyentuh luarnya. */
+data class DaysOffPayload(val from: LocalDate, val to: LocalDate, val dates: List<LocalDate>) {
+    fun toJson(): JSONObject = JSONObject()
+        .put("from", from.toString())
+        .put("to", to.toString())
+        .put("dates", JSONArray(dates.map { it.toString() }))
+
+    val fingerprint: String get() = toJson().toString()
+}
+
+/** Jendela [DAYS_OFF_SYNC_DAYS] hari mulai [from]. [offDates] di luar jendela dibuang, duplikat digabung, hasilnya urut. */
+fun daysOffPayload(from: LocalDate, offDates: Collection<LocalDate>): DaysOffPayload {
+    val to = from.plusDays(DAYS_OFF_SYNC_DAYS - 1L)
+    return DaysOffPayload(from, to, offDates.filter { it >= from && it <= to }.distinct().sorted())
+}
+
+/**
+ * Yang dibutuhkan manajer sinkron untuk mengirim jadwal: lokasi untuk waktu sholat (kartu Sekarang/Berikutnya di HP) dan
+ * [isDayOff] untuk libur efektif (libur manual digabung libur nasional yang tidak dibatalkan, sama dengan `ScheduleRepository.isDayOff`).
+ */
+class ScheduleSyncInputs(val location: LocationSettings, val isDayOff: suspend (LocalDate) -> Boolean)

@@ -90,7 +90,7 @@ class HabitSyncScheduler(
         private const val AFTER_CHANGE = "habitflow-habit-sync-after-change"
         private val TABLES = arrayOf(
             "habits", "habit_entries", "todos", "follow_ups", "work_days", "habit_entry_outbox", "pending_deletes",
-            "weight_entries", "blood_pressure_entries", "schedule_blocks", "schedule_block_habits",
+            "weight_entries", "blood_pressure_entries", "schedule_blocks", "schedule_block_habits", "days_off", "holiday_cancellations",
         )
 
         fun newScope(): CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)

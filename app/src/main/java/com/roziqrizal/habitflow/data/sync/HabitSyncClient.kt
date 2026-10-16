@@ -248,6 +248,13 @@ class HabitSyncClient(
             is Raw.Response -> if (raw.code == 200) HabitApiResult.Success(Unit) else failure(raw)
         }
 
+    /** Mengirim tanggal libur dalam satu jendela (tahap 29 langkah 5). Idempotent: server mengganti isi jendela itu, tanpa 409. */
+    suspend fun putDaysOff(payload: DaysOffPayload): HabitApiResult<Unit> =
+        when (val raw = request("PUT", "/api/v1/days-off", payload.toJson().toString())) {
+            is Raw.Failed -> HabitApiResult.NetworkError(raw.detail)
+            is Raw.Response -> if (raw.code == 200) HabitApiResult.Success(Unit) else failure(raw)
+        }
+
     // --- Ringkasan harian dari Claude (tahap 32): hanya dibaca, ditulis skill di server ---
 
     /** Sampai 31 ringkasan terbaru milik akun ini, terbaru dulu. Yang tidak berisi email (`email_digest` null) tidak ikut. */
