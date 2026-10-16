@@ -1,7 +1,7 @@
 # Deploy dan uji di HP: jadwal, libur, dan angka EOD (disusun 16 Oktober 2026)
 
 Daftar langkah untuk menaikkan perubahan 16 Oktober 2026 ke produksi lalu mengujinya di HP. Semuanya sudah di-push ke `origin main`
-(sampai commit `e8178b4`) dan lulus tes otomatis (server 394, Android 660), tapi **belum di-deploy dan belum dicoba di perangkat**.
+(sampai commit `e8178b4`) dan lulus tes otomatis (server 394, Android 660), tapi **belum dicoba di perangkat**. Server sudah di-deploy 16 Oktober 2026 (bagian B selesai; hasilnya di `docs/concept.md`, "Pembaruan 16 Oktober 2026, sore").
 Cara deploy yang umum ada di [server/DEPLOY.md](../server/DEPLOY.md); dokumen ini hanya daftar untuk rilis ini. Rincian tiap fitur ada di
 `docs/concept.md`: tahap 29 langkah 4 dan 5, serta "Sisa tahap 33".
 
@@ -106,4 +106,4 @@ kalau migrasi merusak data; kedua migrasi ini hanya menambah, jadi mestinya tida
 
 - [ ] Catat hasil tiap uji di `docs/concept.md` (tahap 29 langkah 4 dan 5, serta "Sisa tahap 33"), seperti sesi sebelumnya.
 - [ ] Ubah status "belum di-deploy" di tempat yang sama, termasuk butir 6 di "Status terkini dan serah terima".
-- [ ] Catat nama berkas cadangan dan tag image yang dibuat di B.2.
+- [x] Catat nama berkas cadangan dan tag image yang dibuat di B.2 (dicatat 16 Oktober 2026 di `concept.md`, "Pembaruan 16 Oktober 2026, sore").

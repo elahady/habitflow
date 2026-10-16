@@ -1469,8 +1469,8 @@ pindah, baru dipertimbangkan apakah 19B dipensiunkan total.
 | Follow-up kerja | `follow_ups` | 19 | **Tahap 27: selesai (server, web, Android); Android diuji sebagian di HP fisik** |
 | To-do tim | `team_todos`, `teams`, `team_invites` | baru | **Selesai (web+API+Android) — tahap 26** |
 | Habit + to-do harian | `habits`, `habit_entries`, `todos` | 1-9 | **Selesai (web+API+Android)** — tahap 28 |
-| Jadwal harian & libur | `schedule_blocks`, `schedule_block_habits`, `days_off`, `holiday_cancellations` | 17, 22 | Sebagian: server `schedule_blocks`, API, cache waktu sholat, dan kartu web selesai (tahap 29 langkah 1-3); Android mengirim blok, waktu sholat, dan libur efektif (langkah 4 dan 5, kode dan tes 16 Oktober 2026, belum di-deploy dan belum dicoba di HP); tabel `holiday_cancellations` sengaja tidak dibuat (lihat langkah 5) |
-| Daily scrum/EOD | `work_days` | 19 | **Catatan EOD selesai dua arah (tahap 33 langkah 3a-3c: server, web, Android; di-deploy dan dicoba di HP 16 Oktober 2026)**. Angka "X dari Y selesai" per hari: kode dan tes 16 Oktober 2026, belum di-deploy (lihat tahap 33 "Sisa tahap 33"); rencana besok dan scrum belum dimigrasi |
+| Jadwal harian & libur | `schedule_blocks`, `schedule_block_habits`, `days_off`, `holiday_cancellations` | 17, 22 | Sebagian: server `schedule_blocks`, API, cache waktu sholat, dan kartu web selesai (tahap 29 langkah 1-3); Android mengirim blok, waktu sholat, dan libur efektif (langkah 4 dan 5, kode dan tes 16 Oktober 2026; **server di-deploy 16 Oktober 2026**, belum dicoba di HP); tabel `holiday_cancellations` sengaja tidak dibuat (lihat langkah 5) |
+| Daily scrum/EOD | `work_days` | 19 | **Catatan EOD selesai dua arah (tahap 33 langkah 3a-3c: server, web, Android; di-deploy dan dicoba di HP 16 Oktober 2026)**. Angka "X dari Y selesai" per hari: kode dan tes 16 Oktober 2026, server di-deploy 16 Oktober 2026, belum dicoba di HP (lihat tahap 33 "Sisa tahap 33"); rencana besok dan scrum belum dimigrasi |
 | Kesehatan (berat, tensi) | `weight_entries`, `blood_pressure_entries` | 21 | **Tahap 30: langkah 1-5 selesai dan di-deploy (satu arah, web hanya membaca); langkah 6 verifikasi di HP sebagian** (fokus, grafik, tema gelap lulus; catat berat/tensi baru belum dicoba). Beda dari pola penuh: input hanya di Android, tanpa deteksi konflik |
 | Asupan makan | `meals`, `drink_counts`, `habit_manual_marks` | 20, 23 | Belum dimulai |
 | Kalender & acara | `events`, `event_exceptions` | 22 | Belum dimulai |
@@ -1676,7 +1676,7 @@ perubahan dan push+pull jaring pengaman tiap 30 menit lewat WorkManager - lihat 
   WorkManager - di HP MIUI bisa tertunda signifikan, lihat catatan Doze di langkah 5).
 - ✅ Tidak ada data yang hilang saat transisi dari model snapshot ke model baru ini.
 
-### Tahap 29: Migrasi Jadwal Harian ke Web (langkah 1-3 selesai di server dan web 11 Oktober 2026; langkah 4 dan 5 (Android kirim jadwal, waktu sholat, dan libur) selesai di kode dan tes 16 Oktober 2026, belum di-deploy dan belum dicoba di HP)
+### Tahap 29: Migrasi Jadwal Harian ke Web (langkah 1-3 selesai di server dan web 11 Oktober 2026; langkah 4 dan 5 (Android kirim jadwal, waktu sholat, dan libur) selesai di kode dan tes 16 Oktober 2026, server di-deploy 16 Oktober 2026, belum dicoba di HP)
 
 Lanjutan arah "Web jadi versi lengkap" (tahap 25-28). Baris "Jadwal harian & libur" di
 tabel migrasi masih "Belum dimulai" — tahap ini menuliskan rencananya. **Koreksi penting**:
@@ -1738,7 +1738,7 @@ blok. Yang belum ada cuma versi web/server-nya.
     (termasuk uji bahwa memakai UTC membuat tes gagal). Seluruh suite server 87 tes lulus.
   - **Batasan (saat langkah 3, 11 Oktober 2026):** "Hari ini libur" belum ada di server, jadi web menganggap tidak libur;
     teratasi di langkah 5 di bawah. Kartu belum dilihat langsung di browser, hanya diuji lewat tes Livewire.
-- ✅ **Langkah 4 (16 Oktober 2026, kode dan tes; belum di-deploy ke server dan belum dicoba di HP).** **Keputusan Claude, boleh
+- ✅ **Langkah 4 (16 Oktober 2026, kode dan tes; server di-deploy 16 Oktober 2026, belum dicoba di HP).** **Keputusan Claude, boleh
   diubah pemilik:** rencana awal (CRUD per blok, `remoteId`/`dirty`, antrean hapus, migrasi Room 11 ke 12) **tidak dipakai**.
   Web hanya membaca blok, jadi HP satu-satunya penulis dan deteksi konflik tidak ada gunanya. Dipakai pola tahap 30 (kesehatan):
   satu kiriman yang menggantikan keadaan lama, tanpa antrean, tanpa perubahan skema Room (jadi tidak menambah migrasi yang
@@ -1764,7 +1764,7 @@ blok. Yang belum ada cuma versi web/server-nya.
   - **Seed 16 blok awal di server tidak diperlukan lagi:** HP sudah punya 16 blok itu (ScheduleSeed) dan mengirimnya.
   - **Belum:** di-deploy ke server (tanpa itu HP baru menerima 404 dan melewatinya, jadi aman), dicoba di HP, dan dilihat di web
     dengan data nyata. Libur dikerjakan di langkah 5 di bawah.
-- ✅ **Langkah 5: libur ("Hari ini libur"), 16 Oktober 2026, kode dan tes; belum di-deploy dan belum dicoba di HP.**
+- ✅ **Langkah 5: libur ("Hari ini libur"), 16 Oktober 2026, kode dan tes; server di-deploy 16 Oktober 2026, belum dicoba di HP.**
   **Keputusan Claude, boleh diubah pemilik:** server menyimpan **libur efektif**, bukan libur manual dan pembatalan terpisah.
   Android sudah punya daftar libur nasional (`assets/libur/`) dan aturan pembatalannya, jadi menyalinnya ke PHP berarti dua
   sumber kebenaran (dan data libur yang harus diperbarui tiap tahun di dua tempat). Maka tabel `holiday_cancellations` yang
@@ -1828,7 +1828,7 @@ menampilkan angka. Android menampilkannya di dashboard Hari ini, web di `/dashbo
    pagar (BMI kurus, di bawah target, tensi tinggi, data kurang).
 2. ✅ **Kartu Fokus di Android.** Kartu hero di atas dashboard Hari ini, "Kenapa ini?", dan catatan nilai baru di
    `docs/design/README.md` lebih dulu.
-3. ✅ **Server (16 Oktober 2026, kode dan tes; belum di-deploy).** Migrasi `2026_10_16_110000_create_health_tables` (`weight_entries`, `blood_pressure_entries`, `step_days`, `health_focus`), model, dan
+3. ✅ **Server (16 Oktober 2026, kode dan tes; di-deploy 16 Oktober 2026).** Migrasi `2026_10_16_110000_create_health_tables` (`weight_entries`, `blood_pressure_entries`, `step_days`, `health_focus`), model, dan
    `PUT /api/v1/health` (`HealthController`, `user-token`). Kontrak: `timezone` wajib; `profile` (`height_cm` 100-250, `target_kg` 20-300), `weights` (maks 500; `time_millis`, `kg` 20-300),
    `blood_pressures` (maks 500; sistolik 50-300, diastolik 30-200, nadi 20-250, catatan maks 500), `step_days` (maks 14; `date`, `steps` 0-200000), dan `focus` (`rule` huruf besar dan garis bawah,
    `walk_minutes`, `title`, `sentence`, `note`, `reasons` daftar `{label, value}` maks 6, `computed_at`) semuanya opsional. **Idempotent:** berat dan tensi dikunci `user_id` + `time_millis`
@@ -1853,7 +1853,7 @@ menampilkan angka. Android menampilkannya di dashboard Hari ini, web di `/dashbo
      (tidak menebak). Kunci "sudah terkirim" hanya di memori, jadi proses baru mengirim sekali lagi (aman).
    - **Tes:** `HealthSyncPayloadTest` (bentuk JSON, batas jumlah dan panjang teks, urutan, target bawaan, sidik jari, `HealthFocusStore`), `StepHistoryTest`, dua tes klien `putHealth` di
      `HabitSyncClientTest`, dan di server tes bentuk kiriman Android pengguna baru. **622 tes Android dan 335 tes server lulus.**
-5. ✅ **Web (16 Oktober 2026, kode, tes, dan dilihat lewat screenshot; belum di-deploy).** Dua komponen Livewire hanya-baca di Beranda `/`: `HealthFocusCard` (hero, di atas "Jadwal sekarang") dan
+5. ✅ **Web (16 Oktober 2026, kode, tes, dan dilihat lewat screenshot; di-deploy 16 Oktober 2026).** Dua komponen Livewire hanya-baca di Beranda `/`: `HealthFocusCard` (hero, di atas "Jadwal sekarang") dan
    `HealthSection` (bagian "Kesehatan", di bawah strip 4 kartu). Logika di `App\Support\Health\HealthSummary` dan `WeightChart` (geometri SVG di PHP, tanpa JavaScript).
    - **Kartu fokus:** judul, kalimat, dan "Kenapa ini?" (`<details>`, alasan dan catatan "Dipilih karena") **persis teks dari HP**; batang langkah hari ini memakai `steps_target` dari HP. Keterangan "Dihitung di HP ...";
      fokus yang dihitung kemarin atau lebih dari 24 jam diberi keterangan agar menyinkron ulang (nada netral, tanpa merah, sama dengan Android). Tanpa fokus: pesan cara mengisinya.
@@ -2534,6 +2534,23 @@ sinkron catatan EOD dua arah HP dan web termasuk penggabungan saat bentrok (sete
    (`PUT /api/v1/schedule-blocks`, `PUT /api/v1/days-off`, migrasi `create_days_off_table`); tinggal dicoba di HP (APK baru, lihat uji-deploy-16-okt.md bagian C).
    Setelah itu tahap 29 selesai. Daftar langkah deploy dan uji HP: [uji-deploy-16-okt.md](uji-deploy-16-okt.md).
 
+**Pembaruan 16 Oktober 2026, sore (deploy dan portofolio):** semua yang tadinya "kode selesai, belum di-deploy" hari ini kini **live di `https://habitflow.roziqrizal.com`**: migrasi `create_days_off_table` dan
+`add_eod_counts_to_work_days_table`, endpoint `PUT /schedule-blocks` dan `PUT`/`GET /days-off`, `eod_done_count`/`eod_total_count` di `work-days`, kartu "Jadwal hari ini" bergaya `hf-card`,
+keterangan libur, "X dari Y selesai" di riwayat rekap, dan halaman Tugas Rumah bergaya baru beserta perbaikan lebar dropdown (tahap 33 langkah 6). Server dites sebelum deploy: **400 lulus**.
+- **Cek produksi:** rute baru menjawab 401 tanpa token (rute ada), `/tugas-rumah` 302 ke login, `/login` 200, tanpa galat di log, `migrate:status` tanpa yang tertunda. `/api/v1/ping` kini juga 401 tanpa token (sejak 31E).
+  **Belum:** halaman dilihat setelah login dengan akun nyata, dan **semua uji di HP** (Uji 1-3 di `uji-deploy-16-okt.md` bagian C).
+- **Android tidak berubah:** APK debug `habitflow-debug-2026-10-16-d.apk` (di `~/Downloads`, SHA-256 `d935ea48...`, Room versi 12) dibangun dua kali dengan hasil identik; belum dipasang di HP (`adb devices` kosong).
+  Pasang sebagai update di atas data lama, jangan uninstall: migrasi Room 11 ke 12 belum pernah jalan di perangkat.
+- **Cadangan dan rollback di VM** (`~/backups-habitflow/`): `habitflow-pra-tugas-rumah-20261016-064055.sql` dan `kode-pra-tugas-rumah-20261016-064055.tar.gz` (tag image `habitflow:pra-tugas-rumah`),
+  lalu `kode-pra-dropdown-20261016-081833.tar.gz` (tag `habitflow:pra-dropdown`). Tag image `roziqrizalcom-app:pra-karya-habitflow` dan `pra-versi-gambar` untuk situs roziqrizal.com.
+- **Healthcheck worker dimatikan:** service `queue` di `docker-compose.yml` diberi `healthcheck: disable: true` (commit `5955acf`) dan diterapkan dengan `docker compose up -d`; hanya `habitflow-queue` yang dibuat
+  ulang. Akibatnya Docker tidak lagi menandai worker bermasalah: kalau worker hang tanpa mati, satu-satunya tanda adalah tabel `jobs` yang menumpuk (`restart: unless-stopped` hanya menangani worker yang mati).
+- **Portofolio `https://roziqrizal.com/karya/habitflow` (repo `roziqrizalcom`, di-deploy 16 Oktober 2026, commit `4a5e45b` dan `d4836a0`):** enam tangkapan layar web baru dari data contoh (Beranda, Habit,
+  Kontribusi, Rekap kerja, Kesehatan, Tugas Rumah; pengguna "Demo", tema terang, 1280x640) menggantikan dua gambar lama; label Jadwal dan Kesehatan menjadi "Android, web hanya baca"; kartu fitur baru
+  "Rekap harian dan catatan EOD" dan "Ringkasan dari Claude"; teks status disesuaikan. Gambar karya kini membawa `?v=<8 hex md5 isi berkas>` (`Projects::imageUrl`) karena disajikan `Cache-Control: immutable`
+  setahun; sebelumnya satu edge Cloudflare sempat menyajikan `follow-up.jpg` versi lama. Rizqflow sengaja belum dimasukkan (pertanyaan itu belum dijawab pemilik). **Kalau tampilan web Habitflow berubah
+  lagi, foto ulang dengan skrip yang sama**: data contoh dibuat di DB sementara lalu dirender lewat Edge headless (skripnya hanya ada di folder sementara sesi, tidak di repo).
+
 **Keputusan yang diambil Claude di sesi ini, boleh diubah pemilik** (semuanya sudah dicatat di tempatnya, ini daftar cepat): skill di `skills/` repo (bukan `.claude/skills/`) dan token dari
 `HABITFLOW_TOKEN`; Meeting & briefing satu catatan per hari di `daily_briefs.meeting_note`, ditulis manual; heatmap 53 minggu (mockup 66); kartu To-do `selesai / jumlah`; "Semua" di halaman
 Kerja memuat semua follow-up terbuka; bentrok catatan EOD digabung otomatis (dua catatan dipertahankan), bukan dialog; "hari ini" di web mengikuti zona waktu HP (dulu UTC, jadi antara 00.00
@@ -2609,7 +2626,7 @@ kontrak `POST /api/v1/daily-briefs` dan `GET /api/v1/ping`. Keputusan di dalamny
     identik dengan lokal (66). Catatan: **image kontainer yang sedang jalan masih memuat berkas-berkas itu** sampai deploy berikutnya (host dihapus, kontainer tidak di-recreate); tidak berpengaruh.
     Penyebab berkas lama bertahan: `tar -x` hanya menimpa, tidak pernah menghapus berkas yang sudah dihapus di repo. Import `use App\Models\ApiToken;` yang tak terpakai di dua tes (`AccountDeletionTest`, `SnapshotApiTest`)
     juga sudah dibuang (16 Oktober 2026); 322 tes server tetap lulus.
-    Juga: `habitflow-queue` selalu tampil `unhealthy` karena healthcheck bawaan image memeriksa `localhost:8080` sedangkan worker tidak punya web server; worker sendiri jalan.
+    Juga: `habitflow-queue` selalu tampil `unhealthy` karena healthcheck bawaan image memeriksa `localhost:8080` sedangkan worker tidak punya web server; worker sendiri jalan. **Healthcheck service `queue` dimatikan 16 Oktober 2026** (`healthcheck: disable: true` di `docker-compose.yml`, commit `5955acf`); sejak itu tampil `Up` tanpa label unhealthy.
 - **Hanya `email_digest` yang dikirim**, `meeting_note` tidak (butir "Meeting & briefing" di bawah tetap belum diputuskan).
 - **Gmail tidak terhubung atau token tidak ada: tidak menulis apa pun**, supaya ringkasan benar sebelumnya tidak tertimpa "kosong".
 - Kode verifikasi, tautan reset, dan data kartu/rekening dari email tidak disalin ke ringkasan, karena disimpan di server dan terbaca di web.
@@ -2758,10 +2775,10 @@ menunjuk hal yang sama; cuma perlu disamakan kalau pemilik mau ikut mockup persi
 | Elemen di mockup | Status live (11 Okt 2026) | Tahap yang menanggung |
 |---|---|---|
 | Header tanggal ("Minggu, 11 Oktober 2026") di atas judul sapaan | Tidak ada — `dashboard.blade.php` langsung `<h1>Selamat datang, {nama}</h1>` tanpa baris tanggal | Baru, bagian tahap ini |
-| Kartu hero "Fokus kesehatan hari ini" (judul, narasi, chip, panel "Dasar rekomendasi") | Tidak ada sama sekali di web *(16 Oktober 2026: ada di kode, `HealthFocusCard`, belum di-deploy; tanpa chip kategori)* | Tahap 30 langkah 5 (selesai di kode) |
+| Kartu hero "Fokus kesehatan hari ini" (judul, narasi, chip, panel "Dasar rekomendasi") | Tidak ada sama sekali di web *(16 Oktober 2026: ada di kode, `HealthFocusCard`, di-deploy 16 Oktober 2026; tanpa chip kategori)* | Tahap 30 langkah 5 (selesai di kode) |
 | Kartu "Jadwal hari ini" (Sekarang/Berikutnya) | **Sudah ada** lewat `<livewire:schedule-card />`, strukturnya (kartu terisi warna untuk Sekarang, border untuk Berikutnya, teks "sisa N menit") sudah dekat dengan mockup. Bedanya cuma judul ("Jadwal sekarang" vs "Jadwal hari ini") dan belum dibungkus gaya `hf-card` yang konsisten dengan kartu lain | Tahap 29 (sudah jalan), tinggal langkah 4 (Android kirim data) supaya tidak kosong |
 | Strip 4 kartu ringkasan: Habit hari ini (X/9 + bar), To-do hari ini (X/5 + bar), Follow-up kerja (Lewat tanggal/Jatuh tempo/Inbox), Tugas Rumah (jumlah belum selesai) | **Tidak ada sama sekali.** `dashboard.blade.php` cuma punya sapaan, kartu jadwal, dan kotak status akun Google | Baru — tidak tercakup tahap manapun yang ada. Datanya sendiri sudah tersedia dari tahap 28 (habit/to-do web), 27 (follow-up web), 26 (tugas rumah web), tinggal dirangkum jadi kartu di beranda |
-| Section "Kesehatan" penuh: grafik berat SVG 6 minggu + target, grafik batang langkah 7 hari, kartu tensi | Tidak ada di web *(16 Oktober 2026: ada di kode, `HealthSection`, belum di-deploy)* | Tahap 30 langkah 5 (selesai di kode) |
+| Section "Kesehatan" penuh: grafik berat SVG 6 minggu + target, grafik batang langkah 7 hari, kartu tensi | Tidak ada di web *(16 Oktober 2026: ada di kode, `HealthSection`, di-deploy 16 Oktober 2026)* | Tahap 30 langkah 5 (selesai di kode) |
 | Gaya kartu (`hf-card`: border radius 16px, padding konsisten) dan tema terang/gelap dengan token warna sage yang sama | Tema terang/gelap **sudah ada** (`partials/theme-toggle.blade.php`, token warna di `partials/theme-styles.blade.php`) dan tampaknya sudah pakai palet sage yang sama; kartu individual belum konsisten pakai gaya `hf-card` | Baru, bagian tahap ini (perapian visual) |
 
 #### B. Habit (`/habit`, `HabitToday.php` + `habit-today.blade.php`) vs `Habit.dc.html`

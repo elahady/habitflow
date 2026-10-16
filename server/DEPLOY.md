@@ -101,6 +101,11 @@ database**, jadi ada dua proses: container `habitflow` (web) dan `habitflow-queu
 `queue` di `docker-compose.yml`, menjalankan `queue:work`). Tanpa yang kedua, email tertahan
 di tabel `jobs` dan tidak pernah terkirim.
 
+Service `queue` memakai `healthcheck: disable: true` (16 Oktober 2026): healthcheck bawaan image memeriksa
+`curl localhost:8080`, padahal worker tidak punya web server, jadi dulu selalu `unhealthy` walau prosesnya
+jalan. Konsekuensinya Docker tidak menandai worker yang hang. Periksa dengan `docker top habitflow-queue`
+dan `docker exec habitflow php artisan queue:failed`, dan waspadai tabel `jobs` yang menumpuk.
+
 - Variabel di `.env.production`: `QUEUE_CONNECTION=database`, `MAIL_*` untuk Resend lewat
   SMTP (contoh lengkap di `.env.example`), `OWNER_EMAIL`, `MAIL_DAILY_LIMIT`. Kunci API
   Resend hanya ada di `.env.production` (VM dan salinan lokal), tidak di git.
