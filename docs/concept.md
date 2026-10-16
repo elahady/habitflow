@@ -1824,7 +1824,11 @@ menampilkan angka. Android menampilkannya di dashboard Hari ini, web di `/dashbo
    - **Dilihat lewat screenshot Edge headless** dari data contoh (DB sementara, sudah dihapus): desktop terang dan gelap, dan lebar 500 px (tidak meluber). Label nilai di batang dan sumbu grafik diperbesar setelah
      terlihat terlalu kecil di ponsel. **Belum dilihat di produksi dengan data nyata dari HP.**
    - 30 tes baru (`HealthWebTest`: kartu, bagian Kesehatan, zona waktu, data pengguna lain, tanpa form, geometri grafik) dan 1 tes API; **365 tes server lulus**.
-6. **Verifikasi di HP fisik** dan catat hasilnya di sini.
+6. **Verifikasi di HP fisik** dan catat hasilnya di sini. **Persiapan selesai 16 Oktober 2026:** server langkah 3 dan web langkah 5 **di-deploy ke produksi** (cadangan
+   `habitflow-pra-tahap30-20261016-053155.sql`, `kode-pra-tahap30-...tar.gz`, image `habitflow:pra-tahap30`; migrasi `create_health_tables` lulus, batch 13; arsip deploy 280 KB tanpa .dll/.exe; tabel
+   baru kosong; curl: `PUT /health` tanpa token 401, token terbatas 403, `ping` 200, beranda 302). APK debug Android langkah 4 ada di Drive: `01-Personal/habitflow-debug-2026-10-16-c.apk`
+   (dipasang sebagai update, jangan uninstall). **Belum dicoba di HP.** Yang diperiksa: (a) buka layar Hari ini lalu sinkron, cek web menampilkan fokus dan teks yang sama dengan HP; (b) catat berat lalu
+   tensi di HP, cek muncul di web dan grafik bergerak; (c) langkah 7 hari dan target; (d) catat berat dua kali di menit yang sama dan pastikan tidak menggandakan; (e) tiap aturan fokus yang bisa dipancing.
 
 **Selesai jika:**
 - Untuk setiap kondisi di tabel aturan, unit test membuktikan fokus yang benar, dan aturan 1 selalu menang.
