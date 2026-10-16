@@ -54,9 +54,9 @@ kontribusi ala GitHub. Detail rancangan ada di [docs/rancangan.md](docs/rancanga
   `JAVA_HOME=... ./gradlew.bat installDebug --console=plain`
 - **Kalau user minta "build dan taruh di folder personal"** (atau sejenisnya): jalankan
   `./gradlew.bat :app:assembleDebug --console=plain -q`, lalu salin `app/build/outputs/apk/debug/app-debug.apk` ke
-  Google Drive `G:/My Drive/01-Personal/` (di Git Bash: `/g/My Drive/01-Personal/`) dengan nama
-  `habitflow-debug-YYYY-MM-DD.apk`. Kalau berkas bernama itu sudah ada hari itu, pakai akhiran `-b`, `-c`, `-d`, dst.
-  (cek `ls` folder itu dulu), jangan menimpa APK lama.
+  Google Drive `G:/My Drive/01-Personal/` (di Git Bash: `/g/My Drive/01-Personal/`) dengan **satu nama tetap
+  `habitflow-debug.apk`, ditimpa setiap build** (`cp -f`), supaya tidak menumpuk sampah. Jangan membuat berkas
+  bertanggal atau berakhiran `-b`, `-c`, dst. Tulis jam build di jawaban agar user tahu itu versi terbaru.
 
 ## Sebelum mengunggah AAB (wajib)
 

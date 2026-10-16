@@ -1907,7 +1907,7 @@ menampilkan angka. Android menampilkannya di dashboard Hari ini, web di `/dashbo
    - 30 tes baru (`HealthWebTest`: kartu, bagian Kesehatan, zona waktu, data pengguna lain, tanpa form, geometri grafik) dan 1 tes API; **365 tes server lulus**.
 6. **Verifikasi di HP fisik** dan catat hasilnya di sini. **Persiapan selesai 16 Oktober 2026:** server langkah 3 dan web langkah 5 **di-deploy ke produksi** (cadangan
    `habitflow-pra-tahap30-20261016-053155.sql`, `kode-pra-tahap30-...tar.gz`, image `habitflow:pra-tahap30`; migrasi `create_health_tables` lulus, batch 13; arsip deploy 280 KB tanpa .dll/.exe; tabel
-   baru kosong; curl: `PUT /health` tanpa token 401, token terbatas 403, `ping` 200, beranda 302). APK debug Android langkah 4 ada di Drive: `01-Personal/habitflow-debug-2026-10-16-c.apk`
+   baru kosong; curl: `PUT /health` tanpa token 401, token terbatas 403, `ping` 200, beranda 302). APK debug Android langkah 4 ada di Drive: `01-Personal/habitflow-debug.apk` (satu berkas, ditimpa tiap build)
    (dipasang sebagai update, jangan uninstall).
    **Hasil uji di HP pemilik (16 Oktober 2026, sebagian):** ✅ **fokus di web sama dengan di HP**; ✅ grafik normal; ✅ tema gelap aman (menurut laporan pemilik). Dicek di produksi (hanya baca) setelah HP
    menyinkron: `health_focus` terisi (zona Asia/Jakarta, tinggi 165, target berat 68,1, `steps_target` 8.000, aturan `LOW_STEPS`, dihitung 12.45 WIB), `step_days` 7 hari terisi, `weight_entries` 1 baris (11 Oktober),
