@@ -152,7 +152,9 @@ class HabitSyncManager(
                 lastHealthSent = key
                 null
             }
-            is HabitApiResult.Rejected -> null
+            // 422 (ditolak) dan 404 (server belum punya endpoint ini, mis. app baru terpasang sebelum server di-deploy)
+            // dilewati: data kesehatan tidak boleh membuat sinkron tampak gagal terus. Dicoba lagi begitu isinya berubah.
+            is HabitApiResult.Rejected, HabitApiResult.NotFound -> null
             else -> result.asUnit()
         }
     }

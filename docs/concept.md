@@ -1799,7 +1799,7 @@ menampilkan angka. Android menampilkannya di dashboard Hari ini, web di `/dashbo
      `readRecentSteps`), dan **fokus terakhir beserta teksnya** (kode aturan, menit jalan, judul, kalimat, catatan "Dipilih karena", dan alasan). Teks dipotong ke batas server.
      Berat dan tensi lebih tua dari 120 hari tidak dikirim (web hanya menampilkan 90 hari; yang sudah terkirim sebelumnya tetap di server).
    - **Tanpa antrean:** setiap kiriman memuat jendela terbaru, server idempotent. `HabitSyncManager.pushHealth` paling akhir di `pushLocked` supaya data kesehatan tidak menahan habit, to-do, atau follow-up.
-     Kiriman yang isinya sama dengan yang terakhir berhasil (kunci = token akun + isi) dilewati; **ditolak server (422) tidak menahan sinkron lain** dan dicoba lagi begitu isinya berubah.
+     Kiriman yang isinya sama dengan yang terakhir berhasil (kunci = token akun + isi) dilewati; **ditolak server (422) atau endpoint belum ada (404, app terpasang sebelum server di-deploy) tidak menahan sinkron lain** dan dicoba lagi begitu isinya berubah.
      Gagal jaringan atau 5xx dicoba lagi lewat jalur worker yang ada (periodik 30 menit, push setelah perubahan).
    - **Pemicu kirim:** perubahan tabel `weight_entries` dan `blood_pressure_entries` (ditambahkan ke `HabitSyncScheduler`), dan fokus baru (`HealthFocusStore`). Layar Hari ini menerbitkan fokus lewat
      `onFocusComputed` hanya kalau isinya berubah dan **data kesehatan sudah selesai dimuat** (langkah tidak lagi `Loading`), supaya "Catat berat pertama" palsu tidak terkirim saat app baru dibuka.
