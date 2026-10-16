@@ -10,7 +10,7 @@ Cara deploy yang umum ada di [server/DEPLOY.md](../server/DEPLOY.md); dokumen in
 - **2 migrasi:** `2026_10_16_120000_create_days_off_table` dan `2026_10_16_130000_add_eod_counts_to_work_days_table`. Keduanya hanya menambah.
 - **Endpoint:** `PUT /api/v1/schedule-blocks` (ganti seluruh jadwal), `PUT` dan `GET /api/v1/days-off`, dan `eod_done_count` / `eod_total_count` di
   `PUT /api/v1/work-days/{date}`.
-- **Tampilan web:** kartu "Jadwal hari ini" bergaya `hf-card`, keterangan libur, dan angka "X dari Y selesai" di riwayat rekap.
+- **Tampilan web:** kartu "Jadwal hari ini" bergaya `hf-card`, keterangan libur, angka "X dari Y selesai" di riwayat rekap, dan halaman Tugas Rumah bergaya baru (tanpa migrasi atau endpoint; cukup dilihat di `/tugas-rumah`, terang dan gelap).
 - **Android:** mengirim jadwal, waktu sholat 7 hari, libur 14 hari, dan angka EOD; **Room 11 ke 12** (dua kolom nullable di `work_days`).
 - **Tidak ada** paket Composer atau variabel `.env` baru.
 

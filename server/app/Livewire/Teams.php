@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\Team;
 use App\Models\TeamInvite;
 use App\Models\TeamTodo;
+use App\Support\UserDay;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
 
@@ -17,6 +18,9 @@ class Teams extends Component
     public string $newTeamName = '';
 
     public ?string $inviteLink = null;
+
+    /** Tim yang link undangannya baru dibuat, supaya link hanya tampil di kartu timnya. */
+    public ?int $inviteTeamId = null;
 
     public array $newTodoTitle = [];
 
@@ -44,6 +48,7 @@ class Teams extends Component
         $invite = TeamInvite::issue($this->team($teamId), auth()->user());
 
         $this->inviteLink = route('invites.show', $invite->token);
+        $this->inviteTeamId = $teamId;
     }
 
     public function addTodo(int $teamId): void
@@ -85,8 +90,19 @@ class Teams extends Component
 
     public function render(): View
     {
+        $user = auth()->user();
+        $teams = $user->teams()->with(['members', 'todos.assignee'])->get();
+        $todos = $teams->flatMap->todos;
+        $mine = $todos->where('assigned_to', $user->id);
+
         return view('livewire.teams', [
-            'teams' => auth()->user()->teams()->with(['members', 'todos.assignee'])->get(),
+            'teams' => $teams,
+            'dateLabel' => UserDay::now($user)->locale('id')->translatedFormat('l, j F Y'),
+            // Sama dengan kartu Tugas Rumah di Beranda (DaySummary::teamMine): milik saya, belum selesai.
+            'mineOpen' => $mine->where('done', false)->count(),
+            'mineTotal' => $mine->count(),
+            'allDone' => $todos->where('done', true)->count(),
+            'allTotal' => $todos->count(),
         ])->layout('components.layout', ['title' => 'Tugas Rumah']);
     }
 }

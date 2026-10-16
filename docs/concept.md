@@ -2525,7 +2525,7 @@ sinkron catatan EOD dua arah HP dan web termasuk penggabungan saat bentrok (sete
 2. ~~Tahap 32 langkah 5~~ selesai 16 Oktober 2026: token terbatas `daily-briefs`, skill dijalankan sungguhan, routine 07.00 WIB Senin-Jumat dibuat. Sisa: pastikan ia **berjalan terjadwal** (jalan pertama
    Senin 19 Oktober 2026; PC harus menyala), dan pengingat pemeriksaannya hanya hidup selama sesi Claude Code itu terbuka.
 3. ~~Angka "X dari Y selesai" per hari di riwayat web~~ selesai di kode dan tes 16 Oktober 2026 (kolom `eod_done_count` dan `eod_total_count` di `work_days`, diisi HP saat EOD selesai; Room 11 ke 12). Belum di-deploy dan belum dicoba di HP; hari-hari sebelumnya tetap "N selesai" karena tidak ada angkanya.
-4. Sisa tahap 33: ~~bagian Kesehatan di Beranda~~ (selesai dan di-deploy 16 Oktober 2026 lewat tahap 30 langkah 5), ~~judul dan gaya kartu jadwal~~ (selesai di kode 16 Oktober 2026), halaman Tugas Rumah (belum ada mockup web).
+4. Sisa tahap 33: ~~bagian Kesehatan di Beranda~~ (selesai dan di-deploy 16 Oktober 2026 lewat tahap 30 langkah 5), ~~judul dan gaya kartu jadwal~~ (selesai di kode 16 Oktober 2026), ~~halaman Tugas Rumah~~ (dirapikan tanpa mockup di kode 16 Oktober 2026, belum di-deploy; kalau mockup web datang, sesuaikan).
    **Tahap 30 langkah 3-5 sudah di-deploy (16 Oktober 2026) dan sebagian dicoba di HP (langkah 6):** fokus, grafik, dan tema gelap lulus; tinggal mencatat berat dan tensi baru lalu melihatnya di web.
 5. Sisa tahap 31 yang menunggu pemilik: kunci unggah dan AAB ditandatangani, Google Sign-In produksi, DNS dan Resend untuk email, backup ke Cloudflare R2, kontak privasi, penguji (lihat
    `docs/uji-tertutup-dan-play-console.md`). **Email belum jalan:** `.env.production` di VM masih `MAIL_MAILER=log` dan `QUEUE_CONNECTION=sync`, jadi pendaftaran dengan email belum boleh dibuka.
@@ -2735,7 +2735,7 @@ berikutnya tanpa disalin ulang. Jadi skill versi Habitflow seharusnya lebih ramp
 - Hubungan dengan tahap 31 (Login Wajib): `user-token` sudah ada sejak tahap 27 jadi kemungkinan tidak
   terpengaruh, tapi perlu dicek ulang setelah tahap 31 selesai.
 
-### Tahap 33: Web disamakan dengan mockup Design canvas (langkah 1-3 selesai dan di-deploy 15 Oktober 2026; Android 3c dicoba di HP 16 Oktober 2026 dan lulus; sisa: kode selesai 16 Oktober 2026 (kartu jadwal dan angka EOD, belum di-deploy); halaman Tugas Rumah menunggu mockup)
+### Tahap 33: Web disamakan dengan mockup Design canvas (langkah 1-3 selesai dan di-deploy 15 Oktober 2026; Android 3c dicoba di HP 16 Oktober 2026 dan lulus; sisa: kode selesai 16 Oktober 2026 (kartu jadwal dan angka EOD, belum di-deploy); halaman Tugas Rumah dirapikan di kode tanpa mockup, belum di-deploy)
 
 **Kenapa tahap ini ada.** Di sesi 11 Oktober 2026, setelah deploy tahap 29 langkah 1-3, pemilik menunjukkan
 bahwa beranda web (`https://habitflow.roziqrizal.com/`) tidak terlihat seperti mockup di
@@ -2907,7 +2907,15 @@ Ini beda paling besar — **bukan cuma soal gaya, tapi konsep halaman yang beda 
        `WorkRepository.completeEod` menyimpannya; dikirim hanya kalau keduanya ada. Penggabungan saat 409 (`mergeWorkDay`): angka milik EOD yang lebih akhir (seri: HP), tidak digabung per
        bidang; kalau yang terpilih tanpa angka dipakai milik sisi lain. 14 tes baru; 660 tes Android lulus. SQL migrasi sudah dicocokkan dengan `HabitDatabase_Impl` yang dibangkitkan Room,
        **tapi belum dijalankan di perangkat**: pasang sebagai update di atas data lama sebelum dirilis. Snapshot 19B tidak membawa angka ini (tidak perlu: server sumbernya).
-     - **Belum:** deploy (migrasi server), coba di HP (selesaikan EOD lalu lihat angkanya di riwayat web), dan **halaman Tugas Rumah** tetap menunggu mockup web (canvas tidak punya artboard-nya).
+     - **Belum:** deploy (migrasi server), coba di HP (selesaikan EOD lalu lihat angkanya di riwayat web), dan lihat langkah 6 untuk halaman Tugas Rumah.
+
+6. **Halaman Tugas Rumah (16 Oktober 2026, kode dan tes; belum di-deploy).** Canvas tidak punya artboard web-nya, jadi ini **bukan salinan mockup**: gaya `hf-*` yang sama dengan Beranda, Habit, dan Follow-up
+   (keputusan Claude atas permintaan pemilik "lanjutkan"; boleh diganti kalau mockup datang).
+   - `Teams.php` dan `teams.blade.php`: baris tanggal, dua kartu ringkas (`x-progress-card`: **Tugas saya** `selesai / jumlah` yang ditugaskan ke saya, dan **Semua tugas tim**), tiap tim
+     jadi kartu `hf-card` dengan anggota sebagai chip ("Anda" untuk diri sendiri), baris tugas `hf-row` dengan label yang bisa diklik, tombol Hapus kini meminta konfirmasi, dan keadaan kosong
+     yang menjelaskan cara bergabung. Aturan data tidak berubah (to-do tim tetap lewat model yang sama dengan API tahap 26).
+   - **Perbaikan sampingan:** link undangan dulu tampil di kartu **semua tim** saat satu tim membuatnya; kini hanya di kartu tim itu (`inviteTeamId`).
+   - 6 tes baru (`TeamsPageTest`, sebelumnya halaman ini tanpa tes); 400 tes server lulus. **Belum:** dilihat di browser (terang, gelap, lebar 500px) dan di produksi.
 
 **Urutan terhadap tahap 31 (Login Wajib):** sama seperti tahap 30 langkah 3-6 dan tahap 32, tahap ini menyentuh
 halaman web secara luas — sebaiknya **menunggu enam butir terbuka tahap 31 diputuskan (12 Oktober 2026)** sebelum
