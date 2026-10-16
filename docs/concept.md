@@ -2429,7 +2429,7 @@ sinkron catatan EOD dua arah HP dan web termasuk penggabungan saat bentrok (sete
 **Ada di kode tapi belum pernah dijalankan di perangkat nyata (semuanya Android, belum dirilis):**
 1. Tema gelap dan lipatan "Selengkapnya" di kartu Ringkasan dari Claude, serta kartu dengan isi ringkasan sungguhan (menunggu skill dijalankan).
 2. Migrasi Room 10 ke 11 tetap **tanpa tes otomatis** (hanya diuji manual di satu HP); jangan dianggap terlindungi dari perubahan skema berikutnya.
-4. Skill `skills/habitflow-morning-routine/SKILL.md` sudah dijalankan sekali dari awal sampai akhir (16 Oktober 2026; server membalas 201). Yang belum: kartu dengan isi nyata dilihat di HP dan web, dan jadwal otomatis (`/schedule`).
+4. Skill `skills/habitflow-morning-routine/SKILL.md` sudah dijalankan sekali dari awal sampai akhir (16 Oktober 2026; server membalas 201). Kartu dengan isi nyata sudah tampil di HP. Jadwal otomatis 07.00 WIB Senin-Jumat sudah dibuat (lihat tahap 32 langkah 5) tapi belum pernah berjalan terjadwal; ia butuh PC menyala.
 
 **Yang perlu dikerjakan berikutnya, urut yang disarankan:**
 1. ~~Pasang debug build ke HP dan uji~~ selesai 16 Oktober 2026 (hasil di tahap 33 3c dan tahap 32 langkah 4). Sisa dari uji itu: tema gelap dan lipatan "Selengkapnya" di HP,
@@ -2492,7 +2492,14 @@ kontrak `POST /api/v1/daily-briefs` dan `GET /api/v1/ping`. Keputusan di dalamny
     tanpa mengubah email), ringkasan 17 baris dikirim, **`POST /daily-briefs` dengan token terbatas dibalas 201** di produksi. Berkas payload dihapus. Temuan yang membuat SKILL.md perlu hati-hati:
     (1) Gmail hanya memberi perkiraan total (201) dan 50 thread per halaman, jadi angka di baris pertama ditulis "perkiraan" dan sisanya "dan sekitar N email lainnya"; (2) `TZ=Asia/Jakarta date`
     **tidak dihormati di Git Bash Windows** (mengembalikan UTC, jam bergeser 7 jam); jam diambil dari PowerShell (`SE Asia Standard Time`). Tanggalnya kebetulan sama, tapi di rentang 00.00-07.00 WIB
-    tanggalnya akan salah satu hari. **Belum dilihat di kartu HP dan web dengan isi nyata** (menunggu pemilik membukanya).
+    tanggalnya akan salah satu hari. **Kartu dengan isi nyata dilihat di HP pemilik (16 Oktober 2026): tampil.** Di web belum dilaporkan.
+  - **Dijadwalkan (16 Oktober 2026):** routine `/schedule` "Habitflow rekap pagi (email ke kartu Ringkasan)", id `trig_011WQht3zp2RpjfUssBNbfdj`, cron `0 0 * * 1-5` UTC = **07.00 WIB Senin-Jumat**,
+    model `claude-sonnet-5-5`, konektor Gmail terpasang. Dibuat dan dikelola di https://claude.ai/code/routines (Claude tidak bisa menghapus routine dari sini; nonaktifkan atau hapus di sana).
+    **Lingkungan: `BornAsTheWinner` (jembatan lokal di PC pemilik), bukan cloud.** Dipilih pemilik supaya token terbatas dan skill terbaca dari PC ini (`~/.habitflow/claude-token`, `~/.claude/skills/`),
+    tanpa menaruh token di konfigurasi routine. **Akibat yang perlu diketahui:** kalau PC mati atau aplikasi Claude tidak terbuka pukul 07.00, hari itu terlewat (tidak menyusul), dan kartu tetap
+    menampilkan ringkasan terakhir dengan tulisan "Belum ada ringkasan hari ini". Prompt-nya berdiri sendiri dan memuat aturan berhenti (token atau Gmail tidak ada: tidak menulis apa pun).
+    Server menggeser jam jalan beberapa menit (`next_run_at` pertama 19 Oktober 2026 00.06 UTC). **Belum pernah berjalan terjadwal**; periksa dengan `list_runs`/`get_run_log` setelah Senin 19 Oktober 2026.
+    Kalau token dicabut (`habitflow:revoke-all-sessions`, "Keluar dari semua perangkat"), terbitkan ulang dengan `habitflow:issue-token ... --replace` ke berkas yang sama; routine tidak perlu diubah.
   - **Temuan di VM, belum ditangani:** `~/apps/habitflow/` berisi ±2.400 berkas **sistem Windows** (isi `C:\Windows\System32`, ±950 MB, bertanggal 10 Oktober 2026), hasil arsip deploy lama
     yang dibuat dari direktori yang salah. Tidak merusak fungsi, tapi memboroskan disk (VM tinggal ±5,9 GB, 78% terpakai) dan membengkakkan konteks `docker compose build` serta arsip
     cadangan kode (428 MB). Membersihkannya perlu persetujuan pemilik (menghapus di produksi). Arsip deploy hari ini sudah dicek bersih (325 KB, tanpa .dll/.exe).
