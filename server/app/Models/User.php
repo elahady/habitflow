@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Support\Str;
 
@@ -100,6 +101,26 @@ class User extends Authenticatable
     public function dailyBriefs(): HasMany
     {
         return $this->hasMany(DailyBrief::class);
+    }
+
+    public function weightEntries(): HasMany
+    {
+        return $this->hasMany(WeightEntry::class);
+    }
+
+    public function bloodPressureEntries(): HasMany
+    {
+        return $this->hasMany(BloodPressureEntry::class);
+    }
+
+    public function stepDays(): HasMany
+    {
+        return $this->hasMany(StepDay::class);
+    }
+
+    public function healthFocus(): HasOne
+    {
+        return $this->hasOne(HealthFocus::class);
     }
 
     public function snapshots(): HasMany

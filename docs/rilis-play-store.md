@@ -38,7 +38,11 @@ dihapus. Kalau salah satu dari ketiganya berbeda dari tabel ini, tabel ini yang 
 | `work_days` | catatan EOD per tanggal (bisa memuat isi pekerjaan dan nama orang lain) dan waktu daily scrum dan EOD selesai (tahap 33 langkah 3) | Aktivitas, nama orang lain | Ya |
 | `daily_briefs` | ringkasan harian dari Claude (ringkasan email: pengirim dan subjek, catatan meeting), satu baris per tanggal (tahap 32) | Aktivitas, nama orang lain | Ya |
 | `teams`, `team_members`, `team_invites`, `team_todos` | tim tugas rumah dan isinya | Aktivitas, melibatkan orang lain | **Aturan khusus, lihat Keputusan** |
-| Rencana tahap 29 dan 30: `weight_entries`, `blood_pressure_entries`, `step_days`, `health_focus`, jadwal, `work_days`, makan, acara | berat, tensi, langkah, jadwal | **Kesehatan** | Ya. Wajib masuk daftar hapus **sebelum** tabelnya dibuat |
+| `weight_entries` | berat badan per catatan (waktu catat dalam milidetik, kg satu desimal) dari HP (tahap 30 langkah 3) | **Kesehatan** | Ya |
+| `blood_pressure_entries` | tensi per catatan (sistolik, diastolik, nadi, catatan bebas) dari HP (tahap 30 langkah 3) | **Kesehatan** | Ya |
+| `step_days` | jumlah langkah per tanggal dari Health Connect (tahap 30 langkah 3) | **Kesehatan** | Ya |
+| `health_focus` | satu baris per pengguna: zona waktu, tinggi dan target berat, dan fokus kesehatan terakhir beserta teks dan alasannya (tahap 30 langkah 3) | **Kesehatan** | Ya |
+| Rencana tahap 29: jadwal harian, makan, acara | jadwal, makanan, kalender | **Kesehatan, lokasi** | Ya. Wajib masuk daftar hapus **sebelum** tabelnya dibuat |
 
 ### Android (HP)
 

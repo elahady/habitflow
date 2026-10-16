@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\DailyBriefController;
 use App\Http\Controllers\Api\FollowUpController;
 use App\Http\Controllers\Api\GoogleAuthController;
 use App\Http\Controllers\Api\HabitController;
+use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\PrayerDayController;
 use App\Http\Controllers\Api\ScheduleBlockController;
 use App\Http\Controllers\Api\TeamController;
@@ -95,6 +96,11 @@ Route::prefix('v1')->middleware(['user-token', 'throttle:habitflow'])->group(fun
 Route::prefix('v1')->middleware(['user-token', 'throttle:habitflow'])->group(function () {
     Route::get('prayer-days', [PrayerDayController::class, 'index']);
     Route::put('prayer-days', [PrayerDayController::class, 'upsert']);
+});
+
+// Data kesehatan dari Android (tahap 30) - satu arah, idempotent; web hanya membaca dari database.
+Route::prefix('v1')->middleware(['user-token', 'throttle:habitflow'])->group(function () {
+    Route::put('health', [HealthController::class, 'upsert']);
 });
 
 // Ringkasan harian dari Claude (tahap 32) - upsert per tanggal, ditulis skill dan dibaca app/web.

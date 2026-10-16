@@ -59,6 +59,10 @@ class AccountDeletionTest extends TestCase
         DB::table('prayer_days')->insert(['user_id' => $user->id, 'date' => '2026-10-12', 'timezone' => 'Asia/Jakarta', 'created_at' => now(), 'updated_at' => now()]);
         DB::table('daily_briefs')->insert(['user_id' => $user->id, 'date' => '2026-10-12', 'email_digest' => '3 email belum dibaca', 'created_at' => now(), 'updated_at' => now()]);
         DB::table('work_days')->insert(['user_id' => $user->id, 'date' => '2026-10-12', 'eod_note' => 'catatan EOD', 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('weight_entries')->insert(['user_id' => $user->id, 'time_millis' => 1792000000000, 'kg' => 70.4, 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('blood_pressure_entries')->insert(['user_id' => $user->id, 'time_millis' => 1792000000000, 'systolic' => 120, 'diastolic' => 80, 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('step_days')->insert(['user_id' => $user->id, 'date' => '2026-10-12', 'steps' => 5400, 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('health_focus')->insert(['user_id' => $user->id, 'timezone' => 'Asia/Jakarta', 'rule' => 'ON_TRACK', 'title' => 'Hari ini sudah di jalur', 'created_at' => now(), 'updated_at' => now()]);
 
         $path = 'snapshots/'.$user->id.'/uji.enc';
         Storage::disk('local')->put($path, 'isi-terenkripsi');
@@ -148,7 +152,7 @@ class AccountDeletionTest extends TestCase
 
         $this->assertSame(1, User::count());
         $this->assertSame($sari->id, User::first()->id);
-        foreach (['user_tokens', 'email_codes', 'habits', 'schedule_blocks', 'todos', 'follow_ups', 'prayer_days', 'daily_briefs', 'work_days', 'snapshots'] as $table) {
+        foreach (['user_tokens', 'email_codes', 'habits', 'schedule_blocks', 'todos', 'follow_ups', 'prayer_days', 'daily_briefs', 'work_days', 'weight_entries', 'blood_pressure_entries', 'step_days', 'health_focus', 'snapshots'] as $table) {
             $this->assertSame(1, DB::table($table)->where('user_id', $sari->id)->count(), "Baris $table milik pengguna lain ikut terhapus.");
         }
         $this->assertSame(1, DB::table('habit_entries')->count());

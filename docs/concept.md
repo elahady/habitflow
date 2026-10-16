@@ -1743,7 +1743,7 @@ blok. Yang belum ada cuma versi web/server-nya.
   blok awal untuk user baru di server juga belum ada; sampai langkah 4 jalan, kartu di web kosong ("Belum ada jadwal di
   server").
 
-### Tahap 30: Fokus Kesehatan Harian (langkah 1-2 selesai di Android 11 Oktober 2026; langkah 3-6 belum)
+### Tahap 30: Fokus Kesehatan Harian (langkah 1-2 selesai di Android 11 Oktober 2026; langkah 3 server selesai di kode 16 Oktober 2026; langkah 4-6 belum)
 
 Aturan fitur di `docs/rancangan.md` bagian Fokus kesehatan harian. Mockup web dan mobile:
 https://claude.ai/artifact/TWJ8Uus2hKtQQa81wKujG5
@@ -1784,7 +1784,14 @@ menampilkan angka. Android menampilkannya di dashboard Hari ini, web di `/dashbo
    pagar (BMI kurus, di bawah target, tensi tinggi, data kurang).
 2. ✅ **Kartu Fokus di Android.** Kartu hero di atas dashboard Hari ini, "Kenapa ini?", dan catatan nilai baru di
    `docs/design/README.md` lebih dulu.
-3. **Server.** Migrasi tabel, endpoint `PUT /api/v1/health`, tes Laravel.
+3. ✅ **Server (16 Oktober 2026, kode dan tes; belum di-deploy).** Migrasi `2026_10_16_110000_create_health_tables` (`weight_entries`, `blood_pressure_entries`, `step_days`, `health_focus`), model, dan
+   `PUT /api/v1/health` (`HealthController`, `user-token`). Kontrak: `timezone` wajib; `profile` (`height_cm` 100-250, `target_kg` 20-300), `weights` (maks 500; `time_millis`, `kg` 20-300),
+   `blood_pressures` (maks 500; sistolik 50-300, diastolik 30-200, nadi 20-250, catatan maks 500), `step_days` (maks 14; `date`, `steps` 0-200000), dan `focus` (`rule` huruf besar dan garis bawah,
+   `walk_minutes`, `title`, `sentence`, `note`, `reasons` daftar `{label, value}` maks 6, `computed_at`) semuanya opsional. **Idempotent:** berat dan tensi dikunci `user_id` + `time_millis`
+   (kirim ulang memperbarui, tidak menggandakan), langkah per tanggal (hari yang sama ditimpa), fokus satu baris per pengguna. **Server tidak pernah menghapus** baris dari kiriman yang lebih pendek
+   (berat dan tensi hanya bertambah di HP). Kolom yang tidak dikirim tidak disentuh; `profile` yang `null` mengosongkan tinggi dan target. Tanpa 409. Kode aturan fokus **tidak** divalidasi
+   terhadap daftar (hanya bentuk `[A-Z_]`), supaya aturan baru di Android tidak butuh deploy server. Ikut hapus akun (`AccountDeletionService`, `DataInventory`, `AccountDeletionTest`) dan inventaris
+   `docs/rilis-play-store.md` (kategori **Kesehatan**). 12 tes baru (`HealthApiTest`), 334 tes server lulus **di SQLite dan di MariaDB 10.4.32** (instance sementara, sudah dihapus).
 4. **Android mengirim.** Kirim catatan, langkah 7 hari, dan fokus; aman diulang. *Digantikan tahap 31: sekarang pasti ada
    akun (login wajib), jadi langkah ini tidak lagi perlu menangani cabang "belum login".*
 5. **Web.** Kartu fokus dan bagian Kesehatan di `/dashboard`.
