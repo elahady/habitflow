@@ -2423,15 +2423,17 @@ tahap 31, 32, dan 33 di bawah. Kalau bagian ini bertentangan dengan rincian taha
 Beranda dengan strip 4 kartu, halaman Habit dengan streak dan heatmap, halaman Kerja "Rekap hari ini", dan endpoint `work-days` (tahap 33 langkah 1-3). Dites dengan curl ke produksi:
 `daily-briefs` dan `work-days` (data uji sudah dihapus). Produksi saat itu: 1 pengguna (Google), 9 habit, 2 follow-up. Tes otomatis: server **311**, Android **593**, semuanya lulus.
 
+**Sudah dicoba di HP pemilik (16 Oktober 2026, debug build dipasang sebagai update di atas data lama; hasil rinci di tahap 33 3c):** migrasi Room 10 ke 11 (data lama utuh),
+sinkron catatan EOD dua arah HP dan web termasuk penggabungan saat bentrok (setelah perbaikan sinkron saat app kembali tampil), dan kartu "Ringkasan dari Claude" (pesan kosong sesuai rancangan).
+
 **Ada di kode tapi belum pernah dijalankan di perangkat nyata (semuanya Android, belum dirilis):**
-1. Migrasi Room **10 ke 11** (`work_days` mendapat `remoteUpdatedAt` dan `dirty`). Tidak ada tes migrasi. **Coba di HP yang berisi data lama sebelum apa pun dirilis.**
-2. Sinkron catatan EOD dua arah HP dan web (tahap 33 langkah 3c), termasuk penggabungan otomatis saat bentrok.
-3. Kartu "Ringkasan dari Claude" di tab Kerja (tahap 32 langkah 4).
+1. Tema gelap dan lipatan "Selengkapnya" di kartu Ringkasan dari Claude, serta kartu dengan isi ringkasan sungguhan (menunggu skill dijalankan).
+2. Migrasi Room 10 ke 11 tetap **tanpa tes otomatis** (hanya diuji manual di satu HP); jangan dianggap terlindungi dari perubahan skema berikutnya.
 4. Skill `skills/habitflow-morning-routine/SKILL.md` belum pernah dijalankan dari awal sampai akhir (butuh token pemilik dan Gmail).
 
 **Yang perlu dikerjakan berikutnya, urut yang disarankan:**
-1. Pasang debug build ke HP (atau emulator) dan uji: migrasi 10 ke 11 pada data lama; tulis EOD di HP lalu lihat di web; ubah catatan di web lalu lihat di HP; kartu Ringkasan dari Claude;
-   tema gelap dan lipatan "Selengkapnya". Catat hasilnya di tahap 33 3c dan tahap 32 langkah 4.
+1. ~~Pasang debug build ke HP dan uji~~ selesai 16 Oktober 2026 (hasil di tahap 33 3c dan tahap 32 langkah 4). Sisa dari uji itu: tema gelap dan lipatan "Selengkapnya" di HP,
+   serta kartu dengan isi ringkasan sungguhan (menunggu langkah 2).
 2. Tahap 32 langkah 5 (opsional): token **khusus tulis ringkasan** (token sekarang setara akses penuh ke data akun), lalu jalankan skill sungguhan, lalu pasang `/schedule`.
 3. Angka "X dari Y selesai" per hari di riwayat web (usulan kolom `eod_summary` di `work_days`, diisi HP saat EOD selesai; web kini hanya bisa menulis "N selesai").
 4. Sisa tahap 33: bagian Kesehatan di Beranda (menunggu tahap 30 langkah 3-6), judul dan gaya kartu "Jadwal sekarang", halaman Tugas Rumah (belum ada mockup web).
@@ -2602,7 +2604,7 @@ berikutnya tanpa disalin ulang. Jadi skill versi Habitflow seharusnya lebih ramp
 - Hubungan dengan tahap 31 (Login Wajib): `user-token` sudah ada sejak tahap 27 jadi kemungkinan tidak
   terpengaruh, tapi perlu dicek ulang setelah tahap 31 selesai.
 
-### Tahap 33: Web disamakan dengan mockup Design canvas (langkah 1-3 selesai dan di-deploy 15 Oktober 2026; Android 3c belum dicoba di HP; sisa: bagian Kesehatan menunggu tahap 30)
+### Tahap 33: Web disamakan dengan mockup Design canvas (langkah 1-3 selesai dan di-deploy 15 Oktober 2026; Android 3c dicoba di HP 16 Oktober 2026 dan lulus; sisa: bagian Kesehatan menunggu tahap 30)
 
 **Kenapa tahap ini ada.** Di sesi 11 Oktober 2026, setelah deploy tahap 29 langkah 1-3, pemilik menunjukkan
 bahwa beranda web (`https://habitflow.roziqrizal.com/`) tidak terlihat seperti mockup di
@@ -2702,7 +2704,7 @@ Ini beda paling besar — **bukan cuma soal gaya, tapi konsep halaman yang beda 
      "Baca Qur'an") merusak tombolnya. Kini hanya id yang dikirim dan nama dibaca di server (tes memakai nama berkutip).
    - 23 tes baru (`HabitStatsTest`, `HabitPageTest`), 272 tes server lulus. Dilihat lewat screenshot Edge headless dari data contoh (9 habit,
      riwayat 300 hari): desktop terang dan gelap, lebar 500px. **Belum:** produksi dengan data nyata, dan heatmap di lebar 390px.
-3. **Kerja/Follow-up** (server, web, dan Android selesai di kode 15 Oktober 2026; server dan web **sudah di-deploy 15 Oktober 2026**, Android **belum dicoba di HP**): dikerjakan dalam tiga bagian.
+3. **Kerja/Follow-up** (server, web, dan Android selesai di kode 15 Oktober 2026; server dan web **sudah di-deploy 15 Oktober 2026**, Android **dicoba di HP 16 Oktober 2026, lulus**, lihat 3c): dikerjakan dalam tiga bagian.
    - **3a. Server `work_days`** ✅ (commit `f5e26d8`, sudah di-push): tabel `work_days` (`date`, `eod_note`, `scrum_done_at`, `eod_done_at`, satu baris per user per
      tanggal) dan `GET /api/v1/work-days` + `PUT /api/v1/work-days/{date}`. PUT adalah upsert; baris yang sudah ada **wajib** menyertakan `updated_at` yang
      terakhir dilihat client, kalau tidak atau berbeda dijawab 409 berisi versi terbaru (pola follow-up). Masuk hapus akun dan inventaris data.
@@ -2726,7 +2728,7 @@ Ini beda paling besar — **bukan cuma soal gaya, tapi konsep halaman yang beda 
        dan token `--warn-fixed` (terang dan gelap) ditambahkan. Label nav tetap "Follow-up" (mockup menulis "Kerja").
      - 39 tes baru (`WorkDayApiTest` 9, `WorkRecapTest` 9, `WorkRecapPageTest` 21, ditambah penyesuaian `FollowUpsPageTest`), 311 tes server lulus. Dilihat lewat
        screenshot Edge headless dari data contoh: desktop terang dan gelap, dan lebar 500px (riwayat di atas, panel di bawah).
-   - **3c. Android mengirim dan menarik `work_days`** ✅ di kode dan tes (15 Oktober 2026), **belum dicoba di HP atau emulator** dan belum dirilis (app dipasang manual).
+   - **3c. Android mengirim dan menarik `work_days`** ✅ di kode dan tes (15 Oktober 2026) dan **✅ dicoba di HP pemilik (16 Oktober 2026)**, belum dirilis (app dipasang manual).
      Server dan halaman web 3a dan 3b **sudah di-deploy ke produksi** pada hari yang sama (migrasi `work_days` lulus; curl ke produksi: 201, 409 tanpa `updated_at`, 200 dengan `updated_at`,
      422, 401; data uji dihapus).
      - **Room 10 ke 11** (`MIGRATION_10_11`): `work_days` mendapat `remoteUpdatedAt` dan `dirty` (baris lama `dirty = 1`, jadi catatan EOD yang sudah ada ikut terkirim saat login).
@@ -2752,7 +2754,8 @@ Ini beda paling besar — **bukan cuma soal gaya, tapi konsep halaman yang beda 
        **Penyebab terbukti:** HP hanya menarik dari server saat app dibuka dari kondisi mati dan lewat worker tiap 30 menit (`HabitSyncScheduler.PERIODIC_MINUTES`); kembali ke app
        tidak menyinkronkan. Pemilik menutup paksa app lalu membukanya lagi: catatan dari web muncul, jadi logika tarik dan gabungnya benar.
        **Perbaikan (16 Oktober 2026):** `HabitSyncManager.syncIfStale()` dipanggil tiap app kembali tampil (`repeatOnLifecycle(STARTED)` di `MainActivity`), dibatasi satu kali per menit
-       oleh `SyncThrottle` (tes murni, 5 tes; 598 tes unit lulus). Perbaikan ini **belum dicoba di HP**. Bentrok dua sisi dan tema gelap serta lipatan "Selengkapnya" belum teruji.
+       oleh `SyncThrottle` (tes murni, 5 tes; 598 tes unit lulus). **Dicoba di HP setelah perbaikan (16 Oktober 2026): hasilnya ok** (web ke HP tanpa menutup paksa app, dan bentrok dua sisi, menurut laporan pemilik).
+       Tema gelap dan lipatan "Selengkapnya" belum dilaporkan.
        Di emulator, migrasi diuji dengan data uji tapi menunggu login (cadangan DB v10 ada di folder sementara, tidak di repo).
 4. **Kesehatan di beranda**: ini tahap 30 langkah 5, dikerjakan di jalurnya sendiri (langkah 3-4 server dan Android
    kirim data dulu sebelum web bisa menampilkan apa pun).
