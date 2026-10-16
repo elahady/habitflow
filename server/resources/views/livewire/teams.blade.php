@@ -47,10 +47,10 @@
 
                 {{-- Daftar to-do --}}
                 @forelse ($team->todos as $todo)
-                    <div class="hf-row" style="align-items: center;">
+                    <div class="hf-row" style="align-items: center; flex-wrap: wrap; gap: 8px 14px;">
                         <input type="checkbox" class="hf-check-sm" id="tugas-{{ $todo->id }}" aria-label="Selesai: {{ $todo->title }}" wire:click="toggleDone({{ $todo->id }})" @checked($todo->done) style="margin-top: 0;">
-                        <label for="tugas-{{ $todo->id }}" style="flex: 1; margin: 0; font-size: 15px; font-weight: 400; {{ $todo->done ? 'text-decoration: line-through; color: var(--on-surface-variant);' : 'color: inherit;' }}">{{ $todo->title }}</label>
-                        <select aria-label="Ditugaskan ke" wire:change="assignTodo({{ $todo->id }}, $event.target.value || null)" style="font-size: 12px; border: 1px solid var(--outline-variant); border-radius: 8px; padding: 4px 6px; background: var(--surface-container-low); color: var(--on-surface); font-family: 'Manrope', sans-serif;">
+                        <label for="tugas-{{ $todo->id }}" style="flex: 1 1 10rem; min-width: 0; margin: 0; font-size: 15px; font-weight: 400; {{ $todo->done ? 'text-decoration: line-through; color: var(--on-surface-variant);' : 'color: inherit;' }}">{{ $todo->title }}</label>
+                        <select aria-label="Ditugaskan ke" wire:change="assignTodo({{ $todo->id }}, $event.target.value || null)" style="width: auto; flex: 0 0 auto; max-width: 12rem; font-size: 12px; border: 1px solid var(--outline-variant); border-radius: 8px; padding: 4px 6px; background: var(--surface-container-low); color: var(--on-surface); font-family: 'Manrope', sans-serif;">
                             <option value="">Belum ditugaskan</option>
                             @foreach ($team->members as $member)
                                 <option value="{{ $member->id }}" @selected($todo->assigned_to === $member->id)>{{ $member->name }}</option>
