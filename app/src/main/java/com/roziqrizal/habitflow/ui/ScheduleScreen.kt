@@ -2,6 +2,8 @@ package com.roziqrizal.habitflow.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -167,7 +169,7 @@ private fun parseMinute(text: String): Int? {
     return if (hour in 0..23 && minute in 0..59) hour * 60 + minute else null
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 private fun BlockEditorDialog(
     initial: ScheduleBlock,
@@ -226,7 +228,7 @@ private fun BlockEditorDialog(
                     }
                 }
                 if (byPrayer) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         PrayerName.entries.forEach { p ->
                             FilterChip(colors = appFilterChipColors(), selected = p == prayer, onClick = { prayer = p }, label = { Text(p.label) })
                         }
@@ -256,7 +258,7 @@ private fun BlockEditorDialog(
                 )
 
                 Text("Hari aktif", style = MaterialTheme.typography.labelMedium)
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     DayOfWeek.entries.forEach { day ->
                         FilterChip(
                             colors = appFilterChipColors(),

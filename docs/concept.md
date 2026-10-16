@@ -487,6 +487,10 @@ diubah.
   besok; alarm tetap berjalan setelah emulator di-restart; lokasi GPS dan dialog lokasi manual;
   perbandingan waktu sholat lokasi Roziq dengan app Al-Kaukaba; jadwal saat HP dalam Doze
   (alarm dengan jendela 5 menit bisa tertunda sampai jendela pemeliharaan).
+- **Perbaikan tampilan (16 Oktober 2026):** di dialog editor blok, chip waktu sholat (5) dan chip hari aktif (7)
+  memakai `Row`, jadi melebihi lebar dialog di HP nyata: chip terakhir terpotong jadi kotak kosong. Keduanya kini
+  `FlowRow` (pola sama dengan `EventEditor`) sehingga chip turun ke baris berikutnya. Compile lolos; **belum dicek
+  ulang di layar HP**.
 
 ### Tahap 18: Alarm Subuh dan pengingat adzan (selesai, 7 Oktober 2026)
 
