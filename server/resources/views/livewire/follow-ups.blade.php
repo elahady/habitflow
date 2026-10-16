@@ -10,7 +10,7 @@
                     @if ($day['date'] === $today)
                         Hari ini · {{ $day['eodAt'] ? 'EOD '.$day['eodAt']->format('H.i') : 'belum EOD' }}
                     @else
-                        {{ $day['done'] }} selesai{{ $day['eodAt'] ? ' · EOD '.$day['eodAt']->format('H.i') : '' }}
+                        {{ ($day['eodTotal'] ?? 0) > 0 ? $day['eodDone'].' dari '.$day['eodTotal'] : $day['done'] }} selesai{{ $day['eodAt'] ? ' · EOD '.$day['eodAt']->format('H.i') : '' }}
                     @endif
                 </span>
             </button>
@@ -45,6 +45,8 @@
                         @else
                             Belum ada follow-up hari ini
                         @endif
+                    @elseif (($eodTotal ?? 0) > 0)
+                        {{ $eodDone }} dari {{ $eodTotal }} follow-up selesai
                     @else
                         {{ $recap['done'] }} follow-up selesai
                     @endif

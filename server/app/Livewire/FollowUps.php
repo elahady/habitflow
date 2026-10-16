@@ -345,6 +345,9 @@ class FollowUps extends Component
             'filter' => $filter,
             'rows' => $recap['items'][$filter],
             'eodAt' => $workDay?->eod_done_at?->copy()->setTimezone($timezone),
+            // Angka "X dari Y" yang dihitung HP saat EOD; null untuk hari tanpa angka itu (EOD sebelum fitur ini, atau belum EOD).
+            'eodDone' => $workDay?->eod_done_count,
+            'eodTotal' => $workDay?->eod_total_count,
             'history' => $history,
             'hasMoreHistory' => count($history) < WorkRecap::historyCount($user, $today),
             'pickable' => $recap['isToday']

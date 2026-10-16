@@ -14,8 +14,9 @@ use Illuminate\Support\Collection;
  * dengan daftar daily scrum di Android) dan yang selesai hari ini; daftar "Semua" memuat seluruh follow-up
  * terbuka, yang dikerjakan hari ini di atas, ditambah yang selesai hari ini. Tanggal lampau: hanya yang selesai pada
  * tanggal itu, karena server tidak menyimpan daftar hari itu sebelum EOD memindahkan item (Lanjut besok
- * mengubah `picked_date`, Pindah tanggal mengubah `date`). Angka "X dari Y" untuk tanggal lampau tidak
- * dibuat-buat: yang ditampilkan hanya jumlah selesai.
+ * mengubah `picked_date`, Pindah tanggal mengubah `date`). Angka "X dari Y" untuk tanggal lampau hanya
+ * ditampilkan kalau HP mengirimnya saat EOD (`work_days.eod_done_count` dan `eod_total_count`); tanpa itu tidak dibuat-buat
+ * dan yang ditampilkan hanya jumlah selesai.
  */
 class WorkRecap
 {
@@ -100,7 +101,7 @@ class WorkRecap
     /**
      * Tanggal untuk daftar riwayat, terbaru dulu: hari ini selalu ada, lalu tanggal yang punya catatan atau follow-up selesai.
      *
-     * @return list<array{date: string, done: int, eodAt: ?Carbon}>
+     * @return list<array{date: string, done: int, eodAt: ?Carbon, eodDone: ?int, eodTotal: ?int}>
      */
     public static function history(User $user, string $today, int $limit): array
     {
@@ -117,6 +118,8 @@ class WorkRecap
             'date' => $d,
             'done' => $doneByDate[$d] ?? 0,
             'eodAt' => $workDays->get($d)?->eod_done_at?->copy()->setTimezone($timezone),
+            'eodDone' => $workDays->get($d)?->eod_done_count,
+            'eodTotal' => $workDays->get($d)?->eod_total_count,
         ], array_slice($dates, 0, $limit));
     }
 

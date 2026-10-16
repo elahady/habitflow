@@ -131,4 +131,48 @@ class WorkDayApiTest extends TestCase
         $this->assertSame('rahasia B', $other->workDays()->first()->eod_note);
         $this->assertSame('punya A', $this->user->workDays()->first()->eod_note);
     }
+    // --- Angka ringkasan EOD "X dari Y selesai" (tahap 33 sisa) ---
+
+    public function test_angka_ringkasan_eod_disimpan_dan_dikembalikan(): void
+    {
+        $this->putJson('/api/v1/work-days/2026-10-15', ['eod_done_at' => '2026-10-15T09:03:00Z', 'eod_done_count' => 7, 'eod_total_count' => 9], $this->auth())
+            ->assertStatus(201)
+            ->assertJsonPath('work_day.eod_done_count', 7)
+            ->assertJsonPath('work_day.eod_total_count', 9);
+
+        $this->assertSame(7, WorkDay::first()->eod_done_count);
+    }
+
+    public function test_ubah_tanpa_mengirim_angka_tidak_menyentuhnya(): void
+    {
+        $created = $this->putJson('/api/v1/work-days/2026-10-15', ['eod_done_count' => 7, 'eod_total_count' => 9], $this->auth())->json('work_day');
+
+        $this->putJson('/api/v1/work-days/2026-10-15', ['eod_note' => 'baru', 'updated_at' => $created['updated_at']], $this->auth())
+            ->assertOk()
+            ->assertJsonPath('work_day.eod_done_count', 7)
+            ->assertJsonPath('work_day.eod_total_count', 9);
+    }
+
+    public function test_angka_bisa_diperbarui_atau_dikosongkan_bersama(): void
+    {
+        $created = $this->putJson('/api/v1/work-days/2026-10-15', ['eod_done_count' => 7, 'eod_total_count' => 9], $this->auth())->json('work_day');
+        $updated = $this->putJson('/api/v1/work-days/2026-10-15', ['eod_done_count' => 9, 'eod_total_count' => 9, 'updated_at' => $created['updated_at']], $this->auth())
+            ->assertOk()->assertJsonPath('work_day.eod_done_count', 9)->json('work_day');
+
+        $this->putJson('/api/v1/work-days/2026-10-15', ['eod_done_count' => null, 'eod_total_count' => null, 'updated_at' => $updated['updated_at']], $this->auth())
+            ->assertOk()->assertJsonPath('work_day.eod_done_count', null)->assertJsonPath('work_day.eod_total_count', null);
+    }
+
+    public function test_angka_ringkasan_yang_tidak_sah_ditolak(): void
+    {
+        $url = '/api/v1/work-days/2026-10-15';
+        $this->putJson($url, ['eod_done_count' => 7], $this->auth())->assertStatus(422); // harus berpasangan
+        $this->putJson($url, ['eod_total_count' => 9], $this->auth())->assertStatus(422);
+        $this->putJson($url, ['eod_done_count' => 10, 'eod_total_count' => 9], $this->auth())->assertStatus(422); // selesai > total
+        $this->putJson($url, ['eod_done_count' => -1, 'eod_total_count' => 9], $this->auth())->assertStatus(422);
+        $this->putJson($url, ['eod_done_count' => 'tujuh', 'eod_total_count' => 9], $this->auth())->assertStatus(422);
+        $this->putJson($url, ['eod_done_count' => 1, 'eod_total_count' => 1001], $this->auth())->assertStatus(422);
+
+        $this->assertSame(0, WorkDay::count());
+    }
 }

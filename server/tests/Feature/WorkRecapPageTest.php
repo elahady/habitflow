@@ -290,4 +290,30 @@ class WorkRecapPageTest extends TestCase
             ->assertSeeHtml('wire:key="hist-2026-09-01"')
             ->assertDontSee('Muat lebih lama');
     }
+    public function test_riwayat_dan_judul_tanggal_lampau_memakai_angka_ringkasan_eod_dari_hp(): void
+    {
+        $this->done('Selesai kemarin', '2026-10-14 10:00');
+        $this->user->workDays()->create([
+            'date' => '2026-10-14', 'eod_done_at' => Carbon::parse('2026-10-14 09:03', 'UTC'), 'eod_done_count' => 7, 'eod_total_count' => 9,
+        ]);
+
+        Livewire::test(FollowUps::class)
+            ->assertSee('7 dari 9 selesai')
+            ->call('selectDate', '2026-10-14')
+            ->assertSee('7 dari 9 follow-up selesai');
+    }
+
+    public function test_tanpa_angka_ringkasan_atau_total_nol_kembali_ke_jumlah_selesai(): void
+    {
+        $this->done('Selesai kemarin', '2026-10-14 10:00');
+        $this->user->workDays()->create(['date' => '2026-10-14', 'eod_done_count' => 0, 'eod_total_count' => 0]);
+        $this->user->workDays()->create(['date' => '2026-10-13', 'eod_done_at' => Carbon::parse('2026-10-13 09:03', 'UTC')]);
+
+        Livewire::test(FollowUps::class)
+            ->assertSee('1 selesai')
+            ->assertDontSee('0 dari 0')
+            ->call('selectDate', '2026-10-14')
+            ->assertSee('1 follow-up selesai')
+            ->assertDontSee('0 dari 0');
+    }
 }

@@ -39,9 +39,21 @@ class WorkDayController extends Controller
                 'eod_note' => ['sometimes', 'nullable', 'string', 'max:5000'],
                 'scrum_done_at' => ['sometimes', 'nullable', 'date'],
                 'eod_done_at' => ['sometimes', 'nullable', 'date'],
+                // Angka ringkasan EOD dari HP ("X dari Y selesai"); keduanya dikirim bersama atau tidak sama sekali.
+                'eod_done_count' => ['sometimes', 'nullable', 'integer', 'min:0', 'max:1000'],
+                'eod_total_count' => ['sometimes', 'nullable', 'integer', 'min:0', 'max:1000'],
                 'updated_at' => ['sometimes', 'nullable', 'date'],
             ],
-        )->validate();
+        )->after(function ($validator) {
+            $data = $validator->getData();
+            $done = $data['eod_done_count'] ?? null;
+            $total = $data['eod_total_count'] ?? null;
+            if (($done === null) !== ($total === null)) {
+                $validator->errors()->add('eod_total_count', 'eod_done_count dan eod_total_count harus dikirim bersama.');
+            } elseif ($done !== null && is_numeric($done) && is_numeric($total) && (int) $done > (int) $total) {
+                $validator->errors()->add('eod_done_count', 'eod_done_count tidak boleh melebihi eod_total_count.');
+            }
+        })->validate();
 
         $existing = $request->user()->workDays()->where('date', $date)->first();
         $fields = array_diff_key($validated, ['date' => null, 'updated_at' => null]);
