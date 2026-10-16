@@ -17,12 +17,14 @@ data class RemoteWorkDay(
     val scrumDoneAt: Long?,
     val eodDoneAt: Long?,
     val updatedAt: String,
+    val eodDoneCount: Int? = null,
+    val eodTotalCount: Int? = null,
 ) {
     /** Salinan lokal baru dari versi server ini: tidak dirty. */
-    fun toEntity(): WorkDayEntity = WorkDayEntity(date, eodNote, scrumDoneAt, eodDoneAt, remoteUpdatedAt = updatedAt, dirty = false)
+    fun toEntity(): WorkDayEntity = WorkDayEntity(date, eodNote, scrumDoneAt, eodDoneAt, remoteUpdatedAt = updatedAt, dirty = false, eodDoneCount = eodDoneCount, eodTotalCount = eodTotalCount)
 
     /** Versi server ini sebagai model domain, untuk digabung dengan versi HP. */
-    fun toDomain(): WorkDay = WorkDay(LocalDate.parse(date), eodNote, scrumDoneAt, eodDoneAt)
+    fun toDomain(): WorkDay = WorkDay(LocalDate.parse(date), eodNote, scrumDoneAt, eodDoneAt, eodDoneCount, eodTotalCount)
 
     companion object {
         fun fromJson(o: JSONObject): RemoteWorkDay = RemoteWorkDay(
@@ -31,12 +33,16 @@ data class RemoteWorkDay(
             scrumDoneAt = o.str("scrum_done_at")?.let { Instant.parse(it).toEpochMilli() },
             eodDoneAt = o.str("eod_done_at")?.let { Instant.parse(it).toEpochMilli() },
             updatedAt = o.getString("updated_at"),
+            eodDoneCount = o.int("eod_done_count"),
+            eodTotalCount = o.int("eod_total_count"),
         )
 
         /** Null untuk baris rusak (tanggal atau waktu tidak terbaca), supaya satu baris rusak tidak menggagalkan semuanya. */
         fun fromJsonOrNull(o: JSONObject): RemoteWorkDay? = runCatching { fromJson(o) }.getOrNull()
 
         private fun JSONObject.str(key: String): String? = if (!has(key) || isNull(key)) null else getString(key)
+
+        private fun JSONObject.int(key: String): Int? = if (!has(key) || isNull(key)) null else optInt(key)
     }
 }
 
@@ -48,5 +54,10 @@ fun WorkDayEntity.toRequestJson(): JSONObject = JSONObject().apply {
     put("eod_note", eodNote?.takeIf { it.isNotBlank() } ?: JSONObject.NULL)
     put("scrum_done_at", scrumDoneAt?.let { Instant.ofEpochMilli(it).toString() } ?: JSONObject.NULL)
     put("eod_done_at", eodDoneAt?.let { Instant.ofEpochMilli(it).toString() } ?: JSONObject.NULL)
+    // Angka EOD hanya dikirim bersama dan kalau ada: server menolak yang satu-satu, dan tidak mengirim berarti tidak menyentuh.
+    if (eodDoneCount != null && eodTotalCount != null) {
+        put("eod_done_count", eodDoneCount)
+        put("eod_total_count", eodTotalCount)
+    }
     remoteUpdatedAt?.let { put("updated_at", it) }
 }

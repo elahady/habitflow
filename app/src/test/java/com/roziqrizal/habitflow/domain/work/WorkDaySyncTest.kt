@@ -90,3 +90,50 @@ class WorkDaySyncTest {
         assertFalse(day("a", d = date).sameContentAs(day("a", d = date.plusDays(1))))
     }
 }
+
+class WorkDayCountsMergeTest {
+
+    private val date = LocalDate.of(2026, 10, 15)
+
+    private fun day(eod: Long?, done: Int?, total: Int?) = WorkDay(date, null, null, eod, done, total)
+
+    @Test
+    fun angkaIkutEodYangLebihAkhir() {
+        val merged = mergeWorkDay(local = day(2_000, 7, 9), server = day(1_000, 3, 4))
+        assertEquals(7, merged.eodDoneCount)
+        assertEquals(9, merged.eodTotalCount)
+
+        val serverNewer = mergeWorkDay(local = day(1_000, 3, 4), server = day(2_000, 7, 9))
+        assertEquals(7, serverNewer.eodDoneCount)
+        assertEquals(9, serverNewer.eodTotalCount)
+    }
+
+    @Test
+    fun angkaTidakDigabungPerBidang() {
+        val merged = mergeWorkDay(local = day(2_000, 1, 2), server = day(1_000, 8, 9))
+        assertEquals(1 to 2, merged.eodDoneCount to merged.eodTotalCount)
+    }
+
+    @Test
+    fun sisiYangLebihAkhirTanpaAngkaMemakaiAngkaSisiLain() {
+        val merged = mergeWorkDay(local = day(2_000, null, null), server = day(1_000, 3, 4))
+        assertEquals(3 to 4, merged.eodDoneCount to merged.eodTotalCount)
+    }
+
+    @Test
+    fun seriJatuhKeHpDanTanpaAngkaDimanapunTetapNull() {
+        val tie = mergeWorkDay(local = day(1_000, 5, 6), server = day(1_000, 1, 2))
+        assertEquals(5 to 6, tie.eodDoneCount to tie.eodTotalCount)
+
+        val none = mergeWorkDay(local = day(null, null, null), server = day(null, null, null))
+        assertNull(none.eodDoneCount)
+        assertNull(none.eodTotalCount)
+    }
+
+    @Test
+    fun isiSamaMemperhatikanAngka() {
+        assertTrue(day(1, 7, 9).sameContentAs(day(1, 7, 9)))
+        assertFalse(day(1, 7, 9).sameContentAs(day(1, 7, 10)))
+        assertFalse(day(1, 7, 9).sameContentAs(day(1, null, null)))
+    }
+}

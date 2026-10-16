@@ -453,6 +453,36 @@ class FollowUpSyncClientTest {
     }
 
     @Test
+    fun kirimAngkaRingkasanEodHanyaBilaKeduanyaAda() = runBlocking {
+        server.responseBody = """{"work_day":$WORK_DAY_JSON}"""
+
+        client().putWorkDay(WorkDayEntity("2026-10-15", "x", null, 2_000L, eodDoneCount = 7, eodTotalCount = 9))
+        val withCounts = JSONObject(server.lastBody)
+        assertEquals(7, withCounts.getInt("eod_done_count"))
+        assertEquals(9, withCounts.getInt("eod_total_count"))
+
+        client().putWorkDay(WorkDayEntity("2026-10-15", "x", null, 2_000L))
+        val without = JSONObject(server.lastBody)
+        assertFalse("tanpa angka, kuncinya tidak dikirim supaya tidak menyentuh angka di server", without.has("eod_done_count"))
+        assertFalse(without.has("eod_total_count"))
+
+        client().putWorkDay(WorkDayEntity("2026-10-15", "x", null, 2_000L, eodDoneCount = 7, eodTotalCount = null))
+        assertFalse("satu angka tanpa pasangan tidak dikirim (server menolaknya)", JSONObject(server.lastBody).has("eod_done_count"))
+    }
+
+    @Test
+    fun angkaRingkasanEodDariServerDibaca() = runBlocking {
+        server.responseBody = """{"work_days":[{"date":"2026-10-14","eod_note":null,"scrum_done_at":null,"eod_done_at":null,"eod_done_count":7,"eod_total_count":9,"updated_at":"2026-10-14T09:03:05.000000Z"},{"date":"2026-10-13","eod_note":null,"scrum_done_at":null,"eod_done_at":null,"eod_done_count":null,"eod_total_count":null,"updated_at":"2026-10-13T09:03:05.000000Z"}]}"""
+
+        val days = (client().listWorkDays() as HabitApiResult.Success).value
+
+        assertEquals(7 to 9, days[0].eodDoneCount to days[0].eodTotalCount)
+        assertEquals(null to null, days[1].eodDoneCount to days[1].eodTotalCount)
+        assertEquals(7, days[0].toEntity().eodDoneCount)
+        assertEquals(9, days[0].toDomain().eodTotalCount)
+    }
+
+    @Test
     fun kirimBentrok409MengembalikanVersiServer() = runBlocking {
         server.status = 409
         server.responseBody = """{"message":"Berubah di tempat lain.","work_day":$WORK_DAY_JSON}"""

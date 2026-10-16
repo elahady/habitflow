@@ -7,6 +7,7 @@ import com.roziqrizal.habitflow.data.PendingDeleteEntity
 import com.roziqrizal.habitflow.data.Todo
 import com.roziqrizal.habitflow.data.WorkDayEntity
 import com.roziqrizal.habitflow.data.toDomain
+import com.roziqrizal.habitflow.data.toEntity
 import com.roziqrizal.habitflow.data.account.AccountSettings
 import com.roziqrizal.habitflow.data.account.UnauthorizedListener
 import com.roziqrizal.habitflow.data.health.readRecentSteps
@@ -393,9 +394,9 @@ class HabitSyncManager(
                     val merged = mergeWorkDay(item.toDomain() ?: return@forEach, server.toDomain())
                     if (merged.sameContentAs(server.toDomain())) {
                         // Server sudah punya semuanya: cukup ikuti, tidak perlu mengirim.
-                        workDays.upsert(WorkDayEntity(item.date, merged.eodNote, merged.scrumDoneAt, merged.eodDoneAt, server.updatedAt, dirty = false))
+                        workDays.upsert(merged.toEntity(server.updatedAt, dirty = false))
                     } else {
-                        val retry = WorkDayEntity(item.date, merged.eodNote, merged.scrumDoneAt, merged.eodDoneAt, server.updatedAt, dirty = true)
+                        val retry = merged.toEntity(server.updatedAt, dirty = true)
                         workDays.upsert(retry)
                         when (val second = client.putWorkDay(retry)) {
                             is HabitApiResult.Success -> markWorkDaySent(retry, second.value)

@@ -16,6 +16,7 @@ import com.roziqrizal.habitflow.domain.work.WorkSection
 import com.roziqrizal.habitflow.domain.work.allPeople
 import com.roziqrizal.habitflow.domain.work.applyEod
 import com.roziqrizal.habitflow.domain.work.applyInbox
+import com.roziqrizal.habitflow.domain.work.eodCounts
 import com.roziqrizal.habitflow.domain.work.eodItems
 import com.roziqrizal.habitflow.domain.work.forPerson
 import com.roziqrizal.habitflow.domain.work.groupedBySection
@@ -159,6 +160,8 @@ class WorkViewModel(
         note: String,
     ) {
         val date = clock.date.value
+        // Dihitung dari keadaan sebelum EOD diterapkan: sesudahnya item sudah pindah ke besok atau tanggal lain.
+        val counts = eodCounts(state.value.all, today, actions, date, java.time.ZoneId.systemDefault())
         viewModelScope.launch {
             val now = nowMillis()
             repo.saveAll(today.map { item -> actions[item.id]?.let { item.applyEod(it, date, now) } ?: item })
@@ -167,7 +170,7 @@ class WorkViewModel(
                 val result = item.applyInbox(choice)
                 if (result == null) repo.delete(item.id) else if (result != item) repo.save(result, now)
             }
-            repo.completeEod(date, note, now)
+            repo.completeEod(date, note, now, counts)
         }
     }
 }

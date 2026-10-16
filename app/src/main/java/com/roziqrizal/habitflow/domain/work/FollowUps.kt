@@ -151,6 +151,9 @@ data class WorkDay(
     val eodNote: String? = null,
     val scrumDoneAt: Long? = null,
     val eodDoneAt: Long? = null,
+    /** Angka ringkasan EOD ([eodCounts]); null kalau EOD belum diselesaikan dengan angka. */
+    val eodDoneCount: Int? = null,
+    val eodTotalCount: Int? = null,
 )
 
 /** Pilihan merapikan satu item Inbox saat EOD. */

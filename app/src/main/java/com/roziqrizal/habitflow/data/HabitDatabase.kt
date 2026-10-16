@@ -17,7 +17,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         MealEntity::class, HabitManualMark::class,
         HabitEntryOutbox::class, PendingDelete::class,
     ],
-    version = 11,
+    version = 12,
     exportSchema = false,
 )
 abstract class HabitDatabase : RoomDatabase() {
@@ -56,7 +56,7 @@ abstract class HabitDatabase : RoomDatabase() {
                 )
                     .addMigrations(
                         MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8,
-                        MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11,
+                        MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12,
                     )
                     .addCallback(SeedCallback)
                     .build()
@@ -153,5 +153,16 @@ val MIGRATION_10_11 = object : Migration(10, 11) {
     override fun migrate(db: SupportSQLiteDatabase) {
         db.execSQL("ALTER TABLE `work_days` ADD COLUMN `remoteUpdatedAt` TEXT")
         db.execSQL("ALTER TABLE `work_days` ADD COLUMN `dirty` INTEGER NOT NULL DEFAULT 1")
+    }
+}
+
+/**
+ * Database versi 11 ke 12 (tahap 33 sisa): angka ringkasan EOD "X dari Y selesai" di `work_days`. Kolom boleh null, jadi
+ * baris lama tidak berubah dan tidak ditandai dirty (angka itu hanya ada untuk EOD yang diselesaikan sesudah ini).
+ */
+val MIGRATION_11_12 = object : Migration(11, 12) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `work_days` ADD COLUMN `eodDoneCount` INTEGER")
+        db.execSQL("ALTER TABLE `work_days` ADD COLUMN `eodTotalCount` INTEGER")
     }
 }

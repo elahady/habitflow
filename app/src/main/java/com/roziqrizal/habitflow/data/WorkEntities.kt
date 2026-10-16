@@ -53,6 +53,9 @@ data class WorkDayEntity(
     val eodDoneAt: Long?,
     val remoteUpdatedAt: String? = null,
     val dirty: Boolean = true,
+    /** Angka ringkasan EOD "X dari Y selesai" yang dihitung saat EOD diselesaikan (tahap 33 sisa). Null sebelum ada EOD dengan angka. */
+    val eodDoneCount: Int? = null,
+    val eodTotalCount: Int? = null,
 )
 
 fun FollowUpEntity.toDomain(): FollowUp = FollowUp(
@@ -88,5 +91,9 @@ fun FollowUp.toEntity(): FollowUpEntity = FollowUpEntity(
 )
 
 fun WorkDayEntity.toDomain(): WorkDay? = runCatching {
-    WorkDay(LocalDate.parse(date), eodNote, scrumDoneAt, eodDoneAt)
+    WorkDay(LocalDate.parse(date), eodNote, scrumDoneAt, eodDoneAt, eodDoneCount, eodTotalCount)
 }.getOrNull()
+
+/** Salinan lokal dari [this]: [remoteUpdatedAt] dan [dirty] diberikan pemanggil (hasil gabungan dengan server). */
+fun WorkDay.toEntity(remoteUpdatedAt: String?, dirty: Boolean): WorkDayEntity =
+    WorkDayEntity(date.toString(), eodNote, scrumDoneAt, eodDoneAt, remoteUpdatedAt, dirty, eodDoneCount, eodTotalCount)

@@ -2,6 +2,7 @@ package com.roziqrizal.habitflow.data
 
 import androidx.room.withTransaction
 import com.roziqrizal.habitflow.data.sync.RemoteFollowUp
+import com.roziqrizal.habitflow.domain.work.EodCounts
 import com.roziqrizal.habitflow.domain.work.EventSource
 import com.roziqrizal.habitflow.domain.work.FollowUp
 import com.roziqrizal.habitflow.domain.work.FollowUpConflict
@@ -112,8 +113,14 @@ class WorkRepository(private val db: HabitDatabase) {
     }
 
     /** Menyimpan catatan EOD dan menandai EOD selesai. Catatan kosong disimpan sebagai tanpa catatan. */
-    suspend fun completeEod(date: LocalDate, note: String, nowMillis: Long) {
+    suspend fun completeEod(date: LocalDate, note: String, nowMillis: Long, counts: EodCounts? = null) {
         val current = workDays.get(date.toString()) ?: WorkDayEntity(date.toString(), null, null, null)
-        workDays.upsert(current.copy(eodNote = note.trim().ifEmpty { null }, eodDoneAt = nowMillis, dirty = true))
+        workDays.upsert(
+            current.copy(
+                eodNote = note.trim().ifEmpty { null }, eodDoneAt = nowMillis, dirty = true,
+                // Tanpa angka (tidak ada yang dihitung): angka lama tidak dibuang.
+                eodDoneCount = counts?.done ?: current.eodDoneCount, eodTotalCount = counts?.total ?: current.eodTotalCount,
+            ),
+        )
     }
 }
