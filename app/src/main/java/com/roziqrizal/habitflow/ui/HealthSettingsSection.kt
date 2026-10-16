@@ -132,7 +132,8 @@ fun HealthReminderSection(settings: HealthSettings) {
                     onClick = { settings.setBpFrequency(option) },
                     shape = SegmentedButtonDefaults.itemShape(index, BpFrequency.entries.size),
                     colors = appSegmentedColors(),
-                    label = { Text(option.label) },
+                    icon = {},
+                    label = { Text(option.label, maxLines = 1, softWrap = false) },
                 )
             }
         }

@@ -494,7 +494,13 @@ diubah.
   di APK `-e`: (1) segmen Notifikasi membungkus "Pengingat" jadi dua baris ("Penginga" / "t") karena segmen terpilih
   memuat ikon centang di dialog sempit: ikon dibuang dan label dikunci satu baris; (2) tombol "Hari ini libur" di kartu
   Sekarang terbaca sebagai status (pengguna mengira hari Jumat ditandai libur, padahal itu tombol aksi): labelnya
-  jadi "Tandai hari ini libur". Perilaku libur tidak berubah. **Belum dicek ulang di HP.**
+  jadi "Tandai hari ini libur". Perilaku libur tidak berubah. **Belum dicek ulang di HP.** (Dicek 16 Oktober 2026: tampilan
+  dialog blok bagus.)
+- **Dua bug dari uji HP (16 Oktober 2026, diperbaiki di APK `-f`, belum dicek di HP):** (1) di layar penuh seperti Atur
+  jadwal, mengetuk tab di bar bawah tidak mengganti halaman karena hanya `history` tab yang berubah sedangkan
+  `showSchedule`/`showProfile`/`session` tetap menimpa; kini mengetuk tab menutup ketiganya (sama dengan tombol kembali,
+  jadi catatan EOD yang belum disimpan hilang seperti saat kembali); (2) segmen "Ukur tensi" (Harian/Mingguan/Mati) di dialog
+  Berat dan tensi mepet kanan karena ikon centang: dibuang seperti segmen Notifikasi.
 
 ### Tahap 18: Alarm Subuh dan pengingat adzan (selesai, 7 Oktober 2026)
 

@@ -168,6 +168,11 @@ fun HabitFlowApp(
                     NavigationBarItem(
                         selected = tab == current,
                         onClick = {
+                            // Layar penuh (Atur jadwal, Profil, Scrum/EOD) menutupi tab, jadi ditutup dulu supaya tab yang
+                            // diketuk langsung terlihat, sama seperti tombol kembali.
+                            showSchedule = false
+                            showProfile = false
+                            sessionName = null
                             if (tab != current) {
                                 history.remove(tab)
                                 history.add(tab)

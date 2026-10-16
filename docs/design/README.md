@@ -372,8 +372,9 @@ sejenis**, bukan hasil gambar — dibuatkan artboard dulu sebelum dikoding kalau
    lewat memakai `onSurfaceVariant`. Titik waktu (batas tidur) hanya menampilkan jam mulai.
 3. Tombol teks "Tandai hari ini libur" di bawah timeline (kalimat perintah, supaya tidak terbaca sebagai status hari ini
    libur). Saat aktif, kartu menampilkan "Hari libur, blok kantor dimatikan" dengan tombol "Batalkan".
-   Segmen Notifikasi di editor blok (Info, Pengingat, Alarm) tanpa ikon centang dan label satu baris, supaya
-   "Pengingat" tidak terpotong di dialog sempit.
+   Tombol segmen tiga pilihan di dalam dialog (Notifikasi di editor blok: Info, Pengingat, Alarm; Ukur tensi di dialog
+   Berat dan tensi: Harian, Mingguan, Mati) tanpa ikon centang dan label satu baris (`maxLines = 1`), supaya
+   teks tidak terpotong atau turun baris di dialog sempit. Terpilih hanya ditandai warna.
 4. Layar **Atur jadwal** (layar penuh di atas tab, tab tetap empat; tombol kembali menutupnya):
    judul (headlineMedium), keterangan lokasi sholat, `TonalButton` "+ Blok", lalu satu kartu per
    blok: nama, jam atau patokan sholat dan durasi, hari aktif sebagai tujuh huruf S S R K J S M
