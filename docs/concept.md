@@ -2478,11 +2478,20 @@ kontrak `POST /api/v1/daily-briefs` dan `GET /api/v1/ping`. Keputusan di dalamny
 - **Token:** dari `HABITFLOW_TOKEN` atau `~/.habitflow/claude-token`, dibuat sekali oleh pemilik lewat `POST /api/v1/auth/login`
   dengan `device_name` `claude-morning-routine`. Skill tidak pernah memegang kata sandi. Token itu setara akses penuh ke data
   akun, dan mati kalau "Keluar dari semua perangkat" atau ganti kata sandi, jadi skill berhenti dengan pesan jelas saat 401.
-  **Diganti di langkah 5 (16 Oktober 2026, kode dan tes selesai, belum di-deploy):** token terbatas. Kolom `user_tokens.scope` (kosong = akses penuh, semua token lama);
+  **Diganti di langkah 5 (16 Oktober 2026, kode dan tes selesai, di-deploy dan diverifikasi di produksi 16 Oktober 2026):** token terbatas. Kolom `user_tokens.scope` (kosong = akses penuh, semua token lama);
   cakupan `daily-briefs` hanya boleh `GET /ping` dan `POST /daily-briefs`, rute lain dibalas **403** (daftar putih di `UserToken::permits`, jadi rute baru otomatis tertutup,
   dan cakupan yang tidak dikenal menolak semuanya). Diterbitkan oleh `php artisan habitflow:issue-token <email> [--replace]` di server, tanpa kata sandi (akun Google tidak punya,
   dan email produksi belum terkirim, jadi jalur `auth/login` buntu): hanya token yang dicetak ke stdout supaya bisa dialihkan ke `~/.habitflow/claude-token` tanpa tampil di layar.
   `--replace` hanya mencabut token bernama sama **dan** bercakupan sama, token login biasa tidak tersentuh. 11 tes baru (`ScopedTokenTest`, `IssueScopedTokenCommandTest`), 322 tes server lulus.
+  - **Deploy 16 Oktober 2026:** cadangan dulu (`~/backups-habitflow/habitflow-pra-langkah5-20261016-012420.sql`, kode `kode-pra-langkah5-...tar.gz`, tag image `habitflow:pra-langkah5`),
+    lalu kirim, build, recreate, `migrate --force` (migrasi `add_scope_to_user_tokens` lulus). Token diterbitkan untuk akun pemilik (#1) dan ditulis langsung ke
+    `~/.habitflow/claude-token` di PC ini (hanya pemilik yang bisa baca; tidak pernah ditampilkan). Dicek dengan curl ke produksi: `ping` 200; `follow-ups`, `work-days`,
+    `daily-briefs` (GET), dan `snapshot/latest` 403; tanpa token 401. `logout-all` sengaja tidak diuji di produksi (kalau cakupan gagal, ia mencabut token); itu ada di tes otomatis.
+    Skill disalin ke `~/.claude/skills/`. **`POST /daily-briefs` dengan token terbatas belum dicoba di produksi** (menunggu skill dijalankan sungguhan).
+  - **Temuan di VM, belum ditangani:** `~/apps/habitflow/` berisi ±2.400 berkas **sistem Windows** (isi `C:\Windows\System32`, ±950 MB, bertanggal 10 Oktober 2026), hasil arsip deploy lama
+    yang dibuat dari direktori yang salah. Tidak merusak fungsi, tapi memboroskan disk (VM tinggal ±5,9 GB, 78% terpakai) dan membengkakkan konteks `docker compose build` serta arsip
+    cadangan kode (428 MB). Membersihkannya perlu persetujuan pemilik (menghapus di produksi). Arsip deploy hari ini sudah dicek bersih (325 KB, tanpa .dll/.exe).
+    Juga: `habitflow-queue` selalu tampil `unhealthy` karena healthcheck bawaan image memeriksa `localhost:8080` sedangkan worker tidak punya web server; worker sendiri jalan.
 - **Hanya `email_digest` yang dikirim**, `meeting_note` tidak (butir "Meeting & briefing" di bawah tetap belum diputuskan).
 - **Gmail tidak terhubung atau token tidak ada: tidak menulis apa pun**, supaya ringkasan benar sebelumnya tidak tertimpa "kosong".
 - Kode verifikasi, tautan reset, dan data kartu/rekening dari email tidak disalin ke ringkasan, karena disimpan di server dan terbaca di web.
