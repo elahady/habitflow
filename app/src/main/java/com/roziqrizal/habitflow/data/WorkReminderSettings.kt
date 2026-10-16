@@ -15,6 +15,18 @@ class WorkReminderSettings(context: Context) {
     private val _breaks = MutableStateFlow(prefs.getBoolean(KEY_BREAK, true))
     val breaks: StateFlow<Boolean> = _breaks.asStateFlow()
 
+    private val _waterAlarm = MutableStateFlow(prefs.getBoolean(KEY_WATER_ALARM, false))
+    /**
+     * Pengingat minum berbunyi sebagai alarm (bunyi dan getar sampai dijawab) alih-alih notifikasi senyap. Awalnya mati
+     * dan hanya di HP ini (tidak ikut snapshot). Nada mengikuti pengaturan Alarm ([AlarmSettings]).
+     */
+    val waterAlarm: StateFlow<Boolean> = _waterAlarm.asStateFlow()
+
+    fun setWaterAlarm(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_WATER_ALARM, enabled).apply()
+        _waterAlarm.value = enabled
+    }
+
     fun setWater(enabled: Boolean) {
         prefs.edit().putBoolean(KEY_WATER, enabled).apply()
         _water.value = enabled
@@ -28,5 +40,6 @@ class WorkReminderSettings(context: Context) {
     private companion object {
         const val KEY_WATER = "work_reminder_water"
         const val KEY_BREAK = "work_reminder_break"
+        const val KEY_WATER_ALARM = "work_reminder_water_alarm"
     }
 }

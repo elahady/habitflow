@@ -445,6 +445,11 @@ Kerja atau dari notifikasi blok Kerja pagi dan EOD.
    gabungan, tanpa tombol untuk break. Tap membuka app.
 3. **Tentang**: bagian baru "Pengingat kerja" di antara Notifikasi dan Alarm, berisi dua baris dengan `Switch`:
    "Minum air" (keterangan "Setiap 60 menit di jam kerja") dan "Break" (keterangan "Setiap 90 menit di jam kerja").
+   Di bawah "Minum air" (hanya tampil kalau menyala) satu baris `Switch` "Minum air berbunyi seperti alarm"
+   (keterangan bodySmall: bunyi dan getar sampai menekan Sudah minum, berhenti sendiri setelah 2 menit, nada mengikuti
+   pengaturan Alarm). Tanpa nilai desain baru.
+   **Layar alarm untuk pengingat minum:** pola Layar alarm (tahap 18) yang sama, label "Pengingat minum", judul
+   "Waktunya minum" atau "Break + minum", `TonalButton` "Sudah minum" (utama) dan `TextButton` "Matikan"; tanpa Tunda.
 4. **Editor blok** (Atur jadwal): satu baris `Switch` "Pengingat air dan break" di bawah pilihan hari aktif, dengan
    keterangan bodySmall "Dihitung dari jam mulai blok ini." Kartu blok di daftar menambah teks "Air dan break"
    (bodySmall) bila menyala.

@@ -838,6 +838,19 @@ yang mulai 12.27 dengan pengingat air tetap mengumumkan blok dan pengingat airny
 sekali per 9 menit per app) tidak masalah untuk pengingat per 60 menit. Belum diuji: Doze nyata semalaman dan
 dampak baterainya.
 
+**Tambahan 16 Oktober 2026: pengingat minum berbunyi seperti alarm (opsional).** Permintaan pemilik: pengingat minum
+yang lebih agresif (getar dan bunyi alarm) dan bisa diatur. Keputusan: saklar baru `WorkReminderSettings.waterAlarm`
+(awalnya mati, hanya lokal, tidak ikut snapshot) di Setelan di bawah "Minum air". Saat nyala, `notifyWorkReminder`
+memanggil `ringWaterAlarm` yang menyalakan `AlarmService` dengan `EXTRA_WATER`: nada alarm yang sama dengan alarm blok,
+volume naik 10 detik, berhenti sendiri 2 menit, tombol "Sudah minum" (`ACTION_DRANK`: tambah gelas, tutup notifikasi,
+diam) dan "Matikan", tanpa Tunda; layar alarm penuh punya varian "Pengingat minum". Pengingat jatuh ke notifikasi senyap
+lama kalau alarm lain sedang berbunyi atau sistem menolak layanan latar belakang (`IllegalStateException`, termasuk
+`ForegroundServiceStartNotAllowedException`). Jadwal, gabung air+break, dan aturan diabaikan tiga kali tidak berubah.
+Manifest dan izin tidak berubah. Compile dan seluruh tes unit lulus. **Belum diuji di HP:** terutama apakah layanan
+foreground boleh dimulai dari alarm tak presisi (`setAndAllowWhileIdle`) di Android 12+ tanpa izin alarm presisi; kalau
+ditolak, pengingat diam-diam jatuh ke notifikasi senyap. Tidak ada tes unit untuk jalur ini (bergantung pada layanan dan
+`AlarmManager`).
+
 ### Tahap 21: Kesehatan (selesai dikoding dan diuji di emulator, 9 Oktober 2026)
 
 **Keputusan (5 Oktober 2026).** Aturan fitur di `docs/rancangan.md` bagian Kesehatan.

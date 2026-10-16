@@ -18,6 +18,8 @@ import android.os.Vibrator
 import androidx.core.app.NotificationCompat
 import com.roziqrizal.habitflow.R
 import com.roziqrizal.habitflow.data.AlarmSettings
+import com.roziqrizal.habitflow.data.DrinkRepository
+import com.roziqrizal.habitflow.data.HabitDatabase
 import com.roziqrizal.habitflow.ui.formatMinute
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -25,10 +27,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import java.time.LocalTime
 
 /** Keadaan alarm yang sedang berbunyi, diamati [AlarmActivity] supaya layarnya menutup saat alarm selesai. */
-data class RingingAlarm(val name: String, val snoozeCount: Int)
+data class RingingAlarm(val name: String, val snoozeCount: Int, val water: Boolean = false)
 
 /**
  * Membunyikan alarm: suara dengan `USAGE_ALARM` (ikut volume alarm dan menembus mode senyap) yang
@@ -40,10 +43,11 @@ class AlarmService : Service() {
     private val handler = Handler(Looper.getMainLooper())
     private var player: MediaPlayer? = null
     private var startedAt = 0L
+    private var rampMillis = RAMP_MILLIS
 
     private val ramp = object : Runnable {
         override fun run() {
-            val fraction = ((System.currentTimeMillis() - startedAt).toFloat() / RAMP_MILLIS).coerceIn(0f, 1f)
+            val fraction = ((System.currentTimeMillis() - startedAt).toFloat() / rampMillis).coerceIn(0f, 1f)
             val volume = START_VOLUME + (1f - START_VOLUME) * fraction
             player?.setVolume(volume, volume)
             if (fraction < 1f) handler.postDelayed(this, 1_000)
@@ -56,9 +60,10 @@ class AlarmService : Service() {
         when (intent?.action) {
             ACTION_SNOOZE -> snooze()
             ACTION_STOP -> finish()
+            ACTION_DRANK -> drank()
             else -> {
                 val name = intent?.getStringExtra(EXTRA_NAME).orEmpty().ifBlank { "Alarm" }
-                ring(name, intent?.getIntExtra(EXTRA_SNOOZE_COUNT, 0) ?: 0)
+                ring(name, intent?.getIntExtra(EXTRA_SNOOZE_COUNT, 0) ?: 0, intent?.getBooleanExtra(EXTRA_WATER, false) ?: false)
             }
         }
         return START_NOT_STICKY
@@ -70,14 +75,15 @@ class AlarmService : Service() {
         super.onDestroy()
     }
 
-    private fun ring(name: String, snoozeCount: Int) {
+    private fun ring(name: String, snoozeCount: Int, water: Boolean) {
         // Bunyi kedua saat sudah ada alarm yang berbunyi menggantikan yang lama, bukan menumpuk.
         releasePlayer()
         handler.removeCallbacksAndMessages(null)
-        current.value = RingingAlarm(name, snoozeCount)
+        current.value = RingingAlarm(name, snoozeCount, water)
+        rampMillis = if (water) WATER_RAMP_MILLIS else RAMP_MILLIS
 
         createChannel()
-        val notification = buildNotification(name, snoozeCount)
+        val notification = buildNotification(name, snoozeCount, water)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK)
         } else {
@@ -88,7 +94,17 @@ class AlarmService : Service() {
         player = createPlayer()
         handler.post(ramp)
         vibrate()
-        handler.postDelayed({ finish() }, AUTO_STOP_MILLIS)
+        handler.postDelayed({ finish() }, if (water) WATER_AUTO_STOP_MILLIS else AUTO_STOP_MILLIS)
+    }
+
+    /** Tombol "Sudah minum" di alarm minum: tambah satu gelas hari ini, tutup notifikasi pengingat, lalu matikan alarm. */
+    private fun drank() {
+        val app = applicationContext
+        CoroutineScope(Dispatchers.Default).launch {
+            DrinkRepository(HabitDatabase.get(app)).addGlass(LocalDate.now())
+            ScheduleNotifier.cancelWorkReminder(app)
+        }
+        finish()
     }
 
     private fun createPlayer(): MediaPlayer? {
@@ -165,7 +181,7 @@ class AlarmService : Service() {
         getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
     }
 
-    private fun buildNotification(name: String, snoozeCount: Int): android.app.Notification {
+    private fun buildNotification(name: String, snoozeCount: Int, water: Boolean): android.app.Notification {
         val now = LocalTime.now()
         val fullScreen = PendingIntent.getActivity(
             this, 0, Intent(this, AlarmActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_USER_ACTION),
@@ -174,18 +190,20 @@ class AlarmService : Service() {
         val builder = NotificationCompat.Builder(this, CHANNEL_ALARM)
             .setSmallIcon(R.drawable.ic_launcher_monochrome)
             .setContentTitle(name)
-            .setContentText("Alarm ${formatMinute(now.hour * 60 + now.minute)}")
+            .setContentText((if (water) "Pengingat minum " else "Alarm ") + formatMinute(now.hour * 60 + now.minute))
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setOngoing(true)
             // Isi alarm (nama dan jam) tidak sensitif, dan tanpa layar penuh notifikasi inilah satu-satunya yang terlihat di layar kunci.
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setContentIntent(fullScreen)
-            .addAction(0, "Matikan", servicePending(ACTION_STOP, 1))
+        // Alarm minum: "Sudah minum" lebih dulu, tanpa tunda (pengingat berikutnya datang sendiri satu jam lagi).
+        if (water) builder.addAction(0, "Sudah minum", servicePending(ACTION_DRANK, 3))
+        builder.addAction(0, "Matikan", servicePending(ACTION_STOP, 1))
         // Layar alarm penuh hanya kalau diizinkan (lihat FullScreenAlarmAccess). Tanpa izin, alarm tetap berbunyi dan
         // muncul sebagai notifikasi heads-up dengan tombol Matikan dan Tunda; mengetuknya membuka layar alarm.
         if (FullScreenAlarmAccess.isGranted(this)) builder.setFullScreenIntent(fullScreen, true)
-        if (snoozeCount < MAX_SNOOZES) builder.addAction(0, "Tunda $SNOOZE_MINUTES menit", servicePending(ACTION_SNOOZE, 2))
+        if (!water && snoozeCount < MAX_SNOOZES) builder.addAction(0, "Tunda $SNOOZE_MINUTES menit", servicePending(ACTION_SNOOZE, 2))
         return builder.build()
     }
 
@@ -197,13 +215,18 @@ class AlarmService : Service() {
     companion object {
         const val ACTION_STOP = "com.roziqrizal.habitflow.ALARM_STOP"
         const val ACTION_SNOOZE = "com.roziqrizal.habitflow.ALARM_SNOOZE"
+        const val ACTION_DRANK = "com.roziqrizal.habitflow.ALARM_DRANK"
         const val EXTRA_NAME = "alarmName"
         const val EXTRA_SNOOZE_COUNT = "snoozeCount"
+        const val EXTRA_WATER = "alarmWater"
 
         const val MAX_SNOOZES = 2
         const val SNOOZE_MINUTES = 5
         private const val AUTO_STOP_MILLIS = 10 * 60_000L
         private const val RAMP_MILLIS = 30_000L
+        // Alarm minum datang tiap jam: lebih singkat dan volumenya naik lebih cepat daripada alarm bangun.
+        private const val WATER_AUTO_STOP_MILLIS = 2 * 60_000L
+        private const val WATER_RAMP_MILLIS = 10_000L
         private const val START_VOLUME = 0.05f
 
         private const val CHANNEL_ALARM = "alarm"

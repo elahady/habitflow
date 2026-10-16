@@ -107,6 +107,8 @@ fun SettingsScreen(
     onPersistentNotificationChange: (Boolean) -> Unit,
     waterReminders: Boolean,
     onWaterRemindersChange: (Boolean) -> Unit,
+    waterAlarm: Boolean,
+    onWaterAlarmChange: (Boolean) -> Unit,
     breakReminders: Boolean,
     onBreakRemindersChange: (Boolean) -> Unit,
     mealReminder: Boolean,
@@ -183,6 +185,16 @@ fun SettingsScreen(
                 checked = waterReminders,
                 onCheckedChange = onWaterRemindersChange,
             )
+            if (waterReminders) {
+                SettingsDivider()
+                SwitchRow(
+                    title = "Minum air berbunyi seperti alarm",
+                    description = "Bunyi dan getar sampai Anda menekan Sudah minum. Berhenti sendiri setelah 2 menit. " +
+                        "Nada mengikuti pengaturan Alarm.",
+                    checked = waterAlarm,
+                    onCheckedChange = onWaterAlarmChange,
+                )
+            }
             SettingsDivider()
             SwitchRow(
                 title = "Istirahat",

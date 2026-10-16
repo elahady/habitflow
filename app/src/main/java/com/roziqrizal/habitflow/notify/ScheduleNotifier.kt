@@ -402,6 +402,7 @@ object ScheduleNotifier {
             WorkReminderKind.BREAK -> "Break sebentar" to "Berdiri dan regangkan badan."
             WorkReminderKind.BREAK_AND_WATER -> "Break + minum" to "$glasses dari $GLASSES_TARGET gelas hari ini"
         }
+        if (kind.includesWater && ringWaterAlarm(context, title)) return
         val builder = NotificationCompat.Builder(context, CHANNEL_INFO)
             .setSmallIcon(R.drawable.ic_launcher_monochrome)
             .setContentTitle(title)
@@ -418,6 +419,26 @@ object ScheduleNotifier {
             builder.addAction(0, "Sudah minum", pending)
         }
         NotificationManagerCompat.from(context).notify(WORK_REMINDER_ID, builder.build())
+    }
+
+    /**
+     * Pengingat minum sebagai alarm (bunyi dan getar lewat [AlarmService]) kalau pengguna menyalakannya. False berarti tidak
+     * dibunyikan dan pemanggil tetap mengirim notifikasi senyap: saat alarm lain (misalnya Subuh) sedang berbunyi supaya tidak
+     * ditimpa, atau saat sistem menolak memulai layanan dari latar belakang.
+     */
+    private fun ringWaterAlarm(context: Context, title: String): Boolean {
+        if (!WorkReminderSettings(context).waterAlarm.value) return false
+        if (AlarmService.ringing.value != null) return false
+        val service = Intent(context, AlarmService::class.java)
+            .putExtra(AlarmService.EXTRA_NAME, title)
+            .putExtra(AlarmService.EXTRA_WATER, true)
+        return try {
+            // Notifikasi alarm memakai id yang sama dengan pengingat senyap ([WORK_REMINDER_ID]), jadi menggantikannya.
+            ContextCompat.startForegroundService(context, service)
+            true
+        } catch (e: IllegalStateException) {
+            false
+        }
     }
 
     private fun readWaterState(prefs: SharedPreferences) = WaterReminderState(

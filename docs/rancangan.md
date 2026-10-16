@@ -114,6 +114,14 @@ divisualisasikan seperti kontribusi GitHub.
 - **Diabaikan.** Pengingat air yang tidak dijawab (tidak ada gelas bertambah sampai pengingat air berikutnya)
   tiga kali berturut-turut di satu blok menghentikan pengingat air sampai blok berikutnya. Break tetap jalan.
 - Pengingat air dan break masing-masing bisa dimatikan di Tentang. Awalnya nyala.
+- **Pengingat minum berbunyi seperti alarm (opsional, 16 Oktober 2026).** Saklar "Minum air berbunyi seperti alarm"
+  di Setelan (hanya tampil kalau Minum air nyala, awalnya **mati**, hanya di HP ini dan tidak ikut snapshot). Kalau
+  nyala, pengingat yang memuat air ("Waktunya minum" dan "Break + minum") berbunyi lewat mesin alarm: nada alarm HP
+  (pilihan nada di bagian Alarm), getar, volume naik dalam 10 detik, tombol **Sudah minum** (tambah satu gelas, lalu
+  diam) dan **Matikan**, tanpa Tunda. Berhenti sendiri setelah 2 menit; pengingat berikutnya datang sendiri satu jam
+  lagi, dan aturan "diabaikan tiga kali" tetap berlaku. Break saja ("Break sebentar") tetap senyap. Kalau alarm lain
+  (misalnya Subuh) sedang berbunyi, atau sistem menolak memulai layanan dari latar belakang, pengingat jatuh ke
+  notifikasi senyap seperti biasa. Izin dan manifest tidak berubah.
 - Teks dan nada tenang, tanpa menyalahkan: "Waktunya minum" dengan "3 dari 8 gelas hari ini", dan "Break sebentar"
   dengan "Berdiri dan regangkan badan."
 - Pengingat air dan break tidak memengaruhi level hari, selain lewat centang otomatis habit air.

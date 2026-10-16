@@ -67,7 +67,7 @@ class AlarmActivity : ComponentActivity() {
                         if (AlarmService.ringing.value == null) finish()
                     }
                 }
-                ringing?.let { AlarmScreen(it, onStop = ::stopAlarm, onSnooze = ::snoozeAlarm) }
+                ringing?.let { AlarmScreen(it, onStop = ::stopAlarm, onSnooze = ::snoozeAlarm, onDrank = ::drankGlass) }
             }
         }
     }
@@ -75,10 +75,12 @@ class AlarmActivity : ComponentActivity() {
     private fun stopAlarm() = startService(AlarmService.intentFor(this, AlarmService.ACTION_STOP))
 
     private fun snoozeAlarm() = startService(AlarmService.intentFor(this, AlarmService.ACTION_SNOOZE))
+
+    private fun drankGlass() = startService(AlarmService.intentFor(this, AlarmService.ACTION_DRANK))
 }
 
 @Composable
-private fun AlarmScreen(alarm: RingingAlarm, onStop: () -> Unit, onSnooze: () -> Unit) {
+private fun AlarmScreen(alarm: RingingAlarm, onStop: () -> Unit, onSnooze: () -> Unit, onDrank: () -> Unit) {
     val now = LocalTime.now()
     Column(
         modifier = Modifier
@@ -88,13 +90,18 @@ private fun AlarmScreen(alarm: RingingAlarm, onStop: () -> Unit, onSnooze: () ->
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text("Alarm", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(if (alarm.water) "Pengingat minum" else "Alarm", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(
             formatMinute(now.hour * 60 + now.minute),
             style = MaterialTheme.typography.displayMedium.copy(fontFeatureSettings = "tnum"),
         )
         Text(alarm.name, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 32.dp))
 
+        if (alarm.water) {
+            TonalButton(text = "Sudah minum", onClick = onDrank, modifier = Modifier.fillMaxWidth().height(56.dp))
+            TextButton(onClick = onStop, modifier = Modifier.padding(top = 8.dp)) { Text("Matikan") }
+            return@Column
+        }
         TonalButton(text = "Matikan", onClick = onStop, modifier = Modifier.fillMaxWidth().height(56.dp))
         if (alarm.snoozeCount < AlarmService.MAX_SNOOZES) {
             TextButton(onClick = onSnooze, modifier = Modifier.padding(top = 8.dp)) {

@@ -252,6 +252,8 @@ class MainActivity : ComponentActivity() {
                         onPersistentNotificationChange = notificationSettings::setPersistent,
                         waterReminders = workReminderSettings.water.collectAsState().value,
                         onWaterRemindersChange = workReminderSettings::setWater,
+                        waterAlarm = workReminderSettings.waterAlarm.collectAsState().value,
+                        onWaterAlarmChange = workReminderSettings::setWaterAlarm,
                         breakReminders = workReminderSettings.breaks.collectAsState().value,
                         onBreakRemindersChange = workReminderSettings::setBreaks,
                         mealReminder = graph.mealSettings.reminder.collectAsState().value,
