@@ -2478,7 +2478,11 @@ kontrak `POST /api/v1/daily-briefs` dan `GET /api/v1/ping`. Keputusan di dalamny
 - **Token:** dari `HABITFLOW_TOKEN` atau `~/.habitflow/claude-token`, dibuat sekali oleh pemilik lewat `POST /api/v1/auth/login`
   dengan `device_name` `claude-morning-routine`. Skill tidak pernah memegang kata sandi. Token itu setara akses penuh ke data
   akun, dan mati kalau "Keluar dari semua perangkat" atau ganti kata sandi, jadi skill berhenti dengan pesan jelas saat 401.
-  Alternatif yang lebih sempit (token khusus tulis ringkasan saja) belum ada; layak dipertimbangkan sebelum dijadwalkan di awan.
+  **Diganti di langkah 5 (16 Oktober 2026, kode dan tes selesai, belum di-deploy):** token terbatas. Kolom `user_tokens.scope` (kosong = akses penuh, semua token lama);
+  cakupan `daily-briefs` hanya boleh `GET /ping` dan `POST /daily-briefs`, rute lain dibalas **403** (daftar putih di `UserToken::permits`, jadi rute baru otomatis tertutup,
+  dan cakupan yang tidak dikenal menolak semuanya). Diterbitkan oleh `php artisan habitflow:issue-token <email> [--replace]` di server, tanpa kata sandi (akun Google tidak punya,
+  dan email produksi belum terkirim, jadi jalur `auth/login` buntu): hanya token yang dicetak ke stdout supaya bisa dialihkan ke `~/.habitflow/claude-token` tanpa tampil di layar.
+  `--replace` hanya mencabut token bernama sama **dan** bercakupan sama, token login biasa tidak tersentuh. 11 tes baru (`ScopedTokenTest`, `IssueScopedTokenCommandTest`), 322 tes server lulus.
 - **Hanya `email_digest` yang dikirim**, `meeting_note` tidak (butir "Meeting & briefing" di bawah tetap belum diputuskan).
 - **Gmail tidak terhubung atau token tidak ada: tidak menulis apa pun**, supaya ringkasan benar sebelumnya tidak tertimpa "kosong".
 - Kode verifikasi, tautan reset, dan data kartu/rekening dari email tidak disalin ke ringkasan, karena disimpan di server dan terbaca di web.

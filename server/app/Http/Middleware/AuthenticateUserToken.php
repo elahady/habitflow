@@ -39,7 +39,11 @@ class AuthenticateUserToken
             return response()->json(['message' => 'Token tidak sah.'], 401);
         }
 
-        if (! $token->last_used_at || $token->last_used_at->lt(now()->subMinute())) {
+        if (! $token->permits($request)) {
+            return response()->json(['message' => 'Token ini tidak boleh mengakses ini.'], 403);
+        }
+
+        if (! $token->last_used_at ||$token->last_used_at->lt(now()->subMinute())) {
             $token->forceFill(['last_used_at' => now()])->save();
         }
 

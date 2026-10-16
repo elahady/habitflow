@@ -28,17 +28,17 @@ Dokumen rancangan: `docs/concept.md`, bagian "Tahap 32".
 
 ### Membuat token (sekali saja, oleh user, bukan oleh skill)
 
-Token sesi dibuat dengan login biasa dan disimpan sendiri oleh user. Skill ini **tidak pernah meminta, menerima, atau menyimpan kata sandi** user.
+Pakai **token terbatas** (cakupan `daily-briefs`): hanya boleh `GET /api/v1/ping` dan `POST /api/v1/daily-briefs`, jadi kalau bocor ia tidak bisa membaca atau mengubah data lain. Token ini diterbitkan di server oleh pemilik, tanpa kata sandi, jadi cocok untuk akun yang daftar lewat Google. Skill ini **tidak pernah meminta, menerima, atau menyimpan kata sandi** user.
+
+Di VM (host Hyper-V; detail akses di `server/DEPLOY.md`), alihkan keluarannya langsung ke berkas supaya token tidak pernah tampil di layar:
 
 ```bash
-curl -s -X POST "$HABITFLOW_URL/api/v1/auth/login" \
-  -H "Content-Type: application/json" \
-  -d '{"email":"<email>","password":"<kata sandi>","device_name":"claude-morning-routine"}'
+ssh elahady@<ip-vm> "docker exec habitflow php artisan habitflow:issue-token <email> --replace" > ~/.habitflow/claude-token
 ```
 
-Balasannya `{"token": "...", "account": {...}}`. Simpan nilai `token` ke `~/.habitflow/claude-token` atau ke rahasia/variabel lingkungan routine `/schedule`. Akun yang daftar lewat Google belum punya kata sandi: buat dulu lewat "lupa kata sandi".
+Hanya token yang masuk stdout (pesan lain ke stderr). `--replace` mencabut token lama bernama `claude-morning-routine` dan membuat yang baru; tanpa `--replace`, perintah menolak kalau token itu sudah ada. Simpan isi berkas ke rahasia/variabel lingkungan routine `/schedule` kalau dijadwalkan di awan.
 
-Token ini setara akses penuh ke data Habitflow user. **Jangan** menampilkannya di chat, laporan, log, atau berkas di repo. Token berhenti berlaku kalau user menekan "Keluar dari semua perangkat" atau mengganti kata sandi; buat ulang dengan perintah di atas.
+**Jangan** menampilkan token di chat, laporan, log, atau berkas di repo. Token terbatas yang dipakai untuk rute lain dibalas `403` (bukan `401`): itu berarti skill salah dipakai, bukan token mati. Token berhenti berlaku (`401`) kalau user menekan "Keluar dari semua perangkat" atau menjalankan `habitflow:revoke-all-sessions`; terbitkan ulang dengan perintah di atas. Token biasa dari `POST /api/v1/auth/login` (akses penuh) masih diterima skill, tapi **jangan** dipakai kalau ada pilihan token terbatas.
 
 ## Alur kerja
 
@@ -95,6 +95,7 @@ Token ini setara akses penuh ke data Habitflow user. **Jangan** menampilkannya d
     - `201`: baris baru dibuat untuk hari ini.
     - `200`: ringkasan hari ini ditimpa (skill dijalankan ulang). Normal, tidak ada baris dobel.
     - `401`: token dicabut di tengah jalan; sama seperti langkah 2.
+    - `403`: token terbatas dengan cakupan yang tidak mengizinkan permintaan ini. Jangan dicoba ulang; laporkan.
     - `422`: validasi gagal. Tampilkan pesan dari server. Kalau sebabnya kelebihan panjang, perpendek ke 15 baris pertama, kirim ulang sekali, dan beri tahu user. Selain itu jangan mengubah isi diam-diam.
     - `429`: terlalu banyak permintaan. Tunggu sesuai header `Retry-After` lalu coba satu kali lagi.
     - `5xx` atau gagal tersambung: jangan mengulang terus-menerus. Laporkan, dan tampilkan ringkasan di chat sebagai cadangan.
