@@ -42,7 +42,7 @@ IP VM berubah-ubah dan hanya terjangkau dari PC host.
   `docker compose up -d --force-recreate` (ini sekaligus mengulang worker antrean).
 - [ ] **5. Migrasi:** `docker exec habitflow php artisan migrate --force`. Harus menjalankan tepat 2 migrasi di atas tanpa galat.
 - [ ] **6. Cek cepat tanpa token.** Rute ada kalau jawabannya 401, bukan 404 atau 405:
-  - `curl -s -o /dev/null -w "%{http_code}" https://habitflow.roziqrizal.com/api/v1/ping` harus `200`.
+  - `curl -s -o /dev/null -w "%{http_code}" https://habitflow.roziqrizal.com/api/v1/ping` harus `401` (sejak 31E `ping` butuh token; 200 hanya dengan token).
   - `curl -s -o /dev/null -w "%{http_code}" -X PUT https://habitflow.roziqrizal.com/api/v1/days-off` harus `401`.
   - Hal yang sama untuk `-X PUT .../api/v1/schedule-blocks`: harus `401`.
 - [ ] **7. Cek web setelah login.** Kartu di beranda berjudul "Jadwal hari ini". Sebelum HP mengirim, isinya "Belum ada jadwal di server…" (normal).
