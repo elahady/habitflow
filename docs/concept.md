@@ -2498,7 +2498,11 @@ kontrak `POST /api/v1/daily-briefs` dan `GET /api/v1/ping`. Keputusan di dalamny
     **Lingkungan: `BornAsTheWinner` (jembatan lokal di PC pemilik), bukan cloud.** Dipilih pemilik supaya token terbatas dan skill terbaca dari PC ini (`~/.habitflow/claude-token`, `~/.claude/skills/`),
     tanpa menaruh token di konfigurasi routine. **Akibat yang perlu diketahui:** kalau PC mati atau aplikasi Claude tidak terbuka pukul 07.00, hari itu terlewat (tidak menyusul), dan kartu tetap
     menampilkan ringkasan terakhir dengan tulisan "Belum ada ringkasan hari ini". Prompt-nya berdiri sendiri dan memuat aturan berhenti (token atau Gmail tidak ada: tidak menulis apa pun).
-    Server menggeser jam jalan beberapa menit (`next_run_at` pertama 19 Oktober 2026 00.06 UTC). **Belum pernah berjalan terjadwal**; periksa dengan `list_runs`/`get_run_log` setelah Senin 19 Oktober 2026.
+    Server menggeser jam jalan beberapa menit (`next_run_at` pertama 19 Oktober 2026 00.06 UTC). **Belum pernah berjalan *terjadwal*; periksa dengan `list_runs`/`get_run_log` setelah Senin 19 Oktober 2026.**
+    **Uji manual (`run`, 16 Oktober 2026, 08.47 WIB): berhasil**, sesi `cse_018XakQ6cNHzFfY3EWPbyXQw`, 8 giliran, 39 detik, tanpa galat. Routine memang jalan di PC ini (skill terbaca dari
+    `C:\Users\roziq\.claude\skills\`, token dari `~/.habitflow/claude-token`, tanpa menampilkannya), ping 200, Gmail dibaca saja, payload dihapus, `POST /daily-briefs` dibalas **200** (menimpa
+    ringkasan hari itu, tidak ada baris dobel). Ringkasan tidak menyalin nomor kartu atau nomor pesanan. Cacat kecil: baris pertama menulis "perkiraan" dua kali ("perkiraan 201 email ... (perkiraan Gmail;
+    ...)") karena prompt routine dan SKILL.md sama-sama menyuruh menandai angka sebagai perkiraan; tidak merusak apa pun.
     Kalau token dicabut (`habitflow:revoke-all-sessions`, "Keluar dari semua perangkat"), terbitkan ulang dengan `habitflow:issue-token ... --replace` ke berkas yang sama; routine tidak perlu diubah.
   - **Temuan di VM, belum ditangani:** `~/apps/habitflow/` berisi ±2.400 berkas **sistem Windows** (isi `C:\Windows\System32`, ±950 MB, bertanggal 10 Oktober 2026), hasil arsip deploy lama
     yang dibuat dari direktori yang salah. Tidak merusak fungsi, tapi memboroskan disk (VM tinggal ±5,9 GB, 78% terpakai) dan membengkakkan konteks `docker compose build` serta arsip
