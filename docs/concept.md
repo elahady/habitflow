@@ -1743,7 +1743,7 @@ blok. Yang belum ada cuma versi web/server-nya.
   blok awal untuk user baru di server juga belum ada; sampai langkah 4 jalan, kartu di web kosong ("Belum ada jadwal di
   server").
 
-### Tahap 30: Fokus Kesehatan Harian (langkah 1-2 selesai di Android 11 Oktober 2026; langkah 3 server, 4 Android, dan 5 web selesai di kode 16 Oktober 2026, belum di-deploy; langkah 6 verifikasi di HP belum)
+### Tahap 30: Fokus Kesehatan Harian (langkah 1-5 selesai dan di-deploy 16 Oktober 2026; langkah 6 verifikasi di HP sebagian: fokus, grafik, dan tema gelap lulus; catat berat dan tensi baru belum dicoba)
 
 Aturan fitur di `docs/rancangan.md` bagian Fokus kesehatan harian. Mockup web dan mobile:
 https://claude.ai/artifact/TWJ8Uus2hKtQQa81wKujG5
@@ -1827,7 +1827,11 @@ menampilkan angka. Android menampilkannya di dashboard Hari ini, web di `/dashbo
 6. **Verifikasi di HP fisik** dan catat hasilnya di sini. **Persiapan selesai 16 Oktober 2026:** server langkah 3 dan web langkah 5 **di-deploy ke produksi** (cadangan
    `habitflow-pra-tahap30-20261016-053155.sql`, `kode-pra-tahap30-...tar.gz`, image `habitflow:pra-tahap30`; migrasi `create_health_tables` lulus, batch 13; arsip deploy 280 KB tanpa .dll/.exe; tabel
    baru kosong; curl: `PUT /health` tanpa token 401, token terbatas 403, `ping` 200, beranda 302). APK debug Android langkah 4 ada di Drive: `01-Personal/habitflow-debug-2026-10-16-c.apk`
-   (dipasang sebagai update, jangan uninstall). **Belum dicoba di HP.** Yang diperiksa: (a) buka layar Hari ini lalu sinkron, cek web menampilkan fokus dan teks yang sama dengan HP; (b) catat berat lalu
+   (dipasang sebagai update, jangan uninstall).
+   **Hasil uji di HP pemilik (16 Oktober 2026, sebagian):** ✅ **fokus di web sama dengan di HP**; ✅ grafik normal; ✅ tema gelap aman (menurut laporan pemilik). Dicek di produksi (hanya baca) setelah HP
+   menyinkron: `health_focus` terisi (zona Asia/Jakarta, tinggi 165, target berat 68,1, `steps_target` 8.000, aturan `LOW_STEPS`, dihitung 12.45 WIB), `step_days` 7 hari terisi, `weight_entries` 1 baris (11 Oktober),
+   tanpa duplikat. ❌ **Belum teruji:** mencatat berat dan tensi **baru** di HP lalu melihatnya di web (tensi masih 0 baris di server), dan memastikan catatan ganda tidak menggandakan di data nyata
+   (sudah ada tes otomatis di server dan Android). Langkah 6 ditutup setelah itu. Yang semula diperiksa: (a) buka layar Hari ini lalu sinkron, cek web menampilkan fokus dan teks yang sama dengan HP; (b) catat berat lalu
    tensi di HP, cek muncul di web dan grafik bergerak; (c) langkah 7 hari dan target; (d) catat berat dua kali di menit yang sama dan pastikan tidak menggandakan; (e) tiap aturan fokus yang bisa dipancing.
 
 **Selesai jika:**
@@ -2477,8 +2481,8 @@ sinkron catatan EOD dua arah HP dan web termasuk penggabungan saat bentrok (sete
 2. ~~Tahap 32 langkah 5~~ selesai 16 Oktober 2026: token terbatas `daily-briefs`, skill dijalankan sungguhan, routine 07.00 WIB Senin-Jumat dibuat. Sisa: pastikan ia **berjalan terjadwal** (jalan pertama
    Senin 19 Oktober 2026; PC harus menyala), dan pengingat pemeriksaannya hanya hidup selama sesi Claude Code itu terbuka.
 3. Angka "X dari Y selesai" per hari di riwayat web (usulan kolom `eod_summary` di `work_days`, diisi HP saat EOD selesai; web kini hanya bisa menulis "N selesai").
-4. Sisa tahap 33: ~~bagian Kesehatan di Beranda~~ (selesai di kode 16 Oktober 2026 lewat tahap 30 langkah 5, **belum di-deploy**), judul dan gaya kartu "Jadwal sekarang", halaman Tugas Rumah (belum ada mockup web).
-   **Tahap 30 langkah 3-5 ada di kode tapi belum di-deploy dan belum dicoba di HP (langkah 6):** deploy server, pasang build Android baru, buka layar Hari ini, sinkron, lalu cek web.
+4. Sisa tahap 33: ~~bagian Kesehatan di Beranda~~ (selesai dan di-deploy 16 Oktober 2026 lewat tahap 30 langkah 5), judul dan gaya kartu "Jadwal sekarang", halaman Tugas Rumah (belum ada mockup web).
+   **Tahap 30 langkah 3-5 sudah di-deploy (16 Oktober 2026) dan sebagian dicoba di HP (langkah 6):** fokus, grafik, dan tema gelap lulus; tinggal mencatat berat dan tensi baru lalu melihatnya di web.
 5. Sisa tahap 31 yang menunggu pemilik: kunci unggah dan AAB ditandatangani, Google Sign-In produksi, DNS dan Resend untuk email, backup ke Cloudflare R2, kontak privasi, penguji (lihat
    `docs/uji-tertutup-dan-play-console.md`). **Email belum jalan:** `.env.production` di VM masih `MAIL_MAILER=log` dan `QUEUE_CONNECTION=sync`, jadi pendaftaran dengan email belum boleh dibuka.
    Login Google tidak terpengaruh.
