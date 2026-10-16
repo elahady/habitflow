@@ -1223,8 +1223,13 @@ rusak. Pesannya menyesatkan: `parseSingleTodo` memberi kode 200 padahal balasann
 tampil di HP. Tidak ada tes API sama sekali untuk to-do tim (cuma halaman web), jadi tidak ada yang menangkapnya. Perbaikan:
 server membalas `$todo->fresh('assignee')` (`done` false dan data penugasan ikut), dan Android memakai `optBoolean("done", false)`
 supaya tetap jalan terhadap server lama. Tes baru: `TeamTodoApiTest` (4 tes, server 404 lulus) dan satu tes di
-`TeamClientTest`. **Perbaikan Android ada di APK `-h` (cukup dipasang, server lama tidak jadi masalah). Perbaikan server
-belum di-deploy.** Tugas yang sudah terlanjur dibuat saat galat akan tampil setelah daftar dimuat ulang.
+`TeamClientTest`. **Perbaikan Android ada di APK `habitflow-debug.apk` di Drive (cukup dipasang, server lama tidak jadi masalah).
+Perbaikan server di-deploy ke produksi 16 Oktober 2026 (hanya `TeamTodoController`, tanpa migrasi):** cadangan kode
+`~/backups-habitflow/kode-pra-todo-tim-20261016-184538.tar.gz` dan tag image `habitflow:pra-todo-tim`; sidik jari SSH VM dicocokkan
+(IP VM masih `172.28.157.112`); arsip 331 KB tanpa .dll/.exe; kode di container berisi `fresh('assignee')`; `habitflow` healthy dan
+`habitflow-queue` jalan, tanpa galat di log, `migrate:status` tanpa yang tertunda; produksi: `POST`/`GET /teams/1/todos` tanpa token 401,
+`/login` 200, `/ping` 401. **Belum dicoba:** menambah tugas dari HP terhadap server baru dengan akun nyata (sengaja tidak membuat data
+uji di produksi). Tugas yang sudah terlanjur dibuat saat galat akan tampil setelah daftar dimuat ulang.
 
 | Pertanyaan | Keputusan |
 |---|---|
