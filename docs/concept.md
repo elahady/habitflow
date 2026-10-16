@@ -2429,12 +2429,13 @@ sinkron catatan EOD dua arah HP dan web termasuk penggabungan saat bentrok (sete
 **Ada di kode tapi belum pernah dijalankan di perangkat nyata (semuanya Android, belum dirilis):**
 1. Tema gelap dan lipatan "Selengkapnya" di kartu Ringkasan dari Claude, serta kartu dengan isi ringkasan sungguhan (menunggu skill dijalankan).
 2. Migrasi Room 10 ke 11 tetap **tanpa tes otomatis** (hanya diuji manual di satu HP); jangan dianggap terlindungi dari perubahan skema berikutnya.
-4. Skill `skills/habitflow-morning-routine/SKILL.md` sudah dijalankan sekali dari awal sampai akhir (16 Oktober 2026; server membalas 201). Kartu dengan isi nyata sudah tampil di HP. Jadwal otomatis 07.00 WIB Senin-Jumat sudah dibuat (lihat tahap 32 langkah 5) tapi belum pernah berjalan terjadwal; ia butuh PC menyala.
+3. Skill `skills/habitflow-morning-routine/SKILL.md` sudah dijalankan sekali dari awal sampai akhir (16 Oktober 2026; server membalas 201). Kartu dengan isi nyata sudah tampil di HP. Jadwal otomatis 07.00 WIB Senin-Jumat sudah dibuat (lihat tahap 32 langkah 5) tapi belum pernah berjalan terjadwal; ia butuh PC menyala.
 
 **Yang perlu dikerjakan berikutnya, urut yang disarankan:**
 1. ~~Pasang debug build ke HP dan uji~~ selesai 16 Oktober 2026 (hasil di tahap 33 3c dan tahap 32 langkah 4). Sisa dari uji itu: tema gelap dan lipatan "Selengkapnya" di HP,
    serta kartu dengan isi ringkasan sungguhan (menunggu langkah 2).
-2. Tahap 32 langkah 5 (opsional): token **khusus tulis ringkasan** (token sekarang setara akses penuh ke data akun), lalu jalankan skill sungguhan, lalu pasang `/schedule`.
+2. ~~Tahap 32 langkah 5~~ selesai 16 Oktober 2026: token terbatas `daily-briefs`, skill dijalankan sungguhan, routine 07.00 WIB Senin-Jumat dibuat. Sisa: pastikan ia **berjalan terjadwal** (jalan pertama
+   Senin 19 Oktober 2026; PC harus menyala), dan pengingat pemeriksaannya hanya hidup selama sesi Claude Code itu terbuka.
 3. Angka "X dari Y selesai" per hari di riwayat web (usulan kolom `eod_summary` di `work_days`, diisi HP saat EOD selesai; web kini hanya bisa menulis "N selesai").
 4. Sisa tahap 33: bagian Kesehatan di Beranda (menunggu tahap 30 langkah 3-6), judul dan gaya kartu "Jadwal sekarang", halaman Tugas Rumah (belum ada mockup web).
 5. Sisa tahap 31 yang menunggu pemilik: kunci unggah dan AAB ditandatangani, Google Sign-In produksi, DNS dan Resend untuk email, backup ke Cloudflare R2, kontak privasi, penguji (lihat
@@ -2454,11 +2455,12 @@ dan 07.00 WIB halaman menampilkan kemarin); tanggal habit dibuat di web = yang l
   Cara menemukan IP tanpa hak admin ada di `server/DEPLOY.md`.
 - PHP: `C:\xampp\php` (tes server: `php artisan test` di `server/`). Android: JDK 17 dan `C:/Android/Sdk` di `local.properties`; tes unit: `./gradlew.bat testDebugUnitTest --console=plain`,
   keluaran diarahkan ke berkas, jangan di-pipe (daemon Gradle menahan pipa). Python tidak terpasang di PC lama; Edge headless dipakai untuk screenshot.
-- Skill: salin `skills/habitflow-morning-routine/` ke `~/.claude/skills/`. Token skill belum dibuat (lihat `SKILL.md`).
+- Skill: salin `skills/habitflow-morning-routine/` ke `~/.claude/skills/`. Token terbatas diterbitkan di VM (`habitflow:issue-token <email> --replace`) dan disimpan di `~/.habitflow/claude-token`
+  (tidak ada di git; di PC baru terbitkan ulang, lihat `SKILL.md`). Routine `/schedule` jalan di PC yang menyimpan berkas itu.
 - Memori dan `~/.claude/CLAUDE.md` Claude Code ada di komputer, bukan di repo; semua yang penting sudah ada di dokumen ini.
 - Cadangan di VM: `~/backups-habitflow/` (dump database dan arsip kode sebelum tahap 32, 33 langkah 1, dan 33 langkah 3b) dan tag image `habitflow:pra-tahap32`, `pra-tahap33`, `pra-3b`.
 
-### Tahap 32: Rekap kerja otomatis dari Claude (langkah 1-4 selesai dan di-deploy 15 Oktober 2026; skill belum dijalankan sungguhan; langkah 5 belum)
+### Tahap 32: Rekap kerja otomatis dari Claude (langkah 1-5 selesai dan di-deploy; skill dijalankan sungguhan 16 Oktober 2026; routine 07.00 WIB dibuat, belum pernah berjalan terjadwal)
 
 **Status (15 Oktober 2026):** langkah 1 (server) selesai: migrasi `2026_10_15_100000_create_daily_briefs_table`
 (`user_id`, `date`, `email_digest`, `meeting_note`, unik per `user_id`+`date`), model `DailyBrief`, `DailyBriefController`,
