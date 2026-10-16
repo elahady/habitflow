@@ -1470,7 +1470,7 @@ pindah, baru dipertimbangkan apakah 19B dipensiunkan total.
 | To-do tim | `team_todos`, `teams`, `team_invites` | baru | **Selesai (web+API+Android) — tahap 26** |
 | Habit + to-do harian | `habits`, `habit_entries`, `todos` | 1-9 | **Selesai (web+API+Android)** — tahap 28 |
 | Jadwal harian & libur | `schedule_blocks`, `schedule_block_habits`, `days_off`, `holiday_cancellations` | 17, 22 | Sebagian: server `schedule_blocks`, API, cache waktu sholat, dan kartu web selesai (tahap 29 langkah 1-3); Android mengirim blok, waktu sholat, dan libur efektif (langkah 4 dan 5, kode dan tes 16 Oktober 2026, belum di-deploy dan belum dicoba di HP); tabel `holiday_cancellations` sengaja tidak dibuat (lihat langkah 5) |
-| Daily scrum/EOD | `work_days` | 19 | **Catatan EOD selesai dua arah (tahap 33 langkah 3a-3c: server, web, Android; di-deploy dan dicoba di HP 16 Oktober 2026)**. Sisa: angka "X dari Y selesai" per hari (usulan kolom `eod_summary`); rencana besok dan scrum belum dimigrasi |
+| Daily scrum/EOD | `work_days` | 19 | **Catatan EOD selesai dua arah (tahap 33 langkah 3a-3c: server, web, Android; di-deploy dan dicoba di HP 16 Oktober 2026)**. Angka "X dari Y selesai" per hari: kode dan tes 16 Oktober 2026, belum di-deploy (lihat tahap 33 "Sisa tahap 33"); rencana besok dan scrum belum dimigrasi |
 | Kesehatan (berat, tensi) | `weight_entries`, `blood_pressure_entries` | 21 | **Tahap 30: langkah 1-5 selesai dan di-deploy (satu arah, web hanya membaca); langkah 6 verifikasi di HP sebagian** (fokus, grafik, tema gelap lulus; catat berat/tensi baru belum dicoba). Beda dari pola penuh: input hanya di Android, tanpa deteksi konflik |
 | Asupan makan | `meals`, `drink_counts`, `habit_manual_marks` | 20, 23 | Belum dimulai |
 | Kalender & acara | `events`, `event_exceptions` | 22 | Belum dimulai |
@@ -2516,7 +2516,7 @@ sinkron catatan EOD dua arah HP dan web termasuk penggabungan saat bentrok (sete
 
 **Ada di kode tapi belum pernah dijalankan di perangkat nyata (semuanya Android, belum dirilis):**
 1. Tema gelap dan lipatan "Selengkapnya" di kartu Ringkasan dari Claude, serta kartu dengan isi ringkasan sungguhan (menunggu skill dijalankan).
-2. Migrasi Room 10 ke 11 tetap **tanpa tes otomatis** (hanya diuji manual di satu HP); jangan dianggap terlindungi dari perubahan skema berikutnya.
+2. Migrasi Room 10 ke 11 tetap **tanpa tes otomatis** (hanya diuji manual di satu HP), dan migrasi 11 ke 12 (angka EOD) belum diuji sama sekali di perangkat; jangan dianggap terlindungi dari perubahan skema berikutnya. Yang ada hanya pencocokan SQL migrasi dengan skema yang dibangkitkan Room (`HabitDatabase_Impl`).
 3. Skill `skills/habitflow-morning-routine/SKILL.md` sudah dijalankan sekali dari awal sampai akhir (16 Oktober 2026; server membalas 201). Kartu dengan isi nyata sudah tampil di HP. Jadwal otomatis 07.00 WIB Senin-Jumat sudah dibuat (lihat tahap 32 langkah 5) tapi belum pernah berjalan terjadwal; ia butuh PC menyala.
 
 **Yang perlu dikerjakan berikutnya, urut yang disarankan:**
@@ -2524,8 +2524,8 @@ sinkron catatan EOD dua arah HP dan web termasuk penggabungan saat bentrok (sete
    serta kartu dengan isi ringkasan sungguhan (menunggu langkah 2).
 2. ~~Tahap 32 langkah 5~~ selesai 16 Oktober 2026: token terbatas `daily-briefs`, skill dijalankan sungguhan, routine 07.00 WIB Senin-Jumat dibuat. Sisa: pastikan ia **berjalan terjadwal** (jalan pertama
    Senin 19 Oktober 2026; PC harus menyala), dan pengingat pemeriksaannya hanya hidup selama sesi Claude Code itu terbuka.
-3. Angka "X dari Y selesai" per hari di riwayat web (usulan kolom `eod_summary` di `work_days`, diisi HP saat EOD selesai; web kini hanya bisa menulis "N selesai").
-4. Sisa tahap 33: ~~bagian Kesehatan di Beranda~~ (selesai dan di-deploy 16 Oktober 2026 lewat tahap 30 langkah 5), judul dan gaya kartu "Jadwal sekarang", halaman Tugas Rumah (belum ada mockup web).
+3. ~~Angka "X dari Y selesai" per hari di riwayat web~~ selesai di kode dan tes 16 Oktober 2026 (kolom `eod_done_count` dan `eod_total_count` di `work_days`, diisi HP saat EOD selesai; Room 11 ke 12). Belum di-deploy dan belum dicoba di HP; hari-hari sebelumnya tetap "N selesai" karena tidak ada angkanya.
+4. Sisa tahap 33: ~~bagian Kesehatan di Beranda~~ (selesai dan di-deploy 16 Oktober 2026 lewat tahap 30 langkah 5), ~~judul dan gaya kartu jadwal~~ (selesai di kode 16 Oktober 2026), halaman Tugas Rumah (belum ada mockup web).
    **Tahap 30 langkah 3-5 sudah di-deploy (16 Oktober 2026) dan sebagian dicoba di HP (langkah 6):** fokus, grafik, dan tema gelap lulus; tinggal mencatat berat dan tensi baru lalu melihatnya di web.
 5. Sisa tahap 31 yang menunggu pemilik: kunci unggah dan AAB ditandatangani, Google Sign-In produksi, DNS dan Resend untuk email, backup ke Cloudflare R2, kontak privasi, penguji (lihat
    `docs/uji-tertutup-dan-play-console.md`). **Email belum jalan:** `.env.production` di VM masih `MAIL_MAILER=log` dan `QUEUE_CONNECTION=sync`, jadi pendaftaran dengan email belum boleh dibuka.
@@ -2735,7 +2735,7 @@ berikutnya tanpa disalin ulang. Jadi skill versi Habitflow seharusnya lebih ramp
 - Hubungan dengan tahap 31 (Login Wajib): `user-token` sudah ada sejak tahap 27 jadi kemungkinan tidak
   terpengaruh, tapi perlu dicek ulang setelah tahap 31 selesai.
 
-### Tahap 33: Web disamakan dengan mockup Design canvas (langkah 1-3 selesai dan di-deploy 15 Oktober 2026; Android 3c dicoba di HP 16 Oktober 2026 dan lulus; sisa: bagian Kesehatan menunggu tahap 30)
+### Tahap 33: Web disamakan dengan mockup Design canvas (langkah 1-3 selesai dan di-deploy 15 Oktober 2026; Android 3c dicoba di HP 16 Oktober 2026 dan lulus; sisa: kode selesai 16 Oktober 2026 (kartu jadwal dan angka EOD, belum di-deploy); halaman Tugas Rumah menunggu mockup)
 
 **Kenapa tahap ini ada.** Di sesi 11 Oktober 2026, setelah deploy tahap 29 langkah 1-3, pemilik menunjukkan
 bahwa beranda web (`https://habitflow.roziqrizal.com/`) tidak terlihat seperti mockup di
@@ -2850,7 +2850,7 @@ Ini beda paling besar — **bukan cuma soal gaya, tapi konsep halaman yang beda 
        Android (`FollowUpSections`), dipakai juga oleh Beranda.
      - **Tanggal lampau hanya menampilkan yang selesai pada hari itu** dan catatannya. Server tidak menyimpan daftar hari itu sebelum EOD memindahkan item (Lanjut besok
        mengubah `picked_date`, Pindah tanggal mengubah `date`), jadi angka "7 / 9 selesai" di mockup **tidak bisa direkonstruksi**; web menulis "N selesai" saja. Untuk angka
-       penuh, EOD di HP perlu menyimpan ringkasannya saat selesai (belum ada; usulan kolom `eod_summary` di `work_days`).
+       penuh, EOD di HP menyimpan angkanya saat selesai (`eod_done_count` dan `eod_total_count`, lihat "Sisa tahap 33" di bawah).
      - **Rencana besok** = follow-up dengan `picked_date` besok (sama dengan "Lanjut besok" di EOD Android). Centang dilepas membatalkan pilihan; "Tambah dari daftar"
        memilih follow-up (Inbox sekalian jadi Aktif tanpa tanggal). Hanya untuk hari ini. **Catatan EOD** disimpan di `work_days` dan memakai deteksi bentrok (timpa atau
        pakai yang terbaru) kalau HP mengubahnya lebih dulu. **Meeting & briefing: satu catatan per hari** (bukan per meeting seperti di mockup), disimpan di
@@ -2879,7 +2879,7 @@ Ini beda paling besar — **bukan cuma soal gaya, tapi konsep halaman yang beda 
        ditimpa. Server tidak menghapus hari, jadi tidak ada yang dibuang di HP.
      - **Keluar:** catatan EOD yang belum terkirim kini ikut dihitung di peringatan perubahan belum terkirim (`ChangeCounts.unsyncedWorkDays`).
      - 20 tes baru (`WorkDaySyncTest` 12, klien 8; `SignOutCoordinatorTest` disesuaikan), 593 tes unit lulus.
-     - **Belum ada** ringkasan EOD per hari (X dari Y selesai) untuk riwayat web; itu butuh kolom baru yang diisi saat EOD selesai dan masih usulan.
+     - Ringkasan EOD per hari (X dari Y selesai) dikerjakan di "Sisa tahap 33" di bawah.
      - **Hasil uji di HP pemilik (16 Oktober 2026, debug build dari commit `fdd67e7`, dipasang sebagai update di atas data lama):**
        ✅ terpasang sebagai update dan aplikasi terbuka tanpa crash (migrasi Room 10 ke 11 jalan); ✅ data lama (habit, riwayat, catatan EOD) utuh;
        ✅ catatan EOD yang ditulis di HP muncul di web (HP ke web). ❌ **web ke HP tidak muncul selama app tetap terbuka atau di latar**, dan bentrok dua sisi ikut tidak teruji.
@@ -2891,6 +2891,23 @@ Ini beda paling besar — **bukan cuma soal gaya, tapi konsep halaman yang beda 
        Di emulator, migrasi diuji dengan data uji tapi menunggu login (cadangan DB v10 ada di folder sementara, tidak di repo).
 4. **Kesehatan di beranda**: ini tahap 30 langkah 5, dikerjakan di jalurnya sendiri (langkah 3-4 server dan Android
    kirim data dulu sebelum web bisa menampilkan apa pun).
+
+5. **Sisa tahap 33 (16 Oktober 2026, kode dan tes; belum di-deploy dan belum dicoba di HP).**
+   - **Kartu jadwal:** judul "Jadwal hari ini" (mockup) dan gaya `hf-card`. Hanya tampilan, 1 tes disesuaikan.
+   - **Angka "X dari Y follow-up selesai" per hari.** Server tidak bisa merekonstruksinya, jadi HP menghitung saat EOD diselesaikan dan mengirimnya.
+     - **Server:** migrasi `add_eod_counts_to_work_days_table` (`eod_done_count`, `eod_total_count`, boleh null). `PUT /api/v1/work-days/{date}` menerimanya;
+       harus dikirim berpasangan dan selesai tidak boleh melebihi total (422 kalau tidak). Tanpa kuncinya, angka lama tidak disentuh. Riwayat rekap di web menulis
+       "7 dari 9 selesai" dan judul rekap tanggal lampau "7 dari 9 follow-up selesai" bila total > 0; tanpa angka (hari lama, atau total 0) tetap "N selesai".
+       6 tes baru; 394 tes server lulus.
+     - **Definisi angka (keputusan Claude, boleh diubah):** `eodCounts` (domain, tes murni) = selesai: yang sudah selesai lebih dulu hari itu + yang dipilih "Selesai" di layar EOD;
+       total: yang sudah selesai lebih dulu + semua yang ditinjau di layar EOD (bagian "Hari ini"). Jadi sama dengan rekap hari ini di web **kecuali** yang berstatus "Lewat tanggal":
+       layar EOD Android hanya meninjau bagian "Hari ini", jadi yang lewat tanggal tidak ikut dihitung di total. Dihitung dari keadaan sebelum EOD diterapkan.
+       EOD yang diulang di hari yang sama menghitung ulang (yang selesai di EOD pertama kini masuk "sudah selesai lebih dulu").
+     - **Android:** `WorkDayEntity` dan `WorkDay` mendapat `eodDoneCount`/`eodTotalCount`; **Room 11 ke 12** (`MIGRATION_11_12`, dua kolom `INTEGER` boleh null, baris lama tidak dirty).
+       `WorkRepository.completeEod` menyimpannya; dikirim hanya kalau keduanya ada. Penggabungan saat 409 (`mergeWorkDay`): angka milik EOD yang lebih akhir (seri: HP), tidak digabung per
+       bidang; kalau yang terpilih tanpa angka dipakai milik sisi lain. 14 tes baru; 660 tes Android lulus. SQL migrasi sudah dicocokkan dengan `HabitDatabase_Impl` yang dibangkitkan Room,
+       **tapi belum dijalankan di perangkat**: pasang sebagai update di atas data lama sebelum dirilis. Snapshot 19B tidak membawa angka ini (tidak perlu: server sumbernya).
+     - **Belum:** deploy (migrasi server), coba di HP (selesaikan EOD lalu lihat angkanya di riwayat web), dan **halaman Tugas Rumah** tetap menunggu mockup web (canvas tidak punya artboard-nya).
 
 **Urutan terhadap tahap 31 (Login Wajib):** sama seperti tahap 30 langkah 3-6 dan tahap 32, tahap ini menyentuh
 halaman web secara luas — sebaiknya **menunggu enam butir terbuka tahap 31 diputuskan (12 Oktober 2026)** sebelum

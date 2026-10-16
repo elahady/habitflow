@@ -35,7 +35,7 @@ dihapus. Kalau salah satu dari ketiganya berbeda dari tabel ini, tabel ini yang 
 | `account_deletions` | waktu dan sumber penghapusan akun (`app`, `web`, `web-code`), tanpa id, nama, atau email | Bukan data pengguna | Tidak (bukti penghapusan) |
 | `habits`, `habit_entries`, `todos` | habit, riwayat centang, to-do harian | Aktivitas | Ya |
 | `follow_ups` | follow-up kerja (judul, orang, catatan) | Aktivitas, nama orang lain | Ya |
-| `work_days` | catatan EOD per tanggal (bisa memuat isi pekerjaan dan nama orang lain) dan waktu daily scrum dan EOD selesai (tahap 33 langkah 3) | Aktivitas, nama orang lain | Ya |
+| `work_days` | catatan EOD per tanggal (bisa memuat isi pekerjaan dan nama orang lain), waktu daily scrum dan EOD selesai (tahap 33 langkah 3), dan angka ringkasan EOD "X dari Y selesai" (jumlah saja) | Aktivitas, nama orang lain | Ya |
 | `daily_briefs` | ringkasan harian dari Claude (ringkasan email: pengirim dan subjek, catatan meeting), satu baris per tanggal (tahap 32) | Aktivitas, nama orang lain | Ya |
 | `teams`, `team_members`, `team_invites`, `team_todos` | tim tugas rumah dan isinya | Aktivitas, melibatkan orang lain | **Aturan khusus, lihat Keputusan** |
 | `weight_entries` | berat badan per catatan (waktu catat dalam milidetik, kg satu desimal) dari HP (tahap 30 langkah 3) | **Kesehatan** | Ya |
@@ -51,7 +51,7 @@ dihapus. Kalau salah satu dari ketiganya berbeda dari tabel ini, tabel ini yang 
 
 | Lokasi | Isi | Dihapus saat Keluar |
 |---|---|---|
-| Room `habitflow.db` (18 entitas, versi 11) | semua data di atas dalam bentuk lokal, termasuk berat, tensi, makan, kalender | Ya |
+| Room `habitflow.db` (18 entitas, versi 12) | semua data di atas dalam bentuk lokal, termasuk berat, tensi, makan, kalender | Ya |
 | `settings.xml` | tema, lokasi (nama dan koordinat), pengingat, tinggi dan target berat | Ya, **kecuali tema** (`theme_mode`: preferensi perangkat). Semua berkas dibuka lewat `PrefFile`; tes memastikan tidak ada yang terlewat |
 | `account.xml` | token sesi, profil akun, penanda sesi berakhir, dan `owner_account_id` (akun pemilik data lokal) | Sesi: ya. `owner_account_id`: dihapus bersama data lokal (31H) |
 | `sync.xml` | pilihan sinkron otomatis, status terakhir, id perangkat, sidik jari cadangan terakhir (31H). Alamat dan token 19B dihapus otomatis saat app dibuka sejak 31F | Ya |
