@@ -44,6 +44,7 @@ dihapus. Kalau salah satu dari ketiganya berbeda dari tabel ini, tabel ini yang 
 | `health_focus` | satu baris per pengguna: zona waktu, tinggi dan target berat, dan fokus kesehatan terakhir beserta teks dan alasannya (tahap 30 langkah 3) | **Kesehatan** | Ya |
 | `schedule_blocks`, `schedule_block_habits` | blok jadwal harian (nama, jam, patokan sholat, hari aktif, tingkat notifikasi) dan tautannya ke habit, diganti seluruhnya oleh HP tiap berubah (tahap 29 langkah 4) | Aktivitas | Ya |
 | `prayer_days` | waktu sholat 7 hari ke depan yang sudah dihitung HP dari lokasi pengguna, ditambah zona waktu (tahap 29 langkah 4). Koordinat lokasi **tidak** dikirim, tapi waktu sholat bisa menunjukkan perkiraan wilayah | **Lokasi (perkiraan)** | Ya |
+| `days_off` | tanggal libur 14 hari ke depan (libur manual digabung libur nasional yang tidak dibatalkan), dikirim HP tiap berubah (tahap 29 langkah 5) | Aktivitas | Ya |
 | Rencana: makan, acara | makanan, kalender | **Kesehatan, lokasi** | Ya. Wajib masuk daftar hapus **sebelum** tabelnya dibuat |
 
 ### Android (HP)

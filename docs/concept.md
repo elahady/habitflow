@@ -1469,7 +1469,7 @@ pindah, baru dipertimbangkan apakah 19B dipensiunkan total.
 | Follow-up kerja | `follow_ups` | 19 | **Tahap 27: selesai (server, web, Android); Android diuji sebagian di HP fisik** |
 | To-do tim | `team_todos`, `teams`, `team_invites` | baru | **Selesai (web+API+Android) — tahap 26** |
 | Habit + to-do harian | `habits`, `habit_entries`, `todos` | 1-9 | **Selesai (web+API+Android)** — tahap 28 |
-| Jadwal harian & libur | `schedule_blocks`, `schedule_block_habits`, `days_off`, `holiday_cancellations` | 17, 22 | Sebagian: server `schedule_blocks`, API, cache waktu sholat, dan kartu web selesai (tahap 29 langkah 1-3); Android mengirim blok dan waktu sholat (langkah 4, kode dan tes 16 Oktober 2026, belum di-deploy dan belum dicoba di HP); `days_off` dan libur belum |
+| Jadwal harian & libur | `schedule_blocks`, `schedule_block_habits`, `days_off`, `holiday_cancellations` | 17, 22 | Sebagian: server `schedule_blocks`, API, cache waktu sholat, dan kartu web selesai (tahap 29 langkah 1-3); Android mengirim blok, waktu sholat, dan libur efektif (langkah 4 dan 5, kode dan tes 16 Oktober 2026, belum di-deploy dan belum dicoba di HP); tabel `holiday_cancellations` sengaja tidak dibuat (lihat langkah 5) |
 | Daily scrum/EOD | `work_days` | 19 | **Catatan EOD selesai dua arah (tahap 33 langkah 3a-3c: server, web, Android; di-deploy dan dicoba di HP 16 Oktober 2026)**. Sisa: angka "X dari Y selesai" per hari (usulan kolom `eod_summary`); rencana besok dan scrum belum dimigrasi |
 | Kesehatan (berat, tensi) | `weight_entries`, `blood_pressure_entries` | 21 | **Tahap 30: langkah 1-5 selesai dan di-deploy (satu arah, web hanya membaca); langkah 6 verifikasi di HP sebagian** (fokus, grafik, tema gelap lulus; catat berat/tensi baru belum dicoba). Beda dari pola penuh: input hanya di Android, tanpa deteksi konflik |
 | Asupan makan | `meals`, `drink_counts`, `habit_manual_marks` | 20, 23 | Belum dimulai |
@@ -1676,7 +1676,7 @@ perubahan dan push+pull jaring pengaman tiap 30 menit lewat WorkManager - lihat 
   WorkManager - di HP MIUI bisa tertunda signifikan, lihat catatan Doze di langkah 5).
 - ✅ Tidak ada data yang hilang saat transisi dari model snapshot ke model baru ini.
 
-### Tahap 29: Migrasi Jadwal Harian ke Web (langkah 1-3 selesai di server dan web 11 Oktober 2026; langkah 4 Android selesai di kode dan tes 16 Oktober 2026, belum di-deploy dan belum dicoba di HP; libur belum)
+### Tahap 29: Migrasi Jadwal Harian ke Web (langkah 1-3 selesai di server dan web 11 Oktober 2026; langkah 4 dan 5 (Android kirim jadwal, waktu sholat, dan libur) selesai di kode dan tes 16 Oktober 2026, belum di-deploy dan belum dicoba di HP)
 
 Lanjutan arah "Web jadi versi lengkap" (tahap 25-28). Baris "Jadwal harian & libur" di
 tabel migrasi masih "Belum dimulai" — tahap ini menuliskan rencananya. **Koreksi penting**:
@@ -1736,8 +1736,8 @@ blok. Yang belum ada cuma versi web/server-nya.
     dihitung di zona waktu terakhir yang dikirim HP (cadangan `Asia/Jakarta`), bukan UTC server. Kalau waktu sholat hari
     ini belum dikirim, blok yang berpatokan sholat tidak tampil dan kartu menjelaskannya. Tes: `ScheduleCardTest`
     (termasuk uji bahwa memakai UTC membuat tes gagal). Seluruh suite server 87 tes lulus.
-  - **Batasan:** "Hari ini libur" belum ada di server (tabel `days_off` belum dibuat), jadi web menganggap tidak libur.
-    Kartu belum dilihat langsung di browser, hanya diuji lewat tes Livewire.
+  - **Batasan (saat langkah 3, 11 Oktober 2026):** "Hari ini libur" belum ada di server, jadi web menganggap tidak libur;
+    teratasi di langkah 5 di bawah. Kartu belum dilihat langsung di browser, hanya diuji lewat tes Livewire.
 - ✅ **Langkah 4 (16 Oktober 2026, kode dan tes; belum di-deploy ke server dan belum dicoba di HP).** **Keputusan Claude, boleh
   diubah pemilik:** rencana awal (CRUD per blok, `remoteId`/`dirty`, antrean hapus, migrasi Room 11 ke 12) **tidak dipakai**.
   Web hanya membaca blok, jadi HP satu-satunya penulis dan deteksi konflik tidak ada gunanya. Dipakai pola tahap 30 (kesehatan):
@@ -1763,8 +1763,29 @@ blok. Yang belum ada cuma versi web/server-nya.
     sendiri (butuh Room) belum punya tes otomatis.
   - **Seed 16 blok awal di server tidak diperlukan lagi:** HP sudah punya 16 blok itu (ScheduleSeed) dan mengirimnya.
   - **Belum:** di-deploy ke server (tanpa itu HP baru menerima 404 dan melewatinya, jadi aman), dicoba di HP, dan dilihat di web
-    dengan data nyata. "Hari ini libur" (`days_off`, `holiday_cancellations`) **tidak** termasuk langkah ini dan tetap belum ada
-    di server, jadi web menganggap tidak libur.
+    dengan data nyata. Libur dikerjakan di langkah 5 di bawah.
+- ✅ **Langkah 5: libur ("Hari ini libur"), 16 Oktober 2026, kode dan tes; belum di-deploy dan belum dicoba di HP.**
+  **Keputusan Claude, boleh diubah pemilik:** server menyimpan **libur efektif**, bukan libur manual dan pembatalan terpisah.
+  Android sudah punya daftar libur nasional (`assets/libur/`) dan aturan pembatalannya, jadi menyalinnya ke PHP berarti dua
+  sumber kebenaran (dan data libur yang harus diperbarui tiap tahun di dua tempat). Maka tabel `holiday_cancellations` yang
+  tertulis di peta migrasi **tidak dibuat**; HP menghitung `ScheduleRepository.isDayOff` untuk 14 hari ke depan dan mengirim
+  tanggal yang libur. Kekurangannya: web tidak bisa membedakan libur manual dari libur nasional (tidak ada yang
+  memerlukannya sekarang), dan web tidak bisa menampilkan nama hari libur.
+  - **Server:** tabel `days_off` (`user_id`, `date`, unik per pengguna), `PUT /api/v1/days-off` dengan `{from, to, dates}`
+    mengganti isi jendela `from..to` (paling panjang 62 hari; tanggal di luar jendela atau ganda ditolak 422) tanpa menyentuh
+    tanggal di luar jendela, `GET /api/v1/days-off?from=`. `ScheduleResolver::resolve(..., dayOff: true)` membuang blok yang
+    hanya aktif Senin-Jumat (`active_days & Sabtu/Minggu == 0`), sama dengan `isDayOff && isWorkdayOnly()` di Android; **kalau
+    salah satu berubah, ubah keduanya**. `ScheduleCard` mengecek tanggal "hari ini" di zona waktu HP dan menambah keterangan "Hari
+    ini libur, jadi blok hari kerja disembunyikan". Ikut hapus akun (`AccountDeletionService`, `DataInventory`, `AccountDeletionTest`)
+    dan inventaris `docs/rilis-play-store.md`. 14 tes baru; 388 tes server lulus.
+  - **Android:** `HabitSyncManager.pushDaysOff` mengirim jendela 14 hari mulai hari ini (`daysOffPayload`), dilewati kalau isinya
+    sama dengan kiriman berhasil terakhir; 422 dan 404 tidak menahan sinkron lain. Pemicu kirim: perubahan tabel `days_off` dan
+    `holiday_cancellations` (ditambahkan ke `HabitSyncScheduler`), jadi menekan atau membatalkan "Hari ini libur" sampai ke web
+    sekitar semenit kemudian; jendela bergeser tiap hari lewat sinkron periodik 30 menit. 7 tes baru; 646 tes Android lulus.
+    Seperti langkah 4, `pushDaysOff` sendiri (butuh Room) belum punya tes otomatis.
+  - **Belum:** deploy (migrasi `create_days_off_table` harus jalan), dan dicoba di HP: tekan "Hari ini libur", sinkron, lalu
+    cek kartu di web menyembunyikan blok hari kerja; matikan lagi dan cek kembali. Yang juga belum diperiksa: apakah web dan HP
+    sepakat soal libur nasional pada tanggal yang sama.
 
 ### Tahap 30: Fokus Kesehatan Harian (langkah 1-5 selesai dan di-deploy 16 Oktober 2026; langkah 6 verifikasi di HP sebagian: fokus, grafik, dan tema gelap lulus; catat berat dan tensi baru belum dicoba)
 
@@ -2509,8 +2530,9 @@ sinkron catatan EOD dua arah HP dan web termasuk penggabungan saat bentrok (sete
 5. Sisa tahap 31 yang menunggu pemilik: kunci unggah dan AAB ditandatangani, Google Sign-In produksi, DNS dan Resend untuk email, backup ke Cloudflare R2, kontak privasi, penguji (lihat
    `docs/uji-tertutup-dan-play-console.md`). **Email belum jalan:** `.env.production` di VM masih `MAIL_MAILER=log` dan `QUEUE_CONNECTION=sync`, jadi pendaftaran dengan email belum boleh dibuka.
    Login Google tidak terpengaruh.
-6. Tahap 29 langkah 4 (Android mengirim jadwal dan waktu sholat) selesai di kode dan tes 16 Oktober 2026 tapi **server belum di-deploy** (butuh `PUT /api/v1/schedule-blocks`) dan belum dicoba di HP; deploy lewat PC host Hyper-V.
-   Setelahnya sisa tahap 29 hanya libur (`days_off`).
+6. Tahap 29 langkah 4 dan 5 (Android mengirim jadwal, waktu sholat, dan libur) selesai di kode dan tes 16 Oktober 2026 tapi **server belum di-deploy**
+   (butuh `PUT /api/v1/schedule-blocks`, `PUT /api/v1/days-off`, dan migrasi `create_days_off_table`) dan belum dicoba di HP; deploy lewat PC host Hyper-V.
+   Setelah itu tahap 29 selesai.
 
 **Keputusan yang diambil Claude di sesi ini, boleh diubah pemilik** (semuanya sudah dicatat di tempatnya, ini daftar cepat): skill di `skills/` repo (bukan `.claude/skills/`) dan token dari
 `HABITFLOW_TOKEN`; Meeting & briefing satu catatan per hari di `daily_briefs.meeting_note`, ditulis manual; heatmap 53 minggu (mockup 66); kartu To-do `selesai / jumlah`; "Semua" di halaman
