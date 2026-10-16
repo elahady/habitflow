@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\ApiToken;
 use App\Models\Snapshot;
 use App\Models\User;
 use App\Models\UserToken;

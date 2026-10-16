@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Mail\CodeMail;
-use App\Models\ApiToken;
 use App\Models\EmailCode;
 use App\Models\Snapshot;
 use App\Models\User;

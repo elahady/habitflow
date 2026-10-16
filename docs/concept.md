@@ -2514,8 +2514,8 @@ kontrak `POST /api/v1/daily-briefs` dan `GET /api/v1/ping`. Keputusan di dalamny
     **4 berkas kode lama era token 19B juga dihapus dari `app/` VM (16 Oktober 2026, atas izin pemilik):** `IssueToken.php` (perintah `habitflow:token`, sudah rusak karena tabel `api_tokens` dihapus di 31L),
     `GoogleConnectController.php`, `AuthenticateToken.php`, `ApiToken.php`. Tak ada rujukan aktif (rute, provider, kode); semuanya masih ada di riwayat git (`c89e861`, `2c447db`, `18e1fda`). Daftar berkas `app/` di VM kini
     identik dengan lokal (66). Catatan: **image kontainer yang sedang jalan masih memuat berkas-berkas itu** sampai deploy berikutnya (host dihapus, kontainer tidak di-recreate); tidak berpengaruh.
-    Penyebab berkas lama bertahan: `tar -x` hanya menimpa, tidak pernah menghapus berkas yang sudah dihapus di repo. Dua tes (`AccountDeletionTest`, `SnapshotApiTest`) masih punya `use App\Models\ApiToken;`
-    yang tak terpakai (tidak membuat tes gagal; bisa dirapikan).
+    Penyebab berkas lama bertahan: `tar -x` hanya menimpa, tidak pernah menghapus berkas yang sudah dihapus di repo. Import `use App\Models\ApiToken;` yang tak terpakai di dua tes (`AccountDeletionTest`, `SnapshotApiTest`)
+    juga sudah dibuang (16 Oktober 2026); 322 tes server tetap lulus.
     Juga: `habitflow-queue` selalu tampil `unhealthy` karena healthcheck bawaan image memeriksa `localhost:8080` sedangkan worker tidak punya web server; worker sendiri jalan.
 - **Hanya `email_digest` yang dikirim**, `meeting_note` tidak (butir "Meeting & briefing" di bawah tetap belum diputuskan).
 - **Gmail tidak terhubung atau token tidak ada: tidak menulis apa pun**, supaya ringkasan benar sebelumnya tidak tertimpa "kosong".
