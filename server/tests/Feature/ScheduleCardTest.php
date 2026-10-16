@@ -122,6 +122,43 @@ class ScheduleCardTest extends TestCase
             ->assertSee('Tidak ada blok aktif untuk hari ini.');
     }
 
+    public function test_hari_libur_menyembunyikan_blok_hari_kerja_dan_memberi_keterangan(): void
+    {
+        $this->prayerDay();
+        $this->block(['name' => 'Rapat kantor', 'active_days' => 0b0011111]);
+        $this->block(['name' => 'Ngaji', 'active_days' => 127, 'start_value' => 10 * 60]);
+        $this->user->daysOff()->create(['date' => '2026-10-12']);
+
+        Livewire::test(ScheduleCard::class)
+            ->assertDontSee('Rapat kantor')
+            ->assertSee('Ngaji')
+            ->assertSee('Hari ini libur');
+    }
+
+    public function test_libur_tanggal_lain_atau_milik_user_lain_tidak_berlaku(): void
+    {
+        $this->prayerDay();
+        $this->block(['name' => 'Rapat kantor', 'active_days' => 0b0011111]);
+        $this->user->daysOff()->create(['date' => '2026-10-13']);
+        $other = User::create(['google_sub' => 'sub-2', 'email' => 'b@example.com', 'name' => 'B']);
+        $other->daysOff()->create(['date' => '2026-10-12']);
+
+        Livewire::test(ScheduleCard::class)
+            ->assertSee('Rapat kantor')
+            ->assertDontSee('Hari ini libur');
+    }
+
+    public function test_libur_dihitung_menurut_tanggal_di_zona_waktu_hp(): void
+    {
+        // 18.30 UTC hari Minggu 11 Okt = 01.30 WIB Senin 12 Okt: yang berlaku libur tanggal 12, bukan 11.
+        Carbon::setTestNow(Carbon::parse('2026-10-11 18:30:00', 'UTC'));
+        $this->prayerDay('2026-10-12');
+        $this->block(['name' => 'Rapat kantor', 'start_value' => 60, 'duration_minutes' => 120, 'active_days' => 0b0011111]);
+        $this->user->daysOff()->create(['date' => '2026-10-12']);
+
+        Livewire::test(ScheduleCard::class)->assertDontSee('Rapat kantor')->assertSee('Hari ini libur');
+    }
+
     public function test_tidak_menampilkan_jadwal_user_lain(): void
     {
         $other = User::create(['google_sub' => 'sub-2', 'email' => 'b@example.com', 'name' => 'B']);

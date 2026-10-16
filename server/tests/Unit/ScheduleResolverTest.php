@@ -70,6 +70,29 @@ class ScheduleResolverTest extends TestCase
         $this->assertSame(['Kerja'], $this->names(ScheduleResolver::resolve([$sholat, $tetap], $this->prayers(), $this->monday())));
     }
 
+    public function test_hari_libur_membuang_blok_yang_hanya_aktif_di_hari_kerja(): void
+    {
+        $kerja = $this->block(['name' => 'Kerja', 'active_days' => 0b0011111]);
+        $setiapHari = $this->block(['name' => 'Sholat', 'active_days' => 127, 'start_value' => 600]);
+        $akhirPekan = $this->block(['name' => 'Santai', 'active_days' => 0b1100000]);
+        $jumatSabtu = $this->block(['name' => 'Campur', 'active_days' => 0b0110000, 'start_value' => 700]);
+
+        // Senin libur: hanya blok yang juga aktif di Sabtu/Minggu bertahan (sama dengan `isWorkdayOnly` di Android).
+        $this->assertSame(
+            ['Sholat'],
+            $this->names(ScheduleResolver::resolve([$kerja, $setiapHari, $akhirPekan], null, $this->monday(), dayOff: true)),
+        );
+        $this->assertSame(
+            ['Kerja', 'Sholat'],
+            $this->names(ScheduleResolver::resolve([$kerja, $setiapHari, $akhirPekan], null, $this->monday(), dayOff: false)),
+        );
+        // Sabtu libur: blok campur (Jumat-Sabtu) tetap tampil karena ikut menyentuh akhir pekan.
+        $this->assertSame(
+            ['Santai', 'Sholat', 'Campur'], // urut jam mulai: 09.00, 10.00, 11.40
+            $this->names(ScheduleResolver::resolve([$kerja, $setiapHari, $akhirPekan, $jumatSabtu], null, Carbon::parse('2026-10-17'), dayOff: true)),
+        );
+    }
+
     public function test_hari_aktif_bitmask_senin_sampai_minggu(): void
     {
         $kerja = $this->block(['name' => 'Kerja', 'active_days' => 0b0011111]);

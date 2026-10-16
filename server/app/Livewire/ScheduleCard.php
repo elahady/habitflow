@@ -22,11 +22,13 @@ class ScheduleCard extends Component
         $today = $user->prayerDays()->where('date', $now->toDateString())->first();
 
         $blocks = $user->scheduleBlocks()->orderBy('sort_order')->orderBy('id')->get();
-        $resolved = ScheduleResolver::resolve($blocks, $today, $now);
+        $dayOff = $user->daysOff()->where('date', $now->toDateString())->exists();
+        $resolved = ScheduleResolver::resolve($blocks, $today, $now, $dayOff);
         $nowMinute = $now->hour * 60 + $now->minute;
 
         return view('livewire.schedule-card', [
             'hasBlocks' => $blocks->isNotEmpty(),
+            'dayOff' => $dayOff,
             'resolvedCount' => $resolved->count(),
             // Blok berpatokan sholat yang terbuang karena waktu sholat hari ini belum dikirim HP.
             'missingPrayer' => $today === null && $blocks->contains(fn ($b) => $b->start_type === 1),

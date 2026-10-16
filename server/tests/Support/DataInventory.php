@@ -22,6 +22,7 @@ class DataInventory
         'todos',
         'follow_ups',
         'prayer_days',
+        'days_off',
         'daily_briefs',
         'work_days',
         'weight_entries',

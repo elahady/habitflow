@@ -11,25 +11,32 @@ use Illuminate\Support\Collection;
  * Salinan PHP dari `resolveBlocks` dan `nowAndNext` di `domain/schedule/Schedule.kt` (Android),
  * hanya untuk menampilkan jadwal di web (tahap 29). Aturannya sengaja sama; kalau satu berubah,
  * ubah keduanya. Waktu sholat TIDAK dihitung di sini: dibaca dari kiriman HP (`PrayerDay`).
- * "Hari ini libur" belum ada di server, jadi tidak diterapkan.
+ * Libur juga dari kiriman HP (`DayOff`, libur manual digabung libur nasional); server tidak punya daftar libur sendiri.
  */
 final class ScheduleResolver
 {
     public const MINUTES_PER_DAY = 1440;
 
+    /** Sabtu = 32 dan Minggu = 64 (bitmask `active_days`, Senin = 1), sama dengan `Days.WEEKEND` di Android. */
+    private const WEEKEND_MASK = 0b1100000;
+
     /**
      * Blok untuk [$date], urut menurut waktu mulai. Blok yang tidak aktif di hari itu, atau yang
      * berpatokan sholat padahal waktu sholatnya tidak diketahui, dibuang.
      *
+     * Kalau [$dayOff] (tanggal itu libur), blok yang hanya aktif di hari kerja (Senin-Jumat) dibuang juga, sama dengan
+     * `isDayOff && isWorkdayOnly()` di Android. Blok yang aktif di akhir pekan tetap tampil.
+     *
      * @param  iterable<ScheduleBlock>  $blocks
      * @return Collection<int, ResolvedBlock>
      */
-    public static function resolve(iterable $blocks, ?PrayerDay $prayers, Carbon $date): Collection
+    public static function resolve(iterable $blocks, ?PrayerDay $prayers, Carbon $date, bool $dayOff = false): Collection
     {
         $dayBit = 1 << ($date->dayOfWeekIso - 1);
 
         return collect($blocks)
             ->filter(fn (ScheduleBlock $b) => ($b->active_days & $dayBit) !== 0)
+            ->reject(fn (ScheduleBlock $b) => $dayOff && ($b->active_days & self::WEEKEND_MASK) === 0)
             ->map(function (ScheduleBlock $b) use ($prayers) {
                 if ($b->start_type === ScheduleBlock::START_PRAYER) {
                     $prayer = $prayers?->minuteOf((string) $b->prayer);

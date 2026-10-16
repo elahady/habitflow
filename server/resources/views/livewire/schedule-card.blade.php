@@ -33,6 +33,10 @@
             </div>
         </div>
 
+        @if ($dayOff)
+            <p style="font-size: 12px; color: var(--on-surface-variant); margin: 12px 0 0;">Hari ini libur, jadi blok hari kerja disembunyikan.</p>
+        @endif
+
         @if ($missingPrayer)
             <p style="font-size: 12px; color: var(--on-surface-variant); margin: 12px 0 0;">
                 Waktu sholat hari ini belum dikirim dari HP, jadi blok yang berpatokan sholat belum tampil. Buka app Android dan sinkron.

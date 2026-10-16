@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AccountController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DailyBriefController;
+use App\Http\Controllers\Api\DayOffController;
 use App\Http\Controllers\Api\FollowUpController;
 use App\Http\Controllers\Api\GoogleAuthController;
 use App\Http\Controllers\Api\HabitController;
@@ -97,6 +98,8 @@ Route::prefix('v1')->middleware(['user-token', 'throttle:habitflow'])->group(fun
 Route::prefix('v1')->middleware(['user-token', 'throttle:habitflow'])->group(function () {
     Route::get('prayer-days', [PrayerDayController::class, 'index']);
     Route::put('prayer-days', [PrayerDayController::class, 'upsert']);
+    Route::get('days-off', [DayOffController::class, 'index']);
+    Route::put('days-off', [DayOffController::class, 'replace']);
 });
 
 // Data kesehatan dari Android (tahap 30) - satu arah, idempotent; web hanya membaca dari database.
