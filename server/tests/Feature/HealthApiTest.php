@@ -197,6 +197,23 @@ class HealthApiTest extends TestCase
         $this->assertSame(500, WeightEntry::count());
     }
 
+    /** Bentuk yang dikirim Android untuk pengguna baru (HealthSyncPayload.toJson): daftar kosong, profil null, tanpa kunci fokus. */
+    public function test_kiriman_android_pengguna_baru_dengan_daftar_kosong_dan_profil_null_diterima(): void
+    {
+        $this->putJson('/api/v1/health', [
+            'timezone' => 'Asia/Jakarta',
+            'profile' => ['height_cm' => null, 'target_kg' => null],
+            'weights' => [],
+            'blood_pressures' => [],
+            'step_days' => [],
+        ], $this->auth())->assertOk()->assertJson(['weights' => 0, 'blood_pressures' => 0, 'step_days' => 0, 'focus' => false]);
+
+        $row = HealthFocus::first();
+        $this->assertSame('Asia/Jakarta', $row->timezone);
+        $this->assertNull($row->height_cm);
+        $this->assertNull($row->rule);
+    }
+
     public function test_token_terbatas_daily_briefs_tidak_boleh_menulis_data_kesehatan(): void
     {
         [, $scoped] = UserToken::issue($this->user, 'rekap', UserToken::SCOPE_DAILY_BRIEFS);

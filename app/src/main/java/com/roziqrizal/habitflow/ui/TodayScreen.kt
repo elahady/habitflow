@@ -28,6 +28,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -45,6 +46,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.roziqrizal.habitflow.data.Todo
+import com.roziqrizal.habitflow.data.sync.HealthFocusPayload
 import com.roziqrizal.habitflow.domain.MAX_TODOS_PER_DAY
 import com.roziqrizal.habitflow.domain.TODOS_FOR_LEVEL_4
 import com.roziqrizal.habitflow.domain.meals.COFFEE_LIMIT
@@ -87,6 +89,8 @@ fun TodayScreen(
     accountName: String? = null,
     onOpenProfile: () -> Unit = {},
     alarmPrompt: ExactAlarmPrompt? = null,
+    /** Dipanggil kalau fokus (atau teksnya) berubah, supaya sinkron bisa mengirimnya ke server (tahap 30 langkah 4). */
+    onFocusComputed: (HealthFocusPayload) -> Unit = {},
 ) {
     var showAddDialog by rememberSaveable { mutableStateOf(false) }
     val now = LocalTime.now()
@@ -100,6 +104,25 @@ fun TodayScreen(
             minuteOfDay = minuteOfDay,
         ),
     )
+    // Langkah masih "Loading" berarti data kesehatan belum selesai dimuat: fokus yang dihitung saat itu belum layak dikirim
+    // (misalnya "Catat berat pertama" padahal berat sudah ada). Yang terbit hanya fokus yang isinya berubah.
+    val focusText = focusContent(focus, health, state.coffee, state.sweet)
+    val focusReady = health.steps !is StepsUiState.Loading
+    LaunchedEffect(focus, focusText, focusReady) {
+        if (focusReady) {
+            onFocusComputed(
+                HealthFocusPayload(
+                    rule = focus.rule.name,
+                    walkMinutes = focus.walkMinutes,
+                    title = focusText.title,
+                    sentence = focusText.sentence,
+                    note = focusText.note,
+                    reasons = focusText.reasons,
+                    computedAtMillis = System.currentTimeMillis(),
+                ),
+            )
+        }
+    }
 
     LazyColumn(
         modifier = Modifier.fillMaxWidth(),

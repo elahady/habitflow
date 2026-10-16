@@ -9,6 +9,8 @@ import com.roziqrizal.habitflow.data.WorkDayEntity
 import com.roziqrizal.habitflow.data.toDomain
 import com.roziqrizal.habitflow.data.account.AccountSettings
 import com.roziqrizal.habitflow.data.account.UnauthorizedListener
+import com.roziqrizal.habitflow.data.health.readRecentSteps
+import com.roziqrizal.habitflow.domain.health.defaultTargetKg
 import com.roziqrizal.habitflow.domain.sync.EntryMergeAction
 import com.roziqrizal.habitflow.domain.sync.SyncThrottle
 import com.roziqrizal.habitflow.domain.sync.entryMergeAction
@@ -20,6 +22,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.time.LocalDate
+import java.time.ZoneId
 
 /** Hasil satu putaran push atau pull, untuk ditampilkan di UI (tahap 28 langkah 5). Di memori saja. */
 sealed interface HabitSyncStatus {
@@ -46,6 +49,8 @@ class HabitSyncManager(
     /** Dilapori token yang ditolak server (401). Wajib, supaya tidak ada jalur yang menangani 401 sendiri. */
     unauthorized: UnauthorizedListener,
     private val clientFor: (token: String) -> HabitSyncClient = { HabitSyncClient(it, unauthorized = unauthorized) },
+    /** Bahan kiriman data kesehatan (tahap 30). Null: tidak mengirim data kesehatan. */
+    private val health: HealthSyncInputs? = null,
 ) {
     private val mutex = Mutex()
     private val habits = db.habitDao()
@@ -104,10 +109,50 @@ class HabitSyncManager(
 
         pushEntryOutbox(client)?.let { return fail(it) }
 
+        // Paling akhir: data kesehatan tidak boleh menahan habit, to-do, atau follow-up.
+        pushHealth(client)?.let { return fail(it) }
+
         _status.value = HabitSyncStatus.Success(
             System.currentTimeMillis(), habitUpdates.conflicted || todoUpdates.conflicted || followUpUpdates.conflicted,
         )
         return HabitApiResult.Success(Unit)
+    }
+
+    /** Kunci kiriman kesehatan terakhir yang berhasil (akun + isi), di memori. Kiriman yang isinya sama dilewati. */
+    private var lastHealthSent: String? = null
+
+    /**
+     * Kirim data kesehatan (tahap 30 langkah 4): berat dan tensi 120 hari terakhir, langkah 7 hari terakhir dari Health Connect,
+     * tinggi dan target, serta fokus terakhir dari layar Hari ini. Server idempotent, jadi tidak ada antrean: setiap kiriman memuat
+     * jendela terbaru, dan kiriman yang isinya sama dengan yang terakhir berhasil dilewati. Ditolak server (422) tidak menahan
+     * sinkron lain dan dicoba lagi begitu isinya berubah.
+     */
+    private suspend fun pushHealth(client: HabitSyncClient): HabitApiResult<Unit>? {
+        val inputs = health ?: return null
+        val zone = ZoneId.systemDefault()
+        val today = LocalDate.now(zone)
+        val from = today.minusDays(HEALTH_SYNC_DAYS).atStartOfDay(zone).toInstant().toEpochMilli()
+        val healthDao = db.healthDao()
+        val payload = healthSyncPayload(
+            timezone = zone.id,
+            heightCm = inputs.settings.heightCm.value,
+            targetKg = inputs.settings.targetKg.value,
+            weights = healthDao.weightsSince(from, HEALTH_SYNC_MAX_ENTRIES),
+            bloodPressures = healthDao.bloodPressuresSince(from, HEALTH_SYNC_MAX_ENTRIES),
+            stepDays = readRecentSteps(inputs.steps, today, zone, HEALTH_SYNC_STEP_DAYS),
+            focus = inputs.focus.latest.value,
+            defaultTarget = ::defaultTargetKg,
+        )
+        val key = accountSettings.account.value?.token.orEmpty() + "|" + payload.fingerprint
+        if (key == lastHealthSent) return null
+        return when (val result = client.putHealth(payload)) {
+            is HabitApiResult.Success -> {
+                lastHealthSent = key
+                null
+            }
+            is HabitApiResult.Rejected -> null
+            else -> result.asUnit()
+        }
     }
 
     private fun fail(result: HabitApiResult<Unit>): HabitApiResult<Unit> {

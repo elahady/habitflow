@@ -481,4 +481,44 @@ class FollowUpSyncClientTest {
         assertEquals("2026-10-15T09:03:05.000000Z", entity.remoteUpdatedAt)
         assertFalse(entity.dirty)
     }
+
+    private fun healthPayload() = HealthSyncPayload(
+        timezone = "Asia/Jakarta",
+        heightCm = 170.0,
+        targetKg = 65.0,
+        weights = listOf(com.roziqrizal.habitflow.data.WeightEntry(1, 1_792_000_000_000, 70.4)),
+        bloodPressures = emptyList(),
+        stepDays = listOf(LocalDate.parse("2026-10-16") to 2_400L),
+        focus = null,
+    )
+
+    @Test
+    fun kirimKesehatanMemakaiPutDanMembawaTokenSertaIsinya() = runBlocking {
+        server.responseBody = """{"weights":1,"blood_pressures":0,"step_days":1,"focus":false}"""
+
+        val result = HabitSyncClient("rahasia", "http://127.0.0.1:${server.port}").putHealth(healthPayload())
+
+        assertEquals(HabitApiResult.Success(Unit), result)
+        assertEquals("PUT", server.lastMethod)
+        assertEquals("/api/v1/health", server.lastPath)
+        assertEquals("Bearer rahasia", server.lastAuth)
+        val body = JSONObject(server.lastBody)
+        assertEquals("Asia/Jakarta", body.getString("timezone"))
+        assertEquals(1_792_000_000_000, body.getJSONArray("weights").getJSONObject(0).getLong("time_millis"))
+        assertEquals("2026-10-16", body.getJSONArray("step_days").getJSONObject(0).getString("date"))
+        assertFalse("tanpa fokus, kuncinya tidak dikirim", body.has("focus"))
+    }
+
+    @Test
+    fun kirimKesehatanDitolakDanGalat() = runBlocking {
+        server.status = 422
+        server.responseBody = """{"message":"The weights.0.kg field must be between 20 and 300."}"""
+        assertTrue(client().putHealth(healthPayload()) is HabitApiResult.Rejected)
+        server.status = 401
+        assertEquals(HabitApiResult.Unauthorized, client().putHealth(healthPayload()))
+        server.status = 429
+        assertEquals(HabitApiResult.ServerError(429), client().putHealth(healthPayload()))
+        server.status = 503
+        assertEquals(HabitApiResult.ServerError(503), client().putHealth(healthPayload()))
+    }
 }

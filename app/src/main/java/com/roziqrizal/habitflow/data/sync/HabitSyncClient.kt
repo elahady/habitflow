@@ -221,6 +221,16 @@ class HabitSyncClient(
             }
         }
 
+    /**
+     * Mengirim data kesehatan (tahap 30 langkah 4). Satu arah dan idempotent di server: berat dan tensi dikunci waktu catat,
+     * langkah per tanggal, fokus satu baris. Tidak ada 409; 422 berarti bentuk kiriman ditolak.
+     */
+    suspend fun putHealth(payload: HealthSyncPayload): HabitApiResult<Unit> =
+        when (val raw = request("PUT", "/api/v1/health", payload.toJson().toString())) {
+            is Raw.Failed -> HabitApiResult.NetworkError(raw.detail)
+            is Raw.Response -> if (raw.code == 200) HabitApiResult.Success(Unit) else failure(raw)
+        }
+
     // --- Ringkasan harian dari Claude (tahap 32): hanya dibaca, ditulis skill di server ---
 
     /** Sampai 31 ringkasan terbaru milik akun ini, terbaru dulu. Yang tidak berisi email (`email_digest` null) tidak ikut. */

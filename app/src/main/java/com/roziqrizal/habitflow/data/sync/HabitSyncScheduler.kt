@@ -20,6 +20,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 
@@ -29,7 +30,12 @@ import java.util.concurrent.TimeUnit
  * periodik sebagai jaring pengaman. **Hanya aktif kalau sudah login** - tanpa akun, app tetap
  * lokal-saja seperti sebelum fitur ini ada.
  */
-class HabitSyncScheduler(context: Context, private val accountSettings: AccountSettings) {
+class HabitSyncScheduler(
+    context: Context,
+    private val accountSettings: AccountSettings,
+    /** Fokus kesehatan yang dihitung layar Hari ini (tahap 30): fokus baru memicu kirim, seperti perubahan data. */
+    private val focusStore: HealthFocusStore? = null,
+) {
 
     private val work = WorkManager.getInstance(context.applicationContext)
     private val network = Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
@@ -74,6 +80,7 @@ class HabitSyncScheduler(context: Context, private val accountSettings: AccountS
             })
         }
         scope.launch { accountSettings.account.collectLatest { onAccountChanged() } }
+        focusStore?.let { store -> scope.launch { store.latest.filterNotNull().collect { scheduleAfterChange() } } }
     }
 
     companion object {
@@ -81,7 +88,10 @@ class HabitSyncScheduler(context: Context, private val accountSettings: AccountS
         const val PERIODIC_MINUTES = 30L
         private const val PERIODIC = "habitflow-habit-sync-periodic"
         private const val AFTER_CHANGE = "habitflow-habit-sync-after-change"
-        private val TABLES = arrayOf("habits", "habit_entries", "todos", "follow_ups", "work_days", "habit_entry_outbox", "pending_deletes")
+        private val TABLES = arrayOf(
+            "habits", "habit_entries", "todos", "follow_ups", "work_days", "habit_entry_outbox", "pending_deletes",
+            "weight_entries", "blood_pressure_entries",
+        )
 
         fun newScope(): CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     }

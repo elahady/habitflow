@@ -1743,7 +1743,7 @@ blok. Yang belum ada cuma versi web/server-nya.
   blok awal untuk user baru di server juga belum ada; sampai langkah 4 jalan, kartu di web kosong ("Belum ada jadwal di
   server").
 
-### Tahap 30: Fokus Kesehatan Harian (langkah 1-2 selesai di Android 11 Oktober 2026; langkah 3 server selesai di kode 16 Oktober 2026; langkah 4-6 belum)
+### Tahap 30: Fokus Kesehatan Harian (langkah 1-2 selesai di Android 11 Oktober 2026; langkah 3 server dan 4 Android selesai di kode 16 Oktober 2026; langkah 5-6 belum)
 
 Aturan fitur di `docs/rancangan.md` bagian Fokus kesehatan harian. Mockup web dan mobile:
 https://claude.ai/artifact/TWJ8Uus2hKtQQa81wKujG5
@@ -1792,8 +1792,23 @@ menampilkan angka. Android menampilkannya di dashboard Hari ini, web di `/dashbo
    (berat dan tensi hanya bertambah di HP). Kolom yang tidak dikirim tidak disentuh; `profile` yang `null` mengosongkan tinggi dan target. Tanpa 409. Kode aturan fokus **tidak** divalidasi
    terhadap daftar (hanya bentuk `[A-Z_]`), supaya aturan baru di Android tidak butuh deploy server. Ikut hapus akun (`AccountDeletionService`, `DataInventory`, `AccountDeletionTest`) dan inventaris
    `docs/rilis-play-store.md` (kategori **Kesehatan**). 12 tes baru (`HealthApiTest`), 334 tes server lulus **di SQLite dan di MariaDB 10.4.32** (instance sementara, sudah dihapus).
-4. **Android mengirim.** Kirim catatan, langkah 7 hari, dan fokus; aman diulang. *Digantikan tahap 31: sekarang pasti ada
-   akun (login wajib), jadi langkah ini tidak lagi perlu menangani cabang "belum login".*
+4. ✅ **Android mengirim (16 Oktober 2026, kode dan tes; belum dicoba di HP dan belum ada deploy server).** Aman diulang. *Tahap 31: pasti ada
+   akun (login wajib), jadi tidak ada cabang "belum login".*
+   - **Apa yang dikirim** (`HealthSyncPayload`, `data/sync/HealthSync.kt`): zona waktu, tinggi dan target berat (target bawaan dari tinggi sudah dihitung, jadi web menampilkan angka yang sama dengan kartu),
+     berat dan tensi **120 hari terakhir** (paling banyak 500 tiap jenis, urut dari yang paling lama), langkah **7 hari** (hari ini dan 6 sebelumnya, dibaca per hari dari Health Connect lewat
+     `readRecentSteps`), dan **fokus terakhir beserta teksnya** (kode aturan, menit jalan, judul, kalimat, catatan "Dipilih karena", dan alasan). Teks dipotong ke batas server.
+     Berat dan tensi lebih tua dari 120 hari tidak dikirim (web hanya menampilkan 90 hari; yang sudah terkirim sebelumnya tetap di server).
+   - **Tanpa antrean:** setiap kiriman memuat jendela terbaru, server idempotent. `HabitSyncManager.pushHealth` paling akhir di `pushLocked` supaya data kesehatan tidak menahan habit, to-do, atau follow-up.
+     Kiriman yang isinya sama dengan yang terakhir berhasil (kunci = token akun + isi) dilewati; **ditolak server (422) tidak menahan sinkron lain** dan dicoba lagi begitu isinya berubah.
+     Gagal jaringan atau 5xx dicoba lagi lewat jalur worker yang ada (periodik 30 menit, push setelah perubahan).
+   - **Pemicu kirim:** perubahan tabel `weight_entries` dan `blood_pressure_entries` (ditambahkan ke `HabitSyncScheduler`), dan fokus baru (`HealthFocusStore`). Layar Hari ini menerbitkan fokus lewat
+     `onFocusComputed` hanya kalau isinya berubah dan **data kesehatan sudah selesai dimuat** (langkah tidak lagi `Loading`), supaya "Catat berat pertama" palsu tidak terkirim saat app baru dibuka.
+     Fokus dengan isi sama (waktu hitung beda) diabaikan, jadi tidak memicu kiriman ulang.
+   - **Batasan yang perlu diketahui:** fokus hanya terbit kalau layar Hari ini pernah ditampilkan di proses itu (aturan fokus butuh data yang hidup di UI: langkah, kopi, makan); sebelum itu yang
+     terkirim hanya catatan dan langkah, dan fokus lama di server tidak tersentuh. Langkah di latar belakang hanya terbaca kalau izin latar belakang Health Connect diberikan; kalau tidak, langkah dilewati
+     (tidak menebak). Kunci "sudah terkirim" hanya di memori, jadi proses baru mengirim sekali lagi (aman).
+   - **Tes:** `HealthSyncPayloadTest` (bentuk JSON, batas jumlah dan panjang teks, urutan, target bawaan, sidik jari, `HealthFocusStore`), `StepHistoryTest`, dua tes klien `putHealth` di
+     `HabitSyncClientTest`, dan di server tes bentuk kiriman Android pengguna baru. **622 tes Android dan 335 tes server lulus.**
 5. **Web.** Kartu fokus dan bagian Kesehatan di `/dashboard`.
 6. **Verifikasi di HP fisik** dan catat hasilnya di sini.
 

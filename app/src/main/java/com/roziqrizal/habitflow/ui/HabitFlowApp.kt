@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import com.roziqrizal.habitflow.data.AlarmSettings
 import com.roziqrizal.habitflow.data.HealthSettings
 import com.roziqrizal.habitflow.data.PlaceLocation
+import com.roziqrizal.habitflow.data.sync.HealthFocusPayload
 import com.roziqrizal.habitflow.data.ThemeMode
 import com.roziqrizal.habitflow.data.calendar.CalendarSettings
 import com.roziqrizal.habitflow.data.calendar.PhoneCalendarSource
@@ -81,6 +82,8 @@ fun HabitFlowApp(
     onBreakRemindersChange: (Boolean) -> Unit,
     mealReminder: Boolean,
     onMealReminderChange: (Boolean) -> Unit,
+    /** Fokus kesehatan yang dihitung layar Hari ini, diteruskan ke penyimpan untuk dikirim ke server (tahap 30). */
+    onFocusComputed: (HealthFocusPayload) -> Unit,
     health: HealthViewModel,
     healthSettings: HealthSettings,
     phoneCalendar: PhoneCalendarSource,
@@ -293,6 +296,7 @@ fun HabitFlowApp(
                         accountName = accountStateForInvite.account?.name,
                         onOpenProfile = { showProfile = true },
                         alarmPrompt = rememberExactAlarmPrompt(nextAlarmToday, alarmSettings),
+                        onFocusComputed = onFocusComputed,
                     )
                 }
                 Tab.WORK -> WorkScreen(

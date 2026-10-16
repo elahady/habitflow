@@ -360,6 +360,13 @@ interface HealthDao {
     @Query("SELECT * FROM blood_pressure_entries ORDER BY timeMillis ASC, id ASC")
     fun observeBloodPressures(): Flow<List<BloodPressureEntry>>
 
+    /** Catatan terbaru sejak [from], paling banyak [limit], untuk dikirim ke server (tahap 30). Urutan bebas; penyusun kiriman mengurutkan. */
+    @Query("SELECT * FROM weight_entries WHERE timeMillis >= :from ORDER BY timeMillis DESC, id DESC LIMIT :limit")
+    suspend fun weightsSince(from: Long, limit: Int): List<WeightEntry>
+
+    @Query("SELECT * FROM blood_pressure_entries WHERE timeMillis >= :from ORDER BY timeMillis DESC, id DESC LIMIT :limit")
+    suspend fun bloodPressuresSince(from: Long, limit: Int): List<BloodPressureEntry>
+
     @Query("SELECT COUNT(*) FROM weight_entries WHERE timeMillis >= :from AND timeMillis < :until")
     suspend fun weightCountBetween(from: Long, until: Long): Int
 

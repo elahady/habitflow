@@ -27,6 +27,8 @@ import com.roziqrizal.habitflow.data.sync.DailyBriefRepository
 import com.roziqrizal.habitflow.data.sync.DailyBriefStore
 import com.roziqrizal.habitflow.data.sync.HabitSyncManager
 import com.roziqrizal.habitflow.data.sync.HabitSyncScheduler
+import com.roziqrizal.habitflow.data.sync.HealthFocusStore
+import com.roziqrizal.habitflow.data.sync.HealthSyncInputs
 import com.roziqrizal.habitflow.data.sync.SnapshotRepository
 import com.roziqrizal.habitflow.data.sync.SnapshotSettings
 import com.roziqrizal.habitflow.data.sync.SyncManager
@@ -98,8 +100,13 @@ class AppGraph(app: Application) {
         AccountClient(unauthorized = sessionGuard),
         deviceName = { "${Build.MANUFACTURER} ${Build.MODEL}".trim().take(100) },
     )
-    val habitSyncManager: HabitSyncManager by lazy { HabitSyncManager(db, accountSettings, sessionGuard) }
-    val habitSyncScheduler = HabitSyncScheduler(app, accountSettings)
+    /** Fokus kesehatan terakhir dari layar Hari ini, dikirim bersama data kesehatan ke server (tahap 30). */
+    val healthFocusStore = HealthFocusStore()
+    private val stepsSource = HealthConnectStepsSource(app)
+    val habitSyncManager: HabitSyncManager by lazy {
+        HabitSyncManager(db, accountSettings, sessionGuard, health = HealthSyncInputs(healthSettings, stepsSource, healthFocusStore))
+    }
+    val habitSyncScheduler = HabitSyncScheduler(app, accountSettings, healthFocusStore)
 
     /** Ringkasan harian dari Claude untuk kartu di tab Kerja (tahap 32). */
     val dailyBriefRepository = DailyBriefRepository(accountSettings, DailyBriefStore(app), sessionGuard)
@@ -114,7 +121,7 @@ class AppGraph(app: Application) {
         accountSettings,
         AndroidBackgroundWork(app, syncScheduler, habitSyncScheduler, teamPollScheduler, SyncScheduler.newScope()),
     )
-    val stepsTracker: StepsTracker by lazy { StepsTracker(HealthConnectStepsSource(app), db, healthSettings) }
+    val stepsTracker: StepsTracker by lazy { StepsTracker(stepsSource, db, healthSettings) }
 
     /** Alur Keluar dan Hapus akun (tahap 31H). */
     val signOutCoordinator: SignOutCoordinator by lazy {

@@ -256,6 +256,7 @@ class MainActivity : ComponentActivity() {
                         onBreakRemindersChange = workReminderSettings::setBreaks,
                         mealReminder = graph.mealSettings.reminder.collectAsState().value,
                         onMealReminderChange = graph.mealSettings::setReminder,
+                        onFocusComputed = graph.healthFocusStore::publish,
                         health = health,
                         healthSettings = graph.healthSettings,
                         phoneCalendar = graph.phoneCalendar,
