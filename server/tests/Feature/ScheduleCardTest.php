@@ -45,7 +45,7 @@ class ScheduleCardTest extends TestCase
 
     public function test_dashboard_menampilkan_kartu(): void
     {
-        $this->get('/')->assertOk()->assertSee('Jadwal sekarang');
+        $this->get('/')->assertOk()->assertSee('Jadwal hari ini');
     }
 
     public function test_tanpa_blok_menjelaskan_belum_ada_jadwal(): void

@@ -1,5 +1,5 @@
-<div wire:poll.60s style="border: 1px solid var(--outline-variant); border-radius: 16px; padding: 16px; margin-bottom: 16px;">
-    <h2 style="font-family: 'Libre Caslon Text', serif; font-weight: 400; font-size: 18px; margin: 0 0 12px;">Jadwal sekarang</h2>
+<div wire:poll.60s class="hf-card" style="padding: 16px; margin-bottom: 16px;">
+    <h2 class="hf-serif" style="font-size: 18px; margin: 0 0 12px;">Jadwal hari ini</h2>
 
     @if (! $hasBlocks)
         <p style="font-size: 13px; color: var(--on-surface-variant); margin: 0;">Belum ada jadwal di server. Jadwal diatur di app Android dan akan muncul di sini setelah sinkron.</p>
