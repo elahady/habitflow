@@ -2429,7 +2429,7 @@ sinkron catatan EOD dua arah HP dan web termasuk penggabungan saat bentrok (sete
 **Ada di kode tapi belum pernah dijalankan di perangkat nyata (semuanya Android, belum dirilis):**
 1. Tema gelap dan lipatan "Selengkapnya" di kartu Ringkasan dari Claude, serta kartu dengan isi ringkasan sungguhan (menunggu skill dijalankan).
 2. Migrasi Room 10 ke 11 tetap **tanpa tes otomatis** (hanya diuji manual di satu HP); jangan dianggap terlindungi dari perubahan skema berikutnya.
-4. Skill `skills/habitflow-morning-routine/SKILL.md` belum pernah dijalankan dari awal sampai akhir (butuh token pemilik dan Gmail).
+4. Skill `skills/habitflow-morning-routine/SKILL.md` sudah dijalankan sekali dari awal sampai akhir (16 Oktober 2026; server membalas 201). Yang belum: kartu dengan isi nyata dilihat di HP dan web, dan jadwal otomatis (`/schedule`).
 
 **Yang perlu dikerjakan berikutnya, urut yang disarankan:**
 1. ~~Pasang debug build ke HP dan uji~~ selesai 16 Oktober 2026 (hasil di tahap 33 3c dan tahap 32 langkah 4). Sisa dari uji itu: tema gelap dan lipatan "Selengkapnya" di HP,
@@ -2487,7 +2487,12 @@ kontrak `POST /api/v1/daily-briefs` dan `GET /api/v1/ping`. Keputusan di dalamny
     lalu kirim, build, recreate, `migrate --force` (migrasi `add_scope_to_user_tokens` lulus). Token diterbitkan untuk akun pemilik (#1) dan ditulis langsung ke
     `~/.habitflow/claude-token` di PC ini (hanya pemilik yang bisa baca; tidak pernah ditampilkan). Dicek dengan curl ke produksi: `ping` 200; `follow-ups`, `work-days`,
     `daily-briefs` (GET), dan `snapshot/latest` 403; tanpa token 401. `logout-all` sengaja tidak diuji di produksi (kalau cakupan gagal, ia mencabut token); itu ada di tes otomatis.
-    Skill disalin ke `~/.claude/skills/`. **`POST /daily-briefs` dengan token terbatas belum dicoba di produksi** (menunggu skill dijalankan sungguhan).
+    Skill disalin ke `~/.claude/skills/`.
+  - **Skill dijalankan sungguhan sekali (16 Oktober 2026, 08.41 WIB, dari sesi Claude Code di PC ini, Gmail lewat konektor):** `ping` 200, 50 thread belum dibaca terbaru dibaca (hanya metadata,
+    tanpa mengubah email), ringkasan 17 baris dikirim, **`POST /daily-briefs` dengan token terbatas dibalas 201** di produksi. Berkas payload dihapus. Temuan yang membuat SKILL.md perlu hati-hati:
+    (1) Gmail hanya memberi perkiraan total (201) dan 50 thread per halaman, jadi angka di baris pertama ditulis "perkiraan" dan sisanya "dan sekitar N email lainnya"; (2) `TZ=Asia/Jakarta date`
+    **tidak dihormati di Git Bash Windows** (mengembalikan UTC, jam bergeser 7 jam); jam diambil dari PowerShell (`SE Asia Standard Time`). Tanggalnya kebetulan sama, tapi di rentang 00.00-07.00 WIB
+    tanggalnya akan salah satu hari. **Belum dilihat di kartu HP dan web dengan isi nyata** (menunggu pemilik membukanya).
   - **Temuan di VM, belum ditangani:** `~/apps/habitflow/` berisi ±2.400 berkas **sistem Windows** (isi `C:\Windows\System32`, ±950 MB, bertanggal 10 Oktober 2026), hasil arsip deploy lama
     yang dibuat dari direktori yang salah. Tidak merusak fungsi, tapi memboroskan disk (VM tinggal ±5,9 GB, 78% terpakai) dan membengkakkan konteks `docker compose build` serta arsip
     cadangan kode (428 MB). Membersihkannya perlu persetujuan pemilik (menghapus di produksi). Arsip deploy hari ini sudah dicek bersih (325 KB, tanpa .dll/.exe).

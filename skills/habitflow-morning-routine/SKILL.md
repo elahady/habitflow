@@ -44,7 +44,9 @@ Hanya token yang masuk stdout (pesan lain ke stderr). `--replace` mencabut token
 
 ### A. Tentukan tanggal hari ini
 
-1. Ambil tanggal sekarang yang akurat di zona **Asia/Jakarta** (`TZ=Asia/Jakarta date +%F`), jangan pakai tanggal dari ingatan atau context lama. Hasilnya `YYYY-MM-DD`, dipakai sebagai `date`.
+1. Ambil tanggal dan jam sekarang yang akurat di zona **Asia/Jakarta**, jangan pakai tanggal dari ingatan atau context lama. Hasilnya `YYYY-MM-DD`, dipakai sebagai `date`; jamnya untuk "dicek <jam.menit> WIB".
+   - Linux, macOS, dan routine awan: `TZ=Asia/Jakarta date '+%F %H.%M'`.
+   - **Windows: jangan pakai `TZ=... date` di Git Bash**, variabelnya tidak dihormati dan hasilnya UTC (jam bergeser 7 jam, dan antara 00.00 dan 07.00 WIB tanggalnya salah satu hari). Pakai PowerShell: `[TimeZoneInfo]::ConvertTimeBySystemTimeZoneId([DateTime]::UtcNow,'SE Asia Standard Time').ToString('yyyy-MM-dd HH.mm')`.
 
 ### B. Cek sambungan ke Habitflow
 
@@ -73,6 +75,7 @@ Hanya token yang masuk stdout (pesan lain ke stderr). `--replace` mencabut token
    Contoh baris: `- Bu Rina (Finance) — Revisi invoice Oktober — minta angka PPN diperbaiki sebelum Jumat`.
 7. Aturan isi:
    - Urutkan dari yang paling mendesak: yang meminta jawaban, tenggat, atau dari atasan dan klien dulu, buletin dan notifikasi otomatis paling bawah. Boleh menggabung notifikasi sejenis jadi satu baris (`- 6 notifikasi GitHub — ...`).
+   - `search_threads` hanya memberi **perkiraan** total (`resultCountEstimate`) dan maksimal 50 thread per halaman. Jangan menulis angka itu sebagai pasti: tulis "perkiraan Gmail; <K> terbaru diringkas" di baris pertama dan `... dan sekitar <M> email lainnya yang lebih lama` di akhir.
    - Maksimal 30 baris. Kalau lebih, tulis `... dan <M> email lainnya` di akhir. Total teks jauh di bawah batas server (20.000 karakter).
    - **Jangan menyalin** kode verifikasi (OTP), kata sandi, tautan reset atau masuk, token, atau nomor kartu dan rekening, walau muncul di cuplikan. Tulis seperlunya, misalnya `kode verifikasi dari <layanan>`. Ringkasan ini disimpan di server dan dibaca di web.
    - Tidak ada klaim yang tidak ada di email. Kalau cuplikan tidak cukup untuk meringkas, tulis subjeknya saja.
