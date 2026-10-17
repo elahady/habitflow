@@ -3,6 +3,21 @@
 Aplikasi Android untuk memantau habit harian dan to-do kecil, dengan tampilan
 kontribusi ala GitHub. Detail rancangan ada di [docs/rancangan.md](docs/rancangan.md).
 
+## Status Pengembangan
+
+_Diperbarui 17 Oktober 2026. **Direkonstruksi dari `git log` dan dokumen repo, belum diverifikasi pemilik** — koreksi butir yang keliru. Potret keadaan sekarang, bukan log: ubah di tempat setiap selesai pekerjaan nyata (skill `catat-progres`); riwayat ada di `git log`._
+
+Catatan progres per fitur ada di [docs/concept.md](docs/concept.md) (aturan di bagian "Catat progres di docs/concept.md" di bawah); bagian ini hanya penunjuk dan ringkasan.
+
+### Sudah selesai
+- Versi web live di habitflow.roziqrizal.com; **deploy produksi terakhir 16 Oktober 2026** (jadwal, libur, angka EOD, Tugas Rumah) dan perbaikan dropdown Tugas Rumah, dicatat di [docs/uji-deploy-16-okt.md](docs/uji-deploy-16-okt.md). Uji di HP: Tugas Rumah berhasil, alarm minum berbunyi (commit terakhir 2026-10-16).
+- Ringkasan pagi email lewat Claude ke kartu "Ringkasan dari Claude" (baru dipakai pemilik sendiri).
+
+### Belum selesai / berikutnya
+1. **Android belum dirilis ke Play Store**; persiapan ada di [docs/rilis-play-store.md](docs/rilis-play-store.md) dan [docs/uji-tertutup-dan-play-console.md](docs/uji-tertutup-dan-play-console.md).
+2. Kalender masih menyusul ke versi web (menurut halaman Karya di roziqrizal.com).
+3. Daftar tugas turunan lain: lihat [docs/concept.md](docs/concept.md) dan [docs/visi-super-app.md](docs/visi-super-app.md).
+
 ## Baca dulu sebelum mengerjakan apa pun
 
 - [docs/concept.md](docs/concept.md): tahapan pembangunan, kriteria selesai per
