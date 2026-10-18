@@ -19,15 +19,15 @@ tidak harus membaca kode. Pasangan teknisnya: [operasional-server.md](operasiona
 
 ## 1. Apakah ini insiden? (5 menit)
 
-Anggap **ya** sampai terbukti bukan kalau salah satu terjadi: akses tidak sah ke VM, database, `.env.production`, backup, atau tujuan backup; kehilangan atau pencurian PC host, VM, ponsel
-yang masuk ke server, atau media salinan rahasia; kunci SSH, token Cloudflare, atau kredensial Resend/Google terlihat pihak lain; akun pengguna diambil alih secara massal; pengguna melapor
+Anggap **ya** sampai terbukti bukan kalau salah satu terjadi: akses tidak sah ke VPS, database, `.env.production`, backup, atau tujuan backup; kehilangan atau pencurian PC, ponsel
+yang masuk ke server, atau media salinan rahasia; kunci SSH atau kredensial Resend/Google terlihat pihak lain; akun pengguna diambil alih secara massal; pengguna melapor
 melihat data orang lain; atau data dikirim ke pihak yang salah (email ke alamat salah, log berisi data pribadi tersebar).
 
 Bukan insiden (cukup catat): satu pengguna lupa kata sandi, satu akun dibobol karena sandi lemah pengguna sendiri tanpa tanda masalah di sistem kami. Ragu berarti perlakukan sebagai insiden.
 
 ## 2. Menahan (dalam 1 jam; lakukan yang relevan, urut dari yang paling cepat)
 
-Semua perintah dijalankan di VM lewat `ssh elahady@<ip-vm>`. Catat waktu setiap tindakan.
+Semua perintah dijalankan di VPS lewat `ssh -i ~/.ssh/id_ed25519_vps_jakarta elahady@103.54.170.198`. Catat waktu setiap tindakan.
 
 | Tindakan | Perintah / cara | Kapan |
 |---|---|---|
@@ -36,10 +36,16 @@ Semua perintah dijalankan di VM lewat `ssh elahady@<ip-vm>`. Catat waktu setiap 
 | Ganti kata sandi database | Di `shared-mysql`: `ALTER USER 'habitflow'@'%' IDENTIFIED BY '<baru>';`, ubah `DB_PASSWORD` di `.env.production`, recreate container app dan queue | Kredensial database diduga bocor |
 | Cabut kunci layanan email | Buat kunci baru di dashboard Resend, ganti `MAIL_PASSWORD`, hapus yang lama | Kunci Resend diduga bocor, atau email dipakai menyebar spam |
 | Ganti rahasia Google | Console Google Cloud: buat client secret baru, ganti di `.env.production`, hapus yang lama | Secret OAuth bocor |
-| Putus dari internet | `sudo systemctl stop cloudflared` (situs offline, data aman di VM) | Pelaku masih aktif atau cakupan tidak jelas; harga: layanan mati |
+| Putus dari internet (hanya habitflow) | `sudo rm /etc/nginx/sites-enabled/habitflow.roziqrizal.com && sudo nginx -t && sudo systemctl reload nginx` (situs offline, data aman di VPS; roziqrizalcom tetap jalan) | Pelaku masih aktif atau cakupan tidak jelas; harga: layanan mati |
+| Putus dari internet (seluruh VPS) | `sudo ufw deny 80,443/tcp && sudo ufw reload` | Cakupan insiden tidak jelas, menyangkut VPS secara keseluruhan (bukan cuma habitflow) |
 | Mode perawatan | `docker exec habitflow php artisan down --secret=<kata-rahasia>` | Perlu menutup aplikasi tetapi tetap bisa menguji sendiri |
 | Ganti akses SSH | Hapus kunci yang dicurigai dari `~/.ssh/authorized_keys`, buat kunci baru | Kunci SSH atau PC pemilik diduga disusupi |
 | Amankan backup | Cabut akses/ganti kunci layanan tujuan backup (rclone), ganti `~/.habitflow-backup-pass` untuk backup berikutnya | Tujuan backup diduga bocor |
+
+☐ **Dua baris "Putus dari internet" di atas baru ditulis ulang 18 Oktober 2026** mengikuti arsitektur
+VPS baru (nginx + Cloudflare Origin Cert, menggantikan `cloudflared` yang sudah dihapus) — **belum
+pernah dilatih/diuji di lapangan**, beda dengan prosedur lama yang juga belum sempat diuji. Jalankan
+latihan di atas kertas (bagian 8) sebelum menganggap ini teruji.
 
 Setelah menahan, **jangan menghapus bukti**: jangan `docker system prune`, jangan menimpa log, jangan menghapus akun mencurigakan sebelum dicatat. Salin log sebelum recreate container
 (`docker logs habitflow > ~/insiden-<tanggal>-app.log`, `docker logs habitflow-queue`, dan `docker cp habitflow:/var/www/html/storage/logs ~/insiden-<tanggal>-laravel`).
@@ -50,7 +56,7 @@ Tujuannya menjawab tiga pertanyaan yang diminta pemberitahuan: **data apa**, **m
 
 - Log container (`docker logs habitflow`) dan `storage/logs/laravel.log`. Aplikasi sengaja **tidak** mencatat isi permintaan (ada tes penjaga), jadi log menunjukkan *apa yang diakses*, bukan isinya.
 - `user_tokens.last_used_at` dan `created_at`: token mana yang aktif pada rentang waktu mencurigakan, milik akun mana. `users.updated_at`, `users.email_verified_at`, `account_deletions`.
-- Log SSH VM: `last -a`, `sudo journalctl -u ssh --since "<tanggal>"`; log tunnel: `sudo journalctl -u cloudflared`; dashboard Cloudflare (analitik dan log keamanan domain).
+- Log SSH VPS: `last -a`, `sudo journalctl -u ssh --since "<tanggal>"`; log akses nginx: `/var/log/nginx/access.log`, `/var/log/nginx/error.log`; dashboard Cloudflare (analitik dan log keamanan domain — akses publik sekarang lewat Cloudflare Proxied + Origin Cert, bukan Tunnel).
 - Dashboard Resend (email apa yang dikirim), Google Cloud (penggunaan client OAuth).
 - Daftar berkas dan waktu ubah di `storage/app/private/snapshots`, dan riwayat backup di tujuan (siapa mengunduh, kalau layanan tujuan mencatatnya).
 
@@ -110,7 +116,7 @@ dan taruh pengumuman di halaman kebijakan privasi/beranda. Tulis jujur dan singk
 
 ## 6. Setelah itu
 
-1. **Pulihkan:** perbaiki akar masalah, tambal, buka kembali layanan (`php artisan up`, `sudo systemctl start cloudflared`), dan pantau 72 jam (`monitor.sh` tetap berjalan).
+1. **Pulihkan:** perbaiki akar masalah, tambal, buka kembali layanan (`php artisan up`; kalau sempat dimatikan lewat nginx, pasang lagi `sudo ln -s /etc/nginx/sites-available/habitflow.roziqrizal.com /etc/nginx/sites-enabled/ && sudo systemctl reload nginx`, atau `sudo ufw allow 80,443/tcp` kalau yang diputus seluruh VPS), dan pantau 72 jam (`monitor.sh` tetap berjalan).
 2. **Kalau data hilang atau rusak:** pemulihan dari backup di [operasional-server.md](operasional-server.md) bagian 3.
 3. **Tinjauan tertulis dalam 7 hari:** apa yang terjadi, mengapa tidak tertangkap lebih awal, apa yang diubah. Masukkan perbaikan sebagai tugas di `concept.md`.
 4. Perbarui inventaris data dan dokumen ini kalau ada celah yang ditemukan.
