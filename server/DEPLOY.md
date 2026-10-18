@@ -2,40 +2,35 @@
 
 Dokumen ini supaya sesi Claude Code mana pun (atau kamu sendiri manual) bisa lanjut
 deploy tanpa perlu re-derive proses dari nol. Ditulis 10 Oktober 2026 setelah Tahap 25-28
-dikerjakan.
+dikerjakan. **Diperbarui 18 Oktober 2026**: arsitektur pindah dari VM rumah ke VPS
+(lihat `MIGRATION.md` di repo `server`) — bagian "Akses VPS" di bawah sudah disesuaikan,
+bagian lain (proses deploy, kredensial) tidak berubah selain path `<ip-vm>` yang sudah
+diganti IP statis VPS di contoh perintah.
 
 ## Fakta penting
 
 - **Git push ≠ deploy.** Push ke GitHub cuma riwayat/backup kode. Yang bikin perubahan
-  tampil di `https://habitflow.roziqrizal.com` adalah proses deploy manual ke VM (lihat
+  tampil di `https://habitflow.roziqrizal.com` adalah proses deploy manual ke VPS (lihat
   di bawah).
-- **Kode jalan di VM Linux di rumah**, bukan di layanan hosting. VM ini juga menjalankan
-  project lain (roziqrizalcom, MySQL bersama). Detail infrastruktur VM (Hyper-V, Cloudflare
-  Tunnel, dll) ada di [repo `server`](https://github.com/elahady/build-server) — baca itu
-  dulu kalau VM-nya sendiri bermasalah (bukan soal kode habitflow).
+- **Kode jalan di VPS IDCloudHost** (Jakarta), bukan layanan hosting managed dan bukan lagi
+  VM Hyper-V di rumah (pindah 18 Oktober 2026 setelah motherboard PC rumah rusak — riwayat
+  lengkap di `MIGRATION.md` repo `server`). VPS ini juga menjalankan project lain
+  (roziqrizalcom, rizqflow, MySQL bersama). Detail infrastruktur VPS (firewall, nginx,
+  Cloudflare, dll) ada di [repo `server`](https://github.com/elahady/build-server) — baca
+  itu dulu kalau VPS-nya sendiri bermasalah (bukan soal kode habitflow).
 
-## Akses VM
+## Akses VPS
 
-- SSH: `ssh elahady@<ip-vm>` — key-based auth sudah di-setup dari PC Windows ini
-  (`~/.ssh/id_ed25519`), tidak perlu password.
-- **IP VM bisa berubah** tiap VM restart (DHCP dari Hyper-V Default Switch). Cek IP
-  terkini dengan masuk ke VM lewat Hyper-V Manager → Connect, login, jalankan `ip a`,
-  lihat baris `inet` di `eth0`. IP terakhir yang diketahui (15 Oktober 2026):
-  `172.28.157.112` (sebelumnya `172.23.192.247` pada 10 Oktober) — **jangan asumsikan ini masih
-  benar**, selalu cek ulang kalau sudah lama tidak dipakai. Seluruh subnet Default Switch
-  ikut berganti, bukan hanya IP VM-nya.
-- **Cara menemukan IP tanpa Hyper-V Manager** (tidak perlu hak admin, hanya membaca), dari PowerShell
-  di PC ini: `Get-NetNeighbor -AddressFamily IPv4 | Where InterfaceAlias -match 'Default Switch'` menampilkan
-  tetangga di switch virtual (VM punya MAC berawalan `00-15-5D`). Sebelum login, cocokkan sidik jarinya:
-  `ssh-keyscan -t ed25519 <ip> | ssh-keygen -l -f -` harus sama dengan `ssh-keygen -l -F <ip-lama>`
-  (ED25519 VM ini: `SHA256:iM1PvGgSv/Xk98d3I7fQHsyC4xud25STtq32XoDULC8`). `Get-VM` butuh grup
-  Hyper-V Administrators dan gagal di akun biasa.
-- **Cadangan sebelum deploy** (dibuat 15 Oktober 2026, belum otomatis): `~/backups-habitflow/` di VM berisi
-  `mysqldump` database dan arsip kode sebelum tahap 32, dan image lama ditandai `habitflow:pra-tahap32`.
-  Rollback kode: ekstrak arsip kode itu ke `~/apps/habitflow` lalu `docker compose up -d --build --force-recreate`.
-  Rollback database dari dump hanya kalau migrasi merusak data (migrasi `drop_api_tokens` dan sesudahnya tidak
-  punya `down()` yang memulihkan data).
-- Kode project ada di `~/apps/habitflow/` di VM.
+- **IP**: `103.54.170.198` (statis — beda dari VM lama yang IP-nya dinamis via DHCP
+  Hyper-V, catatan "IP bisa berubah tiap restart" sudah **tidak berlaku lagi**).
+- SSH: `ssh -i ~/.ssh/id_ed25519_vps_jakarta elahady@103.54.170.198` — key-based auth,
+  **password login dimatikan** di VPS ini (jangan coba kirim/pakai password). Key lokal
+  ada di PC Windows ini saja, tidak di repo.
+- **Cadangan sebelum deploy**: backup MySQL terjadwal harian (lihat `build-server/CLAUDE.md`)
+  di `/home/elahady/backups/mysql/` di VPS. Cadangan kode manual ala `~/backups-habitflow/`
+  dari era VM lama **belum ada polanya di VPS baru** — bikin arsip manual dulu kalau mau
+  rollback aman untuk perubahan besar.
+- Kode project ada di `~/apps/habitflow/` di VPS (path sama dengan VM lama).
 - Container MySQL bersama: `shared-mysql` (network Docker `shared-db`).
 
 ## Proses deploy (manual, belum ada script otomatis)
@@ -60,20 +55,20 @@ tar -czf /tmp/habitflow-deploy.tar.gz \
 #    Arsip normal sekitar 300 KB. Lebih dari beberapa MB, atau ada .dll/.exe di dalamnya, berarti salah:
 #    ls -la /tmp/habitflow-deploy.tar.gz && tar -tzf /tmp/habitflow-deploy.tar.gz | grep -ciE '\.(dll|exe)$'   # harus 0
 
-# 2. Kirim ke VM
-scp /tmp/habitflow-deploy.tar.gz elahady@<ip-vm>:~/apps/habitflow-deploy.tar.gz
+# 2. Kirim ke VPS
+scp -i ~/.ssh/id_ed25519_vps_jakarta /tmp/habitflow-deploy.tar.gz elahady@103.54.170.198:~/apps/habitflow-deploy.tar.gz
 
-# 3. Extract di VM (timpa file lama)
-ssh elahady@<ip-vm> "cd ~/apps/habitflow && tar -xzf ../habitflow-deploy.tar.gz && rm ../habitflow-deploy.tar.gz"
+# 3. Extract di VPS (timpa file lama)
+ssh -i ~/.ssh/id_ed25519_vps_jakarta elahady@103.54.170.198 "cd ~/apps/habitflow && tar -xzf ../habitflow-deploy.tar.gz && rm ../habitflow-deploy.tar.gz"
 
 # 4. Build image Docker baru
-ssh elahady@<ip-vm> "cd ~/apps/habitflow && docker compose build"
+ssh -i ~/.ssh/id_ed25519_vps_jakarta elahady@103.54.170.198 "cd ~/apps/habitflow && docker compose build"
 
 # 5. Recreate container (supaya pakai image baru + env terbaru)
-ssh elahady@<ip-vm> "cd ~/apps/habitflow && docker compose up -d --force-recreate"
+ssh -i ~/.ssh/id_ed25519_vps_jakarta elahady@103.54.170.198 "cd ~/apps/habitflow && docker compose up -d --force-recreate"
 
 # 6. Jalankan migrasi kalau ada migration baru
-ssh elahady@<ip-vm> "docker exec habitflow php artisan migrate --force"
+ssh -i ~/.ssh/id_ed25519_vps_jakarta elahady@103.54.170.198 "docker exec habitflow php artisan migrate --force"
 ```
 
 **Migrasi `drop_api_tokens` (31L) menolak jalan kalau masih ada snapshot tanpa akun.** Perintah klaim
@@ -125,8 +120,8 @@ dan `docker exec habitflow php artisan queue:failed`, dan waspadai tabel `jobs` 
 - `.env.production` (APP_KEY, kredensial database, kredensial Google OAuth) **sengaja
   tidak di-commit** (gitignored). Isinya cuma ada di dua tempat: file lokal di komputer
   ini, dan `~/apps/habitflow/.env.production` di VM.
-- **Kalau file lokal hilang**: tarik salinannya dari VM dulu sebelum kerja lagi —
-  `scp elahady@<ip-vm>:~/apps/habitflow/.env.production server/.env.production` — jangan
+- **Kalau file lokal hilang**: tarik salinannya dari VPS dulu sebelum kerja lagi —
+  `scp -i ~/.ssh/id_ed25519_vps_jakarta elahady@103.54.170.198:~/apps/habitflow/.env.production server/.env.production` — jangan
   generate ulang `APP_KEY` baru (itu akan bikin semua data terenkripsi dengan key lama
   tidak terbaca).
 - Isi lengkap variabel yang dibutuhkan ada di `.env.example` (placeholder kosong, aman
@@ -138,16 +133,16 @@ PHP/Composer **tidak terinstall di PC Windows ini** — semua `composer require`
 dijalankan di VM lewat container sementara:
 
 ```bash
-ssh elahady@<ip-vm> "docker run --rm -v ~/apps/habitflow:/app -w /app --user root serversideup/php:8.3-fpm-nginx composer require <paket>"
+ssh -i ~/.ssh/id_ed25519_vps_jakarta elahady@103.54.170.198 "docker run --rm -v ~/apps/habitflow:/app -w /app --user root serversideup/php:8.3-fpm-nginx composer require <paket>"
 ```
 
 Lalu **segera** tarik `composer.json`/`composer.lock` balik ke lokal SEBELUM sync file
-lain ke VM lagi (kalau tidak, sync berikutnya bisa menimpa balik composer.json yang baru
+lain ke VPS lagi (kalau tidak, sync berikutnya bisa menimpa balik composer.json yang baru
 diupdate - ini pernah kejadian, lihat catatan tahap 25 di `docs/concept.md`):
 
 ```bash
-scp elahady@<ip-vm>:~/apps/habitflow/composer.json server/composer.json
-scp elahady@<ip-vm>:~/apps/habitflow/composer.lock server/composer.lock
+scp -i ~/.ssh/id_ed25519_vps_jakarta elahady@103.54.170.198:~/apps/habitflow/composer.json server/composer.json
+scp -i ~/.ssh/id_ed25519_vps_jakarta elahady@103.54.170.198:~/apps/habitflow/composer.lock server/composer.lock
 ```
 
 ## Hal-hal yang pernah bikin error (ringkasan — detail lengkap di `docs/concept.md`)
