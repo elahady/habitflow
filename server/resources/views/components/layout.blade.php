@@ -13,6 +13,7 @@
     <style>
         @include('partials.theme-styles')
         * { box-sizing: border-box; }
+        [x-cloak] { display: none !important; }
         body { font-family: 'Manrope', system-ui, sans-serif; margin: 0; background: var(--background); color: var(--on-surface); }
         header { background: var(--surface-lowest); border-bottom: 1px solid var(--outline-variant); padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
         header .brand { display: flex; align-items: center; gap: 10px; font-family: 'Libre Caslon Text', serif; font-size: 18px; }
@@ -131,6 +132,9 @@
         @endif
         {{ $slot }}
     </main>
+    @auth
+        <x-confirm-modal />
+    @endauth
     <footer>
         <a href="{{ route('privacy') }}">Kebijakan Privasi</a> · <a href="{{ route('delete-account') }}">Hapus akun</a>
     </footer>

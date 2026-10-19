@@ -56,7 +56,7 @@
                                 <option value="{{ $member->id }}" @selected($todo->assigned_to === $member->id)>{{ $member->name }}</option>
                             @endforeach
                         </select>
-                        <button type="button" class="hf-btn-text" wire:click="deleteTodo({{ $todo->id }})" wire:confirm="Hapus tugas ini?" style="color: var(--error);">Hapus</button>
+                        <button type="button" class="hf-btn-text" @click="$dispatch('confirm-action', { message: 'Hapus tugas ini?', action: () => $wire.deleteTodo({{ $todo->id }}) })" style="color: var(--error);">Hapus</button>
                     </div>
                 @empty
                     <p style="font-size: 13px; color: var(--on-surface-variant);">Belum ada tugas.</p>

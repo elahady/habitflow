@@ -205,7 +205,7 @@
                                 <span class="hf-chip neutral">Aktif</span>
                             @endif
                             <button type="button" wire:click="edit({{ $item->id }})" class="hf-btn-text">Ubah</button>
-                            <button type="button" wire:click="delete({{ $item->id }})" wire:confirm="Hapus follow-up ini?" class="hf-btn-text" style="color: var(--error);">Hapus</button>
+                            <button type="button" @click="$dispatch('confirm-action', { message: 'Hapus follow-up ini?', action: () => $wire.delete({{ $item->id }}) })" class="hf-btn-text" style="color: var(--error);">Hapus</button>
                         </div>
                     @endif
                 @empty

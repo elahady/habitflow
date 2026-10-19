@@ -52,7 +52,7 @@
             <div style="display: flex; align-items: center; gap: 10px; padding: 6px 0;">
                 <input type="checkbox" id="todo-{{ $todo->id }}" wire:click="toggleTodo({{ $todo->id }})" @checked($todo->done)>
                 <label for="todo-{{ $todo->id }}" style="flex: 1; margin: 0; font-size: 15px; font-weight: 400; {{ $todo->done ? 'text-decoration: line-through; color: var(--on-surface-variant);' : 'color: inherit;' }}">{{ $todo->title }}</label>
-                <button type="button" wire:click="deleteTodo({{ $todo->id }})" wire:confirm="Hapus to-do ini?" style="color: var(--error); background: none; border: none; cursor: pointer;">Hapus</button>
+                <button type="button" @click="$dispatch('confirm-action', { message: 'Hapus to-do ini?', action: () => $wire.deleteTodo({{ $todo->id }}) })" style="color: var(--error); background: none; border: none; cursor: pointer;">Hapus</button>
             </div>
         @empty
             <p style="font-size: 13px; color: var(--on-surface-variant);">Belum ada to-do hari ini.</p>
@@ -125,12 +125,17 @@
                 @endif
 
                 <label style="display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--on-surface-variant); margin: 0;">
-                    <input type="checkbox" wire:click="toggleMandatory({{ $habit->id }})" @checked($habit->is_mandatory) @if ($habit->is_mandatory) wire:confirm="Matikan status wajib habit ini?" @endif>
+                    <input type="checkbox" @checked($habit->is_mandatory)
+                        @if ($habit->is_mandatory)
+                            @click.prevent="$dispatch('confirm-action', { message: 'Matikan status wajib habit ini?', action: () => $wire.toggleMandatory({{ $habit->id }}) })"
+                        @else
+                            wire:click="toggleMandatory({{ $habit->id }})"
+                        @endif>
                     Wajib
                 </label>
 
                 @unless ($habit->is_mandatory)
-                    <button type="button" wire:click="deleteHabit({{ $habit->id }})" wire:confirm="Hapus habit ini? Riwayat centangnya ikut terhapus." style="color: var(--error); background: none; border: none; cursor: pointer;">Hapus</button>
+                    <button type="button" @click="$dispatch('confirm-action', { message: 'Hapus habit ini? Riwayat centangnya ikut terhapus.', action: () => $wire.deleteHabit({{ $habit->id }}) })" style="color: var(--error); background: none; border: none; cursor: pointer;">Hapus</button>
                 @endunless
             </div>
         @endforeach
