@@ -65,7 +65,10 @@ ssh -i ~/.ssh/id_ed25519_vps_jakarta elahady@103.54.170.198 "cd ~/apps/habitflow
 ssh -i ~/.ssh/id_ed25519_vps_jakarta elahady@103.54.170.198 "cd ~/apps/habitflow && docker compose build"
 
 # 5. Recreate container (supaya pakai image baru + env terbaru)
-ssh -i ~/.ssh/id_ed25519_vps_jakarta elahady@103.54.170.198 "cd ~/apps/habitflow && docker compose up -d --force-recreate"
+# PENTING: container berjalan dengan label compose project "server" (lihat bagian "Hal-hal
+# yang pernah bikin error" - insiden 19 Oktober), BUKAN "habitflow". Tanpa -p server, compose
+# tidak mengenali container/volume/network yang sudah ada dan membuat set baru yang kosong.
+ssh -i ~/.ssh/id_ed25519_vps_jakarta elahady@103.54.170.198 "cd ~/apps/habitflow && docker compose -p server up -d --force-recreate"
 
 # 6. Jalankan migrasi kalau ada migration baru
 ssh -i ~/.ssh/id_ed25519_vps_jakarta elahady@103.54.170.198 "docker exec habitflow php artisan migrate --force"
@@ -146,6 +149,42 @@ scp -i ~/.ssh/id_ed25519_vps_jakarta elahady@103.54.170.198:~/apps/habitflow/com
 ```
 
 ## Hal-hal yang pernah bikin error (ringkasan — detail lengkap di `docs/concept.md`)
+
+- **(19 Oktober 2026) Container berlabel compose project "server", bukan "habitflow".**
+  Deploy pertama (18 Oktober, migrasi VM→VPS) sempat dijalankan dengan `docker compose` tanpa
+  nama project eksplisit dari dalam struktur lama, jadi Docker memakai nama folder sebagai nama
+  project — hasilnya volume `server_storage` dan network `server_default`, bukan
+  `habitflow_storage`/`habitflow_default`. (Insiden terkait: deploy pertama **rizqflow** di hari
+  yang sama sempat menimpa container `habitflow` selama ±2 menit karena masalah nama project yang
+  sama dari arah sebaliknya — lihat `rizqflow/server/DEPLOY.md`.) Dampaknya: `docker compose up
+  -d --force-recreate` **tanpa** `-p server` gagal dengan `Conflict: container name "/habitflow"
+  already in use` — compose bikin network/volume baru yang kosong lalu nabrak nama container yang
+  sudah ada. Fix sementara: selalu pakai `docker compose -p server ...` (sudah dipakai di langkah
+  5 di atas). Fix permanen yang belum dikerjakan: tambahkan baris `name: server` di
+  `docker-compose.yml` (pola yang sama dipakai `rizqflow/server/docker-compose.yml` dengan
+  `name: rizqflow`) supaya tidak bergantung ke orang/Claude mengingat `-p server` tiap deploy.
+  **Jangan** ganti ke `name: habitflow` tanpa memindahkan isi volume `server_storage` ke
+  `habitflow_storage` dulu (snapshot terenkripsi ada di situ) — kalau cuma ganti nama, deploy
+  berikutnya akan memakai volume baru yang kosong dan data lama jadi tidak keakses (bukan hilang,
+  cuma "tersembunyi" di volume lama).
+
+- **(19 Oktober 2026) `NGINX_LISTEN_IP_PROTOCOL` wajib `ipv4` di `.env.production`.** Base image
+  `serversideup/php:8.3-fpm-nginx` defaultnya listen di IPv4 **dan** IPv6 (`NGINX_LISTEN_IP_PROTOCOL=all`).
+  VPS ini kernelnya tidak mendukung IPv6, jadi tiap `docker compose build` yang menarik versi base
+  image terbaru bisa bikin nginx gagal start: `nginx: [emerg] socket() [::]:8080 failed (97:
+  Address family not supported by protocol)`, container jadi `unhealthy` terus-menerus (healthcheck
+  loop tanpa pernah hijau). Fix: pastikan baris `NGINX_LISTEN_IP_PROTOCOL=ipv4` ada di
+  `.env.production` sebelum/setelah `docker compose up`. Sama persis dipakai di
+  `rizqflow/server/.env.production` (lihat komentar di `rizqflow/server/Dockerfile`).
+
+- **(19 Oktober 2026) `.env.production` sempat hilang dari VPS sekaligus dari PC lokal** —
+  penyebab pastinya belum diketahui. Diselamatkan dari environment variable container lama yang
+  masih hidup (`docker exec habitflow env`, lalu difilter ke prefix variabel app yang relevan)
+  SEBELUM container itu di-recreate — kalau container keburu mati/restart duluan, `APP_KEY` dan
+  semua kredensial produksi hilang permanen (data terenkripsi ikut tidak bisa dibaca). Pelajaran:
+  anjuran "simpan salinan `.env` di pengelola kata sandi" di bagian atas dokumen ini **belum
+  pernah benar-benar dikerjakan** — lakukan sekarang, jangan tunda lagi, supaya kejadian ini tidak
+  terulang dengan container yang sudah keburu mati duluan.
 
 - Livewire full-page component (`Route::get('/', Component::class)`) butuh
   `->layout('components.layout')` eksplisit di method `render()` — tidak otomatis pakai
