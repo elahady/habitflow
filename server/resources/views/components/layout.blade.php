@@ -14,6 +14,8 @@
         @include('partials.theme-styles')
         * { box-sizing: border-box; }
         [x-cloak] { display: none !important; }
+        .hf-modal-backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 100; }
+        .hf-modal { max-width: 380px; width: 100%; padding: 22px 24px; display: flex; flex-direction: column; gap: 18px; }
         body { font-family: 'Manrope', system-ui, sans-serif; margin: 0; background: var(--background); color: var(--on-surface); }
         header { background: var(--surface-lowest); border-bottom: 1px solid var(--outline-variant); padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
         header .brand { display: flex; align-items: center; gap: 10px; font-family: 'Libre Caslon Text', serif; font-size: 18px; }

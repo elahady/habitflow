@@ -127,7 +127,7 @@
                 <label style="display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--on-surface-variant); margin: 0;">
                     <input type="checkbox" @checked($habit->is_mandatory)
                         @if ($habit->is_mandatory)
-                            @click.prevent="$dispatch('confirm-action', { message: 'Matikan status wajib habit ini?', action: () => $wire.toggleMandatory({{ $habit->id }}) })"
+                            @click.prevent="$dispatch('confirm-action', { message: 'Matikan status wajib habit ini?', label: 'Matikan', action: () => $wire.toggleMandatory({{ $habit->id }}) })"
                         @else
                             wire:click="toggleMandatory({{ $habit->id }})"
                         @endif>
