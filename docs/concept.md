@@ -2996,6 +2996,43 @@ Profil, dll.).
 - Bagian yang memang menunggu tahap lain (Fokus kesehatan web, Meeting & briefing, Ringkasan dari Claude) ditandai
   jelas "menyusul" di UI, bukan dibangun setengah jadi.
 
+### Tahap 34: MCP Habitflow dengan login OAuth (kode dan tes selesai 21 Oktober 2026; belum di-deploy, belum dicoba dengan Claude sungguhan)
+
+**Tujuan:** Claude memakai Habitflow seperti Notion: ditambahkan sekali, login lewat browser, lalu skill memanggil tool
+`habitflow` langsung. Tanpa `curl`, berkas `~/.habitflow/claude-token`, atau SSH ke server. Keputusan pemilik 21 Oktober 2026: **OAuth**, bukan token statis.
+
+**Yang dibangun (server/, 417 tes lulus):**
+- Paket `laravel/mcp` 1.1 dan `laravel/passport` 13.10 (efek samping: `laravel/framework` naik 12.69.3 ke 12.70.0).
+- `routes/ai.php`: `Mcp::oauthRoutes()` (metadata `/.well-known/oauth-*`, pendaftaran klien `/oauth/register`) dan `Mcp::web('/mcp', HabitflowServer)`
+  dengan middleware `auth:api`, `scopes:mcp:use`, `throttle:habitflow`. Rute Passport (`/oauth/authorize`, `/oauth/token`) ikut aktif.
+- `app/Mcp/`: server `HabitflowServer` dan dua tool, `save-daily-brief` (upsert per tanggal, sama dengan `POST /daily-briefs`, hanya `email_digest`
+  sehingga `meeting_note` tidak tertimpa) dan `get-daily-brief`. Tool selalu bekerja pada akun pemilik token.
+- Layar persetujuan `resources/views/mcp/authorize.blade.php`: menyebut nama klien, email akun, dan tujuan kembali. Login memakai halaman login web
+  yang sudah ada (email atau Google), lalu kembali ke layar persetujuan lewat `intended`.
+- Token akses berlaku 1 jam, refresh token 30 hari. Kunci Passport di `storage/oauth-*.key` (volume `storage`, tidak di git).
+
+**Keputusan keamanan yang mengikat:**
+- Dua dunia token terpisah. Token OAuth hanya berlaku di `/mcp` (rute REST `/api/v1` memakai `user-token`, jadi menolak token OAuth dengan 401);
+  token REST ditolak di `/mcp`. Diuji di `McpOAuthTest`.
+- `config/mcp.php`: alamat kembali klien hanya `https://claude.ai`, `https://claude.com`, `http://localhost`, `http://127.0.0.1` (bawaan paket `*`
+  mengizinkan semuanya). Klien MCP keluar (github, linear, playwright) dikosongkan.
+- `/oauth/register` terbuka tanpa login (memang begitu alurnya) tapi dibatasi 10 permintaan per menit per IP. Alur kode perangkat dimatikan
+  (`Passport::$deviceCodeGrantEnabled = false`, tabelnya tidak dibuat).
+- Layar persetujuan dan tombolnya memakai `session-not-revoked`: sesi yang sudah diputus tidak bisa menyetujui klien baru.
+- `User::revokeTokens()` (ganti kata sandi, "Keluar dari semua perangkat", `habitflow:revoke-all-sessions`) ikut mencabut token OAuth dan refresh token-nya.
+- Hapus akun menghapus `oauth_access_tokens`, `oauth_refresh_tokens`, dan `oauth_auth_codes` milik pengguna. `oauth_clients` bukan data pengguna
+  (lihat `tests/Support/DataInventory.php` dan inventaris di `docs/rilis-play-store.md`).
+
+**Deploy (belum dilakukan; detail perintah di `server/DEPLOY.md` bagian "MCP dan OAuth"):** cadangkan MySQL, kirim kode, build, recreate,
+`php artisan migrate --force` (4 tabel oauth baru), `php artisan passport:keys` sekali. Lalu di Claude Code: `claude mcp add --transport http habitflow
+https://habitflow.roziqrizal.com/mcp`, kemudian `/mcp` untuk login.
+
+**Belum dikerjakan:**
+- Deploy ke produksi dan uji dengan Claude Code sungguhan (alur browser, refresh token, nama klien yang tampil di layar persetujuan).
+- Mengubah skill `habitflow-morning-routine` supaya memanggil tool `save-daily-brief` (jangan diubah sebelum MCP live, supaya skill lama tetap jalan).
+- Tool lain (follow-up, catatan kerja harian) satu per satu, masing-masing dengan tesnya.
+- Daftar dan pencabutan koneksi MCP dari halaman Akun web (sementara: "Keluar dari semua perangkat").
+
 ## Daftar pertanyaan terbuka
 
 - Urutan habit bisa diubah atau tidak (tahap 9, opsional).

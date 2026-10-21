@@ -86,6 +86,25 @@ trial-error (lihat catatan di `docs/concept.md` tiap tahap). Layak dibuatkan
 `scripts/deploy.sh` begitu polanya benar-benar tidak berubah lagi — belum dilakukan per
 10 Oktober 2026.
 
+## MCP dan OAuth (tahap 34)
+
+Rilis ini menambah 4 tabel (`oauth_*`) dan butuh kunci Passport. **Cadangkan MySQL dulu** (`/home/elahady/backups/mysql/` terjadwal harian, atau jalankan
+skrip backup di `ops/` sekarang), lalu deploy seperti biasa (arsip, `scp`, ekstrak, `docker compose build`, `-p server up -d --force-recreate`). Setelah itu, **sekali saja**:
+
+```bash
+ssh -i ~/.ssh/id_ed25519_vps_jakarta elahady@103.54.170.198 "docker exec habitflow php artisan migrate --force"
+ssh -i ~/.ssh/id_ed25519_vps_jakarta elahady@103.54.170.198 "docker exec habitflow php artisan passport:keys"
+```
+
+`passport:keys` menulis `storage/oauth-private.key` dan `oauth-public.key` di volume `storage` (ikut bertahan saat container dibuat ulang, dipakai juga oleh
+container `queue`). Perintahnya menolak menimpa kunci yang sudah ada; **jangan pakai `--force`**, karena semua token MCP yang sudah terbit jadi tidak sah.
+Kunci ini rahasia: jangan di-commit dan jangan dicetak ke log atau chat.
+
+Cek: `curl -s https://habitflow.roziqrizal.com/.well-known/oauth-authorization-server` harus menjawab JSON, dan `curl -si -X POST https://habitflow.roziqrizal.com/mcp`
+harus 401 dengan header `WWW-Authenticate`. Memasang di Claude Code: `claude mcp add --transport http habitflow https://habitflow.roziqrizal.com/mcp`, lalu `/mcp` di sesi interaktif untuk login.
+
+Rollback: `php artisan migrate:rollback --step=4` menghapus tabel oauth; token MCP yang ada hilang, REST dan Android tidak terpengaruh.
+
 ## Backup, pemantauan, dan insiden (tahap 31K)
 
 Skrip di `ops/` (backup, latihan pemulihan, pemantau) ikut terkirim bersama deploy karena ada di dalam `server/`. Cara memasang, memulihkan,

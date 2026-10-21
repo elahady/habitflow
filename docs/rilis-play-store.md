@@ -31,6 +31,8 @@ dihapus. Kalau salah satu dari ketiganya berbeda dari tabel ini, tabel ini yang 
 | `email_codes` | hash kode verifikasi dan reset (6 angka, berlaku 10 menit), jumlah percobaan | Kredensial | Ya |
 | `jobs`, `failed_jobs` | antrean email. Berisi kode asli selama email belum terkirim (menit), dan kode asli bisa tertinggal di `failed_jobs` kalau pengiriman gagal | Kredensial, sementara | Dibersihkan otomatis saat terkirim. `failed_jobs` dibersihkan berkala (31K) |
 | `user_tokens` | hash token sesi per perangkat dan cakupannya (`scope`, kosong = akses penuh) | Kredensial | Ya |
+| `oauth_access_tokens`, `oauth_refresh_tokens`, `oauth_auth_codes` | token dan kode OAuth untuk MCP Habitflow (Claude): id token, `user_id`, cakupan `mcp:use`, masa berlaku, status dicabut (kolom ini berisi id, bukan token mentah) | Kredensial | Ya |
+| `oauth_clients` | klien MCP yang mendaftar sendiri lewat `/oauth/register` (nama dan alamat kembali dari aplikasinya, mis. Claude), tidak terikat akun | Bukan data pengguna | Tidak |
 | `snapshots` | seluruh data yang belum dimigrasi (jadwal, kesehatan, makan, kalender, pengaturan, EOD), terenkripsi dengan kunci app | **Kesehatan, lokasi** | Ya, termasuk 14 salinan terakhir dan berkasnya (sejak 31D, lewat `snapshots.user_id`; snapshot lama dari token 19B diklaim ke akun lewat `habitflow:claim-legacy` di 31E; perintah dan tabel `api_tokens` dihapus di 31L) |
 | `account_deletions` | waktu dan sumber penghapusan akun (`app`, `web`, `web-code`), tanpa id, nama, atau email | Bukan data pengguna | Tidak (bukti penghapusan) |
 | `habits`, `habit_entries`, `todos` | habit, riwayat centang, to-do harian | Aktivitas | Ya |
