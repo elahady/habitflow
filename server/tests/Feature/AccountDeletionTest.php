@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Tests\Support\DataInventory;
 use Tests\TestCase;
 
@@ -44,6 +45,15 @@ class AccountDeletionTest extends TestCase
     private function populate(User $user): void
     {
         UserToken::issue($user, 'hp');
+        // Token OAuth untuk MCP: access token, refresh token (tanpa user_id, lewat access token), dan kode otorisasi.
+        $clientId = (string) Str::uuid();
+        DB::table('oauth_clients')->insert(['id' => $clientId, 'name' => 'Claude', 'redirect_uris' => '[]', 'grant_types' => '[]', 'revoked' => false, 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('oauth_access_tokens')->insert([
+            'id' => 'at-'.$user->id, 'user_id' => $user->id, 'client_id' => $clientId, 'scopes' => '["mcp:use"]',
+            'revoked' => false, 'created_at' => now(), 'updated_at' => now(), 'expires_at' => now()->addHour(),
+        ]);
+        DB::table('oauth_refresh_tokens')->insert(['id' => 'rt-'.$user->id, 'access_token_id' => 'at-'.$user->id, 'revoked' => false, 'expires_at' => now()->addDays(30)]);
+        DB::table('oauth_auth_codes')->insert(['id' => 'ac-'.$user->id, 'user_id' => $user->id, 'client_id' => $clientId, 'scopes' => '["mcp:use"]', 'revoked' => false, 'expires_at' => now()->addMinutes(10)]);
         DB::table('email_codes')->insert([
             'user_id' => $user->id, 'purpose' => 'verify', 'code_hash' => str_repeat('a', 64),
             'expires_at' => now()->addMinutes(10), 'created_at' => now(), 'updated_at' => now(),
@@ -153,7 +163,7 @@ class AccountDeletionTest extends TestCase
 
         $this->assertSame(1, User::count());
         $this->assertSame($sari->id, User::first()->id);
-        foreach (['user_tokens', 'email_codes', 'habits', 'schedule_blocks', 'todos', 'follow_ups', 'prayer_days', 'days_off', 'daily_briefs', 'work_days', 'weight_entries', 'blood_pressure_entries', 'step_days', 'health_focus', 'snapshots'] as $table) {
+        foreach (['user_tokens', 'oauth_access_tokens', 'oauth_auth_codes', 'email_codes', 'habits', 'schedule_blocks', 'todos', 'follow_ups', 'prayer_days', 'days_off', 'daily_briefs', 'work_days', 'weight_entries', 'blood_pressure_entries', 'step_days', 'health_focus', 'snapshots'] as $table) {
             $this->assertSame(1, DB::table($table)->where('user_id', $sari->id)->count(), "Baris $table milik pengguna lain ikut terhapus.");
         }
         $this->assertSame(1, DB::table('habit_entries')->count());

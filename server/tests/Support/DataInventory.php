@@ -14,6 +14,9 @@ class DataInventory
     public const DELETED_WITH_ACCOUNT = [
         'users',
         'user_tokens',
+        'oauth_access_tokens',
+        'oauth_refresh_tokens',
+        'oauth_auth_codes',
         'email_codes',
         'habits',
         'habit_entries',
@@ -39,6 +42,7 @@ class DataInventory
     /** Bukan data pengguna, atau ditangani dengan cara lain, beserta alasannya. */
     public const NOT_USER_DATA = [
         'migrations' => 'Riwayat migrasi Laravel, tidak berisi data pengguna.',
+        'oauth_clients' => 'Klien MCP yang mendaftar sendiri (nama dan alamat kembali dari aplikasinya), bukan data pengguna dan tidak terikat satu akun. Token dan kode milik pengguna ada di tabel oauth lain dan ikut terhapus.',
         'account_deletions' => 'Catatan audit penghapusan: hanya waktu dan sumber, tanpa id, nama, atau email.',
         'jobs' => 'Antrean email. Baris yang memuat email pengguna dihapus oleh AccountDeletionService; sisanya hilang saat email terkirim.',
         'failed_jobs' => 'Email gagal kirim. Baris yang memuat email pengguna dihapus oleh AccountDeletionService; pembersihan berkala di 31K.',

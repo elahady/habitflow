@@ -7,7 +7,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Laravel\Passport\Contracts\OAuthenticatable;
+use Laravel\Passport\HasApiTokens;
+use Laravel\Passport\Token as OAuthToken;
 
 /**
  * Login lewat email/kata sandi atau Google, di web dan di API Android (tahap 25, diperluas
@@ -17,9 +21,11 @@ use Illuminate\Support\Str;
  * diisi lewat forceFill di alur yang memang berwenang. Token per-HP tahap 19B
  * (api_tokens) dipensiunkan di 31E dan dihapus di 31L.
  */
-class User extends Authenticatable
+class User extends Authenticatable implements OAuthenticatable
 {
-    use HasFactory;
+    // `tokens()` di bawah (UserToken, token REST) sengaja menimpa `tokens()` milik HasApiTokens Passport;
+    // token OAuth untuk MCP dicabut lewat revokeOAuthTokens().
+    use HasApiTokens, HasFactory;
 
     protected $fillable = ['google_sub', 'email', 'name', 'avatar', 'password'];
 
@@ -49,6 +55,15 @@ class User extends Authenticatable
     public function revokeTokens(?int $exceptTokenId = null): void
     {
         $this->tokens()->when($exceptTokenId, fn ($q) => $q->where('id', '!=', $exceptTokenId))->delete();
+        $this->revokeOAuthTokens();
+    }
+
+    /** Cabut semua token OAuth (akses MCP) beserta refresh token-nya. */
+    public function revokeOAuthTokens(): void
+    {
+        $ids = OAuthToken::where('user_id', $this->getKey())->pluck('id');
+        OAuthToken::whereIn('id', $ids)->update(['revoked' => true]);
+        DB::table('oauth_refresh_tokens')->whereIn('access_token_id', $ids)->update(['revoked' => true]);
     }
 
     /**

@@ -47,6 +47,14 @@ class AccountDeletionService
             DB::table('schedule_block_habits')->whereIn('schedule_block_id', $blockIds)->orWhereIn('habit_id', $habitIds)->delete();
             DB::table('schedule_blocks')->where('user_id', $user->id)->delete();
             DB::table('habits')->where('user_id', $user->id)->delete();
+            // Token OAuth untuk MCP: refresh token tidak punya user_id, jadi dicari lewat access token-nya dulu.
+            DB::table('oauth_refresh_tokens')
+                ->whereIn('access_token_id', DB::table('oauth_access_tokens')->where('user_id', $user->id)->select('id'))
+                ->delete();
+            foreach (['oauth_access_tokens', 'oauth_auth_codes'] as $table) {
+                DB::table($table)->where('user_id', $user->id)->delete();
+            }
+
             foreach (['todos', 'follow_ups', 'prayer_days', 'days_off', 'daily_briefs', 'work_days', 'weight_entries', 'blood_pressure_entries', 'step_days', 'health_focus', 'snapshots', 'email_codes', 'user_tokens'] as $table) {
                 DB::table($table)->where('user_id', $user->id)->delete();
             }
