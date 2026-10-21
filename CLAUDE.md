@@ -5,13 +5,14 @@ kontribusi ala GitHub. Detail rancangan ada di [docs/rancangan.md](docs/rancanga
 
 ## Status Pengembangan
 
-_Diperbarui 17 Oktober 2026. **Direkonstruksi dari `git log` dan dokumen repo, belum diverifikasi pemilik** — koreksi butir yang keliru. Potret keadaan sekarang, bukan log: ubah di tempat setiap selesai pekerjaan nyata (skill `catat-progres`); riwayat ada di `git log`._
+_Diperbarui 21 Oktober 2026 (butir MCP saja; sisanya 17 Oktober). **Direkonstruksi dari `git log` dan dokumen repo, belum diverifikasi pemilik** — koreksi butir yang keliru. Potret keadaan sekarang, bukan log: ubah di tempat setiap selesai pekerjaan nyata (skill `catat-progres`); riwayat ada di `git log`._
 
 Catatan progres per fitur ada di [docs/concept.md](docs/concept.md) (aturan di bagian "Catat progres di docs/concept.md" di bawah); bagian ini hanya penunjuk dan ringkasan.
 
 ### Sudah selesai
 - Versi web live di habitflow.roziqrizal.com; **deploy produksi terakhir 16 Oktober 2026** (jadwal, libur, angka EOD, Tugas Rumah) dan perbaikan dropdown Tugas Rumah, dicatat di [docs/uji-deploy-16-okt.md](docs/uji-deploy-16-okt.md). Uji di HP: Tugas Rumah berhasil, alarm minum berbunyi (commit terakhir 2026-10-16).
 - Ringkasan pagi email lewat Claude ke kartu "Ringkasan dari Claude" (baru dipakai pemilik sendiri).
+- **MCP Habitflow dengan login OAuth (tahap 34) selesai di kode dan tes (21 Oktober 2026), belum di-deploy.** Skill `habitflow-morning-routine` belum diubah dan masih memakai token REST; ubah hanya setelah MCP live. Langkah deploy dan serah terima: bagian "Pembaruan 21 Oktober 2026" di [docs/concept.md](docs/concept.md) dan "MCP dan OAuth" di `server/DEPLOY.md`.
 
 ### Belum selesai / berikutnya
 1. **Android belum dirilis ke Play Store**; persiapan ada di [docs/rilis-play-store.md](docs/rilis-play-store.md) dan [docs/uji-tertutup-dan-play-console.md](docs/uji-tertutup-dan-play-console.md).

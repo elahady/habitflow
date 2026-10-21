@@ -2611,6 +2611,28 @@ dan 07.00 WIB halaman menampilkan kemarin); tanggal habit dibuat di web = yang l
 - Memori dan `~/.claude/CLAUDE.md` Claude Code ada di komputer, bukan di repo; semua yang penting sudah ada di dokumen ini.
 - Cadangan di VM: `~/backups-habitflow/` (dump database dan arsip kode sebelum tahap 32, 33 langkah 1, dan 33 langkah 3b) dan tag image `habitflow:pra-tahap32`, `pra-tahap33`, `pra-3b`.
 
+**Pembaruan 21 Oktober 2026 (serah terima dari PC `pc2` ke PC lain):** sesi ini dimulai dari `/habitflow-morning-routine` dan berakhir dengan MCP. Urutannya, supaya sesi berikutnya tidak mengulang:
+1. Skill berhenti sebelum menyentuh Gmail karena token tidak ada di `pc2` (`HABITFLOW_TOKEN` kosong, `~/.habitflow/claude-token` tidak ada). Sudah benar sesuai SKILL.md.
+2. Mencoba menerbitkan token dari `pc2` gagal di tahap SSH: **`Permission denied (publickey)` ke `103.54.170.198`**. VPS hanya menerima kunci (`id_ed25519_vps_jakarta`, login kata sandi mati), dan kunci itu **tidak ada di `pc2`**.
+   Di `pc2` ada kunci `~/.ssh/id_ed25519_habitflow` (hanya kunci publiknya yang pernah ditampilkan; belum terdaftar di server, dan belum diketahui apakah memakai passphrase) serta berkas `~/.habitflow/claude-token`
+   **kosong (0 byte)**. Dua-duanya tidak dipakai lagi. Berkas kosong itu sebaiknya dihapus supaya tidak dikira token. `known_hosts` di `pc2` sudah memuat host VPS.
+3. Pemilik memutuskan: **bukan token statis, tapi MCP dengan login OAuth seperti Notion.** Hasilnya tahap 34 di bawah (kode selesai, 417 tes lulus, commit `175b8f7`, `e1dba0d`, `53fda79`, sudah di-push; **belum di-deploy**).
+4. Deploy tetap manual (arsip, `scp`, build, recreate, lihat `server/DEPLOY.md`) dari PC yang punya `id_ed25519_vps_jakarta`; **tidak ada `git pull` di VPS**, direktori `~/apps/habitflow` bukan checkout git.
+
+**Langkah berikutnya (urut):**
+- (a) Di PC yang punya kunci VPS: `git pull`, cadangkan MySQL, deploy, lalu `migrate --force` dan `passport:keys` sekali (bagian "MCP dan OAuth" di `server/DEPLOY.md`).
+- (b) `claude mcp add --transport http habitflow https://habitflow.roziqrizal.com/mcp`, lalu `/mcp` untuk login, lalu coba tool `save-daily-brief`.
+- (c) Baru setelah itu ubah `skills/habitflow-morning-routine/SKILL.md` (juga salinan di `masuya-context` dan `~/.claude/skills/`) supaya memakai tool MCP dan hapus prasyarat token.
+- (d) Tambah tool lain satu per satu (follow-up, `work-days`).
+- (e) Halaman Akun web untuk melihat dan mencabut koneksi MCP.
+
+**Menyiapkan PC baru untuk server (koreksi untuk daftar di atas, yang masih menyebut VM):** infrastruktur sudah **VPS IDCloudHost `103.54.170.198`** sejak 18 Oktober 2026 (lihat `server/DEPLOY.md`), bukan VM Hyper-V.
+- PHP 8.2+ (xampp: `C:\xampp\php`) dan Composer cukup untuk mengembangkan dan menjalankan tes. Di `server/`: `composer install`, lalu `cp .env.example .env && php artisan key:generate` (`.env` lokal gitignored, bukan `.env.production`).
+- **`ext-sodium` wajib sejak tahap 34** (dipakai `lcobucci/jwt` lewat Passport). Di xampp ia mati secara bawaan: hapus tanda `;` di `extension=sodium` pada `php.ini`, atau tanpa mengubah sistem, salin `php.ini` ke folder lain
+  dengan baris itu aktif dan set variabel lingkungan `PHPRC` ke folder tersebut sebelum menjalankan `composer` atau `php artisan`. Image produksi (PHP 8.3) sudah memilikinya.
+- `php artisan test` harus 417 lulus. Tes OAuth membuat kunci RSA sendiri lewat phpseclib (`openssl_pkey_new` gagal di PHP Windows tanpa `openssl.cnf`), jadi tidak butuh kunci di repo. Gaya kode: `vendor/bin/pint --dirty`.
+- Catatan lama "composer tidak terpasang" di `server/DEPLOY.md` sudah usang untuk pengembangan lokal. Di VPS `composer require` tidak perlu: `composer.lock` ikut terkirim dan image dibangun ulang.
+
 ### Tahap 32: Rekap kerja otomatis dari Claude (langkah 1-5 selesai dan di-deploy; skill dijalankan sungguhan 16 Oktober 2026; routine 07.00 WIB dibuat, belum pernah berjalan terjadwal)
 
 **Status (15 Oktober 2026):** langkah 1 (server) selesai: migrasi `2026_10_15_100000_create_daily_briefs_table`
