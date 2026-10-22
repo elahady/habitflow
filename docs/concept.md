@@ -3052,6 +3052,12 @@ sebelumnya nonaktif) untuk `php artisan test` 417 lulus, kirim kode, `docker com
 200 JSON, `POST /mcp` 401 dengan `WWW-Authenticate`, `GET /` 302, log container bersih, tidak ada failed job. Belum: `claude mcp add --transport http
 habitflow https://habitflow.roziqrizal.com/mcp` lalu `/mcp` untuk login belum dicoba oleh pemilik.
 
+**Perbaikan susulan (commit `8eaf903`, 418 tes lulus, di-deploy 22 Oktober 2026 beberapa menit setelah deploy pertama di atas):** klien OAuth yang
+tidak mengirim parameter `scope` saat `/oauth/token` tadinya mendapat token tanpa cakupan, membuat `/mcp` menjawab 403. Fix: `Passport::setDefaultScope`
+di `AppServiceProvider` memberi cakupan `mcp:use` bawaan. Commit ini dibuat di sesi lain sebelum sesi deploy menyadarinya lewat `git push` yang ditolak
+(non-fast-forward) — ditarik dengan `git pull`, tes diulang (418 lulus), lalu `docker compose build` + `up -d --force-recreate` ulang (tanpa migrasi
+baru, tanpa `passport:keys` ulang).
+
 **Belum dikerjakan:**
 - Uji dengan Claude Code sungguhan (alur browser, refresh token, nama klien yang tampil di layar persetujuan) — server sudah live, belum dicoba.
 - Mengubah skill `habitflow-morning-routine` supaya memanggil tool `save-daily-brief` (jangan diubah sebelum MCP live, supaya skill lama tetap jalan).
