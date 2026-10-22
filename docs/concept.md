@@ -3018,7 +3018,7 @@ Profil, dll.).
 - Bagian yang memang menunggu tahap lain (Fokus kesehatan web, Meeting & briefing, Ringkasan dari Claude) ditandai
   jelas "menyusul" di UI, bukan dibangun setengah jadi.
 
-### Tahap 34: MCP Habitflow dengan login OAuth (kode dan tes selesai 21 Oktober 2026; belum di-deploy, belum dicoba dengan Claude sungguhan)
+### Tahap 34: MCP Habitflow dengan login OAuth (kode dan tes selesai 21 Oktober 2026; **di-deploy 22 Oktober 2026**, belum dicoba dengan Claude sungguhan)
 
 **Tujuan:** Claude memakai Habitflow seperti Notion: ditambahkan sekali, login lewat browser, lalu skill memanggil tool
 `habitflow` langsung. Tanpa `curl`, berkas `~/.habitflow/claude-token`, atau SSH ke server. Keputusan pemilik 21 Oktober 2026: **OAuth**, bukan token statis.
@@ -3045,12 +3045,15 @@ Profil, dll.).
 - Hapus akun menghapus `oauth_access_tokens`, `oauth_refresh_tokens`, dan `oauth_auth_codes` milik pengguna. `oauth_clients` bukan data pengguna
   (lihat `tests/Support/DataInventory.php` dan inventaris di `docs/rilis-play-store.md`).
 
-**Deploy (belum dilakukan; detail perintah di `server/DEPLOY.md` bagian "MCP dan OAuth"):** cadangkan MySQL, kirim kode, build, recreate,
-`php artisan migrate --force` (4 tabel oauth baru), `php artisan passport:keys` sekali. Lalu di Claude Code: `claude mcp add --transport http habitflow
-https://habitflow.roziqrizal.com/mcp`, kemudian `/mcp` untuk login.
+**Deploy (selesai 22 Oktober 2026; detail perintah di `server/DEPLOY.md` bagian "MCP dan OAuth"):** backup MySQL harian terjadwal dipakai (tidak backup
+manual tambahan karena cadangan 22 Oktober 02:30 masih segar), `composer install` lokal (plus aktifkan ekstensi `sodium` di `C:\xampp\php\php.ini` yang
+sebelumnya nonaktif) untuk `php artisan test` 417 lulus, kirim kode, `docker compose build`, `docker compose -p server up -d --force-recreate`,
+`php artisan migrate --force` (4 tabel oauth dibuat), `php artisan passport:keys` (sekali, berhasil). Verifikasi: `/.well-known/oauth-authorization-server`
+200 JSON, `POST /mcp` 401 dengan `WWW-Authenticate`, `GET /` 302, log container bersih, tidak ada failed job. Belum: `claude mcp add --transport http
+habitflow https://habitflow.roziqrizal.com/mcp` lalu `/mcp` untuk login belum dicoba oleh pemilik.
 
 **Belum dikerjakan:**
-- Deploy ke produksi dan uji dengan Claude Code sungguhan (alur browser, refresh token, nama klien yang tampil di layar persetujuan).
+- Uji dengan Claude Code sungguhan (alur browser, refresh token, nama klien yang tampil di layar persetujuan) — server sudah live, belum dicoba.
 - Mengubah skill `habitflow-morning-routine` supaya memanggil tool `save-daily-brief` (jangan diubah sebelum MCP live, supaya skill lama tetap jalan).
 - Tool lain (follow-up, catatan kerja harian) satu per satu, masing-masing dengan tesnya.
 - Daftar dan pencabutan koneksi MCP dari halaman Akun web (sementara: "Keluar dari semua perangkat").
