@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Mcp\Server\Registrar;
 use Laravel\Passport\Passport;
 
 class AppServiceProvider extends ServiceProvider
@@ -30,6 +31,8 @@ class AppServiceProvider extends ServiceProvider
         Passport::authorizationView('mcp.authorize');
         Passport::tokensExpireIn(now()->addHour());
         Passport::refreshTokensExpireIn(now()->addDays(30));
+        // Klien yang tidak mengirim parameter `scope` tetap mendapat token yang berlaku di /mcp.
+        Passport::setDefaultScope(Registrar::OAUTH_SCOPE);
 
         // Rute OAuth didaftarkan oleh provider Passport dan MCP, jadi middleware tambahan ditempel setelah semua provider
         // selesai boot. Sesi yang sudah diputus ("Keluar dari semua perangkat") tidak boleh menyetujui klien MCP baru,

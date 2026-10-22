@@ -150,6 +150,29 @@ class McpOAuthTest extends TestCase
         $this->assertSame('2 email belum dibaca', $this->user->dailyBriefs()->where('date', '2026-10-21')->value('email_digest'));
     }
 
+    public function test_klien_tanpa_parameter_scope_tetap_mendapat_token_untuk_mcp(): void
+    {
+        $redirect = 'http://localhost:54321/callback';
+        $clientId = $this->postJson('/oauth/register', ['redirect_uris' => [$redirect]])->json('client_id');
+        $verifier = bin2hex(random_bytes(32));
+        $challenge = rtrim(strtr(base64_encode(hash('sha256', $verifier, true)), '+/', '-_'), '=');
+        $query = http_build_query([
+            'response_type' => 'code', 'client_id' => $clientId, 'redirect_uri' => $redirect,
+            'state' => 's', 'code_challenge' => $challenge, 'code_challenge_method' => 'S256',
+        ]);
+
+        $this->actingAs($this->user)->get('/oauth/authorize?'.$query)->assertOk();
+        $approve = $this->post('/oauth/authorize', ['state' => 's', 'client_id' => $clientId, 'auth_token' => session('authToken')]);
+        parse_str((string) parse_url($approve->headers->get('Location'), PHP_URL_QUERY), $back);
+        $token = $this->postJson('/oauth/token', [
+            'grant_type' => 'authorization_code', 'client_id' => $clientId, 'redirect_uri' => $redirect,
+            'code' => $back['code'], 'code_verifier' => $verifier,
+        ])->assertOk()->json();
+
+        $this->app['auth']->forgetGuards();
+        $this->rpc('tools/list', [], ['Authorization' => 'Bearer '.$token['access_token']] + self::ACCEPT)->assertOk();
+    }
+
     public function test_kode_otorisasi_tidak_bisa_dipakai_dengan_verifier_salah(): void
     {
         $redirect = 'http://localhost:54321/callback';
