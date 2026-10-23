@@ -3061,8 +3061,35 @@ baru, tanpa `passport:keys` ulang).
 **Belum dikerjakan:**
 - Uji dengan Claude Code sungguhan (alur browser, refresh token, nama klien yang tampil di layar persetujuan) — server sudah live, belum dicoba.
 - Mengubah skill `habitflow-morning-routine` supaya memanggil tool `save-daily-brief` (jangan diubah sebelum MCP live, supaya skill lama tetap jalan).
-- Tool lain (follow-up, catatan kerja harian) satu per satu, masing-masing dengan tesnya.
+- Tool follow-up sudah ditambahkan di tahap 35 (di bawah). Tool lain menyusul satu per satu, masing-masing dengan tesnya.
 - Daftar dan pencabutan koneksi MCP dari halaman Akun web (sementara: "Keluar dari semua perangkat").
+
+### Tahap 35: Tool follow-up di MCP untuk log aktivitas ala jurnal kerja (langkah 1 selesai di kode dan tes 24 Oktober 2026; belum di-deploy; langkah 2-3 belum dikerjakan)
+
+**Latar belakang:** pemilik ingin rekap harian di halaman Kerja berupa **checkbox pekerjaan** seperti halaman "Jurnal Kerja" di Notion, bukan teks
+di kartu "Ringkasan dari Claude" (read-only, hanya ringkasan email). Keputusan 23 Oktober 2026: **wadahnya follow-up yang sudah ada**
+(bukan jenis item baru) dan **menunggu MCP live** (bukan token REST penuh). Rekap web sudah menghitung follow-up selesai per tanggal
+(`WorkRecap`), jadi tidak ada perubahan UI.
+
+**Pemetaan ke follow-up:**
+- Pekerjaan yang sudah dikerjakan = status `DONE`, `done_at` di tanggal itu (tengah hari zona pengguna kalau `done_on` diberikan, supaya tidak bergeser hari karena UTC).
+- Rencana besok = status `ACTIVE` dengan `picked_date` besok, sama dengan "Lanjut besok" di EOD dan bagian "Rencana besok" halaman Kerja.
+
+**Langkah 1 (selesai di kode dan tes, server/, 428 tes lulus):** `app/Mcp/Tools/` bertambah tiga tool.
+- `list-follow-ups` (hanya baca): tanpa filter = semua yang belum selesai; `status`; atau `done_on` (yang selesai pada satu tanggal, dikelompokkan di zona pengguna).
+- `create-follow-up`: judul wajib, status bawaan `ACTIVE`, `date`, `picked_date`, `done_on`, `person`, `note`. **Penjaga dobel:** judul sama (tanpa membedakan huruf) yang
+  belum selesai, atau yang selesai di tanggal yang sama, tidak dibuat lagi dan data yang ada dikembalikan (`created: false`), sehingga skill aman dijalankan ulang.
+- `update-follow-up`: ubah per id, hanya field yang dikirim; DONE mengisi `done_at`, status lain mengosongkannya (sama dengan Livewire `FollowUps::apply`).
+  **Sengaja tidak ada tool hapus**, supaya Claude tidak bisa menghilangkan follow-up.
+- Tes di `tests/Feature/McpFollowUpToolsTest.php` (milik pengguna lain tidak tersentuh, zona waktu, tanpa dobel, validasi).
+- Tidak ada migrasi baru dan tahap 34 sudah live (22 Oktober 2026): deploy cukup arsip, `scp`, `docker compose build`, dan `-p server up -d --force-recreate` seperti biasa, tanpa `migrate` dan tanpa `passport:keys`.
+
+**Belum dikerjakan:**
+- Deploy tahap 35 ke produksi, lalu uji login MCP dan ketiga tool dengan Claude Code sungguhan (login MCP sendiri belum pernah dicoba).
+- Langkah 2: skill baru (mirip `write-work-journal`) untuk mencatat aktivitas hari ini sebagai follow-up `DONE` dan rencana besok sebagai `ACTIVE`;
+  skill hanya ditulis setelah MCP live supaya bisa diuji sungguhan.
+- Langkah 3: ubah `habitflow-morning-routine` ke tool `save-daily-brief`. Tiga salinan skill: `~/.claude/skills`, `masuya-context`, repo ini.
+- Teks "Rekap sesi Claude Code" yang kemarin ditulis ke `email_digest` sebaiknya pindah ke log aktivitas ini; `email_digest` kembali khusus ringkasan email.
 
 ## Daftar pertanyaan terbuka
 
