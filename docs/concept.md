@@ -3087,8 +3087,12 @@ di kartu "Ringkasan dari Claude" (read-only, hanya ringkasan email). Keputusan 2
 
 **Belum dikerjakan:**
 - Uji login MCP dan ketiga tool follow-up dengan Claude Code sungguhan (login MCP sendiri belum pernah dicoba, termasuk dari tahap 34).
-- Langkah 2: skill baru (mirip `write-work-journal`) untuk mencatat aktivitas hari ini sebagai follow-up `DONE` dan rencana besok sebagai `ACTIVE`;
-  skill hanya ditulis setelah MCP live supaya bisa diuji sungguhan.
+- **Langkah 2 (ditulis 24 Oktober 2026, belum diuji sungguhan):** skill `habitflow-work-log`
+  (mirip `write-work-journal`, lihat deskripsi lengkap di berkasnya) untuk mencatat aktivitas hari
+  ini sebagai follow-up `DONE` dan rencana besok sebagai `ACTIVE` + `picked_date`, lewat tool MCP
+  `list-follow-ups`/`create-follow-up`/`update-follow-up`. Salinan di `masuya-context/.claude/skills/habitflow-work-log/SKILL.md`
+  (belum di-commit, repo bersama) dan `habitflow/skills/habitflow-work-log/SKILL.md` (sudah
+  di-commit). Belum dicoba sungguhan karena login MCP sendiri belum pernah dicoba (butir di atas).
 - Langkah 3: ubah `habitflow-morning-routine` ke tool `save-daily-brief`. Tiga salinan skill: `~/.claude/skills`, `masuya-context`, repo ini.
 - Teks "Rekap sesi Claude Code" yang kemarin ditulis ke `email_digest` sebaiknya pindah ke log aktivitas ini; `email_digest` kembali khusus ringkasan email.
 
