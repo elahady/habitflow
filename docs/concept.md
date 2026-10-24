@@ -3064,7 +3064,7 @@ baru, tanpa `passport:keys` ulang).
 - Tool follow-up sudah ditambahkan di tahap 35 (di bawah). Tool lain menyusul satu per satu, masing-masing dengan tesnya.
 - Daftar dan pencabutan koneksi MCP dari halaman Akun web (sementara: "Keluar dari semua perangkat").
 
-### Tahap 35: Tool follow-up di MCP untuk log aktivitas ala jurnal kerja (langkah 1 selesai di kode, tes, dan deploy produksi 24 Oktober 2026; langkah 2-3 belum dikerjakan)
+### Tahap 35: Tool follow-up di MCP untuk log aktivitas ala jurnal kerja (langkah 1-2 selesai dan diuji sungguhan 24 Oktober 2026; langkah 3 belum dikerjakan)
 
 **Latar belakang:** pemilik ingin rekap harian di halaman Kerja berupa **checkbox pekerjaan** seperti halaman "Jurnal Kerja" di Notion, bukan teks
 di kartu "Ringkasan dari Claude" (read-only, hanya ringkasan email). Keputusan 23 Oktober 2026: **wadahnya follow-up yang sudah ada**
@@ -3085,14 +3085,18 @@ di kartu "Ringkasan dari Claude" (read-only, hanya ringkasan email). Keputusan 2
 - Tidak ada migrasi baru dan tahap 34 sudah live (22 Oktober 2026): deploy cukup arsip, `scp`, `docker compose build`, dan `-p server up -d --force-recreate` seperti biasa, tanpa `migrate` dan tanpa `passport:keys`.
 - **Deploy produksi 24 Oktober 2026** (arsip server/, scp, `docker compose build`, `-p server up -d --force-recreate`, `migrate --force` konfirmasi "Nothing to migrate" sesuai perkiraan). Container `habitflow` dan `habitflow-queue` `healthy`. Cek pasca-deploy: situs utama 302, `/.well-known/oauth-authorization-server` 200, `/mcp` 401 dengan header `WWW-Authenticate` — semua sesuai `server/DEPLOY.md`.
 
+- **Login MCP dan skill `habitflow-work-log` diuji sungguhan 24 Oktober 2026 dan lulus:** connector `habitflow` dipasang scope **user**
+  (`claude mcp add --transport http habitflow https://habitflow.roziqrizal.com/mcp -s user` — scope `local`/project **tidak** muncul
+  di panel MCP servers VSCode, harus `-s user` supaya tampil global dan dipakai lintas sesi/project; panel juga butuh reload window
+  setelah dipasang, tidak langsung membaca ulang config) lalu login OAuth lewat panel MCP VSCode (klik server → browser). Setelah
+  tersambung, `/habitflow-work-log` dipanggil untuk mencatat sesi kerja hari itu sendiri: dua follow-up `DONE` dibuat (id `13` "Deploy
+  tahap 35 ke produksi", id `14` "Tulis skill habitflow-work-log"), `list-follow-ups` dan `create-follow-up` berfungsi seperti
+  dirancang, tidak ada duplikat. `update-follow-up` (jalur "ketemu follow-up lama, tandai selesai") belum tercoba di jalur sungguhan
+  ini karena kedua judul memang baru.
+
 **Belum dikerjakan:**
-- Uji login MCP dan ketiga tool follow-up dengan Claude Code sungguhan (login MCP sendiri belum pernah dicoba, termasuk dari tahap 34).
-- **Langkah 2 (ditulis 24 Oktober 2026, belum diuji sungguhan):** skill `habitflow-work-log`
-  (mirip `write-work-journal`, lihat deskripsi lengkap di berkasnya) untuk mencatat aktivitas hari
-  ini sebagai follow-up `DONE` dan rencana besok sebagai `ACTIVE` + `picked_date`, lewat tool MCP
-  `list-follow-ups`/`create-follow-up`/`update-follow-up`. Salinan di `masuya-context/.claude/skills/habitflow-work-log/SKILL.md`
-  (belum di-commit, repo bersama) dan `habitflow/skills/habitflow-work-log/SKILL.md` (sudah
-  di-commit). Belum dicoba sungguhan karena login MCP sendiri belum pernah dicoba (butir di atas).
+- Skill `habitflow-work-log`, Salinan di `masuya-context/.claude/skills/habitflow-work-log/SKILL.md` sudah di-commit dan di-push
+  (rebase di atas commit tim lain yang masuk duluan) — bukan "belum di-commit" lagi seperti catatan sebelumnya.
 - Langkah 3: ubah `habitflow-morning-routine` ke tool `save-daily-brief`. Tiga salinan skill: `~/.claude/skills`, `masuya-context`, repo ini.
 - Teks "Rekap sesi Claude Code" yang kemarin ditulis ke `email_digest` sebaiknya pindah ke log aktivitas ini; `email_digest` kembali khusus ringkasan email.
 
