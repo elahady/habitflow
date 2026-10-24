@@ -3064,7 +3064,7 @@ baru, tanpa `passport:keys` ulang).
 - Tool follow-up sudah ditambahkan di tahap 35 (di bawah). Tool lain menyusul satu per satu, masing-masing dengan tesnya.
 - Daftar dan pencabutan koneksi MCP dari halaman Akun web (sementara: "Keluar dari semua perangkat").
 
-### Tahap 35: Tool follow-up di MCP untuk log aktivitas ala jurnal kerja (langkah 1 selesai di kode dan tes 24 Oktober 2026; belum di-deploy; langkah 2-3 belum dikerjakan)
+### Tahap 35: Tool follow-up di MCP untuk log aktivitas ala jurnal kerja (langkah 1 selesai di kode, tes, dan deploy produksi 24 Oktober 2026; langkah 2-3 belum dikerjakan)
 
 **Latar belakang:** pemilik ingin rekap harian di halaman Kerja berupa **checkbox pekerjaan** seperti halaman "Jurnal Kerja" di Notion, bukan teks
 di kartu "Ringkasan dari Claude" (read-only, hanya ringkasan email). Keputusan 23 Oktober 2026: **wadahnya follow-up yang sudah ada**
@@ -3083,9 +3083,10 @@ di kartu "Ringkasan dari Claude" (read-only, hanya ringkasan email). Keputusan 2
   **Sengaja tidak ada tool hapus**, supaya Claude tidak bisa menghilangkan follow-up.
 - Tes di `tests/Feature/McpFollowUpToolsTest.php` (milik pengguna lain tidak tersentuh, zona waktu, tanpa dobel, validasi).
 - Tidak ada migrasi baru dan tahap 34 sudah live (22 Oktober 2026): deploy cukup arsip, `scp`, `docker compose build`, dan `-p server up -d --force-recreate` seperti biasa, tanpa `migrate` dan tanpa `passport:keys`.
+- **Deploy produksi 24 Oktober 2026** (arsip server/, scp, `docker compose build`, `-p server up -d --force-recreate`, `migrate --force` konfirmasi "Nothing to migrate" sesuai perkiraan). Container `habitflow` dan `habitflow-queue` `healthy`. Cek pasca-deploy: situs utama 302, `/.well-known/oauth-authorization-server` 200, `/mcp` 401 dengan header `WWW-Authenticate` — semua sesuai `server/DEPLOY.md`.
 
 **Belum dikerjakan:**
-- Deploy tahap 35 ke produksi, lalu uji login MCP dan ketiga tool dengan Claude Code sungguhan (login MCP sendiri belum pernah dicoba).
+- Uji login MCP dan ketiga tool follow-up dengan Claude Code sungguhan (login MCP sendiri belum pernah dicoba, termasuk dari tahap 34).
 - Langkah 2: skill baru (mirip `write-work-journal`) untuk mencatat aktivitas hari ini sebagai follow-up `DONE` dan rencana besok sebagai `ACTIVE`;
   skill hanya ditulis setelah MCP live supaya bisa diuji sungguhan.
 - Langkah 3: ubah `habitflow-morning-routine` ke tool `save-daily-brief`. Tiga salinan skill: `~/.claude/skills`, `masuya-context`, repo ini.
